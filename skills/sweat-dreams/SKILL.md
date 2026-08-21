@@ -14,6 +14,7 @@ metadata:
   author: Matanel Gordon
   source: https://github.com/MatanelGordon/skills
   requires: macOS only (caffeinate). Detects claude/codex/copilot sessions specifically.
+  platform: darwin
 ---
 
 # sweat-dreams
@@ -22,7 +23,14 @@ Keeps the Mac awake while an agent is working, and — importantly — **stops**
 it is not. One refcounted `caffeinate` for the whole machine, one lease per agent
 session.
 
-`sweat-dreams` lives at `~/.local/bin/sweat-dreams` (already on PATH).
+The CLI ships with this skill at `scripts/sweat-dreams`. Put it on your PATH
+once — the repo installer offers to do this, or:
+
+```bash
+cp "<this skill's dir>/scripts/sweat-dreams" ~/.local/bin/ && chmod +x ~/.local/bin/sweat-dreams
+```
+
+Commands below assume it is on PATH; otherwise call the script by full path.
 
 ## The loop you follow
 

@@ -29,10 +29,13 @@ git worktree, on its own branch, and reports back in a fixed tiny format.
 4. Never leave a worktree behind after merging.
 
 **Shell state does not persist between Bash calls.** Set `SK` (and `WT`, `SLUG`,
-`LOG`, …) in the same call that uses it:
+`LOG`, …) in the same call that uses it. This skill may be installed under any
+agent's skills directory, so locate it rather than assuming one:
 
 ```bash
-SK="$HOME/.claude/skills/cli-coding-subagents"
+SK=$(ls -d "$HOME"/.claude/skills/cli-coding-subagents "$HOME"/.codex/skills/cli-coding-subagents \
+        "$HOME"/.copilot/skills/cli-coding-subagents "$HOME"/.agents/skills/cli-coding-subagents \
+        "$HOME"/.tabnine/agent/skills/cli-coding-subagents 2>/dev/null | head -1)
 "$SK/scripts/precheck.sh"
 ```
 
@@ -41,7 +44,10 @@ SK="$HOME/.claude/skills/cli-coding-subagents"
 ## 1. Pre-flight (mandatory, every session)
 
 ```bash
-"$HOME/.claude/skills/cli-coding-subagents/scripts/precheck.sh"     # add: codex | copilot | --json
+SK=$(ls -d "$HOME"/.claude/skills/cli-coding-subagents "$HOME"/.codex/skills/cli-coding-subagents \
+        "$HOME"/.copilot/skills/cli-coding-subagents "$HOME"/.agents/skills/cli-coding-subagents \
+        "$HOME"/.tabnine/agent/skills/cli-coding-subagents 2>/dev/null | head -1)
+"$SK/scripts/precheck.sh"                     # add: codex | copilot | --json
 ```
 
 It prints a line per tool plus an `-> action`. **Read the per-tool lines** — the
@@ -85,7 +91,10 @@ are verified to pass every required flag. A dropped
 dropped `-C` makes it edit your main tree instead of its worktree.
 
 ```bash
-SK="$HOME/.claude/skills/cli-coding-subagents"; SLUG=p2-parser
+SK=$(ls -d "$HOME"/.claude/skills/cli-coding-subagents "$HOME"/.codex/skills/cli-coding-subagents \
+        "$HOME"/.copilot/skills/cli-coding-subagents "$HOME"/.agents/skills/cli-coding-subagents \
+        "$HOME"/.tabnine/agent/skills/cli-coding-subagents 2>/dev/null | head -1)
+SLUG=p2-parser
 WT=$("$SK/scripts/wt.sh" new "$SLUG")        # worktree + branch sa/$SLUG
 echo "$WT"
 ```
@@ -131,7 +140,10 @@ is a planning bug: resplit.
 Verify **inside the worktree** first — the work is not in your tree yet:
 
 ```bash
-SK="$HOME/.claude/skills/cli-coding-subagents"; SLUG=p2-parser
+SK=$(ls -d "$HOME"/.claude/skills/cli-coding-subagents "$HOME"/.codex/skills/cli-coding-subagents \
+        "$HOME"/.copilot/skills/cli-coding-subagents "$HOME"/.agents/skills/cli-coding-subagents \
+        "$HOME"/.tabnine/agent/skills/cli-coding-subagents 2>/dev/null | head -1)
+SLUG=p2-parser
 WT=$("$SK/scripts/wt.sh" path "$SLUG")
 (cd "$WT" && npm test)                       # the critical-path tests
 "$SK/scripts/wt.sh" merge "$SLUG"            # merges, then REMOVES worktree + branch

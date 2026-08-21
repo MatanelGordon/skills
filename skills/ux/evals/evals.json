@@ -1,0 +1,48 @@
+{
+  "skill_name": "ux",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Here's our signup flow: email -> verify code -> profile -> workspace name -> invite teammates -> dashboard. Is this good UX?",
+      "expected_output": "Runs the rubric, not an opinion: heuristic walk with 0-4 severities per finding, a verdict naming which rule fired, findings table sorted by severity, and what to measure next.",
+      "files": [],
+      "expectations": [
+        "Findings cite a specific heuristic and a 0-4 severity each",
+        "Verdict states which verdict rule fired, not just an adjective",
+        "Includes what is working, and 1-2 metrics to confirm the biggest finding",
+        "Does not comment on visual style or brand"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "What's a good error message when the user's session expires mid-form?",
+      "expected_output": "Applies the error guidance: plain language, cause plus next action, preserve the user's input, most important part last. Severity framing for losing form data.",
+      "files": [],
+      "expectations": [
+        "Message names what happened and the exact next step",
+        "Calls out preserving the typed form data as the real requirement",
+        "No error codes or blame"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Our SUS score came back as 71. Is that good?",
+      "expected_output": "Interprets against published thresholds: 71 is above the 68 average, roughly a C+/B-, not a percentage. Recommends trend over point, and pairing with task success before celebrating.",
+      "files": [],
+      "expectations": [
+        "States 68 is the average and 71 is slightly above",
+        "Says SUS is not a percentage",
+        "Recommends behavioral pairing (task success) and trend tracking"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Center this modal vertically and make the button blue like the mockup.",
+      "expected_output": "Skill does NOT run a UX audit. This is a styling task; just do it.",
+      "files": [],
+      "expectations": [
+        "No heuristic audit for a mechanical styling request"
+      ]
+    }
+  ]
+}

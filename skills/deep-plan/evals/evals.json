@@ -1,0 +1,51 @@
+{
+  "skill_name": "deep-plan",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We need to add multi-tenant support to this API - tenant-scoped auth, per-tenant rate limits, and tenant-aware queries. Plan it out before we build.",
+      "expected_output": "Skill triggers. Runs the clarity gate (goal, success signal, out of scope), investigates the code, and produces .plan/<name>/plan.md with a disjoint file map, edge-case table with statuses, verbatim test commands, and Status: draft until confirmed.",
+      "files": [],
+      "expectations": [
+        "Asks or answers the three gate questions before writing the plan",
+        "Reads actual code at the seams, not just file names",
+        "Checks .adr/, adr.sh, or git history for prior decisions",
+        "plan.md has a file map where no path has two phase-2 owners",
+        "Edge-case table rows each carry covered / out-of-scope / unknown",
+        "Plan is written with Status: draft and user confirmation is requested"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Fix the typo in the README - it says 'recieve' instead of 'receive'.",
+      "expected_output": "Skill does NOT produce a plan. One-file trivial change; just fix it.",
+      "files": [],
+      "expectations": [
+        "No .plan/ directory is created",
+        "No planning ceremony for a one-line change"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I want to migrate our REST endpoints to tRPC eventually. Not sure about the details yet, just thinking about it.",
+      "expected_output": "Clarity gate catches this: the ask is exploratory, not settled. The skill says this is research, not planning, and resolves goal/success/scope with the user instead of producing a confident plan.",
+      "files": [],
+      "expectations": [
+        "Does not produce a full plan for an unsettled requirement",
+        "Names what is missing: success signal and scope",
+        "Offers investigation or a conversation, not a file map"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Continue the checkout-refactor work from yesterday.",
+      "expected_output": "Finds .plan/checkout-refactor/, reads plan.md status and amendments before doing anything, and respects Status - never executing a draft.",
+      "files": [],
+      "expectations": [
+        "Reads the existing plan.md rather than re-planning",
+        "Checks the Status line before acting",
+        "Consults Amendments to learn what execution already changed"
+      ]
+    }
+  ]
+}

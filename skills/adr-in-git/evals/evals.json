@@ -1,0 +1,52 @@
+{
+  "skill_name": "adr-in-git",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Commit these changes - I swapped the JSON parser for a streaming one because the old one loaded whole files into memory.",
+      "expected_output": "Commit message says why (memory blowup), not just what. Trailers as the final paragraph. No Co-Authored-By.",
+      "files": [],
+      "expectations": [
+        "Body explains the trigger, not a restatement of the diff",
+        "Trailers are the last paragraph with no blank lines inside the block",
+        "No Co-Authored-By trailer",
+        "Reason: or Constraint: used where applicable"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Why is there a hand-rolled retry loop in http.ts instead of a library? Looks like something we should clean up.",
+      "expected_output": "Searches git before judging: adr.sh why (or blame -> show), checks for adr tags and Rejected: trailers. Only proposes cleanup if no recorded reason exists.",
+      "files": [],
+      "expectations": [
+        "Runs adr.sh why or the blame-to-show chain before proposing changes",
+        "Checks Rejected: trailers so a dead end is not re-proposed",
+        "Cites the commit or ADR found, or states plainly that no reason is recorded"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "We decided today: all cross-service calls go through the event bus, no direct HTTP between services. Record it.",
+      "expected_output": "Writes the decision as an annotated adr-NNNN tag (plain first line, Tags: trailer) and/or .adr/ file per the adr skill, with Constraint: carrying the invariant.",
+      "files": [],
+      "expectations": [
+        "Creates an annotated tag or .adr file, not just a commit message",
+        "Tag body first line is plain text, not a markdown # heading",
+        "Tags: trailer present for searchability",
+        "Constraint: states the no-direct-HTTP invariant"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Merge the feat/payments worktree back into main.",
+      "expected_output": "No-ff merge with a composed message: Requested, plan prose (max 5 paragraphs), ADRs: and Branch: trailers, written via -F not -m.",
+      "files": [],
+      "expectations": [
+        "Uses --no-ff so the merge commit exists",
+        "Message contains Requested: and the plan in prose",
+        "ADRs accumulated on the branch are listed and tagged",
+        "Message composed in a file and passed with -F"
+      ]
+    }
+  ]
+}

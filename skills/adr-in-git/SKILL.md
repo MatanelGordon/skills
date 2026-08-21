@@ -207,7 +207,9 @@ Tag trailers are queryable too — `git tag -l adr-0004 --format='%(trailers:key
 Two ways in, deliberately. **Always start with the cheap one.**
 
 ```bash
-SK="$HOME/.claude/skills/adr-in-git"
+SK=$(ls -d "$HOME"/.claude/skills/adr-in-git "$HOME"/.codex/skills/adr-in-git \
+        "$HOME"/.copilot/skills/adr-in-git "$HOME"/.agents/skills/adr-in-git \
+        "$HOME"/.tabnine/agent/skills/adr-in-git 2>/dev/null | head -1)
 "$SK/scripts/adr.sh" list
 ```
 

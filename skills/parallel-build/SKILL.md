@@ -15,6 +15,7 @@ metadata:
   author: Matanel Gordon
   source: https://github.com/MatanelGordon/skills
   requires: Dispatches via cli-coding-subagents; assumes git worktrees and those CLIs.
+  depends: cli-coding-subagents, deep-plan
 ---
 
 # Parallel build
@@ -36,7 +37,9 @@ If the user says "continue"/"keep going", or you have no context for work that i
 clearly underway, run this first:
 
 ```bash
-SK="$HOME/.claude/skills/cli-coding-subagents"
+SK=$(ls -d "$HOME"/.claude/skills/cli-coding-subagents "$HOME"/.codex/skills/cli-coding-subagents \
+        "$HOME"/.copilot/skills/cli-coding-subagents "$HOME"/.agents/skills/cli-coding-subagents \
+        "$HOME"/.tabnine/agent/skills/cli-coding-subagents 2>/dev/null | head -1)
 cd "$(git rev-parse --show-toplevel)"
 ls -t .plan/*/PROGRESS.md 2>/dev/null                        # all plans, newest first
 grep -L 'Status:\*\* complete' .plan/*/PROGRESS.md 2>/dev/null   # the unfinished ones
@@ -46,7 +49,9 @@ Take the unfinished plan; if several qualify, use the most recently modified and
 say which you chose. Then:
 
 ```bash
-SK="$HOME/.claude/skills/cli-coding-subagents"     # each Bash call is a fresh shell
+SK=$(ls -d "$HOME"/.claude/skills/cli-coding-subagents "$HOME"/.codex/skills/cli-coding-subagents \
+        "$HOME"/.copilot/skills/cli-coding-subagents "$HOME"/.agents/skills/cli-coding-subagents \
+        "$HOME"/.tabnine/agent/skills/cli-coding-subagents 2>/dev/null | head -1)   # fresh shell — relocate every call
 PLAN=".plan/<plan-name>"                           # substitute the real name — quotes matter
 cat "$PLAN/plan.md"        # what was intended (deep-plan owns this)
 cat "$PLAN/PROGRESS.md"    # where execution got to

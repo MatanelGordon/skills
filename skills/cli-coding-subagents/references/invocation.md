@@ -118,9 +118,10 @@ WT=/abs/path/to/worktree
 PLAN_DIR=/abs/repo/.plan/my-plan
 LOG="$PLAN_DIR/logs/$SLUG.log"
 mkdir -p "$PLAN_DIR/logs"
-# from precheck's "launch:" line — NOT an export
-NODE24="$HOME/.nvm/versions/node/v24.3.0/bin/node"
-COPILOT="$HOME/.nvm/versions/node/v18.18.0/bin/copilot"
+# Take BOTH paths from precheck's "launch: <node> <copilot-js>" line — NOT an
+# export, and machine-specific (example: an nvm v24 node + the copilot JS entry):
+NODE24="/path/to/node24/bin/node"
+COPILOT="/path/to/copilot"
 
 "$NODE24" "$COPILOT" -p "$(cat "$PLAN_DIR/prompts/$SLUG.md")" \
   --model claude-sonnet-5 \

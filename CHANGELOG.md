@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.7.0 — 2026-08-21
+
+- **sweat-dreams goes cross-platform**: caffeinate (macOS), systemd-inhibit /
+  gnome-session-inhibit (Linux), PowerShell SetThreadExecutionState
+  (Windows & WSL) behind one lease/daemon lifecycle. Laptops (battery
+  detected) keep the display awake by default; `--no-display` /
+  `SWEAT_DREAMS_DISPLAY` override. Fixed a pid-capture bug where the
+  keep-awake process could leak unkillable. Linux/Windows paths are
+  implemented to spec but verified only on macOS — reports welcome.
+
 ## 1.6.0 — 2026-08-21
 
 - **Evals for every skill**, and CI now fails any skill (or agent) without a

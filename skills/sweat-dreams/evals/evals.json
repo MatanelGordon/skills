@@ -40,6 +40,17 @@
       "expectations": [
         "No sweat-dreams invocation for trivial work"
       ]
+    },
+    {
+      "id": 5,
+      "prompt": "I'm running this 2-hour training job on my Linux desktop over SSH - keep the machine awake.",
+      "expected_output": "Uses the Linux path (systemd-inhibit) transparently - same on/beat/off loop, no caffeinate assumption. Desktop means the display is not forced awake.",
+      "files": [],
+      "expectations": [
+        "Works via systemd-inhibit on Linux, not caffeinate",
+        "Desktop (no battery) does not get a forced display hold",
+        "Same lease lifecycle: on, beat during, off after"
+      ]
     }
   ]
 }

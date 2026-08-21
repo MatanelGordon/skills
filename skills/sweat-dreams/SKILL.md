@@ -13,15 +13,24 @@ license: MIT
 metadata:
   author: Matanel Gordon
   source: https://github.com/MatanelGordon/skills
-  requires: macOS only (caffeinate). Detects claude/codex/copilot sessions specifically.
-  platform: darwin
+  requires: caffeinate (macOS), systemd-inhibit or gnome-session-inhibit (Linux), or PowerShell (Windows/WSL). Menu bar indicator is macOS-only. Detects claude/codex/copilot sessions specifically.
 ---
 
 # sweat-dreams
 
-Keeps the Mac awake while an agent is working, and — importantly — **stops** when
-it is not. One refcounted `caffeinate` for the whole machine, one lease per agent
-session.
+Keeps the machine awake while an agent is working, and — importantly — **stops**
+when it is not. One refcounted keep-awake process for the whole machine, one
+lease per agent session.
+
+| OS | Mechanism | Display hold |
+|---|---|---|
+| macOS | `caffeinate` | `-d` |
+| Linux | `systemd-inhibit` (fallback `gnome-session-inhibit`) | idle inhibitor; DE screensavers vary |
+| Windows / WSL | PowerShell `SetThreadExecutionState` | `ES_DISPLAY_REQUIRED` |
+
+**Laptops keep the screen awake by default** (battery detected → display hold);
+desktops let it sleep. Override per run with `--display` / `--no-display`, or
+set `SWEAT_DREAMS_DISPLAY=on|off`.
 
 The CLI ships with this skill at `scripts/sweat-dreams`. Put it on your PATH
 once — the repo installer offers to do this, or:
@@ -101,9 +110,9 @@ SwiftBar/xbar). Never work around a user stopping it.
 
 ## What it does and does not do
 
-- Prevents **system and disk idle sleep**; the **display still sleeps** normally.
-  `--display` opts into keeping the screen on, which costs real battery — only use
-  it if the user asks.
+- Prevents **system and disk idle sleep**. The display follows the laptop rule
+  above; `--no-display` saves battery on a laptop when the screen genuinely
+  isn't needed.
 - On **battery below 30%**, the assertion is released automatically and the user
   is notified. Do not fight this; if a run genuinely needs to continue, tell the
   user to plug in.

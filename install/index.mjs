@@ -239,7 +239,6 @@ async function cmdUninstall(skills, YES) {
 }
 
 async function installSweatDreamsCli(YES) {
-  if (process.platform !== 'darwin') return;
   const src = join(SKILLS_DIR, 'sweat-dreams', 'scripts', 'sweat-dreams');
   if (!existsSync(src)) return;
   const destDir = join(HOME, '.local', 'bin');

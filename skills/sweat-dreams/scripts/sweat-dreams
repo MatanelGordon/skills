@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
-# sweat-dreams — keep this Mac awake while a coding agent is working.
+# sweat-dreams — keep this machine awake while a coding agent is working.
+#
+# Platforms: macOS (caffeinate) · Linux (systemd-inhibit / gnome-session-inhibit)
+#            · Windows & WSL (PowerShell SetThreadExecutionState).
+# Laptops keep the display awake by default; desktops let it sleep.
+# Override with --display / --no-display or SWEAT_DREAMS_DISPLAY=on|off.
 #
 # One refcounted caffeinate for the whole machine. Each agent session takes a
 # lease; the daemon holds the power assertion while at least one live lease
 # exists and releases the moment the last one goes away, dies, or goes stale.
 #
-#   sweat-dreams on [--display] [--ttl SEC] [--force] [--label TEXT]
+#   sweat-dreams on [--display|--no-display] [--ttl SEC] [--force] [--label TEXT]
 #   sweat-dreams beat               refresh this session's heartbeat (cheap, call while working)
 #   sweat-dreams keep &             background keeper: beats until the agent exits, then releases
 #   sweat-dreams off                release this session's lease
@@ -14,7 +19,7 @@
 #   sweat-dreams limit --text "..."  claude/codex: parse a rate-limit message for the reset time
 #   sweat-dreams kill               release everything sweat-dreams owns, now
 #   sweat-dreams reap               drop dead/stale leases (the daemon does this too)
-#   sweat-dreams menubar [install|uninstall|probe]
+#   sweat-dreams menubar [install|uninstall|probe]   (macOS only)
 #
 # Only claude / codex / copilot may take a lease; use --force to override.
 # Machine stays awake, display is allowed to sleep unless --display is passed.
@@ -36,6 +41,23 @@ POLL="${SWEAT_DREAMS_POLL:-15}"                   # daemon loop interval, second
 CAFF_TTL="${SWEAT_DREAMS_CAFF_TTL:-3600}"         # hard backstop on one caffeinate
 
 [ -r "$CONFIG" ] && . "$CONFIG"
+
+# ------------------------------------------------------------------ platform
+case "$(uname -s)" in
+  Darwin) OS=darwin ;;
+  Linux)  if grep -qi microsoft /proc/version 2>/dev/null; then OS=windows; else OS=linux; fi ;;
+  MINGW*|MSYS*|CYGWIN*) OS=windows ;;
+  *) OS=unknown ;;
+esac
+
+is_laptop() {
+  case "$OS" in
+    darwin)  pmset -g batt 2>/dev/null | grep -q InternalBattery ;;
+    linux)   ls /sys/class/power_supply/BAT* >/dev/null 2>&1 ;;
+    windows) [ "$(powershell.exe -NoProfile -Command "[bool](Get-CimInstance Win32_Battery)" 2>/dev/null | tr -d '\r')" = "True" ] ;;
+    *) return 1 ;;
+  esac
+}
 
 mkdir -p "$LEASES"
 
@@ -114,14 +136,28 @@ holder_pid() {
 # ------------------------------------------------------------------ battery
 # echoes: "<source> <percent>"   source = AC | Battery | Unknown
 power_state() {
-  local out pct src
-  out="$(pmset -g batt 2>/dev/null)"
-  case "$out" in
-    *"'AC Power'"*) src=AC ;;
-    *"'Battery Power'"*) src=Battery ;;
-    *) src=Unknown ;;
+  local out pct src bat
+  case "$OS" in
+    darwin)
+      out="$(pmset -g batt 2>/dev/null)"
+      case "$out" in
+        *"'AC Power'"*) src=AC ;; *"'Battery Power'"*) src=Battery ;; *) src=Unknown ;;
+      esac
+      pct="$(printf '%s' "$out" | grep -oE '[0-9]+%' | head -1 | tr -d '%')" ;;
+    linux)
+      bat=$(ls -d /sys/class/power_supply/BAT* 2>/dev/null | head -1)
+      pct=$(cat "$bat/capacity" 2>/dev/null)
+      if grep -q 1 /sys/class/power_supply/A*/online 2>/dev/null; then src=AC
+      elif [ -n "$bat" ] && [ "$(cat "$bat/status" 2>/dev/null)" = "Discharging" ]; then src=Battery
+      else src=AC; fi ;;
+    windows)
+      out="$(powershell.exe -NoProfile -Command \
+        "\$b=Get-CimInstance Win32_Battery; if(\$b){\"\$(\$b.BatteryStatus) \$(\$b.EstimatedChargeRemaining)\"}else{'0 100'}" 2>/dev/null | tr -d '\r')"
+      # BatteryStatus 1 = discharging; most other values mean external power
+      case "${out%% *}" in 1) src=Battery ;; 0) src=AC ;; *) src=AC ;; esac
+      pct="${out##* }" ;;
+    *) src=Unknown; pct=100 ;;
   esac
-  pct="$(printf '%s' "$out" | grep -oE '[0-9]+%' | head -1 | tr -d '%')"
   echo "${src} ${pct:-100}"
 }
 
@@ -134,7 +170,11 @@ battery_ok() {
 
 notify() {
   [ "${SWEAT_DREAMS_NOTIFY:-1}" = "1" ] || return 0
-  osascript -e "display notification \"$2\" with title \"sweat-dreams\" subtitle \"$1\"" >/dev/null 2>&1 &
+  case "$OS" in
+    darwin) osascript -e "display notification \"$2\" with title \"sweat-dreams\" subtitle \"$1\"" >/dev/null 2>&1 & ;;
+    linux)  command -v notify-send >/dev/null 2>&1 && notify-send "sweat-dreams: $1" "$2" >/dev/null 2>&1 & ;;
+    *) : ;;   # windows/unknown: the log and status carry it
+  esac
 }
 
 # ------------------------------------------------------------------- leases
@@ -152,9 +192,36 @@ live_leases() {
 lease_count() { live_leases | grep -c . | tr -d ' '; }
 
 # ------------------------------------------------------------------- daemon
-caffeinate_args() {
-  # -i idle system sleep, -m disk sleep, -s system sleep (AC only); -d display opt-in
-  if [ -f "$HOME_DIR/.display" ]; then echo "-d -i -m -s"; else echo "-i -m -s"; fi
+# Spawns the platform keep-awake process and writes its pid to CAFF_PID_FILE.
+# Killing that pid always releases the inhibition: caffeinate drops its
+# assertion, systemd-inhibit releases the lock, and Windows clears
+# ES_CONTINUOUS when the PowerShell process dies (per-thread state).
+start_keepalive() {
+  local disp=0; [ -f "$HOME_DIR/.display" ] && disp=1
+  case "$OS" in
+    darwin)
+      if [ "$disp" = "1" ]; then caffeinate -d -i -m -s -t "$CAFF_TTL" >/dev/null 2>&1 &
+      else caffeinate -i -m -s -t "$CAFF_TTL" >/dev/null 2>&1 & fi ;;
+    linux)
+      if command -v systemd-inhibit >/dev/null 2>&1; then
+        systemd-inhibit --what=idle:sleep --who=sweat-dreams \
+          --why="coding agent working" --mode=block sleep "$CAFF_TTL" >/dev/null 2>&1 &
+      elif command -v gnome-session-inhibit >/dev/null 2>&1; then
+        gnome-session-inhibit --inhibit suspend:idle sleep "$CAFF_TTL" >/dev/null 2>&1 &
+      else
+        log "no inhibitor found (need systemd-inhibit or gnome-session-inhibit)"; return 1
+      fi ;;
+    windows)
+      local flags="0x80000001"   # ES_CONTINUOUS | ES_SYSTEM_REQUIRED
+      [ "$disp" = "1" ] && flags="0x80000003"   # + ES_DISPLAY_REQUIRED
+      powershell.exe -NoProfile -Command "
+        Add-Type -Name PW -Namespace SD -MemberDefinition '[DllImport(\"kernel32.dll\")] public static extern uint SetThreadExecutionState(uint f);' | Out-Null;
+        [SD.PW]::SetThreadExecutionState($flags) | Out-Null;
+        Start-Sleep -Seconds $CAFF_TTL" >/dev/null 2>&1 &
+      ;;
+    *) log "unsupported OS for keep-awake"; return 1 ;;
+  esac
+  echo $! >"$CAFF_PID_FILE"
 }
 
 daemon_loop() {
@@ -181,11 +248,12 @@ daemon_loop() {
     fi
 
     if [ -z "$caff_pid" ] || ! alive "$caff_pid"; then
-      # shellcheck disable=SC2046
-      caffeinate $(caffeinate_args) -t "$CAFF_TTL" &
-      caff_pid=$!
-      echo "$caff_pid" >"$CAFF_PID_FILE"
-      log "caffeinate started pid=$caff_pid args='$(caffeinate_args) -t $CAFF_TTL'"
+      if start_keepalive; then
+        caff_pid=$(cat "$CAFF_PID_FILE" 2>/dev/null)
+        log "keepalive started pid=$caff_pid os=$OS display=$([ -f "$HOME_DIR/.display" ] && echo on || echo off)"
+      else
+        log "keepalive failed on $OS"; sleep "$POLL"; continue
+      fi
     fi
     sleep "$POLL"
   done
@@ -216,11 +284,12 @@ stop_daemon() {
 
 # -------------------------------------------------------------- subcommands
 cmd_on() {
-  local force=0 ttl="" label="" display=0
+  local force=0 ttl="" label="" display="auto"
   while [ $# -gt 0 ]; do
     case "$1" in
       --force) force=1 ;;
-      --display) display=1 ;;
+      --display) display=on ;;
+      --no-display) display=off ;;
       --ttl) shift; ttl="${1:-}" ;;
       --label) shift; label="${1:-}" ;;
       *) die "unknown option for on: $1" 64 ;;
@@ -234,7 +303,15 @@ cmd_on() {
     agent="manual"
   fi
 
-  [ "$display" = "1" ] && : >"$HOME_DIR/.display"
+  # Display: explicit flag > env > auto (laptops keep the screen awake).
+  [ "$display" = "auto" ] && display="${SWEAT_DREAMS_DISPLAY:-auto}"
+  if [ "$display" = "auto" ]; then
+    if is_laptop; then display=on; else display=off; fi
+  fi
+  case "$display" in
+    on)  : >"$HOME_DIR/.display" ;;
+    off) rm -f "$HOME_DIR/.display" ;;
+  esac
 
   local id hpid f
   id="$(session_id "$agent")"; hpid="$(holder_pid)"
@@ -440,6 +517,7 @@ print(int(c))")" ;;
 cmd_reap() { lock; live_leases >/dev/null; unlock; echo "sweat-dreams: reaped"; }
 
 foreign_caffeinate() {
+  [ "$OS" = "darwin" ] || return 0
   local ours p
   ours=$(cat "$CAFF_PID_FILE" 2>/dev/null)
   for p in $(pgrep -x caffeinate 2>/dev/null); do
@@ -524,7 +602,10 @@ $(printf '%s' "$fg" | sed 's/^/    /')"
   printf '%s\n' "$out"
 }
 
-cmd_menubar() { exec "$HOME_DIR/menubar.sh" "$@"; }
+cmd_menubar() {
+  [ "$OS" = "darwin" ] || die "the menu bar indicator is macOS-only; use 'sweat-dreams status' here"
+  exec "$HOME_DIR/menubar.sh" "$@"
+}
 
 case "${1:-}" in
   on)      shift; cmd_on "$@" ;;

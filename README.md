@@ -128,9 +128,10 @@ Seventeen skills. The short version of each:
 **Architecture and machine**
 
 - **vertical-slice** — organise code by feature, not by technical layer.
-- **sweat-dreams** — keeps a Mac awake while an agent is working and lets it
-  sleep the moment work stops. Ships its own CLI; the installer offers to put
-  it on your PATH.
+- **sweat-dreams** — keeps the machine awake while an agent is working and
+  lets it sleep the moment work stops — macOS, Linux, and Windows/WSL. Laptops
+  keep the screen on by default. Ships its own CLI; the installer offers to
+  put it on your PATH.
 
 ## Things that need more than markdown
 
@@ -143,7 +144,7 @@ platform-locked skills on the wrong OS:
 |---|---|
 | `cli-coding-subagents` | codex + copilot CLIs, installed and authenticated |
 | `parallel-build` | the above, plus git worktrees |
-| `sweat-dreams` | macOS (`caffeinate`) — auto-skipped elsewhere |
+| `sweat-dreams` | macOS `caffeinate` / Linux `systemd-inhibit` / Windows PowerShell; menu bar extra is macOS-only |
 | `terminal-ux` / `tui-builder` | Node ≥ 22 (Ink) |
 | `adr-in-git` | git ≥ 2.35 |
 

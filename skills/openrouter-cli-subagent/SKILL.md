@@ -3,8 +3,9 @@ name: openrouter-cli-subagent
 description: >
   Run codex and claude coding subagents through OpenRouter with the ori CLI, so
   subagent work costs nothing when free models suffice. Use when asked to run
-  agents on OpenRouter, use ori, work on free models, cut subagent cost, or route
-  work to a specific OpenRouter model. Covers the login pre-flight that stops
+  agents on OpenRouter, use ori, work on free models or cheap ones under a price
+  ceiling, cut subagent cost, escape free-tier rate limits, or route work to a
+  specific OpenRouter model. Covers the login pre-flight that stops
   rather than attempting browser OAuth, discovering which free models are
   genuinely usable for coding today, routing claude for orchestration and codex
   for fixes, mandatory cross-model code review and plan review because these
@@ -66,10 +67,24 @@ subagents run in. It never prints the key, the contents of
 ## 2. Pick models — from the script, never from memory
 
 ```bash
-./scripts/ori-free-models.sh            # human table, two tiers
-./scripts/ori-free-models.sh --json     # machine
-./scripts/ori-free-models.sh --all      # also shows what was rejected, and why
+./scripts/ori-models.sh                          # default: out <= $0.50 / 1M tokens
+./scripts/ori-models.sh --free-only              # free models only
+./scripts/ori-models.sh --max-output-price 0.10  # tighter ceiling
+./scripts/ori-models.sh --json                   # machine
+./scripts/ori-models.sh --all                    # what was rejected, and why
 ```
+
+**Free is not the only sensible ceiling, and often not the best one.** A few
+cents per million output tokens buys out of the two problems that actually break
+this workflow — the 20 req/min free cap, and a free author tier that is routinely
+one model family. Measured today: at ≥1M context, free gives **3 models from 1
+stable family**; a $0.50/1M output ceiling gives **18 models across many
+families**, the cheapest at $0.13/1M output with a 1M window. A full subagent run
+at those rates costs cents.
+
+So the default ceiling is **$0.50 per 1M output tokens**, not zero. Free models
+still sort first, so the cheapest safe option is always the top row. Use
+`--free-only` when spending nothing is a hard requirement.
 
 Free and large-context is not enough — a model must be able to **call tools**, or
 it cannot drive an editor or apply a patch however well it writes prose. The
@@ -77,18 +92,21 @@ script decides from `supported_parameters` and `architecture`, never from the
 name. That distinction is not academic: it is what stops `google/lyria-*`, which
 are *music* models, being recommended as coding agents.
 
-**Two tiers, because one floor makes review a fiction.** Run today, a 1M floor
-yielded three models from a *single* stable family; dropping the reviewer floor
-to 256K yielded nine families. Authors need the context; reviewers read a diff.
+**Two tiers, because one floor makes review a fiction.** Authors need the
+context; reviewers read a diff and do not.
 
 ```
-AUTHOR / ORCHESTRATOR  (context >= 1,000,000)      → 1 stable family
-REVIEWER               (context >= 200,000)        → 9 families
+AUTHOR / ORCHESTRATOR  (context >= 1,000,000)
+REVIEWER               (context >=   200,000)
 ```
 
-The set is small, volatile and rate limited. **Never hardcode a model list in
-docs or prompts** — re-run the script at the start of every run, and again if a
-model starts failing.
+**The wallet is checked before paid models are recommended.** Above a zero
+ceiling the script asks OpenRouter what credit remains and exits `10` rather than
+suggesting models you cannot pay for. It reads the key only to send it as a
+bearer token — never printing, logging, or emitting it in `--json`.
+
+The set is volatile. **Never hardcode a model list in docs or prompts** — re-run
+the script at the start of every run, and again if a model starts failing.
 
 ## 3. Routing
 
@@ -162,8 +180,8 @@ rather than discovered at hour three.
 
 | Limitation | Why it bites | Work around it |
 |---|---|---|
-| **20 requests/minute**, credits don't raise it | An agent loop is many small calls. Wide fan-out collides | 2–3 concurrent subagents, not 8. Fewer, larger turns |
-| **50 requests/day** under $10 of credits | One real subagent session, maybe | **Spend $10 once** — permanently raises it to 1,000/day. Highest-leverage fix available |
+| **20 requests/minute** on free models, credits don't raise it | An agent loop is many small calls. Wide fan-out collides | 2–3 concurrent subagents, not 8. Or move off free: **the cap is free-tier only**, and a $0.13/1M model escapes it for cents |
+| **50 requests/day** under $10 of credits | One real subagent session, maybe | **Spend $10 once** — permanently raises it to 1,000/day, *and* unlocks the cheap paid tier. Highest-leverage fix available |
 | **Failed calls still count** against quota | A retry storm can eat the day's budget producing nothing | Fail fast, cap retries, never loop on a failing model — switch models instead |
 | **Models vanish or change** without notice | A pinned id 404s mid-run | Re-run the discovery script at run start and on first failure. Never hardcode ids |
 | **`stealth/*` and preview models are unstable** | Behaviour changes under you | Usable for one-shot work, never for a long multi-iteration run |

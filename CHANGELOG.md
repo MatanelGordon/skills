@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.15.0 — 2026-08-22
+
+- **`ori-free-models.sh` is now `ori-models.sh`, with a price ceiling.**
+  Free-only was the wrong default: at a 1M context floor it yields 3 models from
+  a single family, while a $0.50/1M-output ceiling yields 18 across many —
+  cheapest at $0.13/1M with a 1M window. Free models still sort first, and
+  `--free-only` restores the old behaviour exactly.
+- **Wallet check before recommending anything paid.** Queries the remaining
+  credit and exits `10` rather than suggesting models that cannot be paid for.
+  The key is sent as a bearer token and never printed, logged, or emitted in
+  `--json`.
+- **The rate limit is free-tier only**, which reframes it as a reason to spend
+  cents rather than a hard constraint to design around. Recorded in the
+  limitations table alongside the observed 429s.
+- Cross-OS: `pty-drive.py` guarded so Windows gets exit `40` and a pointer to
+  WSL / node-pty / pywinpty, instead of an ImportError from a module-level
+  `import pty`. Every other repo script audited — no GNU-only or BSD-only flags,
+  all shebangs via `/usr/bin/env`, so macOS and Linux needed no changes.
+
 ## 1.14.0 — 2026-08-22
 
 - **New skill: `openrouter-cli-subagent`.** Runs the `cli-coding-subagents`

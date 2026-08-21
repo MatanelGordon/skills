@@ -94,12 +94,13 @@ Twenty-two skills. The short version of each:
   spending paid overage), strict prompt contracts, and merge + cleanup that
   never leaves a worktree behind.
 - **openrouter-cli-subagent** — the same workflow routed through OpenRouter via
-  the `ori` CLI, so subagent work costs nothing when free models suffice.
-  Discovers which free models can actually call tools (a free million-token
-  model that turns out to be a *music* model is not a coding agent), splits
-  author and reviewer context floors so cross-model review is genuinely
-  possible, and is blunt about the 20 req/min and 50 req/day ceilings that
-  shape everything else.
+  the `ori` CLI, so subagent work costs cents rather than dollars. Discovers
+  which models can actually call tools (a free million-token model that turns
+  out to be a *music* model is not a coding agent), under a price ceiling
+  defaulting to $0.50 per 1M output tokens — because free-only leaves one model
+  family and a 20 req/min cap, while a few cents buys out of both. Checks the
+  wallet before recommending anything paid, and splits author and reviewer
+  context floors so cross-model review is genuinely possible.
 
 **Decisions and memory**
 

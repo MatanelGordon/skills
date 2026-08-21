@@ -8,7 +8,7 @@
       "files": [],
       "expectations": [
         "Runs ori-precheck.sh before dispatching anything",
-        "Runs ori-free-models.sh rather than naming a model from memory",
+        "Runs ori-models.sh rather than naming a model from memory",
         "Passes the model as an ori flag before the double dash, not after it",
         "Limits concurrency to two or three subagents citing the shared rate limit",
         "Defers worktree, prompt contract and cleanup mechanics to cli-coding-subagents rather than restating them"
@@ -76,6 +76,31 @@
         "Recommends capping retries and switching models rather than looping",
         "Surfaces the one-time credit purchase that raises the daily limit 20x",
         "Checks whether the model still exists rather than assuming a code fault"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "I don't mind paying a little if it means the agents stop getting rate limited. Keep it cheap though.",
+      "expected_output": "Runs the discovery script at its default price ceiling rather than free-only, checks the wallet has credit before recommending paid models, and explains that the 20 req/min cap is free-tier only so a few cents per million tokens removes it.",
+      "files": [],
+      "expectations": [
+        "Uses the price ceiling rather than --free-only",
+        "Confirms wallet credit before recommending a paid model, and stops if there is none",
+        "Explains that the per-minute rate limit applies to free models specifically",
+        "Names concrete cheap models with their per-million output price rather than saying paid models generally",
+        "Does not silently escalate to an expensive model"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Use the best model on OpenRouter for this, money is no object.",
+      "expected_output": "Does not silently raise the ceiling. This skill's purpose is cheap subagent work under a deliberate cap; a blank cheque is a decision to surface, with the cost implication stated, rather than assume.",
+      "files": [],
+      "expectations": [
+        "Surfaces the cost decision rather than quietly selecting a premium model",
+        "States what raising or removing the price ceiling would mean per run",
+        "Confirms the wallet can cover the intended spend",
+        "Does not treat 'money is no object' as licence to skip the review gates"
       ]
     }
   ]

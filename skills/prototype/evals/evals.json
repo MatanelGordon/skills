@@ -1,0 +1,79 @@
+{
+  "skill_name": "prototype",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Before we build this, I'm not sure the booking state machine actually holds up. Can you try a quick version so we can see?",
+      "expected_output": "Greenfield throwaway: writes the question down first, builds a single script with a pure module plus a scenario list that prints state after every step, no tests, no abstractions, no persistence.",
+      "files": [],
+      "expectations": [
+        "States the question in one sentence at the top of the prototype before writing logic",
+        "Predicts the answer before running, so the run can surprise",
+        "Keeps the model pure and separate from the throwaway scenario runner",
+        "Adds no tests, no error handling beyond runnability, and no persistence",
+        "Pushes scenarios through the awkward cases, not just the happy path"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "We want to try ranking the feed by engagement instead of recency, but this is our main production service and I don't want a hack welded into it.",
+      "expected_output": "Brownfield mode: defines the seam interface first, shaped for the real implementation, puts deliberately bad code behind it, verifies the swap is one line, marks it loudly and writes the exit path into the prototype file.",
+      "files": [],
+      "expectations": [
+        "Writes the seam interface before any prototype code",
+        "Shapes the interface around what the real implementation needs, not around the hack's conveniences",
+        "Runs the one-line-swap test and moves the seam if call sites would need editing",
+        "Adds no abstractions behind the seam - the bad code stays bad",
+        "Marks the prototype at the boundary via filename, type name and flag name",
+        "Writes an exit path naming both the yes-branch and the no-branch"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Add a --version flag to our CLI that prints the version from package.json.",
+      "expected_output": "No prototype. The behaviour is fully understood and the implementation is a few lines; prototyping it would cost tokens and answer nothing. Implements it directly.",
+      "files": [],
+      "expectations": [
+        "Does not propose a prototype, spike, or throwaway version",
+        "Does not ask which surface or which mode applies",
+        "Implements the change directly"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Here's my prototype for the new pricing rules. Can you add tests and make the discount tiers configurable before we review it?",
+      "expected_output": "Names this as over-prototyping. Tests and configurability mean it is no longer throwaway; asks whether the question is answered, and if it is, pushes to capture the verdict and rewrite properly rather than hardening the prototype.",
+      "files": [],
+      "expectations": [
+        "Flags tests on a prototype as the signal it has stopped being throwaway",
+        "Flags configurability as generality for a case nobody asked about",
+        "Forces the explicit choice: promote it properly, or stop and capture the verdict",
+        "Does not silently harden the prototype into production code"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "The variant B layout won, everyone agrees. What now?",
+      "expected_output": "Captures the question, the answer, and the evidence that settled it; folds the decision into the real code; pushes the prototype to a throwaway branch and deletes it from main. Offers an architecture decision record if the call was hard to reverse.",
+      "files": [],
+      "expectations": [
+        "Records the question, the verdict, and what was observed that settled it",
+        "Deletes the prototype and the losing variants from the main branch",
+        "Does not promote prototype code straight to production unrewritten",
+        "Suggests recording the decision durably when it is hard to reverse and would surprise a future reader"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "I've got a prototype importer behind an interface, but swapping in the real one means updating the twelve places that call it. Is that normal?",
+      "expected_output": "No - that is the seam being in the wrong place. The one-line-swap test has failed; move the seam to where the real implementation would sit, before writing anything further.",
+      "files": [],
+      "expectations": [
+        "Identifies the failed one-line-swap test as a misplaced seam, not an unavoidable cost",
+        "Recommends moving the seam so call sites are untouched by the swap",
+        "Points at a registration, injection or factory point as the single line that should change",
+        "Does not suggest keeping the prototype and fixing the call sites later"
+      ]
+    }
+  ]
+}

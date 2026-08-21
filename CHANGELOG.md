@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.10.0 — 2026-08-22
+
+- **New skill: `prototype`.** Throwaway code that answers a design question
+  before implementation spends tokens on the wrong thing. Question stated and
+  answer predicted before running, so a prototype can actually surprise you.
+- **Two modes, and the tension between them is named rather than smoothed
+  over.** Greenfield says no abstractions. Brownfield says exactly one — a seam
+  designed against the *real* implementation — because bad code with no seam
+  fuses to the system and becomes permanent by default rather than by decision.
+  The one-line-swap test decides whether the seam is in the right place.
+- Question-shaped-prototype framing adapted from Matt Pocock's prototype skill
+  (MIT), credited in the description and body; the seam material is new here.
+
 ## 1.9.1 — 2026-08-21
 
 - README: recommend rampstackco's `after-action-report` (blameless AAR /

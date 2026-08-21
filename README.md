@@ -68,7 +68,7 @@ POSIX shell — use Git Bash or WSL for those.
 
 ## What's in the box
 
-Seventeen skills. The short version of each:
+Eighteen skills. The short version of each:
 
 **Planning and execution**
 
@@ -80,6 +80,12 @@ Seventeen skills. The short version of each:
   execute: a clarity gate before anything is written, a file map where every
   path has exactly one owner, edge cases enumerated with a status each, and
   test commands quoted verbatim. Owns the `.plan/` directory.
+- **prototype** — throwaway code that answers a design question before real
+  implementation burns tokens on the wrong thing. Greenfield mode is the
+  familiar one (no abstractions, hardcode everything, delete it after);
+  brownfield inverts it — deliberately bad code behind exactly one seam, so the
+  real implementation lands as a one-line swap and nothing else in the system
+  knows the difference.
 - **parallel-build** — executes a plan across parallel subagents in three
   phases (foundation → implementation → review), with a `PROGRESS.md` designed
   so a fresh session can resume after a crash.

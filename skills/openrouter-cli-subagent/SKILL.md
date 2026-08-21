@@ -29,9 +29,11 @@ that they often aren't.
 contract, terse output, merge and cleanup all come from there unchanged. What
 follows is only what differs under `ori`.
 
-> Verified against `ori` v0.1.9 on 2026-08-22 by running `--help` on each
-> subcommand and executing both bundled scripts. Where something was not
-> executed, it says so.
+> **What was verified, on 2026-08-22 against `ori` v0.1.9:** `--help` on each
+> subcommand used below; both bundled scripts executed through every exit path;
+> and one live `ori claude --model … -- -p` round trip. **Not verified:** the
+> published rate-limit numbers (sourced, not measured — see §6). Individual
+> claims below carry their own status where it matters.
 
 ---
 
@@ -101,10 +103,11 @@ ori codex  --model z-ai/glm-5.2:free -- exec "$(cat prompt.md)"
 untouched, so a model id placed there reaches Claude Code's own `--model`, which
 does not understand OpenRouter ids. `ori` also owns `--reasoning-effort`.
 
-*Verified from `ori claude --help` and `ori codex --help`, which both document
-`--model string  Model to use (any OpenRouter model id)`. The end-to-end launch
-was **not executed** — it starts an interactive harness and spends the user's
-limited daily free quota. Confirm with one cheap call before a long run.*
+*Verified by execution: `ori claude --model z-ai/glm-5.2:free -- -p "…"` and the
+same against `nvidia/nemotron-3.5-lightning:free` both returned the requested
+output, confirming the flag reaches OpenRouter and the harness runs on the chosen
+model. `ori claude --help` and `ori codex --help` both document
+`--model string  Model to use (any OpenRouter model id)`.*
 
 Other harnesses exist (`ori grok`, `ori opencode`, `ori pi`, `ori hermes`,
 `ori prime-agent`, …). This skill scopes to claude and codex.
@@ -165,9 +168,22 @@ rather than discovered at hour three.
 | **Provider throttling at peak** | Slow or failing calls unrelated to your quota | Retry later or switch models; don't debug your own code for it |
 | **No per-run token accounting verified** | You cannot prove spend from `ori` | See §7 — the ceiling is enforced structurally, not measured |
 
-*The rate limit figures come from OpenRouter's published limits plus an
-independent secondary source, checked 2026-08-22. They were **not** verified by
-exhausting a quota here. Treat them as current-but-changeable.*
+*Status of these numbers: the per-minute and per-day figures come from
+OpenRouter's published limits plus an independent secondary source, checked
+2026-08-22. They were **not** measured here — doing so means deliberately
+exhausting someone's quota. Treat them as current-but-changeable and re-check
+before relying on the exact values.*
+
+*Throttling, however, was observed directly.* Dispatching five concurrent
+review subagents on free models produced an immediate `API Error: Request
+rejected (429) · Provider returned error` on one of them, and a second 429 on a
+retry minutes later. The same models succeeded when run one at a time. The
+concurrency advice above is not theoretical caution — it is the failure this
+workflow actually hits first.
+
+To see the real limit for a given credential rather than the published default,
+query `https://openrouter.ai/api/v1/key` with the key. An account holding
+credits reports `is_free_tier: false` and gets the higher daily allowance.
 
 ## 7. Budget: 750K per subagent, enforced by structure
 

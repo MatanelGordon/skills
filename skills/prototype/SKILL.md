@@ -4,9 +4,9 @@ description: >
   Write throwaway code fast to answer a design question, before real
   implementation burns tokens on the wrong thing. Use when the user says "before
   we build this", "I'm not sure how this should work", "not sure what this should
-  look like", "try a quick version", "spike this", "mock this up", or is choosing
-  between options, validating a state model or flow, or checking whether an
-  interaction feels right. Two modes. Greenfield throwaway - no abstractions,
+  look like", "try a quick version", "spike this", "mock this up", "build a POC",
+  "proof of concept", "throwaway", or is choosing between options, validating a
+  state model or flow, or checking whether an interaction feels right. Two modes. Greenfield throwaway - no abstractions,
   no tests, hardcode everything, delete it after. Brownfield, for prototyping
   inside a large existing system - deliberately bad code behind exactly one
   abstraction, a seam, so the real implementation replaces it by changing one

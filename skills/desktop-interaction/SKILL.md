@@ -3,7 +3,8 @@ name: desktop-interaction
 description: >
   Drive a webview-based desktop app the way a human tester would - launch or
   attach to it, click, type, read the window back, report the finding. Use when
-  asked to manually test, try, or "see if it works" in a desktop app built with
+  asked to manually test, try, inspect, or "see if it works" in a desktop app,
+  a webview app, or an embedded browser window - including apps built with
   Electron, Tauri, pywebview, or Neutralino; to reproduce a bug that only shows
   up in the packaged app and not in the browser; or to check window, menu, or
   multi-window behaviour. Always searches for an existing tool first - an MCP
@@ -53,9 +54,14 @@ suites, not assertions, not CI.
 Cheap checks before committing to an approach:
 
 ```bash
+# Electron ships its UI in an asar archive alongside a bundled Chromium
 ls "MyApp.app/Contents/Resources" | grep -qi 'app.asar' && echo "Electron"
-ls "MyApp.app/Contents/MacOS"                 # Tauri binaries are small, single
-strings MyApp | grep -qi 'wry\|tauri' && echo "likely Tauri"
+
+# Tauri links the OS webview instead, so look for its runtime symbols
+strings "MyApp.app/Contents/MacOS/MyApp" | grep -qi 'wry\|tauri' && echo "Tauri"
+
+# Neither, and no bundled engine? Treat it as native and stop.
+du -sh "MyApp.app"    # Electron apps are ~100MB+; Tauri and native are far smaller
 ```
 
 An Electron app ships `app.asar` and a bundled Chromium. A Tauri app is a small
@@ -102,8 +108,11 @@ not just the DOM.
 only `chromium`, `firefox` and `webkit` — there is no `_electron`, and reaching
 for it raises `AttributeError`.* If you are in Python, use the CDP route below.
 
-Requires Electron v12.2.0+, v13.4.0+ or v14+. If launches hang, check the
-`nodeCliInspect` fuse is not disabled.
+Playwright documents support for Electron v12.2.0+, v13.4.0+ and v14+
+([playwright.dev/docs/api/class-electron](https://playwright.dev/docs/api/class-electron)).
+If launches hang, check the `nodeCliInspect` fuse is not disabled — hardened
+production builds commonly disable it, which is one reason a dev build drives
+and the packaged build does not.
 
 ### Attach to a running app — works from anywhere
 

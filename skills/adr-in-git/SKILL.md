@@ -80,9 +80,12 @@ its place. Use only the ones that apply; most commits need none or one.
 | `Reason:` | short stable code for grouping — `latency-regression`, `api-contract`, `test-fixture` |
 | `Constraint:` | a rule that shaped this and **stays true afterwards** |
 | `Rejected:` | `<alternative> \| <why not>` — stops it being re-proposed in six months |
-| `Refs:` | `adr-NNNN`, issue ids, related commits |
+| `Refs:` | `adr-NNNN`, `.memory/<file>` paths, issue ids, related commits |
 | `Reversibility:` | `clean` \| `migration-needed` \| `irreversible` |
 | `Tested:` | what was actually verified, when that isn't obvious |
+
+Memory-backed facts are linkable the same way ADRs are: use
+`Refs: .memory/<file>` or append `#<entry-id>` for one entry.
 
 `Constraint:` and `Rejected:` are the ones that pay off later — they're what a
 future planner needs to not undo your work or re-litigate a dead end.

@@ -68,7 +68,7 @@ POSIX shell — use Git Bash or WSL for those.
 
 ## What's in the box
 
-Seventeen skills. The short version of each:
+Eighteen skills. The short version of each:
 
 **Planning and execution**
 
@@ -101,6 +101,8 @@ Seventeen skills. The short version of each:
   its git history; internet answers always cite at least two origins).
 - **adr** — Architectural Decision Records as small files in `.adr/`, read
   *before* planning so past decisions don't get undone by accident.
+- **bookkeeper** — durable, non-derivable repository facts as small tagged
+  entries in `.memory/`, with an index read first for cheap PageIndex lookup.
 - **adr-in-git** — the same reasoning pushed into git itself: commits that say
   *why*, decisions as annotated tags, and an `adr.sh` that answers "why is this
   code like this?" from the CLI, cheapest query first.

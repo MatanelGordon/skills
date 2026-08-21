@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.13.0 — 2026-08-22
+
+- **New skill: `desktop-interaction`.** Drives webview-based desktop apps —
+  Electron, Tauri, pywebview, Neutralino — either launched under control or
+  attached to a running instance over a debugging port. Native Swift/Qt/WinUI is
+  explicitly out of scope rather than vaguely implied.
+- **Documents the support gradient instead of averaging it.** Electron bundles
+  Chromium and speaks CDP, so it is strong. Everything on the OS webview
+  inherits that platform's limits: `tauri-driver` has **no macOS support**, and
+  pywebview on macOS exposes no remote debugging port at all.
+- **Two verified findings.** Playwright Python has no `_electron` — Electron
+  launch is Node-only. And attach-over-CDP → click → ARIA snapshot works from
+  Python, confirmed here against a Chromium process standing in for Electron.
+- Polls for the debugging port rather than sleeping, after a fixed sleep
+  produced `ECONNREFUSED` during verification and polling connected first try.
+
 ## 1.12.0 — 2026-08-22
 
 - **New skill: `browser-interaction`.** Clicks through a page as a manual tester

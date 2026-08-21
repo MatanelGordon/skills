@@ -1,0 +1,78 @@
+{
+  "skill_name": "desktop-interaction",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Our Electron app shows the wrong account name in the title bar after switching workspaces. Can you reproduce it?",
+      "expected_output": "Searches for existing Electron tooling, launches the app under control, drives the workspace switch, and reports with evidence from both the window and the main process.",
+      "files": [],
+      "expectations": [
+        "Checks for an Electron MCP server or published skill before writing a driver",
+        "Uses Playwright's Electron launch API from Node, not Python",
+        "Reaches the main process as well as the renderer, since title bar and window state live there",
+        "Reports actions, evidence and reproduction including app version and OS",
+        "Closes the app afterwards"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "The app is in a broken state on my machine right now - don't restart it, just look at what's on screen.",
+      "expected_output": "Recognises that relaunching would destroy the state. Attaches to the running app over a debugging port, and states that this reaches the window only, not the main process.",
+      "files": [],
+      "expectations": [
+        "Chooses attach-to-running over launch-under-control, and says why",
+        "Notes the app must already have been started with a remote debugging port",
+        "Polls for the CDP endpoint rather than sleeping a fixed amount",
+        "States that main-process state is not observable via this route"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I'm on a Mac. Set up driving for our Tauri app so we can click through it.",
+      "expected_output": "Names the macOS gap: tauri-driver has no macOS support because Apple ships no WKWebView driver. Recommends the WebdriverIO Tauri service instead.",
+      "files": [],
+      "expectations": [
+        "States that tauri-driver does not support macOS",
+        "Recommends @wdio/tauri-service as the route that works on macOS",
+        "Mentions the in-app WebDriver plugin as a debug-builds-only alternative",
+        "Does not give Linux instructions to a macOS user"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Can you click through our Swift menu bar app and check the preferences pane?",
+      "expected_output": "Out of scope. Identifies it as a native app, states that this skill covers webview-based desktop apps only, and does not improvise a webview technique against it.",
+      "files": [],
+      "expectations": [
+        "Identifies the app as native rather than webview-based",
+        "States plainly that this skill does not cover native desktop automation",
+        "Does not attempt CDP, Playwright, or a webview approach against a native app",
+        "Stops rather than pretending a technique applies"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "It works when I run npm start but the bug shows up in the installed app. Take a look.",
+      "expected_output": "Treats dev-versus-packaged as the likely cause. Drives the packaged build specifically, and considers fuses, resource paths, signing and permissions.",
+      "files": [],
+      "expectations": [
+        "Recognises the difference between dev and packaged builds as material, not incidental",
+        "Drives the packaged artifact rather than the dev build",
+        "Considers disabled fuses as a reason automation may fail against the packaged app",
+        "States clearly which build the finding applies to"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "We use pywebview on macOS. Automate clicking through the settings window.",
+      "expected_output": "Says plainly that macOS pywebview uses the Cocoa WebKit renderer, which offers no remote debugging port and no WebDriver, so programmatic driving is unavailable. Offers the honest workarounds.",
+      "files": [],
+      "expectations": [
+        "States that remote debugging is unavailable on the macOS pywebview renderer",
+        "Does not promise automation it cannot deliver",
+        "Offers switching to the Qt renderer for testing, or testing the web UI in a browser separately",
+        "Notes that debug mode gives a human inspector only"
+      ]
+    }
+  ]
+}

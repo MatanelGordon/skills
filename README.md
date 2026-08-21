@@ -68,7 +68,7 @@ POSIX shell — use Git Bash or WSL for those.
 
 ## What's in the box
 
-Twenty skills. The short version of each:
+Twenty-one skills. The short version of each:
 
 **Planning and execution**
 
@@ -145,6 +145,11 @@ Twenty skills. The short version of each:
   network errors, and the cross-browser truth that a green WebKit run is not
   Safari coverage. Searches for an MCP browser server first and recommends one
   when nothing is installed.
+- **desktop-interaction** — drives Electron, Tauri and pywebview apps, either
+  launched under control or attached to a running one over a debugging port.
+  Honest about the support gradient: Electron is strong, `tauri-driver` has no
+  macOS support at all, and pywebview on macOS can't be driven programmatically.
+  Webview apps only — native Swift/Qt/WinUI is explicitly out of scope.
 
 **Architecture**
 

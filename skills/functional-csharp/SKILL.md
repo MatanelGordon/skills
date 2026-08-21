@@ -32,6 +32,26 @@ you need — and the compiler enforces far more than most C# codebases ask of it
 4. **`Result`/`ErrorOr` for expected failures.** Exceptions are for bugs and infrastructure.
 5. **Pure core, imperative shell.** EF entities and I/O never reach the domain.
 
+**Scope:** apply these rules at domain boundaries and in new domain code.
+Framework conventions (ASP.NET models, EF entities), stdlib exception culture,
+and the surrounding codebase win when they conflict — see "Don't be dogmatic".
+
+## Start with the compiler
+
+Most "functional C#" is a compiler configured to actually enforce things:
+
+```xml
+<!-- Directory.Build.props or csproj -->
+<PropertyGroup>
+  <Nullable>enable</Nullable>
+  <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+</PropertyGroup>
+```
+
+Without nullable reference types enabled, records and unions still compile but
+the null-related warnings the rest of this skill relies on never fire. Treat
+warnings as errors so CS8509 (below) is visible instead of noise.
+
 ---
 
 ## Records and immutability
@@ -154,6 +174,10 @@ var text = state.Match(
 Writing that by hand is tedious — **Dunet** (source generator) or **OneOf**
 generate it for you. Use switch expressions for local branching, and `Match` at
 the boundaries where a missed case would be a real bug.
+
+Async composition: `Result`/`ErrorOr` chains compose with `async`/`await` —
+the library types provide awaitable/Task overloads, so an awaited step chains
+into the next `.Then()` like any sync one. See `references/railway.md`.
 
 **This replaces** the enum-plus-nullable-fields pattern, where `Status = Shipped`
 with `Tracking = null` is representable and someone will eventually construct it.
@@ -308,26 +332,27 @@ that alone removes most of the need for mocking.
 | interface with exactly one implementation | a static function, or a `Func<,>` parameter |
 | `enum` + nullable fields | discriminated union (one case per state) |
 | `throw` on validation failure | `Result<T>` / `ErrorOr<T>` |
-| `List<T>` on a domain type | `ImmutableList<T>` |
+| `List<T>` on a domain type | `ImmutableArray<T>` (default) / `ImmutableList<T>` if rebuilt often |
 | `Dictionary` lookup table | `FrozenDictionary` |
 | `string`/`Guid` identifiers | `readonly record struct` value objects |
 | stateful service with private fields | static pure functions taking explicit inputs |
 | `DateTime.UtcNow` inside logic | `TimeProvider` injected into the shell |
 | switch statement | switch expression (no fall-through, must return) |
-| `_ => throw` default arm | omit it, let the compiler warn on new cases |
+| switch over a union without a `Match` method | add a `Match`; don't trust switch exhaustiveness (CS8509) |
 | null checks everywhere | `Option`/`Maybe`, or a union case |
 | Strategy / Template Method | pass a `Func<,>` |
 
 ## Review checklist
 
 - [ ] Domain types are records; no `set;` accessors
-- [ ] Collections are `ImmutableList`/`FrozenDictionary`, not `List`/`Dictionary`
-- [ ] States are sealed record unions; switch expressions have no `_` catch-all
+- [ ] Collections are `ImmutableArray` default (`ImmutableList` when rebuild-heavy) / `FrozenDictionary`, not `List`/`Dictionary`
+- [ ] States are sealed record unions; every union boundary exposes `Match`, since switch exhaustiveness is only a warning (CS8509) and not trustworthy. Any switch default is an explicit `_ => throw new UnreachableException()`
 - [ ] Expected failures return `Result`/`ErrorOr` with typed errors
 - [ ] Identifiers and validated strings are value objects, not primitives
 - [ ] Logic is `static` and takes everything it needs as parameters
 - [ ] No `DateTime.UtcNow`, DB, HTTP, or logging inside domain functions
 - [ ] EF entities do not escape the repository/shell layer
+- [ ] `<Nullable>enable</Nullable>` + warnings-as-errors in effect
 
 ## Don't be dogmatic
 

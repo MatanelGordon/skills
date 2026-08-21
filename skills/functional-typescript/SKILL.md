@@ -31,6 +31,11 @@ this — the language rewards a functional style far more than it rewards OOP.
 4. **Expected failures are values,** returned as `Result`. Exceptions are for bugs.
 5. **Parse at the boundary.** `unknown` in, domain types out. Never trust external data.
 
+**Scope:** apply these rules at domain boundaries and in new modules.
+Framework requirements (React error boundaries, NestJS providers) and internal
+helpers that cannot fail are legitimate exceptions — see "Don't be dogmatic"
+before Result-wrapping everything.
+
 ---
 
 ## Start with the compiler
@@ -46,7 +51,7 @@ Most "functional TypeScript" is just a strict compiler doing its job.
     "exactOptionalPropertyTypes": true,    // `?: T` ≠ `: T | undefined`
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "erasableSyntaxOnly": true             // bans enums/namespaces/param properties
+    "erasableSyntaxOnly": true             // TS 5.8+: bans enums/namespaces/param properties
   }
 }
 ```
@@ -147,6 +152,12 @@ The caller can then handle each case exhaustively. See
 `references/error-handling.md` for the neverthrow/Effect decision and how to
 compose chains without a pyramid of `if (!r.ok) return r`.
 
+Async composition: wrap the awaited value, not the promise — neverthrow's
+`ResultAsync` flattens `(await parse(input)).andThen(fetchUser)` into one
+`Promise<Result<T, E>>`; `Effect.gen` does the same for larger graphs. Never
+let `Promise<Result<Result<T>>>` leak through an unflattened step.
+See `references/error-handling.md`.
+
 **Rule of thumb:** expected domain failure → `Result`. Bug or unrecoverable →
 `throw`. Never use exceptions to model control flow you expect to happen.
 
@@ -230,14 +241,6 @@ NestJS providers, custom `Error` subclasses) or for a stateful resource wrapper
 with a genuine lifecycle. Use them there and keep the logic pure.
 
 ## Composition
-
-```ts
-// Small, named, pure; compose rather than nest
-const slugify = (s: string) => s.toLowerCase().trim().replace(/\s+/g, "-");
-
-const activeNames = (users: readonly User[]): readonly string[] =>
-  users.filter(u => u.active).map(u => u.name);
-```
 
 Prefer `map`/`filter`/`flatMap` over accumulator loops. But **`reduce` is not
 automatically better than a loop** — if a `reduce` needs a comment to explain it,

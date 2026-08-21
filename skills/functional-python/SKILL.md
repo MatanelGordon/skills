@@ -35,6 +35,11 @@ Type hints are not optional here — they are what makes the rest checkable. Run
 `mypy --strict` or `pyright` in strict mode; without a type checker most of this
 degrades to convention.
 
+**Scope:** apply these rules at domain boundaries and in new modules. Python's
+exception culture, framework requirements (Django/pydantic), and small scripts
+are legitimate exceptions — see "Don't be dogmatic" before Result-wrapping
+stdlib calls or importing `returns` into anything small.
+
 ---
 
 ## Immutable data
@@ -216,6 +221,10 @@ accumulates all errors at once.
 
 Once past the boundary, everything is a domain type and no function re-validates.
 
+Async composition: `returns` pipelines compose with coroutines via
+`RequiresFutureResult` / `IOResult`, so an awaited fetch returning `Result`
+chains into the next `bind` like any sync step. See `references/returns.md`.
+
 ## Functions, not classes
 
 ```python
@@ -254,15 +263,6 @@ Classes remain right for: framework requirements (Django models, pydantic
 `BaseModel`), context managers with real lifecycles, and custom exceptions.
 
 ## Composition and iteration
-
-```python
-# Comprehensions over map/filter — more Pythonic and usually clearer
-names = [u.name for u in users if u.active]
-
-# Generators for streaming; itertools for the classics
-from itertools import chain, groupby, islice
-total = sum(line.price * line.qty for line in order.lines)
-```
 
 Prefer comprehensions to `map`/`filter` with lambdas. Use `functools.reduce`
 sparingly — a loop is usually more readable, and `sum`/`min`/`max`/`any`/`all`

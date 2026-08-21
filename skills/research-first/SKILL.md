@@ -9,7 +9,10 @@ description: >
   ADRs) so a deliberate decision isn't undone. Use when asked to search the
   internet — always bring at least two independent resources and cite them.
   Use when stating versions, prices, APIs, or anything that changes over time.
-  Skip the ceremony for trivial, reversible, or purely subjective answers.
+  Grade how conclusive a source is before trusting it alone — one you executed,
+  or the authoritative origin for the exact version, can stand by itself; any
+  slight chance of misleading means re-validate against a second origin. Skip
+  the ceremony for trivial, reversible, or purely subjective answers.
 license: MIT
 metadata:
   author: Matanel Gordon

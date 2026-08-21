@@ -62,7 +62,7 @@ between steps — see the timing rule below.
 |---|---|---|
 | **MCP terminal server** | It's available. Structured screen state beats scraping. | Zero, once configured |
 | **tmux** `send-keys` + `capture-pane` | Full-screen TUIs, long-lived sessions, anything you also want to watch live | Needs tmux installed |
-| **`scripts/pty-drive.py`** (bundled) | Nothing is installed and you need an answer now | **Zero** — Python stdlib only |
+| **`scripts/pty-drive.py`** (bundled) | Nothing is installed and you need an answer now | **Zero** — Python stdlib only. Unix only, see below |
 | **`expect`** | Simple prompt/response, and it's preinstalled on macOS and most Linux | Zero on most systems |
 | **node-pty** | The project is already Node and you want programmatic control | `npm i`, native build |
 | **Framework harness** (Textual `Pilot`, `ink-testing-library`) | You control the app's source and it's built on that framework | Framework-specific |
@@ -107,6 +107,15 @@ transcript and matched `DEPLOY matanel -> prod`.*
 Because it allocates a genuine PTY, programs behave as they do for a human:
 colour stays on, `isatty()` is true, and prompts actually appear. That last point
 is the usual reason piping into a program "hangs" — see below.
+
+**Platform: macOS, Linux, any Unix.** A real PTY needs `os.forkpty`, which
+Windows does not have, and reaching Windows' ConPTY requires a third-party
+package — which would defeat the point of a zero-install fallback. On Windows the
+script exits `40` immediately with a pointer rather than failing obscurely. Use
+WSL (the script runs unchanged), or `node-pty` / `pywinpty`, which wrap ConPTY.
+
+The same applies to the shell recipes here: `tmux` and the bash snippets assume a
+Unix shell. On Windows, run them under WSL or Git Bash.
 
 ## The timing rule
 

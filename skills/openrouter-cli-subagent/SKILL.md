@@ -49,6 +49,10 @@ follows is only what differs under `ori`.
 | `10` | Not logged in | **STOP.** Ask the user to run `ori login` |
 | `40` | `ori` or `python3` missing | Stop; the install pointer is in the output |
 
+Both bundled scripts are bash + `python3` and run on macOS and Linux. On Windows
+run them under WSL or Git Bash; they use no GNU-only or BSD-only flags, so they
+behave the same on either.
+
 **On exit 10, stop and ask.** `ori login` is browser OAuth and you cannot do it
 for the user. Do not attempt it, do not open a browser, do not improvise with a
 key. The non-interactive escapes exist but are the user's to run:

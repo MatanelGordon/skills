@@ -27,7 +27,12 @@ Exit codes:
   0   every step matched and was sent
   1   a step's pattern never appeared (transcript shows how far it got)
   2   timed out before finishing
+  40  unavailable — no Unix PTY on this platform (Windows); see the note printed
   64  bad usage
+
+Platform support: macOS, Linux, and any Unix with os.forkpty. Windows is not
+supported and says so immediately rather than failing obscurely — run it under
+WSL, or use node-pty / pywinpty, which reach the Windows ConPTY API.
 
 Why polling and not sleeping: terminal programs redraw asynchronously, so a
 fixed sleep is simultaneously too slow on a fast machine and too short on a
@@ -37,11 +42,31 @@ loaded one. This waits for the pattern, bounded by --timeout.
 import argparse
 import json
 import os
-import pty
 import re
 import select
 import sys
 import time
+
+# A real PTY needs Unix process control. CPython ships `pty` on Windows but
+# pty.fork() requires os.forkpty(), which does not exist there — so the import
+# below is guarded rather than left to fail with a bare ImportError/AttributeError
+# five frames deep. Windows has ConPTY, but reaching it needs a third-party
+# package (pywinpty / node-pty), which would defeat this script's entire reason
+# to exist: working with nothing installed.
+UNIX_PTY_AVAILABLE = hasattr(os, "forkpty")
+if UNIX_PTY_AVAILABLE:
+    import pty
+
+WINDOWS_HELP = """\
+pty-drive.py needs a Unix pseudo-terminal (os.forkpty), which Windows does not
+provide. This script is deliberately dependency-free, so it cannot use ConPTY.
+
+On Windows, drive terminals with one of:
+  * WSL            — run this script unchanged inside a WSL shell
+  * node-pty       — npm i node-pty; uses the Windows ConPTY API directly
+  * pywinpty       — pip install pywinpty; Python bindings for ConPTY
+  * an MCP terminal server, if the host has one configured
+"""
 
 ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]|\x1b[@-Z\\-_]|\r")
 
@@ -169,6 +194,12 @@ def _set_winsize(fd, rows, cols):
 
 
 def main(argv):
+    # Checked before argument parsing so the failure is the real one, not a
+    # confusing usage error on a platform that could never have worked.
+    if not UNIX_PTY_AVAILABLE:
+        sys.stderr.write(WINDOWS_HELP)
+        return 40
+
     opts, command, error = parse_args(argv)
     if error:
         sys.stderr.write(f"pty-drive: {error}\n\n{__doc__.strip()}\n")

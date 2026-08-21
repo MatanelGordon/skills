@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.16.1 — 2026-08-22
+
+- README: recommend four skills from [affaan-m/ECC](https://github.com/affaan-m/ECC)
+  (MIT, active, not a fork) — `coding-standards` plus the three it explicitly
+  defers to, `frontend-patterns`, `backend-patterns` and `api-design`. Installed
+  as a set, because the deferrals dangle otherwise.
+- No normalization required: all four use only `name` and `description`, both of
+  which Claude Code accepts.
+- Recorded two caveats found while installing. Each skill ships an
+  `agents/openai.yaml` that is Codex harness display metadata rather than a
+  sub-agent, so nothing extra needed installing. And `coding-standards` largely
+  restates `rules/common/coding-style.md` and the `functional-*` skills on
+  immutability and error handling — the three framework-specific siblings are
+  where the real gap was.
+
 ## 1.16.0 — 2026-08-22
 
 - **The three functional skills now say where they apply.** Each states that the

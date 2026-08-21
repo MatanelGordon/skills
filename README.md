@@ -262,6 +262,20 @@ upstream:
   — 28 mental-model skills; `thinking-kepner-tregoe` and `thinking-pre-mortem`
   pair well with `critical-thinking` here, which escalates to them for one-way,
   expensive decisions.
+- [affaan-m/ECC](https://github.com/affaan-m/ECC) — agent-harness system with
+  ~39 skills under `.agents/skills/`. Installed four as a set:
+  `coding-standards` (naming, KISS/DRY/YAGNI, immutability, code smells) plus
+  the three it explicitly defers to — `frontend-patterns` (React/Next.js state,
+  rendering, data fetching), `backend-patterns` (repository/service layers, N+1,
+  pooling) and `api-design` (REST resource naming, status codes, pagination,
+  versioning). Install them together or the deferrals dangle.
+  **Caveats:** frontmatter is clean (`name`/`description` only, no
+  normalization needed), but each skill ships an `agents/openai.yaml` — Codex
+  harness display metadata, not a sub-agent, and not needed by Claude Code.
+  `coding-standards` also overlaps `rules/common/coding-style.md` here and the
+  `functional-*` skills on immutability and error handling; the three
+  framework-specific ones are where the actual value is, and its examples are
+  drawn from a Next.js/Supabase codebase.
 - [TerminalSkills/skills](https://github.com/TerminalSkills/skills) — ~1000
   tool-specific skills.
 - [Claude plugin marketplace](https://github.com/anthropics/claude-plugins-official)

@@ -101,6 +101,50 @@ for (const dir of dirs) {
   await walk(join(SKILLS, dir));
 }
 
+// ---- evals: every skill must have a verifiable suite
+for (const dir of dirs) {
+  const evPath = join(SKILLS, dir, 'evals', 'evals.json');
+  if (!existsSync(evPath)) { fail(dir, 'evals/evals.json missing — every skill needs a verification suite'); continue; }
+  let doc;
+  try { doc = JSON.parse(await readFile(evPath, 'utf8')); }
+  catch (e) { fail(dir, `evals.json: invalid JSON — ${e.message}`); continue; }
+  if (doc.skill_name !== dir) fail(dir, `evals skill_name '${doc.skill_name}' does not match directory`);
+  if (!Array.isArray(doc.evals) || doc.evals.length === 0) { fail(dir, 'evals array empty'); continue; }
+  const ids = new Set();
+  for (const ev of doc.evals) {
+    if (!ev.prompt?.trim()) fail(dir, `eval ${ev.id}: empty prompt`);
+    if (!ev.expected_output?.trim()) fail(dir, `eval ${ev.id}: empty expected_output`);
+    if (!Array.isArray(ev.expectations) || !ev.expectations.length) fail(dir, `eval ${ev.id}: no expectations`);
+    if (ids.has(ev.id)) fail(dir, `duplicate eval id ${ev.id}`);
+    ids.add(ev.id);
+  }
+}
+
+// ---- agents: frontmatter + paired evals
+const AGENTS = join(ROOT, 'agents');
+let agentCount = 0;
+if (existsSync(AGENTS)) {
+  for (const f of (await readdir(AGENTS)).filter((n) => n.endsWith('.md'))) {
+    agentCount++;
+    const label = `agents/${f}`;
+    const text = await readFile(join(AGENTS, f), 'utf8');
+    const fm = /^---\n([\s\S]*?)\n---\n/.exec(text)?.[1];
+    if (!fm) { fail(label, 'no YAML frontmatter'); continue; }
+    const name = /^name:\s*(.+)$/m.exec(fm)?.[1]?.trim();
+    if (name !== f.replace(/\.md$/, '')) fail(label, `name '${name}' does not match filename`);
+    if (!/^description:/m.test(fm)) fail(label, 'missing description');
+    if (!fencesBalanced(text)) fail(label, 'unbalanced code fences');
+    const ev = join(AGENTS, f.replace(/\.md$/, '.evals.json'));
+    if (!existsSync(ev)) fail(label, 'missing paired .evals.json');
+    else {
+      try {
+        const doc = JSON.parse(await readFile(ev, 'utf8'));
+        if (!Array.isArray(doc.evals) || !doc.evals.length) fail(label, 'agent evals empty');
+      } catch (e) { fail(label, `evals JSON invalid — ${e.message}`); }
+    }
+  }
+}
+
 // the installer itself must parse
 for (const f of ['install/index.mjs', 'install/validate.mjs']) {
   const r = spawnSync(process.execPath, ['--check', join(ROOT, f)], { encoding: 'utf8' });
@@ -111,4 +155,4 @@ if (failures) {
   console.error(`\n${failures} problem(s).`);
   process.exit(1);
 }
-console.log(`✔ ${dirs.length} skills valid (frontmatter, fences, control chars, scripts, dependencies)`);
+console.log(`✔ ${dirs.length} skills + ${agentCount} agents valid (frontmatter, fences, scripts, dependencies, evals)`);

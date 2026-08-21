@@ -1,0 +1,50 @@
+{
+  "skill_name": "cli-coding-subagents",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Use codex to build the CSV import feature while we work on something else.",
+      "expected_output": "Runs precheck.sh first, creates a worktree via wt.sh, writes a prompt file containing acceptance criteria, critical-path tests, and scope/off-limits, dispatches in background with output redirected to a log.",
+      "files": [],
+      "expectations": [
+        "precheck.sh runs before any dispatch",
+        "Worktree created with wt.sh new, not by hand",
+        "Prompt has acceptance criteria, verbatim test commands, and file ownership",
+        "Transcript goes to a log file, not into context"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Precheck says copilot is at exit 20 - paid overage. Dispatch the doc updates to copilot anyway?",
+      "expected_output": "Stops and asks the user before dispatching, quoting the overage numbers; offers codex as the alternative. Only proceeds on explicit yes.",
+      "files": [],
+      "expectations": [
+        "No copilot dispatch before the user answers",
+        "Numbers from precheck are quoted",
+        "Codex offered as the alternative route"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "The codex agent reported QUESTION: assumed the existing Result type instead of adding a new one. What now?",
+      "expected_output": "Answers by resuming the same session (codex-session.py to recover the id, codex exec resume), not by re-dispatching; batches questions if several agents are running.",
+      "files": [],
+      "expectations": [
+        "Uses session resume, not a fresh dispatch",
+        "Recovers the codex session id by worktree cwd, not --last",
+        "cd into the worktree since resume rejects -C"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "The agent says DONE. Merge its work.",
+      "expected_output": "Verifies critical-path tests inside the worktree first, then wt.sh merge (worktree and branch removed), then re-runs tests on the merged branch. DONE is treated as a claim.",
+      "files": [],
+      "expectations": [
+        "Tests run in the worktree before merging",
+        "wt.sh merge used; worktree confirmed gone",
+        "Tests re-run on the merged result before reporting success"
+      ]
+    }
+  ]
+}

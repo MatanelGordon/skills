@@ -1,0 +1,46 @@
+{
+  "skill_name": "functional-typescript",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Model the checkout session state for me - it can be idle, loading, done with a receipt, or failed with an error.",
+      "expected_output": "A discriminated union with one variant per state, readonly fields, exhaustive switch with assertNever - not a status string plus optional fields.",
+      "files": [],
+      "expectations": [
+        "Discriminated union, not optional-field soup",
+        "readonly on properties and arrays",
+        "Exhaustive match with assertNever or ts-pattern"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Write the client function that POSTs the new user to /api/users and returns the created record.",
+      "expected_output": "zod schemas on BOTH directions: request body validated before sending, response parsed before returning; Result-typed errors, no thrown exceptions for expected failures.",
+      "files": [],
+      "expectations": [
+        "Outbound body goes through safeParse before fetch",
+        "Response is parsed before being returned; res.json() is never trusted raw",
+        "Expected failures return a typed Result, not throw"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Add a UserService class to hold the cart logic.",
+      "expected_output": "Suggests a module of pure functions over a readonly Cart type instead; classes reserved for framework demands or genuine resource lifecycles.",
+      "files": [],
+      "expectations": [
+        "Proposes functions + immutable data rather than a stateful class",
+        "Explains the exception cases (framework-required classes) honestly"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "This React error boundary has to be a class component, right?",
+      "expected_output": "Yes - acknowledged as a legitimate class case; no dogmatic rewrite.",
+      "files": [],
+      "expectations": [
+        "Accepts the framework-mandated class without forcing FP ceremony"
+      ]
+    }
+  ]
+}

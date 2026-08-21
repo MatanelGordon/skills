@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.0 — 2026-08-21
+
+- **Evals for every skill**, and CI now fails any skill (or agent) without a
+  valid suite — schema-checked: matching name, unique ids, non-empty prompts
+  and expectations.
+- **First original agents**: `plan-reviewer` (fresh-eyes plan review before
+  dispatch) and `code-archaeologist` (both-legs "why does this exist" digs).
+  Chosen by a worth-it test — each needs a subagent's fresh context and
+  disposable budget; candidates that merely restated skills were dropped.
+- Installer installs, lists, uninstalls and doctors agents (Claude Code target).
+
 ## 1.5.0 — 2026-08-21
 
 - **research-first: conclusiveness grading.** One source may stand alone when

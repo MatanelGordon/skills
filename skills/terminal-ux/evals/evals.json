@@ -1,0 +1,47 @@
+{
+  "skill_name": "terminal-ux",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Build a live dashboard showing requests/sec and p99 as charts in the terminal.",
+      "expected_output": "Pure render functions (sparkline/bars) separate from thin Ink components, Box flexbox layout, width measured with string-width, Static for history, throttled updates.",
+      "files": [],
+      "expectations": [
+        "Chart logic is pure functions tested without React",
+        "Layout via Box, no manual space-padding arithmetic",
+        "No .length for terminal width; string-width or Box sizing",
+        "Static used for append-only regions"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Write tests for the counter component - it increments on '+'.",
+      "expected_output": "ink-testing-library with the async gotcha handled: await a tick after stdin.write before asserting lastFrame.",
+      "files": [],
+      "expectations": [
+        "stdin.write followed by awaited tick before assertions",
+        "cleanup() in afterEach",
+        "Layout-invariant or toContain assertions over full-frame snapshots"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Make errors red in the output.",
+      "expected_output": "Color paired with a symbol/label (never color alone), NO_COLOR and non-TTY honored.",
+      "files": [],
+      "expectations": [
+        "Meaning never carried by color alone",
+        "NO_COLOR / TERM=dumb / non-TTY respected"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Parse these CLI flags with commander.",
+      "expected_output": "Not a TUI concern - plain CLI work proceeds without this skill's machinery.",
+      "files": [],
+      "expectations": [
+        "No Ink/TUI ceremony for non-interactive flag parsing"
+      ]
+    }
+  ]
+}

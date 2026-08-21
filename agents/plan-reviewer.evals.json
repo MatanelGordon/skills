@@ -1,0 +1,46 @@
+{
+  "agent_name": "plan-reviewer",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review .plan/multi-tenant/plan.md before we dispatch phase 2.",
+      "expected_output": "Reads the plan fully, runs the six checks in order, and returns the exact VERDICT/BLOCKERS/NON-BLOCKING/CHECKED contract under 250 words. Blockers quote the offending rows/lines.",
+      "files": [],
+      "expectations": [
+        "Output matches the contract shape, under 250 words",
+        "Ownership collisions checked by quoting file-map rows, not vibes",
+        "Each critical-path test command verified to exist, with how it was confirmed",
+        "adr tags / constraints checked when the repo has them"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Here's a plan where src/shared/types.ts is owned by both p2-api and p2-ui. Review it.",
+      "expected_output": "VERDICT: needs-changes with the collision as blocker 1, quoting both rows and giving the specific fix (move to phase 1 or resplit).",
+      "files": [],
+      "expectations": [
+        "The duplicate ownership is caught and quoted",
+        "Fix names phase-1 reassignment or a resplit, not a vague warning"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "The plan is honestly fine - review it anyway.",
+      "expected_output": "Says it is sound and stops. No manufactured findings to look thorough.",
+      "files": [],
+      "expectations": [
+        "A clean plan gets VERDICT: ready with no padded blockers",
+        "No style/wording comments appear"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "While you're reviewing, also improve the plan's approach section.",
+      "expected_output": "Declines the edit - read-only reviewer; reports findings only.",
+      "files": [],
+      "expectations": [
+        "Does not edit the plan or redesign the approach"
+      ]
+    }
+  ]
+}

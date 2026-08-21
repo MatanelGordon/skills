@@ -24,7 +24,10 @@ import prompts from 'prompts';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..');
 const SKILLS_DIR = join(ROOT, 'skills');
+const AGENTS_DIR = join(ROOT, 'agents');
 const HOME = homedir();
+// Agents are Claude Code subagent files; only Claude consumes them today.
+const AGENT_TARGET = { label: 'Claude Code agents', dir: join(HOME, '.claude', 'agents'), detect: join(HOME, '.claude') };
 
 // Running out of the npx cache: symlinks would dangle when npm prunes it.
 const EPHEMERAL = ROOT.includes(`_npx`) || ROOT.includes(join('.npm', '_cacache'));
@@ -49,6 +52,31 @@ const log = {
 };
 
 const meta = (fm, key) => new RegExp(`^\\s{2}${key}:\\s*(.+)$`, 'm').exec(fm)?.[1]?.trim() ?? null;
+
+async function readAgents() {
+  if (!existsSync(AGENTS_DIR)) return [];
+  return (await readdir(AGENTS_DIR)).filter((n) => n.endsWith('.md'))
+    .map((n) => ({ name: n.replace(/\.md$/, ''), file: n, path: join(AGENTS_DIR, n) }));
+}
+
+async function installAgents(mode) {
+  const agents = await readAgents();
+  if (!agents.length || !existsSync(AGENT_TARGET.detect)) return;
+  log.title(AGENT_TARGET.label);
+  await mkdir(AGENT_TARGET.dir, { recursive: true });
+  for (const a of agents) {
+    const dest = join(AGENT_TARGET.dir, a.file);
+    try { await lstat(dest); await rm(dest, { force: true }); } catch {}
+    try {
+      if (mode === 'copy') throw new Error('copy');
+      await symlink(a.path, dest, 'file');
+      log.ok(`${chalk.bold(a.name)} ${chalk.gray('linked')}`);
+    } catch {
+      await copyFile(a.path, dest);
+      log.ok(`${chalk.bold(a.name)} ${chalk.gray('copied')}`);
+    }
+  }
+}
 
 async function readSkills() {
   const entries = await readdir(SKILLS_DIR, { withFileTypes: true });
@@ -120,6 +148,17 @@ async function classify(dir, name) {
 // ---------------------------------------------------------------- subcommands
 
 async function cmdList(skills) {
+  const agents = await readAgents();
+  if (agents.length && existsSync(AGENT_TARGET.dir)) {
+    log.title(`${AGENT_TARGET.label}  ${chalk.gray(AGENT_TARGET.dir.replace(HOME, '~'))}`);
+    for (const a of agents) {
+      const dest = join(AGENT_TARGET.dir, a.file);
+      const st = await lstat(dest).catch(() => null);
+      if (!st) log.skip(`${a.name} — not installed`);
+      else if (st.isSymbolicLink()) log.ok(`${a.name} ${chalk.gray('→ this repo')}`);
+      else log.ok(`${a.name} ${chalk.gray('(copy)')}`);
+    }
+  }
   for (const p of PLATFORMS) {
     if (!existsSync(p.detect)) continue;
     log.title(`${p.label}  ${chalk.gray(p.dir.replace(HOME, '~'))}`);
@@ -137,7 +176,8 @@ async function cmdList(skills) {
 
 async function cmdDoctor() {
   let problems = 0;
-  for (const p of PLATFORMS) {
+  const scanDirs = [...PLATFORMS, { label: AGENT_TARGET.label, dir: AGENT_TARGET.dir }];
+  for (const p of scanDirs) {
     if (!existsSync(p.dir)) continue;
     for (const e of await readdir(p.dir, { withFileTypes: true }).catch(() => [])) {
       const full = join(p.dir, e.name);
@@ -182,6 +222,17 @@ async function cmdUninstall(skills, YES) {
       await rm(join(p.dir, s.name), { recursive: true, force: true });
       log.ok(`${s.name} removed`);
       removed++;
+    }
+  }
+  const agents = await readAgents();
+  if (agents.length && existsSync(AGENT_TARGET.dir) && picked.includes('claude')) {
+    log.title(AGENT_TARGET.label);
+    for (const a of agents) {
+      const dest = join(AGENT_TARGET.dir, a.file);
+      const st = await lstat(dest).catch(() => null);
+      if (!st) continue;
+      await rm(dest, { force: true });
+      log.ok(`${a.name} removed`); removed++;
     }
   }
   log.title('Done'); log.info(`${removed} removed.`); console.log();
@@ -281,6 +332,8 @@ async function cmdInstall(skills, YES) {
       } catch (e) { log.err(`${s.name} — ${e.message}`); }
     }
   }
+
+  if (answers.platforms.includes('claude')) await installAgents(answers.mode);
 
   if (chosen.some((s) => s.name === 'sweat-dreams')) await installSweatDreamsCli(YES);
 

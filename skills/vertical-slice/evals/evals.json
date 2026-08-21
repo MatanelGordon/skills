@@ -1,0 +1,33 @@
+{
+  "skill_name": "vertical-slice",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Add an export-to-PDF endpoint for invoices.",
+      "expected_output": "New feature folder/slice with its own handler+logic+tests, registered via the existing discovery pattern - not new methods scattered across controller/service/repository layers.",
+      "files": [],
+      "expectations": [
+        "Creates a feature slice, not edits across horizontal layers",
+        "Minimal touch on shared files (registration point only)"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I'll just add a fourth method to InvoiceController for this.",
+      "expected_output": "The skill's trigger moment - redirects to a new slice instead of growing the god controller.",
+      "files": [],
+      "expectations": [
+        "Flags the controller-growth moment and proposes a slice"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Fix the rounding bug inside the existing calculateTotals method.",
+      "expected_output": "Bug fix stays in place; no restructuring ceremony for a fix.",
+      "files": [],
+      "expectations": [
+        "No slice refactor imposed on a localized bug fix"
+      ]
+    }
+  ]
+}

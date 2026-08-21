@@ -1,0 +1,34 @@
+{
+  "skill_name": "visual-plan",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Turn the plan we just wrote into something I can review visually with diagrams and open questions.",
+      "expected_output": "Produces the structured visual plan (plan.mdx or equivalent) from the existing text plan as source - not a rewrite from scratch, not a chat paragraph.",
+      "files": [],
+      "expectations": [
+        "Existing plan used as source material",
+        "Output is the structured reviewable artifact with diagrams/questions"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "We need to align on the dashboard redesign - three possible layouts, lots of open questions.",
+      "expected_output": "Visual plan with options and question blocks for reaction before implementation.",
+      "files": [],
+      "expectations": [
+        "Options and open questions rendered as structured blocks",
+        "User reaction sought before implementing"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Add a null check to this function.",
+      "expected_output": "No visual plan for a trivial change.",
+      "files": [],
+      "expectations": [
+        "No plan artifact ceremony for a one-line fix"
+      ]
+    }
+  ]
+}

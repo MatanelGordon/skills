@@ -175,11 +175,26 @@ skill.
 `npm run validate` checks all of this plus the subtle stuff (unbalanced code
 fences, literal escape characters, script syntax) and runs on CI for every PR.
 
-## Recommended agents
+## Agents
 
-This repo carries no agents yet — the agents on my machine turned out to be
-cherry-picks from [github/awesome-copilot](https://github.com/github/awesome-copilot)
-(MIT, GitHub's community pack), so they stay upstream's and install from there:
+Two original subagents live in `agents/` — dispatchable workers, not restated
+guidance. Each exists because the job needs what a subagent uniquely has:
+fresh context and a disposable budget.
+
+| Agent | Why it's a separate agent |
+|---|---|
+| `plan-reviewer` | reviews a `plan.md` before dispatch — the author is the worst-placed person to spot their own missing seam, so this runs with zero authoring context. Returns VERDICT / BLOCKERS / NON-BLOCKING. |
+| `code-archaeologist` | answers "why does this exist / safe to remove?" by walking both the code graph and git history — the dig is bulky, the caller only needs the verdict with shas. Read-only. |
+
+The installer links them into `~/.claude/agents/` when Claude Code is a target
+(they're Claude subagent format; other platforms don't consume them yet). Both
+carry paired `.evals.json` suites, enforced by `npm run validate`.
+
+### Recommended from upstream
+
+The other agents I use are cherry-picks from
+[github/awesome-copilot](https://github.com/github/awesome-copilot) (MIT,
+GitHub's community pack) — they stay upstream's and install from there:
 
 | Agent | What it does |
 |---|---|

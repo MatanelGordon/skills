@@ -1,0 +1,46 @@
+{
+  "skill_name": "functional-python",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create the Job model - it's either pending, running with a worker id, or finished with an output path.",
+      "expected_output": "Frozen slotted dataclasses per state joined in a type union, matched with match/case ending in assert_never - not one class with a status field and Optionals.",
+      "files": [],
+      "expectations": [
+        "@dataclass(frozen=True, slots=True) per variant",
+        "type Job = union of variants; match with assert_never",
+        "tuple/Mapping fields, not list/dict, in frozen dataclasses"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Should parse_config return None when the file is malformed?",
+      "expected_output": "No - None means absence, not failure. Returns a Result (Ok/Err union or returns library) carrying why it failed.",
+      "files": [],
+      "expectations": [
+        "Distinguishes absence (None/Optional) from failure (Result with error)",
+        "Suggests the small hand-rolled Ok/Err union or returns, proportional to project size"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Refactor this isinstance-chain dispatch into something safer.",
+      "expected_output": "match/case on the union with destructuring, assert_never for exhaustiveness, checked by mypy/pyright strict.",
+      "files": [],
+      "expectations": [
+        "match/case replaces isinstance chains",
+        "assert_never gives checker-enforced exhaustiveness",
+        "Mentions strict type checking as the enforcement layer"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Quick one-off script to bulk-rename these files, nothing fancy.",
+      "expected_output": "Plain pragmatic script; no returns library, no Result ceremony for a throwaway.",
+      "files": [],
+      "expectations": [
+        "No FP ceremony imposed on a one-off script"
+      ]
+    }
+  ]
+}

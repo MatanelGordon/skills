@@ -1,0 +1,47 @@
+{
+  "skill_name": "adr",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We just decided: all tenant data lives in its own schema, never shared tables. Record this so we don't undo it.",
+      "expected_output": "Writes .adr/NNNN-slug.md in the minimal format (title + short paragraph), numbered after the highest existing, committed alongside related work.",
+      "files": [],
+      "expectations": [
+        "Creates the file under .adr/ with sequential NNNN-slug naming",
+        "Body is title plus 1-3 sentences of why, not a filled-out ceremony template",
+        "Checks .gitignore does not swallow .adr/"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Plan a refactor of the billing module to call the ledger service directly over HTTP.",
+      "expected_output": "Reads .adr/ first; if a recorded decision (e.g. events-only between contexts) contradicts the ask, stops and names the ADR rather than silently planning against it.",
+      "files": [],
+      "expectations": [
+        "Lists/reads .adr/ before proposing the plan",
+        "A contradicting ADR is cited by number and title with options: comply or supersede",
+        "Absence of an ADR is treated as no constraint, not silently assumed"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "We're reversing ADR-0004 - we're adopting the CSV library after all.",
+      "expected_output": "Writes a NEW ADR superseding 0004, marks the old one 'superseded by', leaves its body intact.",
+      "files": [],
+      "expectations": [
+        "New ADR references the old one",
+        "Old ADR gets Status: superseded, body untouched",
+        "Nothing is deleted or rewritten"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Should we use 2 or 4 spaces in this repo?",
+      "expected_output": "No ADR. Formatting choices don't qualify; answers directly.",
+      "files": [],
+      "expectations": [
+        "Does not offer an ADR for a style/formatting choice"
+      ]
+    }
+  ]
+}

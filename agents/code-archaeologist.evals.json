@@ -1,0 +1,37 @@
+{
+  "agent_name": "code-archaeologist",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Is the hand-rolled retry loop in src/http.ts redundant now that we use axios?",
+      "expected_output": "Digs both legs: callers + dynamic refs, then git log -S / blame / ADR tags for why it was written. Verdict in one of the three honest forms with shas cited, under 300 words.",
+      "files": [],
+      "expectations": [
+        "Both legs walked: code graph AND history",
+        "Dynamic references checked (config strings, DI, routes), not just plain grep",
+        "Verdict is one of the three forms, citing the originating sha or ADR",
+        "Output under 300 words, no raw log dumps"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Nothing references OLD_TIMEOUT_MS anywhere I can see. Delete it?",
+      "expected_output": "Does not conclude from one leg. If history shows the constant was added for a stated reason, cites it; if both legs are empty, returns no-recorded-reason rather than 'safe to delete'.",
+      "files": [],
+      "expectations": [
+        "Never declares safe-to-delete from text-search absence alone",
+        "Empty evidence in both legs yields no-recorded-reason, stated honestly"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Why does parse() double-decode the input? Looks like a bug - fix it.",
+      "expected_output": "Explains the why with evidence but does NOT fix anything - read-only; recommends, caller acts.",
+      "files": [],
+      "expectations": [
+        "No edits made; the fix is described, not applied",
+        "The stated reason (or its absence) is backed by a commit body or ADR"
+      ]
+    }
+  ]
+}

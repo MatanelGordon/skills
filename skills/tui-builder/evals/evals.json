@@ -1,0 +1,33 @@
+{
+  "skill_name": "tui-builder",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "My Ink app leaves ghost frames and duplicated content after I resize the terminal.",
+      "expected_output": "Triggers - applies the resize rules (the skill's core value) rather than generic debugging.",
+      "files": [],
+      "expectations": [
+        "Recognized as the resize-artifact case the skill exists for",
+        "Applies the battle-tested resize handling guidance"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Starting a new full-screen terminal UI for browsing logs, Ink + React.",
+      "expected_output": "Triggers for full-screen TUI construction with its layout/lifecycle rules.",
+      "files": [],
+      "expectations": [
+        "Skill applied to full-screen interactive TUI work"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Write a script that prints a table of results and exits.",
+      "expected_output": "Does not trigger - non-interactive output is out of scope by the skill's own boundary.",
+      "files": [],
+      "expectations": [
+        "No full-screen TUI machinery for print-and-exit output"
+      ]
+    }
+  ]
+}

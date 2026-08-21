@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.0 — 2026-08-21
+
+- **New skill: `development-workflow`.** The umbrella pipeline (research →
+  plan → red-green-refactor → review → commit-with-why) that sequences the
+  other skills, with proportionality rules and the "skips are decisions, not
+  drift" contract. Deliberately overlaps research-first — repetition as
+  emphasis, by design.
+
 ## 1.3.0 — 2026-08-21
 
 - **New skill: `research-first`.** Buy-before-build sweeps when asked to

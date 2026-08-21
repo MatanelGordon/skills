@@ -68,10 +68,14 @@ POSIX shell — use Git Bash or WSL for those.
 
 ## What's in the box
 
-Sixteen skills. The short version of each:
+Seventeen skills. The short version of each:
 
 **Planning and execution**
 
+- **development-workflow** — the spine: research → plan → test-first →
+  implement → review → commit-with-why, each stage deferring to its dedicated
+  skill, with a proportionality table so a typo doesn't get the ceremony a
+  feature does.
 - **deep-plan** — turns "build X" into a plan someone with zero context could
   execute: a clarity gate before anything is written, a file map where every
   path has exactly one owner, edge cases enumerated with a status each, and

@@ -1,0 +1,49 @@
+{
+  "skill_name": "development-workflow",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Add CSV export to the reports page.",
+      "expected_output": "Pipeline order holds: research for existing CSV libraries first, a plan (or stated one-paragraph plan for small scope), a failing test before the implementation, review before merge, and a why-commit. No code before research and plan.",
+      "files": [],
+      "expectations": [
+        "Sweeps for an existing CSV library before writing serialization code",
+        "States a plan before implementing",
+        "Writes the test first and runs it to observe the failure",
+        "Commit message explains why, conventional format"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Fix the typo in the error message - 'occured' should be 'occurred'.",
+      "expected_output": "No pipeline ceremony. Trivial change is just made and committed.",
+      "files": [],
+      "expectations": [
+        "No research sweep, plan document, or review cycle for a typo",
+        "Direct fix with a clean commit"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "The date-parsing bug is back. Users in UTC+13 see yesterday's date.",
+      "expected_output": "Bug-fix proportionality: a test reproducing the timezone bug first (red), then the fix (green), commit explains the cause. Not the full multi-stage pipeline, but never fix-without-reproducing-test.",
+      "files": [],
+      "expectations": [
+        "Writes a failing test that reproduces the UTC+13 case before fixing",
+        "Fix verified by the previously failing test",
+        "Commit body names the root cause"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Skip the tests for now, just ship the feature, we're in a hurry.",
+      "expected_output": "Complies but makes the skip a decision, not drift: states in one sentence what is being skipped and the risk, and the commit records that tests are owed.",
+      "files": [],
+      "expectations": [
+        "Does not lecture or refuse; proceeds as asked",
+        "The skip is stated explicitly with its risk",
+        "A follow-up (owed tests) is recorded somewhere durable"
+      ]
+    }
+  ]
+}

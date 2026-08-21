@@ -68,7 +68,7 @@ POSIX shell — use Git Bash or WSL for those.
 
 ## What's in the box
 
-Fifteen skills. The short version of each:
+Sixteen skills. The short version of each:
 
 **Planning and execution**
 
@@ -91,6 +91,10 @@ Fifteen skills. The short version of each:
   recommendation that admits its own downside, and the do-nothing default)
   instead of a "you might want to consider…" paragraph.
 
+- **research-first** — before building, sweep registries and GitHub for a
+  product that already fits; before any consequential answer, stand it on two
+  independent sources ("redundant" code gets checked against both the code and
+  its git history; internet answers always cite at least two origins).
 - **adr** — Architectural Decision Records as small files in `.adr/`, read
   *before* planning so past decisions don't get undone by accident.
 - **adr-in-git** — the same reasoning pushed into git itself: commits that say

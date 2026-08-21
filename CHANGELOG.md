@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.0 — 2026-08-21
+
+- **New skill: `research-first`.** Buy-before-build sweeps when asked to
+  implement anything; a two-independent-sources rule for consequential answers
+  (running the code counts as a source; memory doesn't, for volatile facts);
+  the Chesterton's-fence check — code judged against both the code graph and
+  git history; a disagreement protocol; and a proportionality gate so trivia
+  stays ceremony-free.
+
 ## 1.2.0 — 2026-08-21
 
 - **New skill: `critical-thinking`.** Flagged decisions in work summaries become

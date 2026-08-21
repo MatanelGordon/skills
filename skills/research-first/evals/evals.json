@@ -1,0 +1,50 @@
+{
+  "skill_name": "research-first",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Write me a rate limiter utility for our Express API.",
+      "expected_output": "Sweeps npm/GitHub before writing code, surfaces existing packages with health signals (stars, last push, license, fit), and suggests adopting one if it covers ~80%+, naming the gap. Only offers to build after presenting the choice.",
+      "files": [],
+      "expectations": [
+        "Searches a registry and GitHub before designing anything",
+        "Top candidate presented with stars/recency/license and fit assessment",
+        "Suggests the existing product when it covers most of the need",
+        "A negative result names the searches performed"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "This retry wrapper in http.ts looks redundant now that axios has retries. Remove it?",
+      "expected_output": "Checks both legs before the verdict: the code graph (callers, tests, dynamic refs) AND history (git log -S / blame / ADRs) to learn why it was created. Verdict is one of: reason never existed, reason still applies (cites the commit), or world changed so removable because X.",
+      "files": [],
+      "expectations": [
+        "Runs git log -S or blame (or adr.sh why) before judging",
+        "Checks for dynamic/config references, not just text search",
+        "Verdict cites the originating commit or ADR, or states none exists",
+        "Does not recommend deletion while unable to explain why the code exists"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Search the internet: what's the current pricing model for Vercel's build minutes?",
+      "expected_output": "At least two independent resources (different origins), cited next to the claims; dates checked because pricing is volatile; any single-sourced detail labeled as such; conflicts reported rather than averaged.",
+      "files": [],
+      "expectations": [
+        "Two or more sources from different origins, cited inline",
+        "Does not answer from memory for volatile pricing",
+        "Conflicting numbers surfaced as a finding, not averaged"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Should this helper be called formatUser or renderUser?",
+      "expected_output": "No research ceremony. Subjective naming question gets a direct answer with reasoning.",
+      "files": [],
+      "expectations": [
+        "No registry sweep or multi-source hunt for a subjective trivial choice",
+        "Direct answer"
+      ]
+    }
+  ]
+}

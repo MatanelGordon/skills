@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.0 — 2026-08-21
+
+- **New skill: `critical-thinking`.** Flagged decisions in work summaries become
+  honest comparison tables — pros, cons, concrete cost, reversibility, a
+  recommendation that restates its own downside, and the do-nothing default.
+  Escalates one-way expensive calls to Kepner-Tregoe / pre-mortem frameworks
+  rather than overreaching with a table.
+
 ## 1.1.0 — 2026-08-21
 
 The portability release: the repo now actually delivers what the README promised.

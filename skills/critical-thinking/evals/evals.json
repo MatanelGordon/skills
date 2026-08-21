@@ -1,0 +1,49 @@
+{
+  "skill_name": "critical-thinking",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Great, the migration is done. Anything I should be aware of before we ship?",
+      "expected_output": "Any flagged decision arrives as a comparison table: 2-4 option columns, Pros/Cons/Cost/Reversible rows, a recommendation restating its own con, and an 'if you do nothing' line. Pure status facts stay prose.",
+      "files": [],
+      "expectations": [
+        "Each genuine decision point is a table, not a closing-paragraph 'consider...'",
+        "Every option column has real cons",
+        "Cost row is concrete (time/money), not 'some effort'",
+        "Recommendation names the recommended option's own downside",
+        "'If you do nothing' default is stated"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Rename the variable and push. Let me know when done.",
+      "expected_output": "No table. Trivial completed work with no decision gets a one-line confirmation.",
+      "files": [],
+      "expectations": [
+        "No comparison table for an FYI-only summary",
+        "No manufactured decision points"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "What are my options for hosting this side project's Postgres?",
+      "expected_output": "A 2-4 column table with pros, cons, concrete cost, reversibility, an honest recommendation, and the do-nothing default. Not five columns, no strawman option.",
+      "files": [],
+      "expectations": [
+        "At most 4 options, all genuinely viable",
+        "Reversibility uses trivially / with effort / one-way",
+        "Recommendation includes its honest con, or explicitly declares a true toss-up"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Should we migrate the whole platform from REST to gRPC? Give me the trade-offs.",
+      "expected_output": "Table for the comparison, plus escalation: this is one-way and expensive, so it offers a deeper pass (kepner-tregoe weighted analysis or a pre-mortem) rather than settling it in a table alone.",
+      "files": [],
+      "expectations": [
+        "Flags the decision as one-way/expensive",
+        "Offers escalation to a full framework instead of overreaching with the table"
+      ]
+    }
+  ]
+}

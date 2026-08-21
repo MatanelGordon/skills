@@ -68,7 +68,7 @@ POSIX shell — use Git Bash or WSL for those.
 
 ## What's in the box
 
-Fourteen skills. The short version of each:
+Fifteen skills. The short version of each:
 
 **Planning and execution**
 
@@ -85,6 +85,11 @@ Fourteen skills. The short version of each:
   never leaves a worktree behind.
 
 **Decisions and memory**
+
+- **critical-thinking** — when a summary flags anything for your decision, it
+  arrives as an honest comparison table (pros, cons, cost, reversibility, a
+  recommendation that admits its own downside, and the do-nothing default)
+  instead of a "you might want to consider…" paragraph.
 
 - **adr** — Architectural Decision Records as small files in `.adr/`, read
   *before* planning so past decisions don't get undone by accident.
@@ -175,6 +180,10 @@ upstream:
   skills framework; its `writing-plans` shaped `deep-plan`.
 - [mattpocock/skills](https://github.com/mattpocock/skills) — engineering
   workflow; his ADR format seeded the `adr` skill here.
+- [tjboudreaux/cc-thinking-skills](https://github.com/tjboudreaux/cc-thinking-skills)
+  — 28 mental-model skills; `thinking-kepner-tregoe` and `thinking-pre-mortem`
+  pair well with `critical-thinking` here, which escalates to them for one-way,
+  expensive decisions.
 - [TerminalSkills/skills](https://github.com/TerminalSkills/skills) — ~1000
   tool-specific skills.
 - [Claude plugin marketplace](https://github.com/anthropics/claude-plugins-official)

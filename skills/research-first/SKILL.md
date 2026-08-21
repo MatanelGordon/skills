@@ -44,10 +44,11 @@ named — before offering to build. Present the choice; don't silently build.
 A negative result is a result: "I searched npm, crates and GitHub for X and Y;
 nothing fits — here's why building is right" is a better opening than code.
 
-## 2. Two independent sources, always
+## 2. Two independent sources — unless one is conclusive
 
-Before a consequential answer leaves your mouth, it has two legs. **Independent
-means different origins** — two blog posts paraphrasing the same README are one
+Before a consequential answer leaves your mouth, it has two legs **or one
+conclusive one**. Grade the first source before deciding whether you owe a
+second. **Independent means different origins** — two blog posts paraphrasing the same README are one
 source; a doc page and a mirror of it are one source. Real pairs:
 
 | Claim about | Leg one | Leg two |
@@ -68,9 +69,33 @@ APIs, pricing, model names — what you remember is leg zero; verify before
 asserting. For stable facts (algorithms, language semantics you can test),
 memory plus one verification is enough.
 
-When you genuinely have only one leg, say so: "single source — X; couldn't
-cross-check because Y." A labeled one-legged answer is honest; an unlabeled one
-is a guess wearing confidence.
+### Grading conclusiveness
+
+A single source carries the answer alone only when **all three** hold:
+
+1. **Direct** — you observed the fact itself (ran it, reproduced it, read the
+   actual code), or the source is the authoritative origin for this exact
+   version: the spec, the changelog entry, the tag.
+2. **Deterministic** — re-checking would give the same answer; it is a fact,
+   not a judgment, estimate, or summary.
+3. **No skew** — no incentive to mislead (vendor marketing fails this), no
+   version or date mismatch with what you are being asked about.
+
+| Grade | Looks like | Rule |
+|---|---|---|
+| **Conclusive** | you executed it; `--help` output; the exact-version changelog; the code itself for "what does it do" | one source is enough — cite it |
+| **Probably right** | official docs, a maintainer's answer, a spec for a *near* version | usable alone for low stakes with a label; any real consequence → add a cheap second leg |
+| **Suspect** | blog posts, forums, SEO aggregations, undated pages, your own memory | two legs, always |
+
+If there is a *slight chance* the source misleads — wrong version, paraphrase,
+stale date, any incentive — it is not conclusive; re-validate with a second
+origin. And one hard-won rule: **documentation is never conclusive about
+runtime behavior.** Docs said `lastFrame()` carries ANSI codes; running it
+proved otherwise. Docs are a claim about the code; execution is the code.
+
+When you genuinely have only one non-conclusive leg, say so: "single source —
+X; couldn't cross-check because Y." A labeled one-legged answer is honest; an
+unlabeled one is a guess wearing confidence.
 
 ## 3. Judging code: the fence has a reason
 

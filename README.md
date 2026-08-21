@@ -175,6 +175,22 @@ skill.
 `npm run validate` checks all of this plus the subtle stuff (unbalanced code
 fences, literal escape characters, script syntax) and runs on CI for every PR.
 
+## Recommended agents
+
+This repo carries no agents yet — the agents on my machine turned out to be
+cherry-picks from [github/awesome-copilot](https://github.com/github/awesome-copilot)
+(MIT, GitHub's community pack), so they stay upstream's and install from there:
+
+| Agent | What it does |
+|---|---|
+| `ai-team-dev` / `ai-team-producer` / `ai-team-qa` | a three-role AI team — implementation, sprint coordination, QA |
+| `implementation-plan` | generate an implementation plan for a feature or refactor |
+| `debug` | structured find-and-fix debugging |
+
+Each has a one-click VS Code install button in the awesome-copilot README, or
+drop the `.agent.md` into `~/.copilot/agents/`. When I write agents of my own,
+they'll land here in an `agents/` directory with the same installer treatment.
+
 ## Good skills that live elsewhere
 
 Deliberately not vendored — they belong to their authors and install fine from

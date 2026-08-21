@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.5.0 — 2026-08-21
+
+- **research-first: conclusiveness grading.** One source may stand alone when
+  it is direct, deterministic, and unskewed (you ran it, or it is the
+  authoritative origin for the exact version); any slight chance of misleading
+  requires a second origin. Documentation is never conclusive about runtime
+  behavior.
+- **README: recommended agents.** The agents in use turned out to be
+  awesome-copilot cherry-picks, so they are referenced upstream rather than
+  vendored; an `agents/` directory is reserved for original ones.
+
 ## 1.4.0 — 2026-08-21
 
 - **New skill: `development-workflow`.** The umbrella pipeline (research →

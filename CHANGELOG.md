@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.16.0 — 2026-08-22
+
+- **The three functional skills now say where they apply.** Each states that the
+  rules govern domain boundaries and new code, and that framework conventions
+  and stdlib culture win where they conflict — an unscoped style mandate gets
+  discarded wholesale the first time it collides with Django or ASP.NET.
+- **`functional-csharp` gained the compiler-setup section** its TypeScript
+  sibling already had. Without `<Nullable>enable</Nullable>` and
+  warnings-as-errors, the diagnostics the rest of the skill relies on never fire.
+- **Two C# corrections.** `ImmutableArray` is the right default for read-heavy
+  domain collections, with `ImmutableList` for rebuild-heavy ones. And switch
+  exhaustiveness over a sealed hierarchy is only the CS8509 *warning*, not a
+  guarantee — so union boundaries get an explicit `Match`. This reverses the
+  previous "omit the default arm and let the compiler warn" advice.
+- Async composition notes added to all three — the gap most likely to send a
+  reader back to exceptions the first time a `Result` meets an `await`.
+- Authored by ox-alpha in a worktree; reviewed before merge, one duplicated
+  checklist bullet fixed, and all three referenced files verified to exist.
+
 ## 1.15.0 — 2026-08-22
 
 - **`ori-free-models.sh` is now `ori-models.sh`, with a price ceiling.**

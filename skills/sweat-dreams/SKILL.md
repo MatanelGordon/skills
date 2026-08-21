@@ -1,14 +1,16 @@
 ---
 name: sweat-dreams
 description: >
-  Keep this Mac awake while you are working, using the sweat-dreams tool, so long agent
-  runs are not killed by the machine going to sleep. Use at the START of any task
+  Keep this machine awake while you are working, using the sweat-dreams tool, so long
+  agent runs are not killed by the computer going to sleep. Use at the START of any task
   expected to run more than a couple of minutes — builds, test suites, benchmarks,
   migrations, parallel subagent work, long downloads — and release it when done. Also
-  use when a rate limit is hit: hold the Mac awake until the quota resets so the session
-  can resume. Run `sweat-dreams beat` periodically during long work so the lease stays
-  fresh; an idle or dead session releases automatically. macOS only. The user can always
-  see and stop it themselves.
+  use when a rate limit is hit: hold the machine awake until the quota resets so the
+  session can resume. Run `sweat-dreams beat` periodically during long work so the lease
+  stays fresh; an idle or dead session releases automatically. Works on macOS
+  (caffeinate), Linux (systemd-inhibit), and Windows/WSL (PowerShell); laptops keep the
+  display awake by default, desktops let it sleep. The user can always see and stop it
+  themselves.
 license: MIT
 metadata:
   author: Matanel Gordon

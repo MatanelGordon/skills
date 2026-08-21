@@ -222,6 +222,10 @@ upstream:
   skills framework; its `writing-plans` shaped `deep-plan`.
 - [mattpocock/skills](https://github.com/mattpocock/skills) — engineering
   workflow; his ADR format seeded the `adr` skill here.
+- [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd) — ADHD-friendly
+  output shaping (lead with the next action, numbered bounded steps, visible
+  wins; 22k+ stars, actively maintained). Opt-in via `/i-have-adhd`; installs
+  cleanly alongside these skills.
 - [tjboudreaux/cc-thinking-skills](https://github.com/tjboudreaux/cc-thinking-skills)
   — 28 mental-model skills; `thinking-kepner-tregoe` and `thinking-pre-mortem`
   pair well with `critical-thinking` here, which escalates to them for one-way,

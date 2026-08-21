@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.8.1 — 2026-08-21
+
+- README: recommend ayghri/i-have-adhd (ADHD-friendly output shaping) from
+  upstream — thriving 22k-star repo, so adopt-not-adapt applies.
+- Trigger tuning from live probes: research-first now fires on imperative
+  build requests (verified fixed by re-probe); adr's read side broadened.
+
 ## 1.8.0 — 2026-08-21
 
 - **New skill: `bookkeeper`.** Durable repository facts live as small tagged

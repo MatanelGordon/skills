@@ -238,24 +238,6 @@ async function cmdUninstall(skills, YES) {
   log.title('Done'); log.info(`${removed} removed.`); console.log();
 }
 
-async function installSweatDreamsCli(YES) {
-  const src = join(SKILLS_DIR, 'sweat-dreams', 'scripts', 'sweat-dreams');
-  if (!existsSync(src)) return;
-  const destDir = join(HOME, '.local', 'bin');
-  const dest = join(destDir, 'sweat-dreams');
-  let doIt = YES;
-  if (!YES) {
-    const a = await prompts({ type: 'confirm', name: 'y', initial: true,
-      message: `sweat-dreams needs its CLI on PATH — install to ${dest.replace(HOME, '~')}?` });
-    doIt = !!a.y;
-  }
-  if (!doIt) { log.skip('sweat-dreams CLI not installed — the skill references scripts/sweat-dreams by path'); return; }
-  await mkdir(destDir, { recursive: true });
-  await copyFile(src, dest);
-  await chmod(dest, 0o755);
-  log.ok(`sweat-dreams CLI → ${dest.replace(HOME, '~')}`);
-  if (!process.env.PATH?.split(':').includes(destDir)) log.warn(`~/.local/bin is not on your PATH — add it to your shell profile`);
-}
 
 async function cmdInstall(skills, YES) {
   const detected = PLATFORMS.filter((p) => existsSync(p.detect));
@@ -333,8 +315,6 @@ async function cmdInstall(skills, YES) {
   }
 
   if (answers.platforms.includes('claude')) await installAgents(answers.mode);
-
-  if (chosen.some((s) => s.name === 'sweat-dreams')) await installSweatDreamsCli(YES);
 
   const tied = chosen.filter((s) => s.requires);
   if (tied.length) {

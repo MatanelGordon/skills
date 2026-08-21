@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.9.0 — 2026-08-21
+
+- **Removed: `sweat-dreams`**, at the operator's direction — skill, evals,
+  vendored CLI, menubar sources, and the installer's PATH-install step. Prior
+  entries stand as history; the code remains recoverable from git.
+
 ## 1.8.1 — 2026-08-21
 
 - README: recommend ayghri/i-have-adhd (ADHD-friendly output shaping) from

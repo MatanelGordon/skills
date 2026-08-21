@@ -68,7 +68,7 @@ POSIX shell — use Git Bash or WSL for those.
 
 ## What's in the box
 
-Eighteen skills. The short version of each:
+Seventeen skills. The short version of each:
 
 **Planning and execution**
 
@@ -127,13 +127,9 @@ Eighteen skills. The short version of each:
 - **visual-plan** — turns text plans into reviewable visual plans with
   diagrams, file maps, and annotated code.
 
-**Architecture and machine**
+**Architecture**
 
 - **vertical-slice** — organise code by feature, not by technical layer.
-- **sweat-dreams** — keeps the machine awake while an agent is working and
-  lets it sleep the moment work stops — macOS, Linux, and Windows/WSL. Laptops
-  keep the screen on by default. Ships its own CLI; the installer offers to
-  put it on your PATH.
 
 ## Things that need more than markdown
 
@@ -146,7 +142,6 @@ platform-locked skills on the wrong OS:
 |---|---|
 | `cli-coding-subagents` | codex + copilot CLIs, installed and authenticated |
 | `parallel-build` | the above, plus git worktrees |
-| `sweat-dreams` | macOS `caffeinate` / Linux `systemd-inhibit` / Windows PowerShell; menu bar extra is macOS-only |
 | `terminal-ux` / `tui-builder` | Node ≥ 22 (Ink) |
 | `adr-in-git` | git ≥ 2.35 |
 

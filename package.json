@@ -1,0 +1,13 @@
+{
+  "name": "@matanelgordon/skills",
+  "version": "1.0.0",
+  "description": "Agent Skills for Claude Code, OpenAI Codex, GitHub Copilot and Tabnine",
+  "type": "module",
+  "bin": { "install-skills": "install/index.mjs" },
+  "scripts": { "install-skills": "node install/index.mjs", "start": "node install/index.mjs" },
+  "license": "MIT",
+  "author": "Matanel Gordon",
+  "repository": { "type": "git", "url": "https://github.com/MatanelGordon/skills.git" },
+  "engines": { "node": ">=18" },
+  "dependencies": { "chalk": "^5.3.0", "prompts": "^2.4.2" }
+}

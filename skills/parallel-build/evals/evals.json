@@ -1,0 +1,57 @@
+{
+  "skill_name": "parallel-build",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I need to add multi-tenant support to this API: tenant-scoped auth, per-tenant rate limiting, tenant-aware DB queries, and an admin UI for managing tenants. Plan it out and split the work across agents.",
+      "expected_output": "Skill triggers. Produces .plan/<name>/plan.md with a concise indicative plan name, a file map assigning every path to exactly one phase-2 owner, an explicit shared-surface section owned by phase 1, and a 3-phase split (1 foundation agent, 2-4 phase-2 agents on disjoint paths, phase-3 review). Writes PROGRESS.md. Stops to confirm the plan before dispatching.",
+      "expectations": [
+        "Creates a .plan/<plan-name>/ directory with a concise, indicative name (not 'plan1' or a long sentence)",
+        "plan.md contains a file map where no path has two phase-2 owners",
+        "Phase 1 is 1 agent (not 2, since this is not a monorepo spanning separate projects)",
+        "Shared surface (types, config, migrations, registries) is assigned to phase 1, not phase 2",
+        "PROGRESS.md is written before any dispatch and contains a 'Resume here' line",
+        "Confirms the plan with the user before dispatching any subagent",
+        "Runs the pre-flight check (precheck.sh) before or during planning"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "continue where you left off",
+      "expected_output": "Skill triggers in resume mode. Reads .plan/*/PROGRESS.md, selects the unfinished plan, also reads agents/*.md, runs wt.sh list and git log, and reconciles the file against actual git state before acting. Does not blindly trust the Resume here line.",
+      "expectations": [
+        "Locates the plan by listing .plan/*/PROGRESS.md rather than asking the user which plan",
+        "Reads agents/*.md, not just PROGRESS.md",
+        "Runs wt.sh list and git log to establish real state",
+        "States that git is ground truth and PROGRESS.md is intent when they disagree",
+        "Decides per live worktree: clean+ahead means verify and merge, UNCOMMITTED means inspect, clean+0-ahead means drop and re-dispatch",
+        "Updates PROGRESS.md to match reality before continuing work"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Build out the whole billing module for this project - subscriptions, invoices, webhooks, and the dunning flow. Use parallel agents.",
+      "expected_output": "In a repo under Desktop/Playgrounds, phase 3 runs code review only and explicitly skips the security agents, recording the skip and its reason in PROGRESS.md. In a repo outside that path, security agents run.",
+      "expectations": [
+        "Checks the repository root path mechanically (git rev-parse --show-toplevel) to decide on security review",
+        "Skips the security agents when the repo is under Desktop/Playgrounds",
+        "Still runs the code-review agents producing CR.md",
+        "Records the security skip and its reason in PROGRESS.md",
+        "Does not silently omit the security phase without saying so"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Here's the plan directory for the auth refactor. Phase 2 agent p2-tokens says DONE. Merge its work and move on.",
+      "expected_output": "Verifies the critical-path tests inside the agent's worktree before merging (not in the main tree), uses wt.sh merge which removes the worktree and branch, then re-runs tests on the merged branch. Treats the agent's DONE as a claim requiring verification.",
+      "expectations": [
+        "Runs the critical-path tests inside the worktree, not the main tree, before merging",
+        "Uses wt.sh merge rather than git merge plus manual worktree removal",
+        "Confirms the worktree and branch were removed after merging",
+        "Re-runs tests on the merged branch",
+        "Does not report success based only on the agent's STATUS: DONE",
+        "Folds the agent's report into PROGRESS.md immediately"
+      ]
+    }
+  ]
+}

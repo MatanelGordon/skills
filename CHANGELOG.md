@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.11.0 — 2026-08-22
+
+- **New skill: `terminal-interaction`.** Drives a CLI, TUI, REPL or installer as
+  a manual tester would — launch, send keys, capture the screen, report the
+  finding. Exploratory verification only; assertions and CI are out of scope.
+- **Searches before it builds.** MCP server, then published skill, then CLI,
+  then an explicit "nothing fits" — the terminal-driving landscape is unusually
+  well populated and hand-rolling a driver is normally the wrong move.
+- **Ships `scripts/pty-drive.py`, verified by execution here.** tmux is absent
+  from stock macOS, so the fallback had to be real: Python stdlib only, genuine
+  PTY, regex-driven steps, JSON output, exit codes 0/1/2/64 all tested.
+- Encodes the rule that fixes most flaky terminal driving: poll for the output
+  you expect, never sleep a fixed amount.
+
 ## 1.10.0 — 2026-08-22
 
 - **New skill: `prototype`.** Throwaway code that answers a design question

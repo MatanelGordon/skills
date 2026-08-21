@@ -68,7 +68,7 @@ POSIX shell — use Git Bash or WSL for those.
 
 ## What's in the box
 
-Eighteen skills. The short version of each:
+Nineteen skills. The short version of each:
 
 **Planning and execution**
 
@@ -132,6 +132,14 @@ Eighteen skills. The short version of each:
 - **tui-builder** — full-screen TUI work, with hard-won terminal-resize rules.
 - **visual-plan** — turns text plans into reviewable visual plans with
   diagrams, file maps, and annotated code.
+
+**Driving and observing** — manual testing by hand, not test suites
+
+- **terminal-interaction** — drives a CLI, TUI, REPL or installer the way a
+  human tester would: launch, send keys, read the screen back, report the
+  finding. Searches for an existing MCP server or skill first, ships a
+  zero-install PTY driver for when nothing is available, and replaces
+  `sleep 2` with polling for the output you actually expect.
 
 **Architecture**
 

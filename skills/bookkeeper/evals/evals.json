@@ -1,0 +1,51 @@
+{
+  "skill_name": "bookkeeper",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We learned that the production importer only runs correctly on runner win-build-03 because that host has the vendor ODBC driver. Record this for future sessions.",
+      "expected_output": "Writes or updates one small durable-fact entry in the appropriate .memory topic file and updates both the topic table and Entries table in .memory/index.md in the same change.",
+      "files": [],
+      "expectations": [
+        "Creates or updates one entry with the required HTML marker, per-entry frontmatter, and an updated timestamp",
+        "Updates the topic row in the first .memory/index.md table",
+        "Updates the exact entry row in the ## Entries table",
+        "Uses 2-4 reusable lowercase tags and records no credential values"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "How do I connect to the known host matanel-win11 in this repository?",
+      "expected_output": "Reads .memory/index.md first, tag-matches the remote-host topic, then opens the one matching topic file or sub-index entry without repository-wide spelunking.",
+      "files": [],
+      "expectations": [
+        "Consults .memory/index.md before opening topic files",
+        "Uses descriptions and tags to select one matching file",
+        "Does not begin with repo-wide grep or load all .memory files",
+        "Uses grep -ri on .memory only as a fallback when the index has no match"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "We decided all services must communicate through domain events, never direct HTTP. Record the decision so future agents do not undo it.",
+      "expected_output": "Routes the durable architectural decision to the adr skill and its reasoning to adr-in-git instead of writing it to .memory.",
+      "files": [],
+      "expectations": [
+        "Does not create or update a .memory entry",
+        "Uses the adr skill for the decision record",
+        "Uses adr-in-git conventions for commit reasoning and linkage"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "For this debugging session, remember that my scratch server is on port 4317 until I restart it.",
+      "expected_output": "Keeps the temporary port in session context only and writes no repository memory because it is transient trivia.",
+      "files": [],
+      "expectations": [
+        "Does not create .memory or change any memory file",
+        "Recognizes the value as temporary session state",
+        "Does not offer an ADR for the trivia"
+      ]
+    }
+  ]
+}

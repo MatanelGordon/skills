@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.8.0 — 2026-08-21
+
+- **New skill: `bookkeeper`.** Durable repository facts live as small tagged
+  entries in committed `.memory/` files; `index.md` is the PageIndex map read
+  first, and every write updates both index tables with the entry.
+- **Memory-aware git linkage.** `adr-in-git` now names `.memory/<file>` paths as
+  valid `Refs:` targets so commits can point to the facts they add or depend on.
+
 ## 1.7.0 — 2026-08-21
 
 - **sweat-dreams goes cross-platform**: caffeinate (macOS), systemd-inhibit /

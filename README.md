@@ -68,7 +68,7 @@ POSIX shell — use Git Bash or WSL for those.
 
 ## What's in the box
 
-Twenty-one skills. The short version of each:
+Twenty-two skills. The short version of each:
 
 **Planning and execution**
 
@@ -93,6 +93,13 @@ Twenty-one skills. The short version of each:
   as autonomous workers in git worktrees, with quota pre-flight (it asks before
   spending paid overage), strict prompt contracts, and merge + cleanup that
   never leaves a worktree behind.
+- **openrouter-cli-subagent** — the same workflow routed through OpenRouter via
+  the `ori` CLI, so subagent work costs nothing when free models suffice.
+  Discovers which free models can actually call tools (a free million-token
+  model that turns out to be a *music* model is not a coding agent), splits
+  author and reviewer context floors so cross-model review is genuinely
+  possible, and is blunt about the 20 req/min and 50 req/day ceilings that
+  shape everything else.
 
 **Decisions and memory**
 

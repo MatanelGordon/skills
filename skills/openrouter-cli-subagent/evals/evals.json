@@ -1,0 +1,82 @@
+{
+  "skill_name": "openrouter-cli-subagent",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Split this refactor across a few subagents and run them through ori on free models.",
+      "expected_output": "Runs the pre-flight, discovers usable free models with the script, routes claude for orchestration and codex for fixes, and keeps concurrency low because free models share a 20 req/min cap.",
+      "files": [],
+      "expectations": [
+        "Runs ori-precheck.sh before dispatching anything",
+        "Runs ori-free-models.sh rather than naming a model from memory",
+        "Passes the model as an ori flag before the double dash, not after it",
+        "Limits concurrency to two or three subagents citing the shared rate limit",
+        "Defers worktree, prompt contract and cleanup mechanics to cli-coding-subagents rather than restating them"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Kick off the subagents on OpenRouter. (No OpenRouter credential is configured on this machine.)",
+      "expected_output": "Pre-flight exits 10. Stops, tells the user to run ori login themselves, and dispatches nothing. Never attempts browser OAuth.",
+      "files": [],
+      "expectations": [
+        "Detects the missing credential via the pre-flight rather than failing mid-dispatch",
+        "Stops and asks the user to run ori login",
+        "Does not attempt browser OAuth, open a browser, or improvise with a key",
+        "Mentions the non-interactive alternatives as the user's to run, not the agent's",
+        "Dispatches no subagent work"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "google/lyria-3-pro-preview is free and has a million tokens of context. Use it as the coding agent.",
+      "expected_output": "Rejects it. Lyria is a music model - it outputs audio and lacks tool calling - so it cannot act as a coding subagent regardless of price or context. Recommends a tool-capable model from the discovery script instead.",
+      "files": [],
+      "expectations": [
+        "Rejects the model for lacking tool calling and not being text-out",
+        "Explains that free and large-context are not sufficient criteria",
+        "Decides from API capability fields rather than the model name",
+        "Names a tool-capable alternative from the discovery script"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "This migration is too big for one run. Set it up so it can go for as long as it needs without blowing the budget.",
+      "expected_output": "Sets up the 750K-per-subagent ceiling sliced into roughly 150K iterations, each rewriting HANDOFF.md with the objective verbatim, DONE with evidence, a single NEXT, BLOCKED and DECISIONS, committed each time.",
+      "files": [],
+      "expectations": [
+        "Slices the budget into bounded iterations rather than one long run",
+        "Rewrites HANDOFF.md each iteration instead of appending",
+        "Carries the original objective verbatim rather than paraphrasing it",
+        "Stops at roughly 80% of the slice to write the handoff before running out",
+        "Commits progress, not just writes it",
+        "Sets up no-progress detection on repeated NEXT with no new commits",
+        "Does not claim measured token accounting from ori"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Only one free model qualifies today. Just have it review its own output so we still get a review gate.",
+      "expected_output": "Does not present same-model review as independent. Either labels it explicitly as weaker, or recommends paying for the review pass, and notes that a lower reviewer context floor usually restores cross-family review.",
+      "files": [],
+      "expectations": [
+        "Refuses to describe same-model review as independent",
+        "Labels same-model review as a smoke test that shares the author's blind spots",
+        "Offers a paid review pass as the cheaper-than-it-sounds alternative, since reviews read a diff",
+        "Suggests lowering the reviewer context floor to widen the family pool"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "The subagents keep erroring out and now everything is failing. Just add a retry loop and let it run overnight.",
+      "expected_output": "Identifies the rate limit and quota model as the cause: failed calls still count against a 50-per-day allowance under $10 of credits. A retry loop makes it worse. Recommends switching models, capping retries, and the one-time $10 that raises the daily cap to 1,000.",
+      "files": [],
+      "expectations": [
+        "Names failed-calls-count-against-quota as why a retry loop makes things worse",
+        "Recommends capping retries and switching models rather than looping",
+        "Surfaces the one-time credit purchase that raises the daily limit 20x",
+        "Checks whether the model still exists rather than assuming a code fault"
+      ]
+    }
+  ]
+}

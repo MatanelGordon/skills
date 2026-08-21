@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.14.0 — 2026-08-22
+
+- **New skill: `openrouter-cli-subagent`.** Runs the `cli-coding-subagents`
+  workflow through OpenRouter via `ori`, referencing that skill rather than
+  restating it. Two executable scripts, both run here.
+- **`ori-precheck.sh`** — exit 0 / 10 / 40 matching the existing precheck
+  contract, all three paths tested. On exit 10 it stops and asks the user to run
+  `ori login`, because browser OAuth is not something an agent can do for them.
+  Never prints the key, the credentials file, or the account identifier.
+- **`ori-free-models.sh`** — filters on `supported_parameters` containing
+  `tools`, not on the model name, which is what stops a free million-token
+  *music* model being recommended as a coding agent. Also checks every pricing
+  field, since `request` and `image` can be non-zero on a "free" model.
+- **Two context tiers, because one floor made review a fiction.** Measured
+  today: a 1M floor yields one stable family, a 256K reviewer floor yields nine.
+  Reviewers read a diff, so they do not need the author's context.
+- **Corrects the model flag.** `--model` belongs to `ori`, before the `--`;
+  placed after it, an OpenRouter id reaches the harness's own flag and fails.
+- **Leads with the limitations.** 20 req/min that credits cannot raise, 50
+  req/day under $10 of credits, and failed calls counting against quota — which
+  together mean wide fan-out and retry loops actively hurt. The 750K ceiling is
+  stated as structurally enforced by iteration slicing, not measured, because no
+  per-run token accounting from `ori` was verified.
+
 ## 1.13.0 — 2026-08-22
 
 - **New skill: `desktop-interaction`.** Drives webview-based desktop apps —

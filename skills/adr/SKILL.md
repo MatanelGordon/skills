@@ -4,10 +4,11 @@ description: >
   Record and consult Architectural Decision Records as markdown files in the repo's
   ./.adr/ folder, so past decisions constrain future planning. Use in two directions.
   WRITE when the user says to record a decision, write an ADR, "remember this decision",
-  "don't let us undo this", or after a hard-to-reverse architectural call. READ before
-  planning, designing, refactoring, choosing a library or datastore, changing module
-  boundaries, or proposing a rewrite — check ./.adr/ first so the plan does not
-  contradict a decision already made, and say which ADR applies. Also use when a
+  "don't let us undo this", or after a hard-to-reverse architectural call. READ at the
+  start of ANY request to plan, refactor, integrate, redesign, or choose a library or
+  datastore — even when ADRs are not mentioned: check ./.adr/ first (and adr-NNNN git
+  tags) so the proposal does not contradict a decision already made, and say which ADR
+  applies. Also use when a
   decision is being reversed, to supersede the old record rather than delete it. Adapted
   from Matt Pocock's ADR format.
 license: MIT

@@ -2,17 +2,19 @@
 name: research-first
 description: >
   Research before answering, and never rest a consequential answer on one
-  source. Use when asked to build, add, or implement anything — sweep package
-  registries and GitHub first and suggest an existing product when one fits.
+  source. Use the moment a request says "write me", "build", "create",
+  "implement", or "add" a utility, feature, service, or tool — BEFORE designing
+  or coding anything, sweep package registries and GitHub and suggest an
+  existing product when one fits.
   Use before judging code ("this is redundant", "dead", "safe to delete") —
   verify against both the code itself and its history (git blame, log -S,
   ADRs) so a deliberate decision isn't undone. Use when asked to search the
   internet — always bring at least two independent resources and cite them.
-  Use when stating versions, prices, APIs, or anything that changes over time.
-  Grade how conclusive a source is before trusting it alone — one you executed,
-  or the authoritative origin for the exact version, can stand by itself; any
-  slight chance of misleading means re-validate against a second origin. Skip
-  the ceremony for trivial, reversible, or purely subjective answers.
+  Use when stating versions, prices, or APIs. Grade how conclusive a source is
+  before trusting it alone — one you executed, or the authoritative origin for
+  the exact version, stands by itself; any slight chance of misleading means
+  re-validate with a second origin. Skip the ceremony for trivial, reversible,
+  or purely subjective answers.
 license: MIT
 metadata:
   author: Matanel Gordon

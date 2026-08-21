@@ -217,6 +217,11 @@ upstream:
   skills framework; its `writing-plans` shaped `deep-plan`.
 - [mattpocock/skills](https://github.com/mattpocock/skills) — engineering
   workflow; his ADR format seeded the `adr` skill here.
+- [rampstackco/claude-skills](https://github.com/rampstackco/claude-skills) —
+  `after-action-report`: blameless postmortem/AAR framework (timeline, root
+  cause, contributing factors, action items). Note: its upstream frontmatter
+  carries keys Claude Code rejects — fold `category`/`catalog_summary`/
+  `display_order` under `metadata:` when installing.
 - [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd) — ADHD-friendly
   output shaping (lead with the next action, numbered bounded steps, visible
   wins; 22k+ stars, actively maintained). Opt-in via `/i-have-adhd`; installs

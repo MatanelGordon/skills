@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.9.1 — 2026-08-21
+
+- README: recommend rampstackco's `after-action-report` (blameless AAR /
+  postmortem, 568 stars, active) from upstream, with the frontmatter
+  normalization Claude Code requires.
+- New standing contract: every externally sourced skill installed on any
+  agent gets recorded here — this README is the canonical registry of the
+  skills in use across all models and machines.
+
 ## 1.9.0 — 2026-08-21
 
 - **Removed: `sweat-dreams`**, at the operator's direction — skill, evals,

@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.12.0 — 2026-08-22
+
+- **New skill: `browser-interaction`.** Clicks through a page as a manual tester
+  would and reports the finding with evidence. Exploratory only; suites and CI
+  stay out of scope.
+- **Structure over pixels.** `locator.aria_snapshot()` is the default evidence —
+  smaller than an image, quotable in a report, and it exposes missing accessible
+  names that a screenshot cannot. Verified by execution here, which also caught
+  that `page.accessibility.snapshot()` no longer exists in current Playwright
+  despite still appearing in circulating documentation.
+- **Says the quiet part about Safari.** Playwright's WebKit tracks WebKit main
+  and cannot drive branded Safari at all, so a green WebKit run is not Safari
+  coverage; `safaridriver` is named as the only real answer.
+- Searches for an MCP browser server before automating, and recommends a
+  specific tool with its install command when nothing is configured.
+
 ## 1.11.0 — 2026-08-22
 
 - **New skill: `terminal-interaction`.** Drives a CLI, TUI, REPL or installer as

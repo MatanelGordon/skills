@@ -1,0 +1,77 @@
+{
+  "skill_name": "browser-interaction",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Can you click through the checkout flow on localhost:3000 and tell me if anything looks broken?",
+      "expected_output": "Searches for an existing browser tool first, drives the flow, captures structured page state plus console messages, and reports the finding with a reproduction.",
+      "files": [],
+      "expectations": [
+        "Checks for an MCP browser server or host browser control before writing automation",
+        "Attaches the console listener before navigating, so load-time errors are captured",
+        "Captures an ARIA or accessibility snapshot rather than relying on a screenshot alone",
+        "Reports actions, evidence, finding and reproduction including browser and viewport",
+        "Does not use fixed sleeps to wait for state changes"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "A user says the pricing page is broken in Safari. Check it.",
+      "expected_output": "Distinguishes WebKit from Safari. Runs WebKit as an approximation if useful, but states plainly that only safaridriver answers a Safari question, and does not claim Safari coverage from a WebKit run.",
+      "files": [],
+      "expectations": [
+        "States that Playwright's WebKit is not Safari and cannot drive branded Safari",
+        "Names safaridriver plus Allow Remote Automation as the route to real Safari",
+        "Does not report a green WebKit run as Safari verification",
+        "Notes if the WebKit bundle is not installed rather than assuming coverage"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Write a Playwright script to click through our admin dashboard.",
+      "expected_output": "Searches for an existing tool before writing anything, names what it found or that nothing fits, and recommends installing the right tool rather than silently hand-rolling.",
+      "files": [],
+      "expectations": [
+        "Runs a search for MCP browser servers and published skills",
+        "Names what it found and whether it fits the task",
+        "Recommends a specific tool with its install command when nothing is configured",
+        "Only writes bespoke automation after stating nothing suitable exists"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "The dashboard only breaks when you're logged in as an admin. Can you reproduce it?",
+      "expected_output": "Recognises that a clean headless browser has no session. Prefers driving the user's real browser or a saved storage state, and asks rather than improvising with credentials.",
+      "files": [],
+      "expectations": [
+        "Identifies that headless has no session and that this is the core obstacle",
+        "Prefers host browser control or saved storage state over logging in each run",
+        "Never places real credentials in a script or the transcript",
+        "Asks for a session or credentials path rather than improvising"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Set up a full cross-browser regression suite with assertions and run it in GitHub Actions on every PR.",
+      "expected_output": "Out of scope for this skill. Says so plainly - this covers exploratory drive-and-observe, not authoring durable suites or CI wiring.",
+      "files": [],
+      "expectations": [
+        "States that assertion suites and CI wiring fall outside this skill's scope",
+        "Does not refuse the work outright, just does not treat it as manual verification",
+        "Distinguishes exploratory verification from regression guarding"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "The page renders fine for me but the screenshot you took looks empty. What's going on?",
+      "expected_output": "Investigates with structured evidence rather than more screenshots - ARIA snapshot, console errors, failed network requests - and considers timing, viewport and whether content rendered after capture.",
+      "files": [],
+      "expectations": [
+        "Reaches for structured page state and console or network evidence, not another screenshot",
+        "Considers that the capture happened before content finished rendering",
+        "Waits for a specific condition rather than adding a fixed delay",
+        "Checks viewport size as a possible cause"
+      ]
+    }
+  ]
+}

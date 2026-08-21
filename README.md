@@ -68,7 +68,7 @@ POSIX shell — use Git Bash or WSL for those.
 
 ## What's in the box
 
-Nineteen skills. The short version of each:
+Twenty skills. The short version of each:
 
 **Planning and execution**
 
@@ -140,6 +140,11 @@ Nineteen skills. The short version of each:
   finding. Searches for an existing MCP server or skill first, ships a
   zero-install PTY driver for when nothing is available, and replaces
   `sleep 2` with polling for the output you actually expect.
+- **browser-interaction** — clicks through a page and reports what happened
+  with evidence: structured ARIA snapshots rather than pixels, console and
+  network errors, and the cross-browser truth that a green WebKit run is not
+  Safari coverage. Searches for an MCP browser server first and recommends one
+  when nothing is installed.
 
 **Architecture**
 

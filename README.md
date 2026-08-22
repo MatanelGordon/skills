@@ -68,7 +68,7 @@ POSIX shell — use Git Bash or WSL for those.
 
 ## What's in the box
 
-Twenty-two skills. The short version of each:
+Twenty-three skills. The short version of each:
 
 **Planning and execution**
 
@@ -86,6 +86,13 @@ Twenty-two skills. The short version of each:
   brownfield inverts it — deliberately bad code behind exactly one seam, so the
   real implementation lands as a one-line swap and nothing else in the system
   knows the difference.
+- **get-the-job-done** — the guard against work that *looks* finished: the done
+  report at 80%, the scope that quietly shrank, the summary with a number nobody
+  checked. Turns completion claims into `GATES.md` entries with a runnable
+  `CHECK` behind each, and ships a checker that re-runs them — so a ticked box
+  that has since become false is caught rather than believed. Read-only and
+  hook-free on purpose: it survives six concurrent agents, and a blocker you
+  can't cleanly remove is worse than the premature "done" it prevents.
 - **parallel-build** — executes a plan across parallel subagents in three
   phases (foundation → implementation → review), with a `PROGRESS.md` designed
   so a fresh session can resume after a crash.

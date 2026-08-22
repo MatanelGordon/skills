@@ -8,7 +8,8 @@
       "files": [],
       "expectations": [
         "Existing plan used as source material",
-        "Output is the structured reviewable artifact with diagrams/questions"
+        "Output is the structured reviewable artifact with diagrams/questions",
+        "Actual plan URL appears in chat as the handoff, not just an opened preview"
       ]
     },
     {

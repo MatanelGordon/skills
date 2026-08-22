@@ -39,12 +39,12 @@
     {
       "id": 4,
       "prompt": "Continue the checkout-refactor work from yesterday.",
-      "expected_output": "Finds .plan/checkout-refactor/, reads plan.md status and amendments before doing anything, and respects Status - never executing a draft.",
+      "expected_output": "Looks for .plan/checkout-refactor/plan.md, finds nothing, says so rather than silently re-planning or inventing prior work, and offers to create the plan now.",
       "files": [],
       "expectations": [
-        "Reads the existing plan.md rather than re-planning",
-        "Checks the Status line before acting",
-        "Consults Amendments to learn what execution already changed"
+        "Checks for .plan/checkout-refactor/plan.md before acting",
+        "States that no plan exists rather than silently re-planning",
+        "Offers to write the plan rather than assuming yesterday's work happened"
       ]
     }
   ]

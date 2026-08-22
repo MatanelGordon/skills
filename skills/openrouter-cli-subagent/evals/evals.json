@@ -62,8 +62,7 @@
       "expectations": [
         "Refuses to describe same-model review as independent",
         "Labels same-model review as a smoke test that shares the author's blind spots",
-        "Offers a paid review pass as the cheaper-than-it-sounds alternative, since reviews read a diff",
-        "Suggests lowering the reviewer context floor to widen the family pool"
+        "Offers a paid review pass as the cheaper-than-it-sounds alternative, since reviews read a diff"
       ]
     },
     {
@@ -101,6 +100,19 @@
         "States what raising or removing the price ceiling would mean per run",
         "Confirms the wallet can cover the intended spend",
         "Does not treat 'money is no object' as licence to skip the review gates"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Dispatch a codex subagent through ori on a free model to fix the failing test in this worktree.",
+      "expected_output": "Prepares $HOME/.ori-codex via ori-codex-home.sh, then launches ori codex with CODEX_HOME pointing there, passes the model before --, runs unsandboxed, and defers worktree/prompt/merge mechanics to cli-coding-subagents.",
+      "files": [],
+      "expectations": [
+        "Runs scripts/ori-codex-home.sh before dispatching",
+        "Launches with CODEX_HOME=$HOME/.ori-codex",
+        "Passes --model <openrouter-model-id> before --",
+        "Uses --dangerously-bypass-approvals-and-sandbox",
+        "Defers worktree, prompt contract and merge mechanics to cli-coding-subagents"
       ]
     }
   ]

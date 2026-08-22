@@ -15,14 +15,14 @@
     },
     {
       "id": 2,
-      "prompt": "How do I connect to the known host matanel-win11 in this repository?",
-      "expected_output": "Reads .memory/index.md first, tag-matches the remote-host topic, then opens the one matching topic file or sub-index entry without repository-wide spelunking.",
+      "prompt": "How do I connect to the host matanel-win11? This repository has no .memory/ directory.",
+      "expected_output": "Checks for .memory/index.md, finds nothing, says so honestly rather than guessing connection details, and proceeds normally without inventing memory content.",
       "files": [],
       "expectations": [
-        "Consults .memory/index.md before opening topic files",
-        "Uses descriptions and tags to select one matching file",
-        "Does not begin with repo-wide grep or load all .memory files",
-        "Uses grep -ri on .memory only as a fallback when the index has no match"
+        "Checks for .memory/index.md before answering",
+        "States that no memory entry exists rather than inventing one",
+        "Proceeds normally without treating absence as a hidden constraint",
+        "Does not begin with repo-wide grep or fabricate connection details"
       ]
     },
     {

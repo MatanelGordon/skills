@@ -10,6 +10,7 @@
         "Sweeps for an existing CSV library before writing serialization code",
         "States a plan before implementing",
         "Writes the test first and runs it to observe the failure",
+        "Runs a review by eyes that did not write the code, triaged by severity",
         "Commit message explains why, conventional format"
       ]
     },

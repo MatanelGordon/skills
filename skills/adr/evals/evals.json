@@ -14,24 +14,24 @@
     },
     {
       "id": 2,
-      "prompt": "Plan a refactor of the billing module to call the ledger service directly over HTTP.",
-      "expected_output": "Reads .adr/ first; if a recorded decision (e.g. events-only between contexts) contradicts the ask, stops and names the ADR rather than silently planning against it.",
+      "prompt": "Plan a refactor of the billing module to call the ledger service directly over HTTP. This repo has no .adr/ directory yet.",
+      "expected_output": "Checks for .adr/, finds nothing, states that no recorded decision constrains the plan, and proceeds without inventing a constraint.",
       "files": [],
       "expectations": [
         "Lists/reads .adr/ before proposing the plan",
-        "A contradicting ADR is cited by number and title with options: comply or supersede",
         "Absence of an ADR is treated as no constraint, not silently assumed"
       ]
     },
     {
       "id": 3,
-      "prompt": "We're reversing ADR-0004 - we're adopting the CSV library after all.",
-      "expected_output": "Writes a NEW ADR superseding 0004, marks the old one 'superseded by', leaves its body intact.",
+      "id": 3,
+      "prompt": "We're reversing ADR-0004 - we're adopting the CSV library after all. The old ADR is titled 'JSON only - no CSV parsing' and records that we chose JSON because we feared CSV quoting bugs. There is no .adr/ directory in this repo yet.",
+      "expected_output": "Proposes writing a NEW ADR superseding 0004 that references it by number and title, marks 0004 'Status: superseded by' rather than editing or deleting it, and carries the old decision's reasoning forward intact.",
       "files": [],
       "expectations": [
-        "New ADR references the old one",
-        "Old ADR gets Status: superseded, body untouched",
-        "Nothing is deleted or rewritten"
+        "New ADR references ADR-0004 by number",
+        "Old ADR gets Status: superseded by the new one, not edited or deleted",
+        "The old decision's reasoning is carried forward, not erased"
       ]
     },
     {

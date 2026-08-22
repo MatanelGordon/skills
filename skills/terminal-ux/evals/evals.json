@@ -10,7 +10,8 @@
         "Chart logic is pure functions tested without React",
         "Layout via Box, no manual space-padding arithmetic",
         "No .length for terminal width; string-width or Box sizing",
-        "Static used for append-only regions"
+        "Static used for append-only regions",
+        "High-frequency updates throttled before they reach state"
       ]
     },
     {

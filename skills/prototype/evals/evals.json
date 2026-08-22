@@ -10,6 +10,7 @@
         "States the question in one sentence at the top of the prototype before writing logic",
         "Predicts the answer before running, so the run can surprise",
         "Keeps the model pure and separate from the throwaway scenario runner",
+        "Scenario list prints state after every step so results are observable",
         "Adds no tests, no error handling beyond runnability, and no persistence",
         "Pushes scenarios through the awkward cases, not just the happy path"
       ]

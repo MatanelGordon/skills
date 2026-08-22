@@ -114,11 +114,35 @@ the script at the start of every run, and again if a model starts failing.
 That is the default split. Orchestration holds the most context and makes the
 decisions that are expensive to get wrong; mechanical fixes do not.
 
+### Codex needs an isolated CODEX_HOME
+
+`ori codex` injects OpenRouter auth into the environment, but the Codex CLI
+still reads its config, instructions, rules, and skills from `CODEX_HOME` —
+which defaults to `~/.codex`. Sharing the interactive home risks clobbering
+session state and leaking the wrong model config into a subagent run. Before
+dispatching any `ori codex` subagent, prepare an isolated home:
+
+```bash
+"$SK/scripts/ori-codex-home.sh"   # idempotent; creates $HOME/.ori-codex with symlinks to AGENTS.md, rules/, and skills/
+```
+
+Then launch every codex subagent through it:
+
+```bash
+CODEX_HOME="$HOME/.ori-codex" ori codex --model <openrouter-model-id> -- \
+  exec --dangerously-bypass-approvals-and-sandbox -C "$WT" -o "$OUT" "$(cat prompt.md)" < /dev/null > "$LOG" 2>&1
+```
+
+**Unsandboxed is required** (`--dangerously-bypass-approvals-and-sandbox`):
+without it the agent hangs on a prompt nobody will answer — see
+`cli-coding-subagents/references/invocation.md` for why this flag is load-bearing.
+For everything else (worktrees, prompt contract, terse output, merge, cleanup,
+resume), follow `cli-coding-subagents` unchanged; it owns those mechanics.
+
 The model is an **`ori` flag**, before the `--`:
 
 ```bash
 ori claude --model nvidia/nemotron-3-ultra-550b-a55b:free -- -p "$(cat prompt.md)"
-ori codex  --model z-ai/glm-5.2:free -- exec "$(cat prompt.md)"
 ```
 
 **Not** `ori claude -- --model …`. Everything after `--` is passed to the harness

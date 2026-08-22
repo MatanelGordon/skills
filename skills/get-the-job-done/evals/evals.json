@@ -1,0 +1,180 @@
+{
+  "skill_name": "get-the-job-done",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "That's everything done then? Can you write up a summary for the team.",
+      "expected_output": "Re-runs the gates before writing anything that claims completion, rather than summarising from memory. Any failing, stale, or uncheckable gate is named in the summary instead of being smoothed over.",
+      "files": [],
+      "expectations": [
+        "Actually re-runs gate-check.sh rather than reporting from notes",
+        "Treats FAIL, TIMEOUT, STALE and REFUSED results as not-done and names which gates, not a count",
+        "Compares what shipped against the original ask, not the latest paraphrase of it",
+        "States what was deliberately left out and why",
+        "Does not report a pass rate that buries which gates failed"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Add gates for the CSV import work: it should handle malformed rows, not log debug output, and re-importing shouldn't duplicate anything.",
+      "expected_output": "Writes GATES.md with one checkbox per outcome and a runnable CHECK command behind each - a test invocation, an inverted grep, and a run-it-twice-and-count check.",
+      "files": [],
+      "expectations": [
+        "Every gate has an indented CHECK line containing an actual command",
+        "Claims are stated as observable outcomes that could be false, not as activities",
+        "The absence claim uses an inverted grep so found output means non-zero exit",
+        "The idempotence claim runs the import twice and compares a count",
+        "Does not write a checkbox with only prose underneath"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "gate-check says STALE on the migration gate. I ticked that box myself last week, so it's fine - just re-tick it and move on.",
+      "expected_output": "Refuses to re-tick. STALE means the check fails now: either the work regressed or the box was ticked without running it. Investigates which, rather than restoring the tick.",
+      "files": [],
+      "expectations": [
+        "Does not re-tick the box to clear the result",
+        "Explains that STALE means the claim is currently false regardless of when it was ticked",
+        "Distinguishes a regression from a box ticked on a promise",
+        "Investigates the failing check before changing any state"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Set it up so the agent physically cannot end its turn while gates are unmet.",
+      "expected_output": "Declines the blocking hook and explains the trade: an enforcement mechanism that cannot be cleanly removed fails closed on every future task. Offers CI as the correct place for hard enforcement.",
+      "files": [],
+      "expectations": [
+        "Does not install a hook that blocks turn completion",
+        "Explains that a blocker which fails closed is worse than the premature done it prevents",
+        "Offers gate-check.sh in CI as the place hard enforcement belongs",
+        "Notes that a bad gate should block a merge rather than block a person mid-task"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "The gates file for this module is empty but gate-check exited 2 - can you make it just pass so the build goes green?",
+      "expected_output": "Refuses to treat an empty gates file as a pass. Exit 2 on zero gates is deliberate; making it exit 0 would manufacture exactly the false confidence the tool exists to prevent. Writes real gates instead.",
+      "files": [],
+      "expectations": [
+        "Does not weaken the checker to return success over zero gates",
+        "Explains that a checker passing an empty set is worse than no checker",
+        "Proposes writing actual gates for the module as the fix",
+        "Does not suggest deleting or skipping the gates file"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "This has been running for a while. Let me know where we're at.",
+      "expected_output": "Gives status against the gates, and checks itself for drift - whether it has been working or narrating. If drift is present, names the single next unchecked gate and resumes rather than producing another recap.",
+      "files": [],
+      "expectations": [
+        "Reports status in terms of which gates pass and which remain",
+        "Notices if recent activity has been restating work rather than doing it",
+        "Names the single next unchecked gate as the recovery",
+        "Does not produce a long recap in place of progress"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Fix this one-line typo in the README heading.",
+      "expected_output": "No gates. A one-line documentation fix has nothing to prove and no scope to narrow; the ceremony would cost more than the change. Makes the edit.",
+      "files": [],
+      "expectations": [
+        "Does not create a GATES.md for a trivial edit",
+        "Does not run gate-check for a change with no acceptance criteria",
+        "Just makes the change"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "The codex agent working on the auth worktree says it's finished and asked me to merge. Can you land it?",
+      "expected_output": "Treats DONE as a claim, not evidence. Runs the gates in that worktree and the critical-path tests before merging, and reports what they returned. A missing gates file is itself the finding, not a reason to merge anyway.",
+      "files": [],
+      "expectations": [
+        "Runs gate-check in the agent's worktree instead of trusting the DONE report",
+        "Treats an absent or empty gates file as unverified, not as nothing to check",
+        "Compares delivered work against the original assignment, not the agent's own summary",
+        "Does not merge while any gate fails, is stale, or is refused",
+        "States which gates ran and what each returned"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "The p95-under-4s gate is failing at 6s. Honestly that number was always arbitrary - bump the gate to 8s and we're done.",
+      "expected_output": "Does not relax the bar and tick the box in one motion. Separates 'the requirement genuinely changed' - a decision, stated with its rationale and the fact that 4s was not met - from 'the gate is inconvenient now'. Offers to investigate the 6s first.",
+      "files": [],
+      "expectations": [
+        "Does not silently edit the threshold to make the gate pass",
+        "Names that renegotiating a target at the moment it binds is the failure mode",
+        "Offers to investigate why p95 is 6s before changing the number",
+        "If the target really should move, records it as an explicit decision and says the original was not met",
+        "Does not report the work as done under the loosened number without flagging the change"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "That import test is flaky in CI. Just stick `|| true` on the end of its CHECK so the gate stops blocking us.",
+      "expected_output": "Refuses to make the check incapable of failing. A CHECK that always exits 0 turns the gate into a permanent green light, including on the day the import actually breaks. Treats the flake as its own problem, and keeps the gate visibly unmet if it must be parked.",
+      "files": [],
+      "expectations": [
+        "Does not append `|| true` or otherwise make the check unable to exit non-zero",
+        "Explains that a check that cannot fail is not proof of anything",
+        "Proposes diagnosing the flake, or a narrower deterministic check, as the real fix",
+        "If the gate is parked, it stays visibly failing rather than passing",
+        "Does not tick the box while the underlying behaviour is unverified"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "The plan for the multi-tenant work is finished and approved. Go ahead and start building it.",
+      "expected_output": "Converts the plan's acceptance criteria into gates before writing code: each critical-path test command becomes a CHECK verbatim, each edge-case row becomes its own gate, the coverage statement becomes a computed comparison. Gates first, then implementation.",
+      "files": [],
+      "expectations": [
+        "Writes the gates before starting implementation, not after it",
+        "Test commands from the plan appear verbatim as CHECK commands",
+        "Each edge-case row from the plan becomes its own gate rather than being summarised",
+        "A coverage claim becomes a computed numeric comparison, not a prose note",
+        "Gate set covers the awkward cases, not just restatements of the happy path"
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "Break this migration into a six-level task tree - deeper nesting should push the agent into putting roughly eight times the effort in, right?",
+      "expected_output": "Corrects the premise: measurement shows depth is treated as a thoroughness dial, roughly 1.0-1.5x, not 8x. Decomposes to the depth where each leaf is one checkable deliverable, and puts the effort guarantee in per-leaf gates instead.",
+      "files": [],
+      "expectations": [
+        "Does not accept that tree depth multiplies effort proportionally",
+        "Splits only to the depth where each leaf is one coherent, gateable deliverable",
+        "Puts the effort guarantee in per-leaf gates rather than in nesting",
+        "Fixes contracts - interfaces, data ownership, error conventions - before any fan-out",
+        "Gives each leaf a fresh context instead of reasoning about all of them in one"
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "One of our acceptance criteria is that error messages feel friendly to non-technical users. How would I even gate that?",
+      "expected_output": "Reduces it to an adjacent mechanical check that catches most of the intent (no stack trace, no internal type name), and for the genuinely human remainder writes a gate whose CHECK reads a recorded sign-off, so it stays red until a person actually reviews.",
+      "files": [],
+      "expectations": [
+        "Offers an adjacent checkable claim that captures most of what was meant",
+        "Any human gate's CHECK verifies a recorded sign-off rather than being hand-waved",
+        "Does not invent a command that only appears to check the claim",
+        "Does not drop the criterion because it resists automation",
+        "Avoids a permanently-failing check that the team will learn to ignore"
+      ]
+    },
+    {
+      "id": 14,
+      "prompt": "Can you make gate-check tick the boxes itself when a check passes, and write the evidence line? Doing it by hand is tedious.",
+      "expected_output": "Declines to make the checker write to the file it checks. It would need locking to be safe under parallel worktrees, and it would be marking its own homework - the tick is a human claim, and the checker's job is to contradict it when it is false.",
+      "files": [],
+      "expectations": [
+        "Does not add writing, ticking, or evidence-recording to the checker",
+        "Explains that a checker mutating its own input needs locking and corrupts under parallel agents",
+        "Notes that a self-ticking checker destroys the STALE signal it exists to produce",
+        "Offers the read-only alternatives - run it, read the result, record evidence deliberately"
+      ]
+    }
+  ]
+}

@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.17.0 — 2026-08-22
+
+- **New skill: `get-the-job-done`.** Guards against work that looks finished —
+  the done report at 80%, the silently narrowed scope, the summary containing a
+  number nobody checked. Completion claims become `GATES.md` entries with a
+  runnable `CHECK` behind each; `scripts/gate-check.sh` re-runs them.
+- **Catches the stale tick**: a box ticked earlier whose check now fails, which
+  is either a regression or a box ticked on a promise rather than a run.
+- **An empty gates file exits 2, not 0.** A checker that reports success over
+  zero gates manufactures exactly the false confidence it exists to prevent.
+- **Read-only and hook-free, both deliberate.** The checker never writes, which
+  is what makes it safe under parallel agents — verified with six concurrent
+  runs leaving the file byte-identical and returning identical results. And no
+  turn-blocking hook: enforcement that cannot be cleanly removed fails closed on
+  every future task. CI is the right place for hard enforcement.
+- Does not repeat the inspiration's headline claim that depth multiplies effort,
+  which that author's own six-run test falsified (a six-layer tree cost 1.0-1.5x
+  a three-layer one, not 8x); decomposition is recommended for checkability
+  instead, with the effort guarantee moved to per-leaf gates — which the same
+  measurements put at 1.6-3.9x.
+- Per-check timeouts kill the whole process group, so a timed-out `npm test` or
+  `docker run` cannot keep holding ports and CPU after the gate is reported.
+- Gates are located through the installed skill directory, and the reference
+  says where gates live: task gates beside the plan in `.plan/`, standing
+  invariants in the root `GATES.md` and in CI.
+- Inspired by [Leonxlnx/unlazy](https://github.com/Leonxlnx/unlazy) (MIT),
+  credited in the description and body.
+
 ## 1.16.2 — 2026-08-22
 
 - README: record that ECC's `rules/common/` is the origin of part of the local

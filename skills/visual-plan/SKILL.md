@@ -42,6 +42,16 @@ surface.
 
 ## Plan Discipline
 
+- **Boundary with `deep-plan`.** The `deep-plan` skill owns the committed,
+  text-based plan file at `.plan/<name>/plan.md` — it is the source of truth for
+  execution, resume, and parallel-build coordination. `visual-plan` does not own
+  that file and must not replace it. When both apply: run `deep-plan` first to
+  produce the durable `.plan/` artifact, then use `/visual-plan` with that text
+  as the source plan when the user wants a reviewable visual surface on top.
+  If the user only asks for a visual review surface and no `.plan/` work is
+  underway, `visual-plan` fires alone. Never hand off a hosted visual link as
+  the substitute for the committed plan file — they are different deliverables
+  owned by different skills.
 - **Gate thoughtfully.** A visual plan is a richer review surface, not only a
   tool for giant projects. Use it when the user needs to see, compare, comment
   on, or approve a direction before code, even for a modest UI/state/workflow

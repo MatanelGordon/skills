@@ -31,12 +31,13 @@
     {
       "id": 3,
       "prompt": "Build out the whole billing module for this project - subscriptions, invoices, webhooks, and the dunning flow. Use parallel agents.",
-      "expected_output": "In a repo under Desktop/Playgrounds, phase 3 runs code review only and explicitly skips the security agents, recording the skip and its reason in PROGRESS.md. In a repo outside that path, security agents run.",
+      "expected_output": "Runs the mechanical Desktop/Playgrounds check on the repo root and acts on its result: under Playgrounds, phase 3 runs code review only and records the security skip in PROGRESS.md; outside it, security agents run.",
+      "files": [],
       "expectations": [
         "Checks the repository root path mechanically (git rev-parse --show-toplevel) to decide on security review",
-        "Skips the security agents when the repo is under Desktop/Playgrounds",
+        "Runs security agents when the repo root is not under Desktop/Playgrounds",
         "Still runs the code-review agents producing CR.md",
-        "Records the security skip and its reason in PROGRESS.md",
+        "Records the security decision (run or skip) and its reason in PROGRESS.md",
         "Does not silently omit the security phase without saying so"
       ]
     },

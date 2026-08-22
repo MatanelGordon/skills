@@ -16,21 +16,24 @@ metadata:
 # Functional C#
 
 Modern C# is a good functional language wearing an OOP costume. Records, pattern
-matching, switch expressions, LINQ, and immutable collections cover most needs.
+matching, switch expressions, LINQ, and immutable collections cover most of what
+you need — and the compiler enforces far more than most C# codebases ask of it.
 
 ## The five rules
 
-1. **Records, not classes,** for data. Immutable by construction.
+1. **Records, not classes,** for anything that is data. Immutable by construction.
 2. **Static pure functions** for logic. No hidden state, no `this`, no ambient dependencies.
 3. **Sealed record hierarchies** for "one of N states", matched exhaustively.
 4. **`Result`/`ErrorOr` for expected failures.** Exceptions are for bugs and infrastructure.
 5. **Pure core, imperative shell.** EF entities and I/O never reach the domain.
 
-**Scope:** apply at domain boundaries and in new domain code. Framework conventions
-(ASP.NET models, EF entities), stdlib exception culture, and surrounding codebase
-win when they conflict — see "Don't be dogmatic".
+**Scope:** apply these rules at domain boundaries and in new domain code.
+Framework conventions (ASP.NET models, EF entities), stdlib exception culture,
+and the surrounding codebase win when they conflict — see "Don't be dogmatic".
 
 ## Start with the compiler
+
+Most "functional C#" is a compiler configured to actually enforce things:
 
 ```xml
 <!-- Directory.Build.props or csproj -->
@@ -40,112 +43,276 @@ win when they conflict — see "Don't be dogmatic".
 </PropertyGroup>
 ```
 
-Without nullable reference types enabled, records and unions compile but null
-warnings never fire. Treat warnings as errors so CS8509 is visible.
+Without nullable reference types enabled, records and unions still compile but
+the null-related warnings the rest of this skill relies on never fire. Treat
+warnings as errors so CS8509 (below) is visible instead of noise.
 
 ---
 
 ## Records and immutability
 
 ```csharp
-// ✗ Anemic mutable class — any caller can corrupt it
-public class Order { public decimal Total { get; set; } public OrderStatus Status { get; set; } }
+// ✗ Anemic mutable class — any caller can corrupt it at any time
+public class Order
+{
+    public decimal Total { get; set; }
+    public OrderStatus Status { get; set; }
+}
 
 // ✓ Immutable record with value equality and non-destructive update
 public sealed record Order(OrderId Id, Money Total, OrderState State);
+
 var repriced = order with { Total = newTotal };   // original untouched
 ```
 
 - `sealed record` for domain data; `readonly record struct` for small values
   (`Money`, `Quantity`, ids) to avoid allocation.
-- Every property init-only. If you type `set;`, stop and ask why.
-- `with` for updates — shallow copy, so nested records need nested `with`.
-- Records give structural equality free.
+- Every property init-only. If you type `set;` in a domain model, stop and ask why.
+- `with` for updates — it is a shallow copy, so nested records need nested `with`.
+- Records give you structural equality free, which is what you almost always want
+  for values and almost never get right by hand.
 
 ### Collections
 
-`List<T>` in a record breaks immutability — reference readonly, contents not.
+`List<T>` in a record is a hole in your immutability — the reference is readonly,
+the contents are not.
 
 ```csharp
 using System.Collections.Immutable;
 using System.Collections.Frozen;
 
 public sealed record Order(OrderId Id, ImmutableList<OrderLine> Lines);
-var updated = order with { Lines = order.Lines.Add(line) };
+
+var updated = order with { Lines = order.Lines.Add(line) };  // structural sharing
 ```
 
 | Use | For |
 |---|---|
-| `ImmutableArray<T>` | **default** for domain collections — compact, fast read, list patterns |
-| `ImmutableList<T>` | frequent mid-collection inserts/removals (tree, structural sharing) |
+| `ImmutableArray<T>` | **default** for domain collections — compact, fast to read, supports list patterns |
+| `ImmutableList<T>` | frequent inserts/removals mid-collection (tree, structural sharing); no list-pattern support |
 | `FrozenDictionary<K,V>` / `FrozenSet<T>` | built once, read many — lookup tables, config |
-| `IReadOnlyList<T>` | parameters, when only promising not to mutate |
+| `IReadOnlyList<T>` | parameters, when you only need to promise you won't mutate |
 
-`ImmutableArray<T>.Add` copies (O(n)); `ImmutableList<T>.Add` shares (O(log n)).
-Pick by access: mostly-read → array, frequently-rebuilt → list.
+Note `ImmutableArray<T>.Add` copies the whole array (O(n)); `ImmutableList<T>.Add`
+shares structure (O(log n)). Pick by access pattern: mostly-read → array,
+frequently-rebuilt → list.
 
-Avoid `IEnumerable<T>` in domain models: deferred execution means value can change
-between enumerations. Materialize at boundary with `.ToImmutableList()`.
+Avoid `IEnumerable<T>` in domain models: deferred execution means the value can
+change between enumerations, or be enumerated twice at a cost. Materialize at the
+boundary with `.ToImmutableList()`.
 
 ## Discriminated unions
 
-C# has no native DU **in a released version** — .NET 11 preview only
-(`public union Result<T>(Success<T>, Failure);`); don't use in production. Verify
-availability first. Stable encoding:
+C# has no native DU **in a released version** — it is a .NET 11 preview feature
+(`public union Result<T>(Success<T>, Failure);`), so don't write it in production
+today. Verify current availability before using it. The stable encoding:
 
 ```csharp
 public abstract record OrderState
 {
-    private OrderState() { }  // seals hierarchy externally
-    public sealed record Unpaid(DateTimeOffset CreatedAt) : OrderState;
-    public sealed record Paid(DateTimeOffset PaidAt, Money Amount) : OrderState;
+    private OrderState() { }                      // seals the hierarchy externally
+
+    public sealed record Unpaid(DateTimeOffset CreatedAt)                : OrderState;
+    public sealed record Paid(DateTimeOffset PaidAt, Money Amount)       : OrderState;
     public sealed record Shipped(DateTimeOffset ShippedAt, string Track) : OrderState;
 }
 ```
 
-Private constructor makes it a real closed union — no outside type can extend.
+The private constructor is what makes it a real closed union — no outside type can
+extend it, so the compiler knows the case list is complete.
 
 ```csharp
 public static string Describe(OrderState state) => state switch
 {
-    OrderState.Unpaid u => $"Unpaid since {u.CreatedAt}",
-    OrderState.Paid p => $"Paid {p.Amount} at {p.PaidAt}",
-    OrderState.Shipped s => $"Shipped {s.Track} at {s.ShippedAt}",
-    _ => throw new UnreachableException()  // CS8509 is only a warning
+    OrderState.Unpaid            => "Awaiting payment",
+    OrderState.Paid p            => $"Paid {p.Amount}",
+    OrderState.Shipped s         => $"Shipped ({s.Track})",
+    _ => throw new UnreachableException(),
 };
 ```
 
-Add a `Match` method to every union; don't trust switch exhaustiveness.
+**Know what the compiler does and does not give you here.** C# does *not* treat a
+private-constructor record hierarchy as a closed union: a switch over it always
+warns CS8509 ("not exhaustive"), because a reference type can also be `null` —
+and adding a `null` arm just changes the warning to "'not null' is not covered".
+Verified on .NET 8. So CS8509 fires whether or not your cases are complete, which
+means **you cannot use it as an exhaustiveness gate**, and `_ => throw` is the
+normal thing to write rather than a mistake.
 
-## Result for expected failures
+For genuine compile-time exhaustiveness, put a `Match` method on the union — one
+delegate per case, so adding a case breaks every caller at compile time:
 
 ```csharp
-public readonly record struct Result<T>(T Value, Error? Error)
+public abstract record OrderState
 {
-    public bool IsOk => Error is null;
-    public static Result<T> Ok(T v) => new(v, null);
-    public static Result<T> Fail(Error e) => new(default!, e);
-    public TResult Match<TResult>(Func<T, TResult> ok, Func<Error, TResult> fail) =>
-        IsOk ? ok(Value) : fail(Error!);
+    private OrderState() { }
+    // ... cases ...
+
+    public T Match<T>(
+        Func<Unpaid, T> unpaid,
+        Func<Paid, T> paid,
+        Func<Shipped, T> shipped) => this switch
+    {
+        Unpaid u  => unpaid(u),
+        Paid p    => paid(p),
+        Shipped s => shipped(s),
+        _ => throw new UnreachableException(),
+    };
+}
+
+var text = state.Match(
+    unpaid:  _ => "Awaiting payment",
+    paid:    p => $"Paid {p.Amount}",
+    shipped: s => $"Shipped ({s.Track})");
+```
+
+Writing that by hand is tedious — **Dunet** (source generator) or **OneOf**
+generate it for you. Use switch expressions for local branching, and `Match` at
+the boundaries where a missed case would be a real bug.
+
+Async composition: `Result`/`ErrorOr` chains compose with `async`/`await` —
+the library types provide awaitable/Task overloads, so an awaited step chains
+into the next `.Then()` like any sync one. See `references/railway.md`.
+
+**This replaces** the enum-plus-nullable-fields pattern, where `Status = Shipped`
+with `Tracking = null` is representable and someone will eventually construct it.
+
+### Pattern matching
+
+```csharp
+public static decimal Fee(Order o) => o switch
+{
+    { State: OrderState.Shipped, Total.Amount: > 100 } => 0m,
+    { State: OrderState.Shipped }                      => 4.99m,
+    { State: OrderState.Paid }                         => 2.99m,
+    _                                                  => 0m,
+};
+
+// list patterns — need ImmutableArray<T>, T[] or another sliceable type.
+// ImmutableList<T> does NOT support them (no Range indexer). Verified.
+ImmutableArray<OrderLine> lines = [..order.Lines];
+var summary = lines switch
+{
+    []                       => "empty",
+    [var only]               => $"one: {only.Sku}",
+    [var first, .. var rest] => $"{first.Sku} +{rest.Length}",
+};
+```
+
+Prefer switch *expressions* over switch statements — they return a value, cannot
+fall through, and force every path to produce something.
+
+## Errors as values
+
+```csharp
+// ✗ Expected failure as an exception: invisible in the signature, costly,
+//   and callers routinely forget to catch it
+public User Register(string email)
+{
+    if (!email.Contains('@')) throw new ValidationException("bad email");
+    ...
+}
+
+// ✓ Failure is part of the return type
+public static Result<User> Register(string email) =>
+    Email.TryParse(email)
+         .Bind(CreateUser)
+         .Map(WithDefaults);
+```
+
+Use a library rather than hand-rolling — they are small, battle-tested, and
+consistent:
+
+| Library | Best for |
+|---|---|
+| **ErrorOr** | pragmatic default; `ErrorOr<T>`, one or many `Error`s, built-in `.Then()`/`.Match()`, low ceremony |
+| **OneOf** | genuine N-way returns (`OneOf<Found, NotFound, Conflict>`) |
+| **CSharpFunctionalExtensions** | small `Result`/`Maybe`, mature, minimal learning curve |
+| **LanguageExt** | full FP: `Option`, `Either`, `Fin`, `Validation`, `Eff`/`IO`, immutable collections — powerful, steep, adopt team-wide or not at all |
+
+```csharp
+// ErrorOr, railway style
+public static ErrorOr<Order> Place(Cart cart, Customer c) =>
+    ValidateCart(cart)
+        .Then(v => CheckCredit(c, v))
+        .Then(CreateOrder)
+        .Else(errors => Error.Failure(description: Summarize(errors)));
+```
+
+`Bind`/`Then` short-circuits: once on the failure track, later steps are skipped.
+That is railway-oriented programming, and it removes the nested `if (result.
+IsFailure) return result;` staircase.
+
+**Exceptions are still correct for**: programmer error (`ArgumentNullException` on
+a public API contract), truly exceptional infrastructure faults, and anything the
+caller cannot act on. Don't wrap the whole world in `Result` — Andrew Lock's
+caveat applies: don't apply the pattern just because you can.
+
+Type your errors. A `Result<T, string>` throws away the caller's ability to react
+differently to "not found" versus "conflict".
+
+## Value objects over primitives
+
+```csharp
+// ✗ Primitive obsession — nothing stops Register(phone, email)
+public static void Register(string email, string phone) { }
+
+// ✓ The compiler now enforces meaning
+public readonly record struct Email
+{
+    private Email(string value) => Value = value;
+    public string Value { get; }
+
+    public static Result<Email> TryParse(string raw) =>
+        raw.Contains('@') ? new Email(raw) : Result.Fail<Email>("invalid email");
 }
 ```
 
-- Exceptions for: infrastructure faults, invariant violations, programmer errors.
-- `Result`/`ErrorOr` for: validation, business rules, missing records, concurrency.
-- `Result.Combine` accumulates errors; `Bind` chains; async via `Result.Task`.
+Private constructor + static `TryParse` is *parse, don't validate*: once you hold
+an `Email`, it is valid, permanently, with no re-checking anywhere downstream. Do
+this for ids especially — `OrderId` and `CustomerId` as bare `Guid`s are one
+transposition away from a production incident.
+
+## Pure functions and pipelines
+
+```csharp
+// static local functions cannot capture `this` or locals — purity, enforced
+public decimal ComputeTotal(Order order)
+{
+    return Sum(order.Lines);
+    static decimal Sum(IEnumerable<OrderLine> ls) => ls.Sum(l => l.Price * l.Quantity);
+}
+```
+
+Two extension methods carry most pipelines:
+
+```csharp
+public static TOut Map<TIn, TOut>(this TIn x, Func<TIn, TOut> f) => f(x);
+public static T Tap<T>(this T x, Action<T> act) { act(x); return x; }
+
+var total = order.Map(ApplyFees).Map(ApplyDiscount).Map(ApplyTax);
+```
+
+LINQ is already functional — lean on it. `Select`/`Where`/`Aggregate` over `for`
+loops that mutate an accumulator, when it reads better.
 
 ## Parameter management
 
-1–3 positional parameters ordered by importance. 4+ parameters → environment/context
-record. Order: data first, dependencies/services last, callbacks last.
+1–3 positional parameters, ordered by importance. When several parameters share
+the same role or relevance tier, group them into a single record. Four or more
+parameters always become an environment/context record — the call site should
+read like a sentence, not a riddle.
+
+Order: data first, dependencies/services last, callbacks last.
 
 ```csharp
-// ✗ Six loose parameters
+// ✗ Six loose parameters — easy to transpose, unreadable at call sites
 public static Result<Order> Place(string sku, int qty, decimal price,
     string email, IClock clock, Func<Order, bool> validate) { ... }
 
 // ✓ Data grouped, dependency second, callback last
 public sealed record PlaceOrder(string Sku, int Qty, decimal Price, string Email);
+
 public static Result<Order> Place(PlaceOrder request, IClock clock,
     Func<Order, bool>? validate = null) { ... }
 ```
@@ -166,32 +333,34 @@ return decision.Match(
     errors  => Results.BadRequest(errors));
 ```
 
-Domain records never EF change-tracked entities — map explicitly at edge.
-Inject `TimeProvider`/`IClock` rather than `DateTime.UtcNow` in logic.
+Domain records are never EF change-tracked entities — map explicitly at the edge.
+Inject `TimeProvider`/`IClock` rather than calling `DateTime.UtcNow` in logic;
+that alone removes most of the need for mocking.
 
 ## Decider pattern
 
-Split "what should happen" from "how it is stored": pure `Decide` turns command +
-state into events, paired with mechanical `Evolve` fold applying one event to
-state. All rules in `Decide`; `Evolve` never decides.
+Split "what should happen" from "how it is stored": a pure `Decide` that turns a
+command and current state into events, paired with a dumb `Evolve` fold that
+applies one event to state. All business rules live in `Decide`; `Evolve` is
+mechanical and never makes decisions.
 
 ```csharp
 public static ImmutableList<OrderEvent> Decide(OrderState state, Command cmd) => cmd switch
 {
     Pay p when state is OrderState.Unpaid => [new OrderPaid(p.Amount, p.At)],
-    Ship s when state is OrderState.Paid => [new OrderShipped(s.Tracking, s.At)],
-    _ => [],
+    Ship s when state is OrderState.Paid  => [new OrderShipped(s.Tracking, s.At)],
+    _                                     => [],
 };
 
 public static OrderState Evolve(OrderState state, OrderEvent e) => (state, e) switch
 {
-    (OrderState.Unpaid, OrderPaid p) => new OrderState.Paid(p.Amount, p.At),
+    (OrderState.Unpaid, OrderPaid p)  => new OrderState.Paid(p.Amount, p.At),
     (OrderState.Paid, OrderShipped s) => new OrderState.Shipped(s.At, s.Tracking),
-    _ => state,
+    _                                 => state,
 };
 ```
 
-Shell persists events and folds `Evolve` to rebuild state. `Decide` tests are
+The shell persists events and folds `Evolve` to rebuild state. `Decide` tests are
 table-driven — no mocks, no DB, no clock.
 
 ---
@@ -200,41 +369,42 @@ table-driven — no mocks, no DB, no clock.
 
 | Reach for | Instead |
 |---|---|
-| mutable class with `get; set;` | `sealed record` init-only + `with` |
+| mutable class with `get; set;` | `sealed record` with init-only properties + `with` |
 | abstract base class | sealed record hierarchy + switch expression |
-| interface with one implementation | static function, or `Func<,>` parameter |
+| interface with exactly one implementation | a static function, or a `Func<,>` parameter |
 | `enum` + nullable fields | discriminated union (one case per state) |
 | `throw` on validation failure | `Result<T>` / `ErrorOr<T>` |
-| `List<T>` on domain type | `ImmutableArray<T>` default / `ImmutableList<T>` if rebuilt often |
-| `Dictionary` lookup | `FrozenDictionary` |
+| `List<T>` on a domain type | `ImmutableArray<T>` (default) / `ImmutableList<T>` if rebuilt often |
+| `Dictionary` lookup table | `FrozenDictionary` |
 | `string`/`Guid` identifiers | `readonly record struct` value objects |
-| stateful service with fields | static pure functions taking explicit inputs |
-| `DateTime.UtcNow` in logic | `TimeProvider` injected into shell |
+| stateful service with private fields | static pure functions taking explicit inputs |
+| `DateTime.UtcNow` inside logic | `TimeProvider` injected into the shell |
 | switch statement | switch expression (no fall-through, must return) |
-| switch over union without `Match` | add `Match`; don't trust exhaustiveness (CS8509) |
-| null checks everywhere | `Option`/`Maybe`, or union case |
+| switch over a union without a `Match` method | add a `Match`; don't trust switch exhaustiveness (CS8509) |
+| null checks everywhere | `Option`/`Maybe`, or a union case |
 | Strategy / Template Method | pass a `Func<,>` |
 
 ## Review checklist
 
 - [ ] Domain types are records; no `set;` accessors
-- [ ] Collections `ImmutableArray` default (`ImmutableList` when rebuild-heavy) / `FrozenDictionary`, not `List`/`Dictionary`
-- [ ] States are sealed record unions; every union boundary exposes `Match`, switch exhaustiveness only warning (CS8509); any default is `_ => throw new UnreachableException()`
+- [ ] Collections are `ImmutableArray` default (`ImmutableList` when rebuild-heavy) / `FrozenDictionary`, not `List`/`Dictionary`
+- [ ] States are sealed record unions; every union boundary exposes `Match`, since switch exhaustiveness is only a warning (CS8509) and not trustworthy. Any switch default is an explicit `_ => throw new UnreachableException()`
 - [ ] Expected failures return `Result`/`ErrorOr` with typed errors
-- [ ] Identifiers/validated strings are value objects, not primitives
-- [ ] Logic is `static` and takes everything as parameters
-- [ ] No `DateTime.UtcNow`, DB, HTTP, logging inside domain functions
-- [ ] EF entities don't escape repository/shell layer
+- [ ] Identifiers and validated strings are value objects, not primitives
+- [ ] Logic is `static` and takes everything it needs as parameters
+- [ ] No `DateTime.UtcNow`, DB, HTTP, or logging inside domain functions
+- [ ] EF entities do not escape the repository/shell layer
 - [ ] `<Nullable>enable</Nullable>` + warnings-as-errors in effect
 
 ## Don't be dogmatic
 
 C# is not F#. Keep interfaces where DI genuinely needs seams (repositories,
-external clients) — target is interfaces invented for one implementation, not all
-abstraction. Use exceptions for infrastructure faults and contract violations.
-`LanguageExt` is excellent but team decision, not unilateral; ErrorOr or
-CSharpFunctionalExtensions give most value with less onboarding. Match existing
-conventions.
+external clients) — the target is interfaces invented for one implementation, not
+all abstraction. Use exceptions for infrastructure faults and contract violations.
+`LanguageExt` is excellent but is a team decision, not a unilateral one; ErrorOr
+or CSharpFunctionalExtensions give most of the value with far less onboarding.
+Match the conventions already in the codebase.
 
 Deeper material: `references/railway.md` (Result composition, validation
-accumulation, async), `references/unions.md` (DU encodings and .NET 11 preview).
+accumulation, async), `references/unions.md` (DU encodings and the .NET 11
+preview syntax).

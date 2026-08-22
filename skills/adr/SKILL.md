@@ -14,115 +14,150 @@ metadata:
 
 # Architectural Decision Records
 
-An ADR records **why** a decision was made, so future readers don't undo it by accident or re-litigate from scratch.
+An ADR is a short markdown file recording **why** a decision was made, so a future
+reader — human or agent — doesn't undo it by accident or re-litigate it from
+scratch.
 
-Format adapted from [Matt Pocock's ADR skill](https://github.com/mattpocock/skills). Only ADR convention borrowed; no surrounding workflow implied.
+Format adapted from [Matt Pocock's ADR skill](https://github.com/mattpocock/skills).
+Only the ADR convention is borrowed; none of the surrounding workflow is implied.
 
-**Location: `./.adr/` at repo root**, committed to git. Sequential: `0001-slug.md`. Create directory lazily — only when first ADR written.
+**Location: `./.adr/` at the repo root**, committed to git. Sequential naming:
+`0001-slug.md`, `0002-slug.md`. Create the directory lazily — only when the first
+ADR is written.
 
 ---
 
 ## Reading: consult before you plan
 
-**Before proposing a plan, refactor, new dependency, or boundary change, check `.adr/`.**
+This is the half that makes ADRs worth keeping. **Before proposing a plan, a
+refactor, a new dependency, or a change to module boundaries, check `.adr/`.**
 
 ```bash
 ls .adr/ 2>/dev/null && grep -l . .adr/*.md 2>/dev/null | head -30
 ```
 
-If directory exists, read titles; read any ADR overlapping your change. Then:
+If the directory exists, read the titles; read in full any ADR whose subject
+overlaps what you're about to change. Then:
 
-- **Plan contradicts accepted ADR** — stop, name ADR by number/title. Options: work within decision, or supersede deliberately. Never silently plan against recorded decision.
-- **ADR constrains plan** — state constraint in plan ("ADR-0003 requires events, so this goes through bus").
-- **No ADR in territory** — proceed normally. Absence ≠ decision.
+- **If the plan contradicts an accepted ADR** — stop and say so, naming the ADR by
+  number and title. Present the options plainly: work within the decision, or
+  supersede it deliberately. Never silently plan against a recorded decision.
+- **If an ADR constrains the plan** — state the constraint in the plan itself
+  ("ADR-0003 requires contexts to talk via events, so this goes through the bus").
+- **If the plan is in territory with no ADR** — proceed normally. Absence of an ADR
+  is not a decision.
 
-Cite ADRs by number/title when informing reasoning.
+Cite ADRs by number and title when they inform your reasoning, so the user can
+check whether the record still reflects what they want.
 
 ## Writing: when a decision earns an ADR
 
-**Write on request, always.** Test below is for *offering*, not arguing with direct request.
+**Write on request, always.** When the user says to record a decision, do it — the
+test below is for deciding what to *offer*, not for arguing with a direct request.
 
-Otherwise, offer only when **all three** are true:
+Otherwise, offer one only when **all three** are true:
 
-1. **Hard to reverse** — changing mind later has real cost.
-2. **Surprising without context** — future reader asks "why this way?"
-3. **Real trade-off** — genuine alternatives existed, one picked for specific reasons.
+1. **Hard to reverse** — changing your mind later carries real cost.
+2. **Surprising without context** — a future reader will look at the code and ask
+   "why on earth did they do it this way?"
+3. **The result of a real trade-off** — genuine alternatives existed and one was
+   picked for specific reasons.
 
-Easy to reverse? Skip. Not surprising? Nobody wonders. No real alternative? Nothing beyond "obvious thing."
+Easy to reverse? Skip it; it'll just get reversed. Not surprising? Nobody will
+wonder. No real alternative? There's nothing to record beyond "we did the obvious
+thing."
 
 ### What qualifies
 
-- **Architectural shape** — "monorepo", "write model event-sourced, read model projected into Postgres".
-- **Integration patterns** — "Ordering and Billing communicate via domain events, not sync HTTP".
-- **Lock-in tech choices** — datastore, message bus, auth provider, deployment target. Not every library; ones taking a quarter to swap.
-- **Boundary/scope decisions** — "Customer data owned by Customer context; others reference by ID". Explicit no's matter as much as yes's.
-- **Deliberate deviations from obvious path** — "manual SQL instead of ORM because X". Stops next engineer "fixing" intentional choice.
-- **Constraints invisible in code** — compliance, partner SLAs, hardware limits, "response <200ms per partner contract".
-- **Non-obvious rejected alternatives** — if GraphQL considered and REST chosen for subtle reasons, record it, or it's proposed again in six months.
+- **Architectural shape** — "monorepo", "write model is event-sourced, read model projected into Postgres".
+- **Integration patterns** — "Ordering and Billing communicate via domain events, not synchronous HTTP".
+- **Technology choices carrying lock-in** — datastore, message bus, auth provider, deployment target. Not every library; the ones that would take a quarter to swap.
+- **Boundary and scope decisions** — "Customer data is owned by the Customer context; others reference it by ID only." The explicit no's matter as much as the yes's.
+- **Deliberate deviations from the obvious path** — "manual SQL instead of an ORM because X". These stop the next engineer from "fixing" something intentional.
+- **Constraints invisible in the code** — compliance rules, partner SLAs, hardware limits, "response times must stay under 200ms because of the partner contract".
+- **Rejected alternatives when the rejection is non-obvious** — if GraphQL was considered and REST chosen for subtle reasons, record it, or it will be proposed again in six months.
 
 ### What does not qualify
 
-Formatting/style, one-line-swap libraries, obvious-from-code, routine bug fixes. Trivia-filled `.adr/` = nobody reads.
+Formatting and style choices, library picks that are a one-line swap, anything
+already obvious from reading the code, and routine bug fixes. An `.adr/` folder
+full of trivia is one nobody reads.
 
 ## The format
 
-Minimal by default. Value in recording *that* and *why* — not filling sections.
+Minimal by default. The value is in recording *that* a decision was made and
+*why* — not in filling out sections.
 
 ```md
-# {Short title}
+# {Short title of the decision}
 
-{1-3 sentences: context, decision, why.}
+{1-3 sentences: the context, what was decided, and why.}
 ```
 
-That's a complete ADR. Most should look like this.
+That is a complete ADR. Most should look like this.
 
 ### Optional sections — only when they earn their place
 
-- **Status** (`proposed | accepted | deprecated | superseded by ADR-NNNN`) — when decisions revisited.
-- **Considered options** — when rejected alternatives worth remembering.
+- **Status** (`proposed | accepted | deprecated | superseded by ADR-NNNN`) — when decisions get revisited.
+- **Considered options** — when the rejected alternatives are worth remembering.
 - **Consequences** — when non-obvious downstream effects need calling out.
-- **Constraints this creates** — invariants future work must not violate. Include whenever decision implies ongoing rule, not one-time change. **This section makes ADR useful during planning.**
-- **Evidence** — benchmarks, commit hashes, run IDs, when decision rests on measurement not judgment.
+- **Constraints this creates** — the invariants future work must not violate. This
+  is the section that makes an ADR useful during planning; include it whenever the
+  decision implies an ongoing rule rather than a one-time change.
+- **Evidence** — benchmark numbers, commit hashes, run IDs, when the decision rests
+  on measurement rather than judgment.
 
-Record *why decision exists and which invariant it protects*, not just what changed.
+Record *why the decision exists and which invariant it protects*, not just what
+changed.
 
 ## Numbering and naming
 
-Scan `.adr/` for highest number, increment:
+Scan `.adr/` for the highest existing number and increment:
 
 ```bash
 ls .adr/ 2>/dev/null | grep -oE '^[0-9]{4}' | sort -n | tail -1
 ```
 
-Four digits, kebab-case slug describing **decision**, not change: `0007-events-not-http-between-contexts.md`, not `0007-refactor.md`.
+Four digits, then a kebab-case slug describing the decision, not the change:
+`0007-events-not-http-between-contexts.md`, not `0007-refactor.md`.
 
 ## Superseding, never deleting
 
-When decision reversed, old record is most valuable — explains why previous approach chosen and what changed.
+When a decision is reversed, the old record is the most valuable thing you have —
+it explains why the previous approach was chosen and what changed.
 
-1. Write **new** ADR for new decision, referencing old one.
-2. Mark old `Status: superseded by ADR-NNNN`, leave body intact.
-3. Never delete or rewrite ADR history. Typo fix fine; erasing reasoning not.
+1. Write a **new** ADR for the new decision, referencing the old one.
+2. Mark the old one `Status: superseded by ADR-NNNN` and leave its body intact.
+3. Never delete or rewrite the history of an ADR. Correcting a typo is fine;
+   erasing the reasoning is not.
 
-If reality drifted from accepted ADR without decision to change, say so — finding worth surfacing, not file to quietly edit.
+If reality has drifted from an accepted ADR without anyone deciding to change it,
+say so — that's a finding worth surfacing, not a file to quietly edit.
 
 ## Git
 
-`.adr/` is dotfile directory; check not ignored:
+`.adr/` is a dotfile directory, so check it isn't being ignored:
 
 ```bash
 git check-ignore -v .adr/ 2>/dev/null && echo "IGNORED — fix .gitignore" || echo "tracked"
 ```
 
-`.*` or `.??*` in `.gitignore` swallows it silently. If ignored, add `!.adr/` and tell user. When committing in scope, include ADR alongside change so record and code move together. Commit body explains reason/constraint not diff; ADR-governed changes end with `Refs: ADR-NNNN` trailer.
+A `.*` or `.??*` pattern in `.gitignore` will silently swallow it. If ignored, add
+`!.adr/` and tell the user. When committing is in scope, include the ADR alongside
+the change it describes so the record and code move together. The commit body
+explains the reason or constraint rather than repeating the diff, and changes
+governed by an ADR end with a `Refs: ADR-NNNN` trailer.
 
 ---
 
 ## Working notes
 
 - **One decision per file.** Two decisions in one ADR can't be superseded independently.
-- **Write at decision time**, not weeks later — reasoning evaporates.
+- **Write it at decision time**, not weeks later — the reasoning is what evaporates.
 - **Present tense, plain language.** "We use X because Y." No ceremony.
-- **Link to code, issues, benchmarks** rather than restating.
-- **Don't retrofit `.adr/` across whole history** unless asked. Start from next real decision.
-- Keep ADRs short enough that reading all is realistic. If folder unreadable, read-side stops and thing is dead weight.
+- **Link to code, issues, or benchmarks** rather than restating them.
+- **Don't retrofit an `.adr/` folder** across a codebase's whole history unless
+  asked. Start from the next real decision.
+- Keep ADRs short enough that reading all of them is realistic. If the folder
+  becomes unreadable, the read-side stops happening and the whole thing is dead
+  weight.

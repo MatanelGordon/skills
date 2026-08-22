@@ -17,27 +17,36 @@ metadata:
 
 # Critical thinking
 
-A flag buried in prose — "one thing you might want to consider…" — extracts a decision while giving nothing to decide *with*. Prose hides trade-offs. Structure exposes them.
+A flag buried in a closing paragraph — "one thing you might want to consider…" —
+extracts a decision from the user while giving them nothing to decide *with*.
+Prose hides trade-offs. Structure exposes them.
 
-**Every genuine decision point you surface gets a comparison table.** User chooses from evidence side by side, not from whichever option your sentence made sound best.
+So: **every genuine decision point you surface gets a comparison table.** The
+user chooses from evidence laid side by side, not from whichever option your
+sentence happened to make sound best.
 
 ## When this fires
 
-- Summing up work, about to write "consider…", "your call…", "worth deciding…", "I'd suggest…", "should I…?"
+- You are summing up work and about to write "consider…", "your call…",
+  "worth deciding…", "I'd suggest…", "should I…?"
 - More than one viable approach exists and you're picking one — show the others.
-- You deferred something to user (sign-off, scope cut, tool choice).
-- User asks "what are my options?"
+- You deferred something to the user (a sign-off, a scope cut, a tool choice).
+- The user asks "what are my options?"
 
 ## When it does NOT fire
 
-- **Pure FYIs.** "Build takes 4 minutes" — no choice. Don't table it.
-- **No real alternative.** One sane path — say so in a sentence. One-column table = press release.
-- **Trivia.** Negligible, trivially reversible impact gets half-sentence, not table.
-- **>3 decisions in one summary** — over-flagging. Merge related, make routine calls yourself, table only what genuinely needs user.
+- **Pure FYIs.** "The build takes 4 minutes now" contains no choice. Don't table it.
+- **No real alternative.** If there's one sane path, say so in a sentence —
+  a one-column table is a press release.
+- **Trivia.** Decisions with negligible, trivially reversible impact get a
+  half-sentence, not a table.
+- More than ~3 decisions in one summary means you're over-flagging: merge the
+  related ones, make the routine calls yourself, and table only what genuinely
+  needs the user.
 
 ## The format
 
-Options as columns (2–4), fixed rows. Exact shape:
+Options as columns (2–4), fixed rows. This exact shape:
 
 ```markdown
 | | **A. <option>** | **B. <option>** | **C. <option>** |
@@ -47,63 +56,83 @@ Options as columns (2–4), fixed rows. Exact shape:
 | **Cost** | <time/money/tokens, concrete> | … | … |
 | **Reversible?** | trivially / with effort / one-way | … | … |
 
-**Recommendation: <letter>** — <reason in one sentence>. The honest con: <recommended option's real downside, restated, not softened>.
+**Recommendation: <letter>** — <the reason in one sentence>. The honest con:
+<the recommended option's real downside, restated, not softened>.
 
-**If you do nothing:** <what current default actually leads to>.
+**If you do nothing:** <what the current default actually leads to>.
 ```
 
-Rules keeping it honest:
+Rules that keep it honest:
 
-- **Every column gets real cons.** Option without downsides = advocacy wearing a table. If no con found, you don't understand the option.
-- **No strawmen.** Every column must be something reasonable person would pick. Padding with fake third to make yours look good > two columns.
-- **Cost is concrete.** "~1 hour", "one repo commit", "bills paid overage" — not "some effort".
-- **Reversibility uses three words:** *trivially* (undo = command), *with effort* (undo = real work), *one-way* (undo = rewrite or data gone). Deliberation depth matches this row.
-- **Recommendation restates its own con.** Can't say what's wrong with your rec? Not analysis yet.
-- **"If you do nothing" mandatory.** Inaction always an option, usually silent winner; name where it leads.
-- **No recommendation is valid** — when genuinely balanced, say "truly your call, here's what it hinges on" rather than manufacturing confidence.
-- **Close calls get sensitivity line:** "flips to B if <assumption> changes." One sentence, only when margin thin.
+- **Every column gets real cons.** An option without downsides is advocacy
+  wearing a table. If you can't find a con, you haven't understood the option.
+- **No strawmen.** Every column must be something a reasonable person would
+  pick. Padding with a fake third option to make yours look good is worse than
+  two columns.
+- **Cost is concrete.** "~1 hour", "one repo commit", "bills paid overage" —
+  not "some effort".
+- **Reversibility uses three words**: *trivially* (undo is a command),
+  *with effort* (undo costs real work), *one-way* (undo is a rewrite or the
+  data is gone). Deliberation depth should match this row.
+- **The recommendation restates its own con.** If you can't say what's wrong
+  with your recommendation, it isn't analysis yet.
+- **"If you do nothing" is mandatory.** Inaction is always an option and
+  usually the silent winner; name where it leads.
+- **No recommendation is a valid recommendation** — when options are genuinely
+  balanced, say "this one's truly your call, here's what it hinges on" rather
+  than manufacturing confidence.
+- **Close calls get a sensitivity line**: "this flips to B if <assumption>
+  changes." One sentence, only when the margin is thin.
 
 ## Optional rows — add only when stakes warrant
 
 | Row | Add when |
 |---|---|
-| **Worst credible outcome** | any option could fail expensively — one line prob × impact per column |
-| **Locks you into** | option carries lock-in Cons row can't fit |
-| **Flips if** | ranking sensitive to one assumption |
+| **Worst credible outcome** | any option could fail expensively — one line of probability × impact per column |
+| **Locks you into** | an option carries lock-in the Cons row can't fit |
+| **Flips if** | the ranking is sensitive to one assumption |
 
 ## Escalation
 
-Table compares; doesn't deliberate. When decision is **both one-way and expensive**, don't stretch table — escalate:
+A table compares; it does not deliberate. When a decision is both **one-way and
+expensive**, don't stretch the table — escalate to a full framework:
 
-- `thinking-kepner-tregoe` (if installed) for weighted MUST/WANT scoring with adverse-consequence pass.
-- `thinking-pre-mortem` (if installed) before committing: assume failed, reason backward.
-- Otherwise, offer user deeper analysis explicitly instead of bigger table.
+- `thinking-kepner-tregoe` (if installed) for weighted MUST/WANT scoring with an
+  adverse-consequence pass.
+- `thinking-pre-mortem` (if installed) before committing to a chosen plan:
+  assume it failed, reason backward.
+- Otherwise, offer the user a deeper analysis explicitly instead of a bigger table.
 
-Reversibility framing follows two-way/one-way-door model; adverse-consequence and sensitivity from Kepner-Tregoe (see [cc-thinking-skills](https://github.com/tjboudreaux/cc-thinking-skills)).
+The reversibility framing here follows the two-way/one-way-door model; the
+adverse-consequence and sensitivity ideas come from Kepner-Tregoe decision
+analysis (see [cc-thinking-skills](https://github.com/tjboudreaux/cc-thinking-skills)).
 
 ## Example
 
-> **Where should retry logic live?**
+> **Where should the retry logic live?**
 >
-> | | **A. In HTTP client** | **B. Per call site** |
+> | | **A. In the HTTP client** | **B. Per call site** |
 > |---|---|---|
-> | **Pros** | One implementation; every caller inherits | Each endpoint tunes retries to its semantics |
-> | **Cons** | Non-idempotent calls could retry unsafely | Duplication; next endpoint forgets |
-> | **Cost** | ~2h + idempotency allowlist | ~30min now, recurring forever |
+> | **Pros** | One implementation; every caller inherits it | Each endpoint tunes retries to its semantics |
+> | **Cons** | Non-idempotent calls could retry unsafely | Duplication; the next endpoint forgets it |
+> | **Cost** | ~2h + an idempotency allowlist | ~30min now, recurring forever |
 > | **Reversible?** | with effort | trivially |
 >
-> **Recommendation: A** — allowlist confines unsafe-retry risk; B's cost recurs on every new endpoint. Honest con: A is behavior change for all callers, needs regression pass.
+> **Recommendation: A** — the allowlist confines the unsafe-retry risk, and B's
+> cost recurs on every new endpoint. The honest con: A is a behavior change for
+> every existing caller and needs a regression pass.
 >
-> **If you do nothing:** three intermittently failing endpoints keep failing; each gets hand-rolled retry eventually.
+> **If you do nothing:** the three endpoints that already fail intermittently
+> keep failing, and each gets a hand-rolled retry eventually anyway.
 
 ## Anti-patterns
 
 | Don't | Why |
 |---|---|
 | Table with no Cons in one column | Advocacy, not analysis |
-| "Some effort" in Cost row | Unmeasurable = undecidable |
-| Recommendation without its own con | Selling, not advising |
-| Omitting "if you do nothing" | Inaction is default option, hidden |
-| Table for an FYI | Trains user to skip your tables |
-| Five options | Nobody compares five columns — cut to viable 2-4 |
-| Burying one-way decision in table | Escalate it; tables for comparable stakes |
+| "Some effort" in the Cost row | Unmeasurable = undecidable |
+| Recommendation without its own con | You're selling, not advising |
+| Omitting "if you do nothing" | Inaction is the default option and it's hidden |
+| A table for an FYI | Trains the user to skip your tables |
+| Five options | Nobody compares five columns — cut to the viable 2-4 |
+| Burying the one-way decision in a table | Escalate it; tables are for comparable stakes |

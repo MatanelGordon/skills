@@ -20,40 +20,44 @@ metadata:
 # Functional TypeScript
 
 Default to functions over classes, values over state, and types that make illegal
-states unrepresentable. TypeScript's structural type system rewards this style.
+states unrepresentable. TypeScript's structural type system is unusually good at
+this — the language rewards a functional style far more than it rewards OOP.
 
 ## The five rules
 
 1. **Data is immutable.** `readonly` by default; produce new values, never mutate.
-2. **Functions are pure.** Same input → same output, no side effects. Push I/O to edges.
-3. **Model with unions, not optional fields.** If two fields only valid together, that's a union.
+2. **Functions are pure.** Same input → same output, no side effects. Push I/O to the edges.
+3. **Model with unions, not optional fields.** If two fields are only valid together, that's a union.
 4. **Expected failures are values,** returned as `Result`. Exceptions are for bugs.
 5. **Parse at the boundary.** `unknown` in, domain types out. Never trust external data.
 
-**Scope:** apply at domain boundaries and in new modules. Framework requirements
-(React error boundaries, NestJS providers) and internal helpers that cannot fail
-are legitimate exceptions — see "Don't be dogmatic".
+**Scope:** apply these rules at domain boundaries and in new modules.
+Framework requirements (React error boundaries, NestJS providers) and internal
+helpers that cannot fail are legitimate exceptions — see "Don't be dogmatic"
+before Result-wrapping everything.
 
 ---
 
 ## Start with the compiler
 
+Most "functional TypeScript" is just a strict compiler doing its job.
+
 ```jsonc
-// tsconfig.json — non-negotiables
+// tsconfig.json — the non-negotiables
 {
   "compilerOptions": {
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
+    "strict": true,                        // the big one
+    "noUncheckedIndexedAccess": true,      // arr[0] is T | undefined — it always was
+    "exactOptionalPropertyTypes": true,    // `?: T` ≠ `: T | undefined`
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "erasableSyntaxOnly": true
+    "erasableSyntaxOnly": true             // TS 5.8+: bans enums/namespaces/param properties
   }
 }
 ```
 
-Ban `any`. At boundaries use `unknown` and parse. `as` is a claim you can't back
-up — only acceptable inside a parser and in `as const`.
+Ban `any`. At boundaries use `unknown` and parse. `as` is a claim you can't back up —
+the only acceptable uses are inside a parser and in `as const`.
 
 ## Immutability
 
@@ -61,28 +65,36 @@ up — only acceptable inside a parser and in `as const`.
 type User = {
   readonly id: UserId;
   readonly email: Email;
-  readonly tags: readonly string[];
+  readonly tags: readonly string[];    // not string[] — callers can't push
 };
 
+// Update by producing a new value
 const withTag = (u: User, tag: string): User =>
   ({ ...u, tags: [...u.tags, tag] });
 ```
 
-- `readonly` on every property and array in domain types.
-- `as const satisfies T` for config/lookup tables: `as const` freezes, `satisfies`
-  type-checks without widening inferred literals.
-- Never mutate a parameter.
-- Deep updates: nested spreads for 2 levels; past that use `immer`'s `produce`.
+- `readonly` on every property and array in a domain type.
+- `as const satisfies T` for config and lookup tables: `as const` freezes it,
+  `satisfies` type-checks it *without* widening the inferred literal types.
+- Never mutate a parameter. A function that takes `User` and changes it is a bug
+  the type system can't see once you drop `readonly`.
+- Deep updates: nested spreads are fine for 2 levels; past that use `immer`'s
+  `produce` (structural sharing, immutable result) rather than hand-rolling.
 
 ## Model with discriminated unions
 
-The highest-leverage change. Optional fields let callers construct nonsense; unions don't.
+The single highest-leverage change. Optional fields let callers construct nonsense;
+unions don't.
 
 ```ts
-// ✗ Four fields, sixteen combos, three legal
-type FetchState = { status: "idle" | "loading" | "ok" | "error"; data?: User; error?: Error };
+// ✗ Four fields, sixteen combinations, three of them legal
+type FetchState = {
+  status: "idle" | "loading" | "ok" | "error";
+  data?: User;
+  error?: Error;
+};
 
-// ✓ Exactly legal states, each carrying its own data
+// ✓ Exactly the legal states, each carrying only its own data
 type FetchState =
   | { readonly status: "idle" }
   | { readonly status: "loading" }
@@ -90,7 +102,8 @@ type FetchState =
   | { readonly status: "error"; readonly error: Error };
 ```
 
-Now `.data` doesn't exist unless `status === "ok"`. No optional chaining.
+Now `.data` simply doesn't exist unless `status === "ok"`. No optional chaining,
+no "this can't happen" comments.
 
 ### Match exhaustively
 
@@ -99,59 +112,151 @@ const render = (r: FetchState): string => {
   switch (r.status) {
     case "idle":    return "";
     case "loading": return "Loading…";
-    case "ok":      return r.data.email;
+    case "ok":      return r.data.email;      // narrowed, no ?.
     case "error":   return r.error.message;
-    default:        return assertNever(r);
+    default:        return assertNever(r);     // compile error if a case is added
   }
 };
 
-const assertNever = (x: never): never =>
-  { throw new Error(`Unhandled variant: ${JSON.stringify(x)}`); };
+const assertNever = (x: never): never => {
+  throw new Error(`Unhandled variant: ${JSON.stringify(x)}`);
+};
 ```
 
-Adding a variant breaks every `switch` until handled. For nested/multi-value
-matching, use **ts-pattern**'s `match(...).exhaustive()`.
+Adding a fifth variant breaks every `switch` until you handle it — that is the
+feature. For nested or multi-value matching, use **ts-pattern**'s `match(...)
+.exhaustive()`; it handles shapes a `switch` can't and fails at compile time.
 
 ## Errors are return values
 
-Throwing is an invisible second return type. Reserve for programmer error
-(invariant violated, unreachable). Return `Result<T, E>` for expected failures
-(validation, not found, business rule, external service error).
+Throwing is an invisible second return type. Reserve it for programmer error
+(invariant violated, unreachable state). For anything a caller should handle,
+return a `Result`.
 
 ```ts
 type Result<T, E> =
-  | { readonly ok: true; readonly value: T }
+  | { readonly ok: true;  readonly value: T }
   | { readonly ok: false; readonly error: E };
-
-const Ok = <T, E>(value: T): Result<T, E> => ({ ok: true, value });
-const Err = <T, E>(error: E): Result<T, E> => ({ ok: false, error });
-
-// Composition
-const map = <T, E, U>(r: Result<T, E>, f: (v: T) => U): Result<U, E> =>
-  r.ok ? Ok(f(r.value)) : r;
-const flatMap = <T, E, U>(r: Result<T, E>, f: (v: T) => Result<U, E>): Result<U, E> =>
-  r.ok ? f(r.value) : r;
 ```
 
-Use `neverthrow` or `Effect` for richer composition; plain `Result` covers most.
-
-## Branded types for IDs
+Errors should be **typed unions**, not `Error` or `string`:
 
 ```ts
-type Brand<T, B> = T & { readonly __brand: B };
-type UserId = Brand<string, "UserId">;
-const UserId = (s: string): UserId => s as UserId;
+type ParseError =
+  | { readonly kind: "empty" }
+  | { readonly kind: "tooLong"; readonly max: number }
+  | { readonly kind: "badFormat"; readonly input: string };
 ```
 
-Parse at boundaries (Zod/ArkType) into branded types. `unknown` → parsed → brand.
+The caller can then handle each case exhaustively. See
+`references/error-handling.md` for the neverthrow/Effect decision and how to
+compose chains without a pyramid of `if (!r.ok) return r`.
+
+Async composition: wrap the awaited value, not the promise — neverthrow's
+`ResultAsync` flattens `(await parse(input)).andThen(fetchUser)` into one
+`Promise<Result<T, E>>`; `Effect.gen` does the same for larger graphs. Never
+let `Promise<Result<Result<T>>>` leak through an unflattened step.
+See `references/error-handling.md`.
+
+**Rule of thumb:** expected domain failure → `Result`. Bug or unrecoverable →
+`throw`. Never use exceptions to model control flow you expect to happen.
+
+## Parse, don't validate
+
+A validator returns a boolean and you forget you called it. A parser returns a
+*different type* and the compiler remembers forever.
+
+```ts
+declare const brand: unique symbol;
+type Brand<T, B> = T & { readonly [brand]: B };
+
+type Email = Brand<string, "Email">;
+
+// The ONLY place the cast is allowed
+const parseEmail = (raw: string): Result<Email, ParseError> =>
+  raw.includes("@")
+    ? { ok: true, value: raw as Email }
+    : { ok: false, error: { kind: "badFormat", input: raw } };
+```
+
+`Email` is now unforgeable — `sendTo(someString)` won't compile. Do this for IDs
+especially: `UserId` and `OrderId` are both `string` structurally, so without
+brands the compiler will happily let you swap them.
+
+At I/O boundaries (HTTP, files, env, DB rows) take `unknown` and parse with **zod**
+or **arktype** into domain types. Everything inside the boundary is trustworthy.
+
+**Both directions of every JSON boundary get a schema — no exceptions:**
+
+```ts
+const CreateUser = z.object({ email: z.string().email(), plan: z.enum(["free","pro"]) });
+const UserCreated = z.object({ id: z.string().uuid(), createdAt: z.coerce.date() });
+
+// OUTBOUND: validate the body before it goes on the wire
+export const createUser = async (input: unknown): Promise<Result<User, ApiError>> => {
+  const body = CreateUser.safeParse(input);
+  if (!body.success) return { ok: false, error: { kind: "badRequest", issues: body.error.issues } };
+
+  const res = await fetch(url, { method: "POST", body: JSON.stringify(body.data) });
+
+  // INBOUND: never trust the response — parse it before returning
+  const parsed = UserCreated.safeParse(await res.json());
+  if (!parsed.success) return { ok: false, error: { kind: "badResponse", issues: parsed.error.issues } };
+  return { ok: true, value: parsed.data };
+};
+```
+
+Applies to handlers too: parse the incoming request body, and parse your own
+response before returning it. `await res.json()` is `any` in disguise — sending an
+unvalidated body ships malformed data to someone else's system, and returning an
+unvalidated response lets a schema drift upstream become a runtime crash three
+layers into your own code. `safeParse` returns a Result-shaped value and
+accumulates every issue at once, so it composes with §Errors directly.
+
+## Functions, not classes
+
+Use a module of functions over a class. Classes couple data to behavior, invite
+mutable fields, and make composition harder.
+
+```ts
+// ✗ Mutable state, hidden dependency, hard to test
+class CartService {
+  private items: Item[] = [];
+  add(i: Item) { this.items.push(i); }
+  total() { return this.items.reduce((s, i) => s + i.price, 0); }
+}
+
+// ✓ Data and transformations, separately
+type Cart = readonly Item[];
+const add   = (c: Cart, i: Item): Cart => [...c, i];
+const total = (c: Cart): number => c.reduce((s, i) => s + i.price, 0);
+```
+
+**Inheritance is never the answer here** — use unions for "is one of" and plain
+function composition for reuse. Higher-order functions replace Strategy, Template
+Method, Decorator, and most of Factory.
+
+Classes are still fine where a framework demands them (React error boundaries,
+NestJS providers, custom `Error` subclasses) or for a stateful resource wrapper
+with a genuine lifecycle. Use them there and keep the logic pure.
+
+## Composition
+
+Prefer `map`/`filter`/`flatMap` over accumulator loops. But **`reduce` is not
+automatically better than a loop** — if a `reduce` needs a comment to explain it,
+write the loop over a local array and return it `readonly`. Clarity wins; the
+point is no *shared* mutation, not zero local variables.
 
 ## Parameter management
 
-1–3 positional parameters, ordered by importance. 4+ → environment/context object.
+1–3 positional parameters, ordered by importance. When several parameters share
+the same role or relevance tier, group them into a single `readonly` object.
+Four or more parameters always become an environment/context object.
+
 Order: data first, dependencies/services last, callbacks last.
 
 ```ts
-// ✗ Six loose parameters
+// ✗ Six loose parameters — easy to transpose, unreadable at call sites
 const place = (sku: string, qty: number, price: number,
                email: string, now: Date, validate: (o: Order) => boolean) => ...;
 
@@ -170,19 +275,21 @@ HTTP handler / CLI / job runner   ← impure: I/O, clock, randomness, logging
         │  parse into domain types
         ▼
    pure domain functions           ← all business logic, trivially testable
-        │  returns decision/value
+        │  returns a decision/value
         ▼
-   shell performs effects          ← writes, sends, persists
+   shell performs the effects      ← writes, sends, persists
 ```
 
-Gather → compute → persist. Core takes values, returns values; never reaches for
-DB, `Date.now()`, or `fetch`. Pass `now: Date` as parameter. Tests need no mocks.
+Gather → compute → persist. The core takes values and returns values; it never
+reaches for a DB, `Date.now()`, or `fetch`. Pass `now: Date` in as a parameter.
+This is what makes tests need no mocks.
 
 ## Decider pattern
 
-Split "what should happen" from "how it is stored": pure `decide` turns command +
-state into events, paired with mechanical `evolve` fold applying one event to
-state. All rules in `decide`; `evolve` never decides.
+Split "what should happen" from "how it is stored": a pure `decide` that turns a
+command and current state into events, paired with a dumb `evolve` fold that
+applies one event to state. All business rules live in `decide`; `evolve` is
+mechanical and never makes decisions.
 
 ```ts
 type Command = { readonly t: "pay"; amount: number } | { readonly t: "ship"; tracking: string };
@@ -200,7 +307,7 @@ const evolve = (state: OrderState, e: Event): OrderState =>
                    : { status: "shipped", tracking: e.tracking };
 ```
 
-Shell persists events and folds `evolve` to rebuild state. `decide` tests are
+The shell persists events and folds `evolve` to rebuild state. `decide` tests are
 table-driven — no mocks, no DB, no clock.
 
 ---
@@ -209,38 +316,38 @@ table-driven — no mocks, no DB, no clock.
 
 | Reach for | Instead |
 |---|---|
-| `class` with mutable fields | module of pure functions over `readonly` type |
+| `class` with mutable fields | module of pure functions over a `readonly` type |
 | `extends` / abstract base | discriminated union + exhaustive match |
 | optional fields for state | one union variant per legal state |
-| `throw` for expected failure | `Result<T, E>` with typed error union |
-| `try/catch` around domain logic | parse at boundary, `Result` inside |
-| `enum` | `as const` object + `typeof x[keyof typeof x]`, or string union |
+| `throw` for expected failure | `Result<T, E>` with a typed error union |
+| `try/catch` around domain logic | parse at the boundary, `Result` inside |
+| `enum` | `as const` object + `typeof x[keyof typeof x]`, or a string union |
 | `any` | `unknown` + parse (zod/arktype) |
 | `string` for an id | branded type (`UserId`) |
-| `arr.push(...)` in loop | `map` / `filter` / `flatMap` |
-| `null` checks scattered | make absent case a union variant |
+| `arr.push(...)` in a loop | `map` / `filter` / `flatMap` |
+| `null` checks scattered around | make the absent case a union variant |
 | getters/setters | plain readonly data + transformation functions |
 | Strategy / Template Method / Decorator | pass a function |
 
 ## Review checklist
 
 - [ ] No `any`; boundaries take `unknown` and parse
-- [ ] Every JSON boundary has a zod schema **both ways** — request validated before sending, response validated before returning
-- [ ] Domain types fully `readonly`; no parameter mutated
+- [ ] Every JSON boundary has a zod schema **both ways** — request body validated before sending, response validated before returning
+- [ ] Domain types are fully `readonly`; no parameter is mutated
 - [ ] States modeled as unions, not optional-field soup
-- [ ] Every union match exhaustive (`assertNever` or `.exhaustive()`)
-- [ ] Expected failures return `Result` with typed error union
-- [ ] IDs and validated strings branded
-- [ ] Business logic pure; clock/IO/randomness injected, not imported
+- [ ] Every union match is exhaustive (`assertNever` or `.exhaustive()`)
+- [ ] Expected failures return `Result` with a typed error union
+- [ ] IDs and validated strings are branded
+- [ ] Business logic is pure; clock/IO/randomness injected, not imported
 - [ ] No inheritance; no class holding mutable domain state
 
 ## Don't be dogmatic
 
 Local mutation inside a pure function is fine and often clearer. Not every
-function needs `Result` — internal helpers that cannot fail return the value.
-Don't introduce Effect/fp-ts into unready codebase; plain `Result` and strict
-flags deliver most benefit at fraction of onboarding cost. Match surrounding
-conventions.
+function needs `Result` — internal helpers that cannot fail should just return
+the value. Don't introduce Effect/fp-ts into a codebase that isn't ready for it;
+a plain `Result` type and strict compiler flags deliver most of the benefit at a
+fraction of the onboarding cost. Match the surrounding code's conventions.
 
 Deeper material: `references/error-handling.md` (Result composition, neverthrow
 vs Effect), `references/types.md` (branding, generics, type-level patterns).

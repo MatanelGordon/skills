@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.16.2 — 2026-08-22
+
+- README: record that ECC's `rules/common/` is the origin of part of the local
+  `~/.claude/rules/common/` layer, discovered while installing its skills.
+  `coding-style.md` there turned out to be byte-identical to ECC's 2026-02-05
+  version — a pristine copy that had gone four months stale, not a divergent
+  local file.
+- Re-synced it to upstream `adebf3e`, which adds Core Principles
+  (KISS/DRY/YAGNI), Naming Conventions and Code Smells. Those three sections
+  were precisely the gap that made the `coding-standards` skill look redundant
+  when it was in fact covering what the stale copy had lost.
+- Only that one file was touched. `hooks.md`, `patterns.md` and `security.md`
+  are also pristine but current; `agents.md`, `development-workflow.md`,
+  `testing.md`, `git-workflow.md` and `performance.md` carry local edits that
+  reference the skills here and would be clobbered by a blind sync.
+- Per-file provenance now lives in `~/.claude/rules/common/ATTRIBUTION.txt`,
+  so the next person to look does not have to re-derive it from a diff.
+
 ## 1.16.1 — 2026-08-22
 
 - README: recommend four skills from [affaan-m/ECC](https://github.com/affaan-m/ECC)

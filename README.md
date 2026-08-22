@@ -281,6 +281,16 @@ upstream:
   `functional-*` skills already cover, and its examples come from a
   Next.js/Supabase codebase. The three framework-specific siblings are where
   the actual value is.
+  **Also the rules layer.** ECC's `rules/common/` is the origin of several
+  files in the local `~/.claude/rules/common/` layer — `coding-style.md`,
+  `hooks.md`, `patterns.md` and `security.md` are byte-identical copies.
+  `coding-style.md` was re-synced 2026-08-22 to upstream `adebf3e`, having sat
+  on the 2026-02-05 version for four months; the update adds Core Principles
+  (KISS/DRY/YAGNI), Naming Conventions and Code Smells. The rest of that
+  directory (`agents.md`, `development-workflow.md`, `testing.md`,
+  `git-workflow.md`, `performance.md`) is locally customized to reference the
+  skills here and must not be blind-synced. Provenance per file is recorded in
+  `~/.claude/rules/common/ATTRIBUTION.txt`.
 - [TerminalSkills/skills](https://github.com/TerminalSkills/skills) — ~1000
   tool-specific skills.
 - [Claude plugin marketplace](https://github.com/anthropics/claude-plugins-official)

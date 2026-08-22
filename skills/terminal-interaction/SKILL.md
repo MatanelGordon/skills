@@ -20,79 +20,63 @@ metadata:
 
 # Terminal interaction
 
-Driving a terminal program by hand, so you can say what actually happened
-instead of what the code suggests should happen.
+Drive a terminal program by hand to report what actually happened, not what code suggests.
 
-**Scope: exploratory verification.** Launch it, interact, capture, report. Not
-test suites, not assertions, not CI wiring — if a finding deserves a permanent
-regression guard, that is a different job.
+**Scope: exploratory verification.** Launch → interact → capture → report. Not test suites, assertions, or CI.
 
 ---
 
 ## Search for a tool before building one
 
-The tooling here moves fast and a lot already exists. **Before writing a driver,
-look for one**, in this order:
+Tooling moves fast. **Before writing a driver, look for one** in this order:
 
-1. **An MCP server for terminal control** — the strongest option when available,
-   because the agent gets structured screen state rather than scraped text.
-   Several exist; the landscape and current names are in
-   [references/drivers.md](references/drivers.md).
-2. **A published Agent Skill** — `gh search code --filename SKILL.md "tmux"` and
-   similar. Someone may have already encoded the workflow.
-3. **A CLI or library** — tmux, `expect`, node-pty, a framework's own harness.
-4. **Nothing fits** — say so plainly, name the closest option and what it can't
-   do, and only then hand-roll. Do not silently write a bespoke driver because
-   searching felt slow.
+1. **MCP terminal server** — strongest option; agent gets structured screen state. Landscape in [references/drivers.md](references/drivers.md).
+2. **Published Agent Skill** — `gh search code --filename SKILL.md "tmux"` etc.
+3. **CLI or library** — tmux, `expect`, node-pty, framework harness.
+4. **Nothing fits** — say so, name closest option and its gap, then hand-roll. Don't silently write bespoke driver.
 
-State which of these you used. "I used X" and "I looked and nothing fit" are both
-fine answers; quietly hand-rolling is not.
+State which you used. "I used X" and "I looked and nothing fit" are fine; quietly hand-rolling is not.
 
 ## The loop
 
-**Launch → interact → capture → report.** Every driver below implements the same
-four steps; they differ only in how much they cost to set up.
+**Launch → interact → capture → report.** All drivers implement these four steps; differ only in setup cost.
 
-The one thing that separates a working driver from a flaky one is what happens
-between steps — see the timing rule below.
+The separator between working and flaky: **what happens between steps** — see timing rule.
 
 ## Pick a driver
 
 | Driver | Use when | Cost |
 |---|---|---|
-| **MCP terminal server** | It's available. Structured screen state beats scraping. | Zero, once configured |
-| **tmux** `send-keys` + `capture-pane` | Full-screen TUIs, long-lived sessions, anything you also want to watch live | Needs tmux installed |
-| **`scripts/pty-drive.py`** (bundled) | Nothing is installed and you need an answer now | **Zero** — Python stdlib only. Unix only, see below |
-| **`expect`** | Simple prompt/response, and it's preinstalled on macOS and most Linux | Zero on most systems |
-| **node-pty** | The project is already Node and you want programmatic control | `npm i`, native build |
-| **Framework harness** (Textual `Pilot`, `ink-testing-library`) | You control the app's source and it's built on that framework | Framework-specific |
+| **MCP terminal server** | Available. Structured state beats scraping. | Zero once configured |
+| **tmux** `send-keys` + `capture-pane` | Full-screen TUIs, long sessions, want to watch live | Needs tmux installed |
+| **`scripts/pty-drive.py`** (bundled) | Nothing installed, need answer now | **Zero** — Python stdlib. Unix only |
+| **`expect`** | Simple prompt/response, preinstalled on macOS/most Linux | Zero on most systems |
+| **node-pty** | Project is Node, want programmatic control | `npm i`, native build |
+| **Framework harness** (Textual `Pilot`, `ink-testing-library`) | Control app source, built on that framework | Framework-specific |
 
-**Do not assume tmux exists.** It is absent from plenty of machines, including
-stock macOS. Check first and fall back rather than failing:
+**Do not assume tmux exists.** Absent on stock macOS, many containers. Check and fall back:
 
 ```bash
 command -v tmux >/dev/null && echo tmux || echo "fall back to pty-drive.py"
 ```
 
-### tmux — best when it's there
+### tmux — best when available
 
 ```bash
 tmux new-session -d -s probe -x 80 -y 24      # detached, fixed size
 tmux send-keys -t probe 'myapp --interactive' Enter
-tmux send-keys -t probe 'j' 'j' Enter          # keys, not a command line
+tmux send-keys -t probe 'j' 'j' Enter          # keys, not command line
 tmux capture-pane -t probe -p                  # -p prints to stdout
 tmux capture-pane -t probe -p -e               # -e keeps ANSI colour
-tmux capture-pane -t probe -p -S -200          # include 200 lines of scrollback
+tmux capture-pane -t probe -p -S -200          # include 200 lines scrollback
 tmux kill-session -t probe                     # always clean up
 ```
 
-Setting the size explicitly with `-x`/`-y` matters: layout bugs are usually width
-bugs, and a session that inherits a random width reproduces inconsistently.
+Explicit size with `-x`/`-y` matters: layout bugs are usually width bugs; random width reproduces inconsistently.
 
 ### Zero-install fallback — `scripts/pty-drive.py`
 
-A real PTY via the Python standard library. No tmux, no pip install, no npm.
-Works wherever Python 3 does.
+Real PTY via Python stdlib. No tmux, pip, npm. Works wherever Python 3 does.
 
 ```bash
 ./scripts/pty-drive.py --cols 80 --rows 24 \
@@ -101,84 +85,62 @@ Works wherever Python 3 does.
   -- bash -c 'printf "name: "; read n; printf "env [dev/prod]: "; read e; echo "DEPLOY $n -> $e"'
 ```
 
-*Verified on this machine (macOS, Python 3.12) — the run above produced the full
-transcript and matched `DEPLOY matanel -> prod`.*
+*Verified on this machine (macOS, Python 3.12) — produced full transcript matching `DEPLOY matanel -> prod`.*
 
-Because it allocates a genuine PTY, programs behave as they do for a human:
-colour stays on, `isatty()` is true, and prompts actually appear. That last point
-is the usual reason piping into a program "hangs" — see below.
+Genuine PTY means programs behave as for humans: colour on, `isatty()` true, prompts appear. That's why piping "hangs" — prompts suppressed off-TTY.
 
-**Platform: macOS, Linux, any Unix.** A real PTY needs `os.forkpty`, which
-Windows does not have, and reaching Windows' ConPTY requires a third-party
-package — which would defeat the point of a zero-install fallback. On Windows the
-script exits `40` immediately with a pointer rather than failing obscurely. Use
-WSL (the script runs unchanged), or `node-pty` / `pywinpty`, which wrap ConPTY.
+**Platform: macOS, Linux, any Unix.** Needs `os.forkpty`; Windows lacks it. ConPTY needs third-party package — defeats zero-install. On Windows script exits `40` with pointer. Use WSL (runs unchanged), or `node-pty`/`pywinpty` wrapping ConPTY.
 
-The same applies to the shell recipes here: `tmux` and the bash snippets assume a
-Unix shell. On Windows, run them under WSL or Git Bash.
+Shell recipes assume Unix shell. On Windows, run under WSL or Git Bash.
 
 ## The timing rule
 
-**Poll for the output you expect. Never sleep a fixed amount.**
+**Poll for expected output. Never sleep fixed amount.**
 
-Terminal programs redraw asynchronously; a fixed `sleep 0.5` is a guess that is
-simultaneously too slow on a fast machine and too short on a loaded one. This is
-the single largest source of flaky terminal driving.
+Terminal programs redraw asynchronously; fixed `sleep 0.5` is a guess — too slow on fast machines, too short on loaded ones. Single largest source of flaky driving.
 
 ```bash
-# wait for the screen to contain what you need, with a real timeout
+# wait for screen to contain expected string, with real timeout
 for i in $(seq 1 50); do
   tmux capture-pane -t probe -p | grep -q "Ready" && break
   sleep 0.1
 done
 ```
 
-Wait for a *specific string or pattern*, not for "some output". A program that
-prints a spinner produces output continuously while making no progress at all.
+Wait for *specific string/pattern*, not "any output". Spinners emit endlessly while making no progress.
 
 ## Reading the screen properly
 
-- **Strip or keep ANSI deliberately.** Colour codes break naive `grep`. Capture
-  clean text by default; capture with escapes (`-e`) only when colour *is* the
-  question.
-- **The visible pane is not the whole story.** Anything scrolled off is gone
-  unless you ask for scrollback (`-S -200`). A crash traceback is exactly the
-  thing that scrolls away.
-- **Width changes behaviour.** Tables, wrapping and truncation are width
-  dependent. Fix the size explicitly, and if layout is the question, test at
-  narrow (60), normal (80) and wide (200).
-- **Piped output differs from terminal output.** Many programs disable colour,
-  progress bars and prompts when `stdout` isn't a TTY. If you drive through a
-  pipe you are testing a different code path than the user's.
+- **Strip or keep ANSI deliberately.** Colour breaks naive `grep`. Clean text by default; escapes (`-e`) only when colour is the question.
+- **Visible pane isn't whole story.** Scrolled-off content gone unless you ask scrollback (`-S -200`). Crash tracebacks scroll away.
+- **Width changes behaviour.** Tables, wrapping, truncation are width-dependent. Fix size explicitly; test narrow (60), normal (80), wide (200) if layout is the question.
+- **Piped output differs from terminal output.** Programs disable colour, progress bars, prompts when stdout isn't TTY. Driving through pipe tests different code path than user.
 
 ## Report what happened
 
-The output of this work is a finding, not a transcript. Give:
+Output is a finding, not a transcript. Give:
 
-1. **What you did** — the exact keys or commands, in order.
-2. **What you saw** — the relevant captured screen region, trimmed. Not 400 lines.
-3. **What it means** — the finding, stated plainly.
-4. **Reproduction** — the driver invocation, so someone else can repeat it.
+1. **What you did** — exact keys/commands, in order.
+2. **What you saw** — relevant captured region, trimmed. Not 400 lines.
+3. **What it means** — finding, stated plainly.
+4. **Reproduction** — driver invocation so others can repeat.
 
-> Sent `j j Enter` on the server list. The detail pane showed the *first*
-> server's stats, not the selected one. Screen capture below; reproduced 3/3 at
-> 80x24 and at 200x50.
+> Sent `j j Enter` on server list. Detail pane showed *first* server's stats, not selected. Screen capture below; reproduced 3/3 at 80x24 and 200x50.
 
-State non-reproduction too: "happened once in five runs" is a finding, and a
-different one from "always broken".
+State non-reproduction too: "happened once in five runs" is a different finding from "always broken".
 
 ## Anti-patterns
 
 | Anti-pattern | Why it fails |
 |---|---|
-| Hand-rolling a driver without searching first | The tooling here is unusually good and moving fast; you rewrote something better than yours. |
-| `sleep 2` between steps | The top cause of flaky terminal driving. Poll for expected output instead. |
-| Assuming tmux is installed | It isn't, on stock macOS and many containers. Check and fall back. |
-| Driving through a pipe instead of a PTY | Programs suppress prompts and colour off-TTY; you tested a different code path. |
-| Waiting for "any output" | Spinners and progress bars emit endlessly while making no progress. |
-| Capturing only the visible pane | Tracebacks and warnings scroll away. Ask for scrollback. |
-| Leaving sessions alive | They hold ports, files and CPU, and poison the next run. Always kill in cleanup. |
-| Not fixing terminal size | Layout bugs are width bugs; a random width reproduces inconsistently. |
-| Pasting the whole transcript as the finding | The reader wants the conclusion and the evidence for it, not the log. |
-| Writing assertions and a test suite | Out of scope. This is exploratory verification; a regression guard is a separate decision. |
-| Reporting "it works" with no evidence | Unfalsifiable. Show the captured screen. |
+| Hand-rolling driver without searching first | Tooling unusually good and fast; you rewrote something better. |
+| `sleep 2` between steps | Top cause of flaky driving. Poll for expected output instead. |
+| Assuming tmux installed | Isn't on stock macOS/many containers. Check and fall back. |
+| Driving through pipe not PTY | Programs suppress prompts/colour off-TTY; tested different code path. |
+| Waiting for "any output" | Spinners/progress bars emit endlessly while making no progress. |
+| Capturing only visible pane | Tracebacks/warnings scroll away. Ask for scrollback. |
+| Leaving sessions alive | Hold ports, files, CPU; poison next run. Always kill in cleanup. |
+| Not fixing terminal size | Layout bugs are width bugs; random width reproduces inconsistently. |
+| Pasting whole transcript as finding | Reader wants conclusion and evidence, not the log. |
+| Writing assertions/test suite | Out of scope. Exploratory verification; regression guard separate decision. |
+| Reporting "it works" with no evidence | Unfalsifiable. Show captured screen. |

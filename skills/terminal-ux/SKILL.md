@@ -42,17 +42,16 @@ npm install -D ink-testing-library vitest @vitejs/plugin-react
 
 ## Architecture: pure core, thin components
 
-The single most important structural decision. Everything that computes text lives
-in a pure function; components only place it.
+Everything that computes text lives in a pure function; components only place it.
 
 ```ts
-// chart.ts — pure, no React, trivially testable, property-testable
+// chart.ts — pure, no React, trivially testable
 const BLOCKS = [' ', '▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'] as const;
 
 export const sparkline = (values: readonly number[]): string => {
   if (values.length === 0) return '';
   const min = Math.min(...values), max = Math.max(...values);
-  const span = max - min || 1;                       // guard: flat series
+  const span = max - min || 1;
   return values
     .map(v => BLOCKS[Math.round(((v - min) / span) * (BLOCKS.length - 1))]!)
     .join('');
@@ -69,17 +68,16 @@ export const Panel = ({ title, series }: { title: string; series: readonly numbe
 );
 ```
 
-This split is why the visualization is testable without a terminal, and why it can
-be reused for `--json`, logs, or a snapshot.
+This split makes visualization testable without terminal, reusable for `--json`,
+logs, or snapshots.
 
 ## Layout
 
-`<Box>` is a flex container (Yoga). Available props include `flexDirection`,
-`flexGrow`/`flexShrink`/`flexBasis`, `justifyContent`, `alignItems`, `alignSelf`,
-`gap`/`rowGap`/`columnGap`, `width`/`height` (number or `"50%"`),
-`min/maxWidth`, `min/maxHeight`, `padding*`, `margin*`, `display`,
-`borderStyle`/`borderColor`/`borderDimColor` (plus per-side `borderTop*`,
-`borderLeft*`, …), `backgroundColor`, `overflow`.
+`<Box>` is a flex container (Yoga). Props: `flexDirection`, `flexGrow`/`flexShrink`/
+`flexBasis`, `justifyContent`, `alignItems`, `alignSelf`, `gap`/`rowGap`/
+`columnGap`, `width`/`height` (number or `"50%"`), `min/maxWidth`, `min/maxHeight`,
+`padding*`, `margin*`, `display`, `borderStyle`/`borderColor`/`borderDimColor`
+(per-side `borderTop*`, `borderLeft*`, …), `backgroundColor`, `overflow`.
 
 ```tsx
 <Box flexDirection="column" height="100%">
@@ -93,27 +91,25 @@ be reused for `--json`, logs, or a snapshot.
 ```
 
 `<Spacer />` pushes siblings apart; `<Newline count={n} />` inserts breaks.
-`measureElement(ref)` reports a node's rendered size when you must compute against
-real dimensions.
+`measureElement(ref)` reports rendered size when computing against real dimensions.
 
 **Terminal size:** `useWindowSize()` gives `{columns, rows}` and updates on resize.
-Design for ~80×24 as the floor unless you know otherwise, and decide explicitly
-what degrades: drop columns, shorten labels, or show a "terminal too small"
-message — never let content wrap into garbage.
+Design for ~80×24 floor; decide explicitly what degrades: drop columns, shorten
+labels, or show "terminal too small" — never let content wrap into garbage.
 
 **Text overflow:** `<Text wrap>` accepts `wrap` (default), `truncate`,
-`truncate-start`, `truncate-middle`, `truncate-end`. Choose deliberately for every
-piece of variable-length text; unbounded content in a fixed box is the most common
+`truncate-start`, `truncate-middle`, `truncate-end`. Choose deliberately for
+every variable-length text; unbounded content in fixed box is the most common
 TUI layout bug.
 
 ## Width: the wide-character trap
 
 `"🎉".length === 2` and `"日".length === 1`, but both occupy **2 terminal columns**.
-Any padding, truncation, or box-drawing you do with `.length` will misalign.
+Any padding/truncation/box-drawing with `.length` will misalign.
 
-Ink handles this correctly inside `<Box>`/`<Text>` — verified: bordered boxes
-containing `日本語テスト` and `🎉🎉🎉` align perfectly. **But your own pure
-functions don't get that for free.** If you pad or truncate manually:
+Ink handles this correctly inside `<Box>`/`<Text>` — bordered boxes containing
+`日本語テスト` and `🎉🎉🎉` align perfectly. **But your pure functions don't.**
+If you pad or truncate manually:
 
 ```ts
 import stringWidth from 'string-width';
@@ -122,107 +118,74 @@ const padTo = (s: string, w: number): string =>
   s + ' '.repeat(Math.max(0, w - stringWidth(s)));
 ```
 
-Prefer letting `<Box width>` do the work. Reach for manual padding only inside a
-single `<Text>` (a bar, a table cell), and use `string-width` there.
+Prefer letting `<Box width>` do the work.
 
-## Visualization techniques
+## Input & focus
 
-Pick by data shape and available space — see `references/visualizations.md` for
-verified implementations of each.
+`useInput((input, key) => { ... })` handles keystrokes. `key` has `return`,
+`escape`, `tab`, `backspace`, `delete`, `up`/`down`/`left`/`right`, `pageup`/
+`pagedown`, `home`/`end`, `ctrl`, `shift`, `meta`. Check `key.ctrl && key.key
+=== 'c'` for Ctrl-C.
 
-| Need | Technique | Density |
-|---|---|---|
-| Trend in one line | Sparkline (`▁▂▃▄▅▆▇█`) | 1 cell per point |
-| Magnitude comparison | Horizontal bars with partial blocks | 1 row per series |
-| Precise curve / scatter | Braille (`⠀`–`⣿`) | **2×4 dots per cell** — 8× the resolution |
-| Distribution over 2 axes | Heatmap via background color or shade blocks `░▒▓█` | 1 cell per bucket |
-| Progress | Bar + percentage + ETA | 1 row |
-| Structured records | Aligned columns with explicit widths | 1 row each |
+Focus: `useFocus({ autoFocus: true })` on one component; `focus.next()` /
+`focus.previous()` for tab order. Only one component focused at a time.
 
-Braille is the highest-resolution option in pure text: each cell packs a 2×4 dot
-matrix, so an 80×20 area addresses 160×80 points.
+## Colors & themes
 
-**Never animate when output is not a TTY** — check `useStdin().isTTY`. Progress
-bars in CI logs produce thousands of junk lines.
+Ink uses chalk colors: `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`,
+`white`, `gray`, `dimColor`, `bold`, `italic`, `underline`, `strikethrough`,
+`inverse`. Hex: `color="#ff6b6b"`. Background: `backgroundColor`.
 
-## Color
+**Themes:** `<ThemeProvider>` with `default` and `dark` maps. Always define both.
 
-- Color is a **redundant** channel. Never encode meaning in color alone — pair it
-  with a symbol, label, or position. This is both accessibility and terminal-theme
-  robustness.
-- Honor **`NO_COLOR`** (any non-empty value), `TERM=dumb`, and non-TTY output.
-- Don't assume a dark background. Avoid low-contrast pairs; prefer named colors
-  and `dimColor` over hardcoded near-black/near-white hex.
-- Keep a small semantic palette — success / warning / error / muted / accent — and
-  use it consistently. More than ~5 meanings and users stop decoding.
+**`NO_COLOR` and `TERM=dumb`:** Ink respects these automatically — no color
+output when set. Your pure functions must too: check `process.env.NO_COLOR` or
+`ink`'s `useTheme()` before emitting ANSI.
 
-```tsx
-const useColor = () => {
-  const { isTTY } = useStdin();
-  return isTTY && !process.env['NO_COLOR'] && process.env['TERM'] !== 'dumb';
-};
-```
+**Color is information:** never sole signal. Pair with symbol/label:
+`●` success, `○` pending, `✕` error — not just green/yellow/red.
 
-## Keyboard and interaction
+## Static vs dynamic content
+
+`<Static>` renders once and never re-renders — use for append-only logs, history,
+completed items. Everything inside `<Static>` is final; new items append below.
+Don't put changing content in `<Static>`.
 
 ```tsx
-useInput((input, key) => {
-  if (input === 'q' || key.escape) exit();
-  if (key.downArrow || input === 'j') move(1);
-  if (key.upArrow   || input === 'k') move(-1);
-});
+<Box flexDirection="column">
+  <Static items={logs.map(l => <LogLine key={l.id} {...l} />)} />
+  <LiveDashboard data={liveData} />
+</Box>
 ```
 
-`key` includes `upArrow`, `downArrow`, `leftArrow`, `rightArrow`, `return`,
-`escape`, `tab`, `backspace`, `delete`, `pageUp`, `pageDown`, `ctrl`, `shift`,
-`meta`. `useFocus()`/`useFocusManager()` handle focus across panes; `usePaste()`
-handles bracketed paste (important — pasted text arrives as one burst, not
-keystrokes).
+## Performance
 
-**Discoverability is the hard part of TUI UX.** Keyboard-only interfaces have no
-affordances, so:
-
-- Show hotkeys **inline next to what they act on** (`s shop · a account · q quit`),
-  not only in a help screen.
-- Keep a persistent footer of the 3–5 keys valid *right now*, and change it per view.
-- Use conventional bindings: `q` quit/back, `?` help, `/` search, `Enter` select,
-  `Esc` cancel, arrows + `jk` navigate, `Ctrl-C` always exits.
-- Provide a `?` overlay listing everything, scoped to the current view.
-- Make destructive keys hard to hit by accident — require confirmation or a modifier.
-
-## Performance and redraw
-
-- **`<Static>`** renders items once and never redraws them — the correct component
-  for append-only logs and completed task lists above a live region. Without it,
-  a long history is re-rendered every frame.
-- Keep the live region small. Ink diffs and repaints; a full-screen re-render at
-  high frequency will flicker and burn CPU.
-- Throttle high-frequency data to ~10–20 fps before it reaches state. Terminals
-  cannot usefully show more, and re-rendering per event is the usual cause of a
-  sluggish TUI.
-- Memoize expensive pure renders (`useMemo`) keyed on the data, not the frame.
+- `<Static>` for append-only — avoids Ink diffs/repaints; full-screen re-render
+  at high frequency flickers and burns CPU.
+- Throttle high-frequency data to ~10–20 fps before state. Terminals can't show
+  more; per-event re-render is usual sluggish TUI cause.
+- Memoize expensive pure renders (`useMemo`) keyed on data, not frame.
 
 ## Accessibility
 
-Terminals have no accessibility tree and no ARIA. Compensate deliberately:
+Terminals have no accessibility tree/ARIA. Compensate deliberately:
 
-- `useIsScreenReaderEnabled()` — Ink exposes this; when true, prefer plain
-  sequential text over boxes, spinners, and redrawing regions.
-- Offer a flag (`--plain` / `--no-animation`) that disables borders, spinners, and
-  cursor movement. Screen readers re-read regions that repaint.
-- Never rely on color, position, or ASCII art alone to convey state.
+- `useIsScreenReaderEnabled()` — when true, prefer plain sequential text over
+  boxes, spinners, redrawing regions.
+- Offer `--plain` / `--no-animation` disabling borders, spinners, cursor movement.
+  Screen readers re-read regions that repaint.
+- Never rely on color, position, or ASCII art alone for state.
 - Everything reachable by keyboard, with visible focus.
 
 ## CLI conventions this sits inside
 
-A TUI is one mode of a program that also has a non-interactive mode. Follow the
-established CLI contract (see `clig.dev`):
+A TUI is one mode of program also having non-interactive mode. Follow `clig.dev`:
 
 - Primary output to **stdout**, messages/errors to **stderr**.
 - **Only go interactive when stdin is a TTY**; support `--no-input`. Never hang
   waiting for input that cannot come.
-- Provide `--json` / `--plain` for machine consumption — a TUI must not be the
-  only way to get the data.
+- Provide `--json` / `--plain` for machine consumption — TUI not only way to
+  get data.
 - Print something within ~100ms; show progress past ~1s.
 - `Ctrl-C` exits immediately; print what's happening if cleanup takes time.
 - Exit 0 on success, non-zero on failure.
@@ -231,7 +194,7 @@ established CLI contract (see `clig.dev`):
 
 ## Testing
 
-Full patterns in `references/testing.md`. The essentials:
+Full patterns in `references/testing.md`. Essentials:
 
 ```tsx
 import { render, cleanup } from 'ink-testing-library';
@@ -239,19 +202,19 @@ import { renderToString } from 'ink';
 
 afterEach(() => cleanup());
 
-it('renders the label and bar', () => {
+it('renders label and bar', () => {
   const { lastFrame } = render(<Gauge label="cpu" value={5} max={10} width={10} />);
   expect(lastFrame()).toContain('cpu');
 });
 
-it('renders without any harness', () => {
+it('renders without harness', () => {
   expect(renderToString(<Panel title="Latency" series={[1,5,2,9]} />)).toContain('Latency');
 });
 ```
 
-**The gotcha that will cost you an hour:** `stdin.write()` is **not applied
-synchronously**. Verified on ink 7.1.1 — reading `lastFrame()` immediately after a
-write returns the *previous* frame. Await a tick after every write:
+**Gotcha:** `stdin.write()` is **not applied synchronously**. Verified on ink
+7.1.1 — reading `lastFrame()` immediately after write returns *previous* frame.
+Await a tick after every write:
 
 ```tsx
 const tick = () => new Promise(r => setImmediate(r));
@@ -264,27 +227,25 @@ it('increments on +', async () => {
 });
 ```
 
-What to test, in priority order:
+Test priority:
 
-1. **Pure render functions** — exhaustively, including empty, single-element,
-   flat, and out-of-range data. This is where the bugs are.
-2. **Layout invariants** — every line the same width; output fits the terminal;
-   no line exceeds `columns`. These catch the failures snapshots miss.
+1. **Pure render functions** — exhaustively: empty, single, flat, out-of-range.
+2. **Layout invariants** — every line same width; output fits terminal; no line
+   exceeds `columns`. Catches failures snapshots miss.
 3. **Frame content** — `lastFrame()` contains what matters. Prefer `toContain`
-   over full-string equality for anything with borders.
-4. **Input behavior** — keystroke in, state change out (awaiting a tick).
-5. **Full-frame snapshots** — last, and sparingly. They break on every cosmetic
-   change and train people to accept diffs blindly.
+   over full-string equality for bordered output.
+4. **Input behavior** — keystroke in, state change out (awaiting tick).
+5. **Full-frame snapshots** — last, sparingly. Break on cosmetic changes.
 
 ```tsx
-it('never exceeds the terminal width', () => {
+it('never exceeds terminal width', () => {
   const out = renderToString(<Dashboard width={80} data={fixture} />);
   for (const line of out.split('\n')) expect(stringWidth(line)).toBeLessThanOrEqual(80);
 });
 ```
 
-Test with awkward data as a matter of course: empty arrays, one point, all-equal
-values, negatives, NaN, huge numbers, very long labels, emoji and CJK text.
+Test with awkward data: empty arrays, one point, all-equal, negatives, NaN,
+huge numbers, long labels, emoji and CJK text.
 
 ---
 
@@ -294,26 +255,26 @@ values, negatives, NaN, huge numbers, very long labels, emoji and CJK text.
 |---|---|
 | Manual `' '.repeat()` alignment | `<Box width>` / flexbox |
 | `str.length` for width | `stringWidth(str)` |
-| Logic inside a component | pure function + thin component |
-| `console.log` in a live UI | Ink state, or `<Static>` for append-only |
-| Re-rendering the whole screen per event | throttle to ~10–20fps; `<Static>` for history |
-| Color as the only signal | color **+** symbol/label |
+| Logic inside component | pure function + thin component |
+| `console.log` in live UI | Ink state, or `<Static>` for append-only |
+| Re-rendering whole screen per event | throttle ~10–20fps; `<Static>` for history |
+| Color as only signal | color **+** symbol/label |
 | Hardcoded 80 columns | `useWindowSize()` |
 | Spinner regardless of context | check `isTTY`; skip when piped |
-| Hotkeys only in a help screen | inline hints + per-view footer |
+| Hotkeys only in help screen | inline hints + per-view footer |
 | Full-frame snapshot tests | invariants + `toContain` |
 | `stdin.write()` then assert | `stdin.write()`, `await tick()`, assert |
 
 ## Review checklist
 
-- [ ] Rendering logic is pure and tested independently of React
+- [ ] Rendering logic pure and tested independently of React
 - [ ] No `.length` used for terminal width anywhere
-- [ ] Every variable-length text has an explicit `wrap`/truncate mode
+- [ ] Every variable-length text has explicit `wrap`/truncate mode
 - [ ] Layout holds at 80×24 and degrades deliberately below it
-- [ ] `NO_COLOR`, `TERM=dumb`, and non-TTY are honored; no animation when piped
+- [ ] `NO_COLOR`, `TERM=dumb`, non-TTY honored; no animation when piped
 - [ ] Meaning never carried by color alone
 - [ ] Current-view hotkeys visible; `?` help; `Ctrl-C` always exits
 - [ ] `<Static>` used for append-only history
 - [ ] High-frequency updates throttled
-- [ ] Tests await a tick after `stdin.write()`
-- [ ] Tested with empty, single, flat, negative, and wide-character data
+- [ ] Tests await tick after `stdin.write()`
+- [ ] Tested with empty, single, flat, negative, wide-character data

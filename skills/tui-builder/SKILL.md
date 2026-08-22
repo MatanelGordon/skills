@@ -5,11 +5,7 @@ description: >
   React on Node, or when hitting terminal-resize rendering bugs — ghost/repeated content,
   a blank screen after resize, or a divider/layout that won't update width. Carries
   battle-tested resize rules Claude otherwise gets wrong. Not for plain non-interactive
-  CLIs (flag parsing, scripts) with no full-screen rendering. Building or modifying an
-  interactive terminal UI (TUI), especially Ink + React on Node Adding or fixing
-  terminal-resize handling in a TUI Debugging resize artifacts: ghosted/repeated content,
-  blank screen after resize, stale divider/width Do NOT use for plain non-interactive CLIs
-  (argument parsing, batch scripts) with no live rendering
+  CLIs (flag parsing, scripts) with no full-screen rendering.
 license: MIT
 metadata:
   author: Matanel Gordon

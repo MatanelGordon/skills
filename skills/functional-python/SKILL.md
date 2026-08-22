@@ -19,9 +19,9 @@ metadata:
 
 # Functional Python
 
-Python is multi-paradigm and its functional side is underused. Frozen dataclasses,
-`match`/`case`, `Protocol`, and a typed `Result` get you most of the way — without
-turning Python into Haskell, which never reads well.
+Python's functional side is underused. Frozen dataclasses, `match`/`case`,
+`Protocol`, and typed `Result` get you most of the way — without turning Python
+into Haskell.
 
 ## The five rules
 
@@ -29,16 +29,14 @@ turning Python into Haskell, which never reads well.
 2. **Functions are pure.** No mutation of arguments, no hidden global/`self` state.
 3. **Model states as tagged unions,** matched exhaustively.
 4. **Expected failures are returned,** not raised. `None` is not an error type.
-5. **Pure core, imperative shell.** I/O, clock, and randomness live at the edges.
+5. **Pure core, imperative shell.** I/O, clock, randomness live at edges.
 
-Type hints are not optional here — they are what makes the rest checkable. Run
-`mypy --strict` or `pyright` in strict mode; without a type checker most of this
-degrades to convention.
+Type hints are not optional — they make the rest checkable. Run `mypy --strict`
+or `pyright` in strict mode; without a type checker this degrades to convention.
 
-**Scope:** apply these rules at domain boundaries and in new modules. Python's
-exception culture, framework requirements (Django/pydantic), and small scripts
-are legitimate exceptions — see "Don't be dogmatic" before Result-wrapping
-stdlib calls or importing `returns` into anything small.
+**Scope:** apply at domain boundaries and in new modules. Python's exception
+culture, framework requirements (Django/pydantic), and small scripts are
+exceptions — see "Don't be dogmatic".
 
 ---
 
@@ -52,37 +50,34 @@ from typing import Final
 class User:
     id: UserId
     email: Email
-    tags: tuple[str, ...] = ()        # tuple, not list — lists are mutable
+    tags: tuple[str, ...] = ()        # tuple, not list
 
-updated = replace(user, email=new_email)   # new object; original untouched
+updated = replace(user, email=new_email)
 ```
 
 - `frozen=True` blocks attribute assignment; `slots=True` cuts memory and blocks
   typos creating new attributes. Use both.
-- **`tuple`, `frozenset`, and `Mapping` in frozen dataclasses.** A `list` field
-  makes the freeze cosmetic — `user.tags.append(x)` still works.
-- `frozen=True` makes instances hashable **only if every field is hashable** — one
-  `dict` or `list` field and `hash()` raises `TypeError` at runtime. Another reason
-  to use `tuple`/`frozenset` throughout.
+- **`tuple`, `frozenset`, `Mapping` in frozen dataclasses.** A `list` field makes
+  the freeze cosmetic — `user.tags.append(x)` still works.
+- `frozen=True` makes instances hashable only if every field hashable — one `dict`
+  or `list` field and `hash()` raises `TypeError`. Another reason for `tuple`/
+  `frozenset`.
 - Mutable defaults: `field(default_factory=tuple)`, never `= []`.
 
 ```python
-# Immutable "updates" on collections
+# Immutable updates on collections
 new_tags   = (*user.tags, "vip")
 new_config = {**config, "retries": 3}
 new_items  = [*items[:i], replacement, *items[i + 1:]]
 ```
 
 For deep persistent structures, `pyrsistent` (`PMap`, `PVector`) gives structural
-sharing. Reach for it only when copying is measurably hot — plain tuples and dict
-unpacking are fine at normal sizes.
-
-Module-level constants: `MAX_RETRIES: Final = 3`.
+sharing. Use only when copying is measurably hot. Module constants: `MAX_RETRIES: Final = 3`.
 
 ## Tagged unions over optional fields
 
 ```python
-# ✗ Which fields are set depends on `status`, and nothing enforces it
+# ✗ Which fields set depends on `status`, nothing enforces it
 @dataclass
 class Job:
     status: str
@@ -110,7 +105,7 @@ class Failed:
 type Job = Pending | Running | Succeeded | Failed   # PEP 695, Python 3.12+
 ```
 
-Use `type X = A | B` on 3.12+; on older versions `X: TypeAlias = A | B`.
+Use `type X = A | B` on 3.12+; older: `X: TypeAlias = A | B`.
 
 ### Exhaustive matching
 
@@ -126,169 +121,60 @@ def describe(job: Job) -> str:
         case _:                         assert_never(job)
 ```
 
-`assert_never` is the key: the type checker errors if any case is unhandled,
-because the value reaching it would no longer be `Never`. Without it, `match` is
-just a nicer `if/elif` with no exhaustiveness guarantee.
+`assert_never` is the key: type checker errors if any case unhandled, because
+value reaching it would be `Never`. Without it, `match` is just nicer `if/elif`
+with no exhaustiveness guarantee. Match supports destructuring, guards, nesting.
 
-Match supports destructuring, guards, and nesting:
+## Errors are return values
 
-```python
-match event:
-    case {"type": "click", "pos": (x, y)} if x > 0:  ...
-    case [first, *rest]:                             ...
-    case Point(x=0, y=0):                            ...
-```
-
-## Errors as values
-
-`raise` for expected failures makes the signature lie and forces callers to know
-which exceptions to catch. Return the failure instead.
+Throwing is an invisible second return. Reserve for programmer error (invariant
+violated, unreachable). Return `Result[T, E]` for expected failures (validation,
+not found, business rule, external error).
 
 ```python
 from dataclasses import dataclass
 from typing import Generic, TypeVar
 
-@dataclass(frozen=True, slots=True)
-class Ok[T]:
+T = TypeVar("T")
+E = TypeVar("E")
+
+@dataclass(frozen=True)
+class Ok(Generic[T]):
     value: T
 
-@dataclass(frozen=True, slots=True)
-class Err[E]:
+@dataclass(frozen=True)
+class Err(Generic[E]):
     error: E
 
 type Result[T, E] = Ok[T] | Err[E]
+
+def map(r: Result[T, E], f: Callable[[T], U]) -> Result[U, E]:
+    match r:
+        case Ok(value=v): return Ok(f(v))
+        case Err():       return r
 ```
 
-Error types should be unions, not strings:
+Use `returns` library for richer composition (railway, `@safe`, do-notation).
+Plain `Result` covers most.
 
-```python
-@dataclass(frozen=True, slots=True)
-class NotFound:
-    user_id: UserId
-
-@dataclass(frozen=True, slots=True)
-class Invalid:
-    field: str
-    reason: str
-
-type UserError = NotFound | Invalid
-```
-
-For real composition use **`returns`** (dry-python) rather than hand-rolling
-chains — see `references/returns.md`:
-
-```python
-from returns.result import Result, Success, Failure, safe
-from returns.pipeline import flow
-from returns.pointfree import bind, map_
-
-result = flow(
-    raw_input,
-    parse_user,          # -> Result[User, UserError]
-    bind(check_credit),  # -> Result[Credit, UserError]
-    map_(to_summary),
-)
-```
-
-**`None` is not an error.** `Optional[T]` means "absent", which is one thing;
-"failed, and here is why" needs `Result`. Returning `None` for both is how you get
-`if x is None:` branches that can't explain themselves.
-
-**Still raise for:** programmer error (`ValueError` on a contract violation),
-unrecoverable startup problems, and genuinely exceptional infrastructure faults.
-Python's culture is more exception-friendly than most — don't wrap `KeyError` in
-`Result` for a lookup you control. Use `Result` where failure is expected,
-recoverable, and part of the domain.
-
-## Parse, don't validate
+## Branded IDs with NewType
 
 ```python
 from typing import NewType
 
 UserId = NewType("UserId", str)
-Email  = NewType("Email", str)
-
-def parse_email(raw: str) -> Result[Email, Invalid]:
-    if "@" not in raw:
-        return Err(Invalid("email", "missing @"))
-    return Ok(Email(raw))
+user_id = UserId("u_123")  # type-checks; str passes but UserId doesn't
 ```
 
-`NewType` is free at runtime and stops `send_to(user_id)` at type-check time —
-without it every id and every email is just `str`. For richer constraints use
-**pydantic** at I/O boundaries: it parses `unknown` JSON into typed models and
-accumulates all errors at once.
-
-Once past the boundary, everything is a domain type and no function re-validates.
-
-Async composition: `returns` pipelines compose with coroutines via
-`RequiresFutureResult` / `IOResult`, so an awaited fetch returning `Result`
-chains into the next `bind` like any sync step. See `references/returns.md`.
-
-## Functions, not classes
-
-```python
-# ✗ A class whose only job is to hold config and expose one method
-class PriceCalculator:
-    def __init__(self, rate: float) -> None:
-        self._rate = rate
-    def calculate(self, amount: float) -> float:
-        return amount * (1 + self._rate)
-
-# ✓ A function; partially apply if you need to bind the rate
-def calculate_price(amount: float, rate: float) -> float:
-    return amount * (1 + rate)
-
-from functools import partial
-at_vat = partial(calculate_price, rate=0.2)
-```
-
-A class with one method and no state should be a function. A class with `__init__`
-storing collaborators and one `run()` is a closure wearing a costume.
-
-**`Protocol` over ABC** for polymorphism — structural typing means no inheritance
-and no registration:
-
-```python
-from typing import Protocol
-
-class Clock(Protocol):
-    def now(self) -> datetime: ...
-```
-
-Anything with a matching `now` satisfies it. For a fixed set of variants, prefer a
-tagged union over either.
-
-Classes remain right for: framework requirements (Django models, pydantic
-`BaseModel`), context managers with real lifecycles, and custom exceptions.
-
-## Composition and iteration
-
-Prefer comprehensions to `map`/`filter` with lambdas. Use `functools.reduce`
-sparingly — a loop is usually more readable, and `sum`/`min`/`max`/`any`/`all`
-cover most real uses. Local mutation inside a pure function is perfectly fine:
-
-```python
-def group_by_status(jobs: Iterable[Job]) -> Mapping[str, tuple[Job, ...]]:
-    acc: dict[str, list[Job]] = {}
-    for j in jobs:
-        acc.setdefault(type(j).__name__, []).append(j)   # local mutation, fine
-    return {k: tuple(v) for k, v in acc.items()}          # immutable at the boundary
-```
-
-`functools.cache` / `lru_cache` are safe *only* on pure functions with hashable
-arguments — which is another reason purity pays.
+Parse at boundaries (pydantic) into branded types.
 
 ## Parameter management
 
-1–3 positional parameters, ordered by importance. When several parameters share
-the same role or relevance tier, group them into a single frozen dataclass.
-Four or more parameters always become an environment/context dataclass.
-
+1–3 positional parameters, ordered by importance. 4+ → frozen dataclass context.
 Order: data first, dependencies/services last, callbacks last.
 
 ```python
-# ✗ Six loose parameters — easy to transpose, unreadable at call sites
+# ✗ Six loose parameters
 def place_order(sku: str, qty: int, price: float,
                 email: str, now: datetime,
                 validate: Callable[[Order], bool]) -> Result[Order, OrderError]: ...
@@ -321,16 +207,15 @@ match decision:
     case Err(error): return error_response(error)
 ```
 
-Pass `now` in as a parameter instead of calling `datetime.now()` inside logic —
-that single change removes most of the need for `freezegun` and mocking. The core
-takes values and returns values, so its tests are plain assertions.
+Pass `now` as parameter instead of `datetime.now()` in logic — removes most need
+for `freezegun` and mocking. Core takes values, returns values; tests are plain
+assertions.
 
 ## Decider pattern
 
-Split "what should happen" from "how it is stored": a pure `decide` that turns a
-command and current state into events, paired with a dumb `evolve` fold that
-applies one event to state. All business rules live in `decide`; `evolve` is
-mechanical and never makes decisions.
+Split "what should happen" from "how it is stored": pure `decide` turns command +
+state into events, paired with mechanical `evolve` fold applying one event to
+state. All rules in `decide`; `evolve` never decides.
 
 ```python
 type Command = Pay | Ship
@@ -349,7 +234,7 @@ def evolve(state: Job, e: Event) -> Job:
         case _: assert_never(e)
 ```
 
-The shell persists events and folds `evolve` to rebuild state. `decide` tests are
+Shell persists events and folds `evolve` to rebuild state. `decide` tests are
 table-driven — no mocks, no DB, no clock.
 
 ---
@@ -362,37 +247,37 @@ table-driven — no mocks, no DB, no clock.
 | inheritance for variants | tagged union + `match`/`assert_never` |
 | ABC with one implementation | a function, or `Protocol` |
 | class with `__init__` + one method | function (+ `functools.partial`) |
-| `list` / `dict` field on a model | `tuple` / `Mapping` |
-| mutating an argument in place | return a new value (`replace`, `{**d}`) |
+| `list` / `dict` field on model | `tuple` / `Mapping` |
+| mutating an argument in place | return new value (`replace`, `{**d}`) |
 | `raise` for validation failure | return `Result` / `Err` |
-| `return None` to signal failure | `Result` with a typed error |
+| `return None` to signal failure | `Result` with typed error |
 | `str`/`int` identifiers | `NewType` |
-| `if/elif` chains on a type field | `match` with `assert_never` |
-| `datetime.now()` inside logic | pass `now` as a parameter |
-| `global` / module-level mutable state | explicit parameters |
+| `if/elif` chains on type field | `match` with `assert_never` |
+| `datetime.now()` inside logic | pass `now` as parameter |
+| `global` / module mutable state | explicit parameters |
 | `Enum` + optional fields | one union variant per state |
 | `map`/`filter` with `lambda` | comprehension / generator expression |
 
 ## Review checklist
 
-- [ ] Dataclasses are `frozen=True, slots=True`; collection fields are immutable
+- [ ] Dataclasses `frozen=True, slots=True`; collection fields immutable
 - [ ] No function mutates its arguments
 - [ ] States modeled as unions; every `match` ends in `assert_never`
 - [ ] Expected failures return `Result`; `None` means absence only
 - [ ] Ids and validated strings use `NewType`; boundaries parse with pydantic
-- [ ] No `datetime.now()`, I/O, randomness, or logging in domain functions
+- [ ] No `datetime.now()`, I/O, randomness, logging in domain functions
 - [ ] Type checker runs in strict mode and passes
 - [ ] No inheritance used purely for polymorphism
 
 ## Don't be dogmatic
 
-Python's exception culture is legitimate — `Result` everywhere fights the stdlib
-and reads badly at call sites that just want the value. Use it at domain
-boundaries and in pipelines where failures compose; let `KeyError`/`ValueError`
-be exceptions. Don't import `returns` into a small script. Comprehensions beat
-`compose(map(...), filter(...))` in nearly all Python code. Frozen dataclasses are
-marginally slower to construct — irrelevant except in a measured hot loop. Match
-the conventions already in the codebase.
+Python's exception culture is legitimate — `Result` everywhere fights stdlib and
+reads badly at call sites that just want the value. Use at domain boundaries and
+pipelines where failures compose; let `KeyError`/`ValueError` be exceptions.
+Don't import `returns` into a small script. Comprehensions beat
+`compose(map(...), filter(...))` in nearly all Python code. Frozen dataclasses
+marginally slower to construct — irrelevant except measured hot loop. Match
+existing conventions.
 
 Deeper material: `references/returns.md` (railway pipelines, `@safe`, do-notation,
 IO/Reader containers), `references/typing.md` (NewType, Protocol, generics,

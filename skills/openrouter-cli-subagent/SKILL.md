@@ -22,6 +22,9 @@ metadata:
 
 # OpenRouter CLI subagents
 
+> **TEMPORARY: DO NOT USE CLAUDE WITH THIS SKILL.** `ori claude` is not working
+> currently. Use `ori codex` only until this warning is removed.
+
 Run the `cli-coding-subagents` workflow through OpenRouter via `ori`, so the work
 costs nothing when free models are good enough — and stays honest about the fact
 that they often aren't.

@@ -301,6 +301,27 @@ var total = order.Map(ApplyFees).Map(ApplyDiscount).Map(ApplyTax);
 LINQ is already functional — lean on it. `Select`/`Where`/`Aggregate` over `for`
 loops that mutate an accumulator, when it reads better.
 
+## Parameter management
+
+1–3 positional parameters, ordered by importance. When several parameters share
+the same role or relevance tier, group them into a single record. Four or more
+parameters always become an environment/context record — the call site should
+read like a sentence, not a riddle.
+
+Order: data first, dependencies/services last, callbacks last.
+
+```csharp
+// ✗ Six loose parameters — easy to transpose, unreadable at call sites
+public static Result<Order> Place(string sku, int qty, decimal price,
+    string email, IClock clock, Func<Order, bool> validate) { ... }
+
+// ✓ Data grouped, dependency second, callback last
+public sealed record PlaceOrder(string Sku, int Qty, decimal Price, string Email);
+
+public static Result<Order> Place(PlaceOrder request, IClock clock,
+    Func<Order, bool>? validate = null) { ... }
+```
+
 ## Functional core, imperative shell
 
 ```csharp
@@ -320,6 +341,32 @@ return decision.Match(
 Domain records are never EF change-tracked entities — map explicitly at the edge.
 Inject `TimeProvider`/`IClock` rather than calling `DateTime.UtcNow` in logic;
 that alone removes most of the need for mocking.
+
+## Decider pattern
+
+Split "what should happen" from "how it is stored": a pure `Decide` that turns a
+command and current state into events, paired with a dumb `Evolve` fold that
+applies one event to state. All business rules live in `Decide`; `Evolve` is
+mechanical and never makes decisions.
+
+```csharp
+public static ImmutableList<OrderEvent> Decide(OrderState state, Command cmd) => cmd switch
+{
+    Pay p when state is OrderState.Unpaid => [new OrderPaid(p.Amount, p.At)],
+    Ship s when state is OrderState.Paid  => [new OrderShipped(s.Tracking, s.At)],
+    _                                     => [],
+};
+
+public static OrderState Evolve(OrderState state, OrderEvent e) => (state, e) switch
+{
+    (OrderState.Unpaid, OrderPaid p)  => new OrderState.Paid(p.Amount, p.At),
+    (OrderState.Paid, OrderShipped s) => new OrderState.Shipped(s.At, s.Tracking),
+    _                                 => state,
+};
+```
+
+The shell persists events and folds `Evolve` to rebuild state. `Decide` tests are
+table-driven — no mocks, no DB, no clock.
 
 ---
 

@@ -106,6 +106,10 @@ features/
       ...
 ```
 
+### File-Level N-Tier Separation
+
+Within one slice's folder, each file carries exactly one layer: `endpoint.ext` is presentation wiring, `handler.ext` is business logic — never both in the same file. This keeps layers decoupled (the handler stays testable without HTTP, the endpoint stays thin) while preserving the slice's vertical ownership; separation is by file responsibility, not by re-introducing technical layer folders.
+
 ### The Anti-Pattern (Layered Architecture)
 
 ```

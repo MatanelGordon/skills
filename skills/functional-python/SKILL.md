@@ -279,6 +279,32 @@ def group_by_status(jobs: Iterable[Job]) -> Mapping[str, tuple[Job, ...]]:
 `functools.cache` / `lru_cache` are safe *only* on pure functions with hashable
 arguments — which is another reason purity pays.
 
+## Parameter management
+
+1–3 positional parameters, ordered by importance. When several parameters share
+the same role or relevance tier, group them into a single frozen dataclass.
+Four or more parameters always become an environment/context dataclass.
+
+Order: data first, dependencies/services last, callbacks last.
+
+```python
+# ✗ Six loose parameters — easy to transpose, unreadable at call sites
+def place_order(sku: str, qty: int, price: float,
+                email: str, now: datetime,
+                validate: Callable[[Order], bool]) -> Result[Order, OrderError]: ...
+
+# ✓ Data grouped, dependency second, callback last
+@dataclass(frozen=True, slots=True)
+class PlaceOrder:
+    sku: str
+    qty: int
+    price: float
+    email: str
+
+def place_order(request: PlaceOrder, now: datetime,
+                validate: Callable[[Order], bool] | None = None) -> Result[Order, OrderError]: ...
+```
+
 ## Functional core, imperative shell
 
 ```python
@@ -298,6 +324,33 @@ match decision:
 Pass `now` in as a parameter instead of calling `datetime.now()` inside logic —
 that single change removes most of the need for `freezegun` and mocking. The core
 takes values and returns values, so its tests are plain assertions.
+
+## Decider pattern
+
+Split "what should happen" from "how it is stored": a pure `decide` that turns a
+command and current state into events, paired with a dumb `evolve` fold that
+applies one event to state. All business rules live in `decide`; `evolve` is
+mechanical and never makes decisions.
+
+```python
+type Command = Pay | Ship
+type Event = Paid | Shipped
+
+def decide(state: Job, cmd: Command) -> tuple[Event, ...]:
+    match (state, cmd):
+        case (Pending(_), Pay(amount=a)): return (Paid(a),)
+        case (Running(_), Ship(tracking=t)): return (Shipped(t),)
+        case _: return ()
+
+def evolve(state: Job, e: Event) -> Job:
+    match e:
+        case Paid(amount=a):    return Succeeded(output=str(a))
+        case Shipped(tracking=t): return Succeeded(output=t)
+        case _: assert_never(e)
+```
+
+The shell persists events and folds `evolve` to rebuild state. `decide` tests are
+table-driven — no mocks, no DB, no clock.
 
 ---
 

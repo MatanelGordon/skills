@@ -247,6 +247,27 @@ automatically better than a loop** — if a `reduce` needs a comment to explain 
 write the loop over a local array and return it `readonly`. Clarity wins; the
 point is no *shared* mutation, not zero local variables.
 
+## Parameter management
+
+1–3 positional parameters, ordered by importance. When several parameters share
+the same role or relevance tier, group them into a single `readonly` object.
+Four or more parameters always become an environment/context object.
+
+Order: data first, dependencies/services last, callbacks last.
+
+```ts
+// ✗ Six loose parameters — easy to transpose, unreadable at call sites
+const place = (sku: string, qty: number, price: number,
+               email: string, now: Date, validate: (o: Order) => boolean) => ...;
+
+// ✓ Data grouped, dependency second, callback last
+type PlaceOrder = { readonly sku: string; readonly qty: number;
+                    readonly price: number; readonly email: string };
+
+const place = (request: PlaceOrder, now: Date,
+               validate?: (o: Order) => boolean): Result<Order, OrderError> => ...;
+```
+
 ## Functional core, imperative shell
 
 ```
@@ -262,6 +283,32 @@ HTTP handler / CLI / job runner   ← impure: I/O, clock, randomness, logging
 Gather → compute → persist. The core takes values and returns values; it never
 reaches for a DB, `Date.now()`, or `fetch`. Pass `now: Date` in as a parameter.
 This is what makes tests need no mocks.
+
+## Decider pattern
+
+Split "what should happen" from "how it is stored": a pure `decide` that turns a
+command and current state into events, paired with a dumb `evolve` fold that
+applies one event to state. All business rules live in `decide`; `evolve` is
+mechanical and never makes decisions.
+
+```ts
+type Command = { readonly t: "pay"; amount: number } | { readonly t: "ship"; tracking: string };
+type Event   = { readonly t: "paid"; amount: number } | { readonly t: "shipped"; tracking: string };
+
+const decide = (state: OrderState, cmd: Command): readonly Event[] => {
+  switch (cmd.t) {
+    case "pay":   return state.status === "unpaid" ? [{ t: "paid", amount: cmd.amount }] : [];
+    case "ship":  return state.status === "paid"   ? [{ t: "shipped", tracking: cmd.tracking }] : [];
+  }
+};
+
+const evolve = (state: OrderState, e: Event): OrderState =>
+  e.t === "paid"   ? { status: "paid", amount: e.amount }
+                   : { status: "shipped", tracking: e.tracking };
+```
+
+The shell persists events and folds `evolve` to rebuild state. `decide` tests are
+table-driven — no mocks, no DB, no clock.
 
 ---
 

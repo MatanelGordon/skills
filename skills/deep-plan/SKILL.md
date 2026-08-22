@@ -25,6 +25,11 @@ reasoning. Every rule below serves that one test.
 **This skill owns `.plan/`.** It creates the directory, defines the layout, and
 writes `plan.md`. `parallel-build` executes a plan; it does not invent one.
 
+**Model requirement.** This skill requires xhigh reasoning effort on a frontier
+model. If the current model does not meet that bar, do not plan silently — ask
+the user whether to (1) proceed anyway, (2) spawn a subagent with the required
+model, or (3) write a `handoff.md` summarizing the task for another session.
+
 `<name>` is concise and indicative: `oauth-device-flow`, `remote-run-verification`.
 Not `plan1`, not a sentence.
 

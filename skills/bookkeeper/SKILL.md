@@ -1,15 +1,7 @@
 ---
 name: bookkeeper
 description: >
-  Maintain and consult a repository knowledge base in ./.memory/. Read
-  .memory/index.md before answering questions or planning work involving the
-  environment, hosts, credentials locations, naming conventions, glossaries,
-  operational quirks, or learned constraints. Use the index tags to open one
-  relevant topic file instead of searching the repository. Write or update
-  small tagged entries, plus both index tables, when durable facts surface.
-  Use for facts that are shared, stable, and not derivable from code or git.
-  Do not use for architectural decisions, which belong in the adr skill, or for
-  session trivia and temporary state.
+  Maintain and consult a repository knowledge base in ./.memory/. Read .memory/index.md before answering questions or planning work involving environment, hosts, credential locations, naming conventions, glossaries, operational quirks, or learned constraints; use its tags to open one relevant topic file. Update small tagged entries plus both index tables for durable shared facts not derivable from code or git. Not for architectural decisions (use adr) or session trivia/temporary state.
 license: MIT
 metadata:
   author: Matanel Gordon

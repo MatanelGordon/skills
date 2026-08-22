@@ -1,17 +1,7 @@
 ---
 name: browser-interaction
 description: >
-  Drive a browser the way a human tester would - open the page, click, type,
-  read back what happened, and report the finding with evidence. Use when asked
-  to manually test, try, click through, or "see if it works" in a browser; to
-  check a page in Chrome, Safari, Firefox or Edge; to reproduce a UI bug, check
-  a form, a flow, a login, or a layout; or when something works locally but is
-  reported broken. Always searches for an existing tool first - an MCP browser
-  server, a published skill, or a CLI - and recommends one rather than
-  hand-rolling automation, saying so plainly when nothing fits. Covers reading
-  the page as structure instead of pixels, console and network evidence,
-  cross-browser reality including why WebKit is not Safari, and testing signed-in
-  state. For exploratory verification, not for authoring test suites or CI.
+  Human-like browser drive: open, click, type, inspect, report evidence. Use when asked to test/try/click through/"see if it works"; check Chrome/Safari/Firefox/Edge; reproduce UI bugs; verify forms/flows/logins/layouts; investigate local-pass but reported-fail behavior. Seek an MCP browser server, published skill, or CLI and recommend it rather than hand-rolling; say plainly if none fits. Covers page structure, console/network evidence, WebKit ≠ Safari, signed-in state. Not test suites or CI.
 license: MIT
 metadata:
   author: Matanel Gordon

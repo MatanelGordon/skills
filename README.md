@@ -272,10 +272,15 @@ upstream:
   **Caveats:** frontmatter is clean (`name`/`description` only, no
   normalization needed), but each skill ships an `agents/openai.yaml` — Codex
   harness display metadata, not a sub-agent, and not needed by Claude Code.
-  `coding-standards` also overlaps `rules/common/coding-style.md` here and the
-  `functional-*` skills on immutability and error handling; the three
-  framework-specific ones are where the actual value is, and its examples are
-  drawn from a Next.js/Supabase codebase.
+  `coding-standards` also points at `rules/common/coding-style.md`, a path
+  relative to the ECC repo root; that file is not installed, so the pointer
+  dangles. It is a *different* file from the identically-pathed one in a local
+  `~/.claude/rules/` layer, which can serve as the substitute. Finally,
+  `coding-standards` is the weakest of the four: its immutability and
+  error-handling material restates what a `rules/common/` layer and the
+  `functional-*` skills already cover, and its examples come from a
+  Next.js/Supabase codebase. The three framework-specific siblings are where
+  the actual value is.
 - [TerminalSkills/skills](https://github.com/TerminalSkills/skills) — ~1000
   tool-specific skills.
 - [Claude plugin marketplace](https://github.com/anthropics/claude-plugins-official)

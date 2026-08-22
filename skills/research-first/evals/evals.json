@@ -19,7 +19,7 @@
       "expected_output": "Checks both legs before the verdict: the code graph (callers, tests, dynamic refs) AND history (git log -S / blame / ADRs) to learn why it was created. Verdict is one of: reason never existed, reason still applies (cites the commit), or world changed so removable because X.",
       "files": [],
       "expectations": [
-        "Runs git log -S or blame (or adr.sh why) before judging",
+        "Runs git log -S or blame before judging",
         "Checks for dynamic/config references, not just text search",
         "Verdict cites the originating commit or ADR, or states none exists",
         "Does not recommend deletion while unable to explain why the code exists"

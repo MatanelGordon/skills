@@ -9,7 +9,7 @@
       "expectations": [
         "Asks or answers the three gate questions before writing the plan",
         "Reads actual code at the seams, not just file names",
-        "Checks .adr/, adr.sh, or git history for prior decisions",
+        "Checks .adr/ or git history for prior decisions",
         "plan.md has a file map where no path has two phase-2 owners",
         "Edge-case table rows each carry covered / out-of-scope / unknown",
         "Plan is written with Status: draft and user confirmation is requested"

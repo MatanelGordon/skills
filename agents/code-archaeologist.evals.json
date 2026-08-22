@@ -4,7 +4,7 @@
     {
       "id": 1,
       "prompt": "Is the hand-rolled retry loop in src/http.ts redundant now that we use axios?",
-      "expected_output": "Digs both legs: callers + dynamic refs, then git log -S / blame / ADR tags for why it was written. Verdict in one of the three honest forms with shas cited, under 300 words.",
+      "expected_output": "Digs both legs: callers + dynamic refs, then git log -S / blame / ADRs for why it was written. Verdict in one of the three honest forms with shas cited, under 300 words.",
       "files": [],
       "expectations": [
         "Both legs walked: code graph AND history",

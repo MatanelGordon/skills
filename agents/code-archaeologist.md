@@ -44,8 +44,7 @@ git log -S '<symbol>' --format='%h %ad %s' --date=short     # birth and changes
 git log -G '<pattern>' --format='%h %s'                     # when -S is too exact
 git blame -w -C -L <range> -- <file>                        # who shaped these lines
 git show -s --format='%B' <sha>                             # the stated why + trailers
-git tag -l 'adr-*' --format='%(refname:short) %(contents:subject)'
-# plus .adr/ and .memory/ if the repo keeps them, and any adr.sh helper
+# plus .adr/ and .memory/ if the repo keeps them
 ```
 
 Read the commit *bodies*, not just subjects — `Constraint:` and `Rejected:`

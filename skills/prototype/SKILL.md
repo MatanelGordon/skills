@@ -1,19 +1,11 @@
 ---
 name: prototype
 description: >
-  Write throwaway code fast to answer a design question, before real
-  implementation burns tokens on the wrong thing. Use when the user says "before
-  we build this", "I'm not sure how this should work", "not sure what this should
-  look like", "try a quick version", "spike this", "mock this up", "build a POC",
-  "proof of concept", "throwaway", or is choosing between options, validating a
-  state model or flow, or checking whether an interaction feels right. Two modes. Greenfield throwaway - no abstractions,
-  no tests, hardcode everything, delete it after. Brownfield, for prototyping
-  inside a large existing system - deliberately bad code behind exactly one
-  abstraction, a seam, so the real implementation replaces it by changing one
-  line and nothing else in the system knows the difference. Also use when
-  planning raises a question that only running something can settle, and when a
-  quick hack needs to go into real code without fusing to it. Inspired by Matt
-  Pocock's prototype skill.
+  Build throwaway code to answer design, architecture, flow, or interaction
+  questions before production implementation. Use for spikes, POCs, mockups,
+  quick versions, comparing options, or uncertainty that running code can
+  resolve. Covers isolated greenfield throwaways and brownfield prototypes
+  placed behind one replaceable seam.
 license: MIT
 metadata:
   author: Matanel Gordon

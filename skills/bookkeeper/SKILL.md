@@ -8,8 +8,8 @@ description: >
   relevant topic file instead of searching the repository. Write or update
   small tagged entries, plus both index tables, when durable facts surface.
   Use for facts that are shared, stable, and not derivable from code or git.
-  Do not use for architectural decisions, which belong in the adr skill and
-  adr-in-git, or for session trivia and temporary state.
+  Do not use for architectural decisions, which belong in the adr skill, or for
+  session trivia and temporary state.
 license: MIT
 metadata:
   author: Matanel Gordon
@@ -20,7 +20,7 @@ metadata:
 
 `.memory/` is the repository's durable facts layer: small markdown records for
 knowledge the code cannot tell you. It complements `adr`, which records durable
-decisions, and `adr-in-git`, which preserves reasoning in history.
+decisions; ordinary git history preserves why code changed.
 
 **Location: `./.memory/` at the repo root, committed to git.** Create it lazily
 when the first durable fact appears. `index.md` is its map and always gets read
@@ -78,8 +78,8 @@ git history. Link to those sources instead when a memory entry needs context.
 
 | Does not qualify | Put it here instead |
 |---|---|
-| An architectural or hard-to-reverse choice | The `adr` skill; use `adr-in-git` for queryable reasoning |
-| Why a code change was made | The commit body and trailers via `adr-in-git` |
+| An architectural or hard-to-reverse choice | The `adr` skill |
+| Why a code change was made | The commit body and git history |
 | A command that failed once during this session | Working notes, then discard |
 | Current branch, temporary port, or today's task state | Session context |
 | Behavior plainly visible in source or configuration | Leave it in its authoritative file |
@@ -201,8 +201,8 @@ Refs: .memory/remote.md#matanel-win11
 ```
 
 Use `Refs: .memory/<file>` when the whole topic matters, or
-`.memory/<file>#<entry-id>` for one fact. Follow `adr-in-git`'s trailer rules:
-trailers are the final paragraph, one per line, with no blank line inside it.
+`.memory/<file>#<entry-id>` for one fact. Git trailers form the final paragraph,
+one per line, with no blank line inside it.
 
 ## Anti-patterns
 
@@ -213,6 +213,6 @@ trailers are the final paragraph, one per line, with no blank line inside it.
 | Grow a giant catch-all file | PageIndex only stays cheap when topics and entries stay small |
 | Store secrets without the user's explicit direction | Committed memory is shared and durable; record locations, not values |
 | Duplicate what code, config, docs, ADRs, or git already say | Two authorities drift; memory is only for non-derivable facts |
-| Record decisions or commit rationale as memory | `adr` and `adr-in-git` preserve those with the right semantics |
+| Record decisions or commit rationale as memory | `adr` and git history preserve those with the right semantics |
 | Save session trivia or temporary state | Noise makes durable constraints harder to find |
 | Describe retrieval as embeddings or similarity search | The contract is explicit tag routing through `index.md` |

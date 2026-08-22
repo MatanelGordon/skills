@@ -9,7 +9,7 @@
 #   wt.sh path <slug>             print the worktree path (exit 1 if absent)
 #   wt.sh list                    list live subagent worktrees with their state
 #   wt.sh merge <slug> [-F FILE]  merge the branch into the CURRENT branch, then clean up
-#                                 -F supplies the full merge message (see adr-in-git skill)
+#                                 -F supplies the full merge message
 #   wt.sh drop <slug>             discard the worktree and branch without merging
 #   wt.sh gc                      remove worktrees whose branch is already merged
 #
@@ -101,7 +101,7 @@ case "$cmd" in
     slug="${1:-}"; slug_check "$slug"
     shift || true
     # Optional: -F <file> supplies the full merge message (request, plan, ADRs).
-    # See the adr-in-git skill. Without it, a terse default is used.
+    # Without it, a terse default is used.
     msg_file=""
     if [ "${1:-}" = "-F" ]; then
       msg_file="${2:-}"

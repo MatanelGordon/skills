@@ -44,9 +44,9 @@ plus any files it cites in Background.
    applicable axis (cardinality, boundaries, absence, malformed, time,
    concurrency, failure, scale) missing entirely for a unit that clearly
    needs it.
-5. **Contradicted decisions** — run `git tag -l 'adr-*'` and, if present, the
-   adr-in-git helper (`adr.sh constraints`); check `.adr/` and `.memory/`.
-   Flag anything the plan violates, citing the ADR/constraint.
+5. **Contradicted decisions** — check `.adr/`, `.memory/`, and targeted git
+   history for the affected area. Flag anything the plan violates, citing the
+   ADR or constraint.
 6. **Missing context** — what would a zero-context executor still have to
    guess? Background linking real shas? Status line present?
 

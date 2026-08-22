@@ -28,12 +28,11 @@
     {
       "id": 3,
       "prompt": "We decided all services must communicate through domain events, never direct HTTP. Record the decision so future agents do not undo it.",
-      "expected_output": "Routes the durable architectural decision to the adr skill and its reasoning to adr-in-git instead of writing it to .memory.",
+      "expected_output": "Routes the durable architectural decision to the adr skill instead of writing it to .memory.",
       "files": [],
       "expectations": [
         "Does not create or update a .memory entry",
-        "Uses the adr skill for the decision record",
-        "Uses adr-in-git conventions for commit reasoning and linkage"
+        "Uses the adr skill for the decision record"
       ]
     },
     {

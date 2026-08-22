@@ -10,7 +10,7 @@
         "Output matches the contract shape, under 250 words",
         "Ownership collisions checked by quoting file-map rows, not vibes",
         "Each critical-path test command verified to exist, with how it was confirmed",
-        "adr tags / constraints checked when the repo has them"
+        "ADR files and recorded constraints checked when the repo has them"
       ]
     },
     {

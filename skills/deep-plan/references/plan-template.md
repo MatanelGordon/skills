@@ -23,7 +23,7 @@ tell a future reader what was considered and set aside.>
 
 ## Background
 <What already exists and matters: merged work (link commits by sha), current
-branch state, prior decisions being honoured (`adr-NNNN`), constraints from
+branch state, prior decisions being honoured (`ADR-NNNN`), constraints from
 `.memory/`. This is what a fresh session reads to catch up.>
 
 ## Approach
@@ -86,7 +86,7 @@ demonstrated working. What makes this plan closeable.>
 - <unknown> -> <how and when it gets resolved>
 
 ## Decisions
-- `adr-NNNN` — <title> — <one line on why it was needed>
+- `ADR-NNNN` — <title> — <one line on why it was needed>
 
 ## Amendments
 - <YYYY-MM-DD> — <what changed in the plan and why execution forced it>

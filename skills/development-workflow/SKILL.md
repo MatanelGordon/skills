@@ -8,13 +8,13 @@ description: >
   should we approach building X"; when tempted to jump straight to code; or when
   work shipped without tests or review and needs the process retrofitted. Each
   stage defers to a dedicated skill where one exists (research-first, deep-plan,
-  parallel-build, adr-in-git). Skip stages only deliberately and say so - a typo
+  parallel-build, adr). Skip stages only deliberately and say so - a typo
   fix does not need the pipeline, a new feature does.
 license: MIT
 metadata:
   author: Matanel Gordon
   source: https://github.com/MatanelGordon/skills
-  depends: research-first, deep-plan, adr-in-git
+  depends: research-first, deep-plan, adr
 ---
 
 # Development workflow
@@ -49,9 +49,9 @@ gate (goal, success signal, out of scope), investigation of the real code, a
 file map, edge cases enumerated with a status each, and test commands verbatim.
 Big enough to split? `parallel-build` executes the plan across subagents.
 
-Check prior decisions before planning — `.adr/`, `adr.sh list`, the project's
-memory conventions. A plan that contradicts a recorded decision is dead on
-arrival.
+Check prior decisions before planning — `.adr/`, the project's memory
+conventions, and targeted git history. A plan that contradicts a recorded
+decision is dead on arrival.
 
 Small-but-real changes still get a paragraph of plan in the conversation:
 what will change, what proves it worked.
@@ -92,11 +92,12 @@ is a claim, not evidence.
 
 ## 5. Commit and record
 
-Per `adr-in-git`: the commit body carries *why* — the trigger, the constraint,
-what forced these edits - with trailers for what outlives the commit
-(`Constraint:`, `Rejected:`, `Refs:`). Conventional format
-(`feat:`/`fix:`/`refactor:`/…). Hard-to-reverse calls made along the way become
-ADRs; merges from worktrees carry the request and the plan.
+When committing is in scope, the commit body carries *why* — the trigger,
+constraint, or evidence that forced the change. Put durable metadata in a final
+trailer block (`Constraint:`, `Rejected:`, `Refs:`), use a conventional subject
+(`feat:`/`fix:`/`refactor:`/…), and reference governing decisions as
+`Refs: ADR-NNNN`. Hard-to-reverse calls made along the way become ADRs; merges
+from worktrees carry the request and plan.
 
 ## Proportionality
 

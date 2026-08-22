@@ -1,16 +1,11 @@
 ---
 name: adr
 description: >
-  Record and consult Architectural Decision Records as markdown files in the repo's
-  ./.adr/ folder, so past decisions constrain future planning. Use in two directions.
-  WRITE when the user says to record a decision, write an ADR, "remember this decision",
-  "don't let us undo this", or after a hard-to-reverse architectural call. READ at the
-  start of ANY request to plan, refactor, integrate, redesign, or choose a library or
-  datastore — even when ADRs are not mentioned: check ./.adr/ first (and adr-NNNN git
-  tags) so the proposal does not contradict a decision already made, and say which ADR
-  applies. Also use when a
-  decision is being reversed, to supersede the old record rather than delete it. Adapted
-  from Matt Pocock's ADR format.
+  Record and consult Architectural Decision Records in ./.adr/. Use when asked
+  to record or remember a decision, when making or reversing a hard-to-reverse
+  architectural choice, and before planning, refactoring, integrating,
+  redesigning, or choosing major dependencies so existing decisions constrain
+  the proposal. Supersede old ADRs rather than deleting them.
 license: MIT
 metadata:
   author: Matanel Gordon
@@ -148,8 +143,10 @@ git check-ignore -v .adr/ 2>/dev/null && echo "IGNORED — fix .gitignore" || ec
 ```
 
 A `.*` or `.??*` pattern in `.gitignore` will silently swallow it. If ignored, add
-`!.adr/` and tell the user. Commit ADRs alongside the change they describe, so the
-record and the code move together.
+`!.adr/` and tell the user. When committing is in scope, include the ADR alongside
+the change it describes so the record and code move together. The commit body
+explains the reason or constraint rather than repeating the diff, and changes
+governed by an ADR end with a `Refs: ADR-NNNN` trailer.
 
 ---
 

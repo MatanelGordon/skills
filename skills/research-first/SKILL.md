@@ -1,20 +1,12 @@
 ---
 name: research-first
 description: >
-  Research before answering, and never rest a consequential answer on one
-  source. Use the moment a request says "write me", "build", "create",
-  "implement", or "add" a utility, feature, service, or tool — BEFORE designing
-  or coding anything, sweep package registries and GitHub and suggest an
-  existing product when one fits.
-  Use before judging code ("this is redundant", "dead", "safe to delete") —
-  verify against both the code itself and its history (git blame, log -S,
-  ADRs) so a deliberate decision isn't undone. Use when asked to search the
-  internet — always bring at least two independent resources and cite them.
-  Use when stating versions, prices, or APIs. Grade how conclusive a source is
-  before trusting it alone — one you executed, or the authoritative origin for
-  the exact version, stands by itself; any slight chance of misleading means
-  re-validate with a second origin. Skip the ceremony for trivial, reversible,
-  or purely subjective answers.
+  Research before consequential implementation or claims. Before building a
+  utility, feature, service, or tool, check registries, GitHub, and the codebase
+  for existing solutions. Before declaring code redundant or safe to delete,
+  check both code and history. For web research or unstable facts, verify with
+  authoritative or independent sources. Skip trivial, reversible, or subjective
+  work.
 license: MIT
 metadata:
   author: Matanel Gordon
@@ -116,7 +108,7 @@ from a text search is not "no references".
 ```bash
 git log -S 'theThing' --format='%h %s'      # when it appeared, and the message
 git blame -w -L <range> -- <file>            # who last shaped it, in which commit
-# plus: .adr/, adr.sh why <file>:<line>, .memory/ — if those conventions exist
+# plus: .adr/ and .memory/ when those conventions exist
 ```
 
 Then the verdict has three honest forms:

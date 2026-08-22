@@ -52,9 +52,10 @@ Most bad plans are confident guesses. Before writing:
 - **Read the code at every seam you intend to touch.** Not filenames — code.
 - **Find the existing conventions.** How does this codebase already do errors,
   config, DI, tests? A plan that fights the local idiom gets rejected in review.
-- **Check prior decisions.** `adr.sh list` and `adr.sh search <area>`, `.memory/index.md`,
-  `git log --grep` for the area. A plan that contradicts a recorded decision gets
-  thrown away — cite it, or supersede it deliberately.
+- **Check prior decisions.** Read relevant files in `.adr/`, consult
+  `.memory/index.md`, and use targeted `git log --grep` searches for the area. A
+  plan that contradicts a recorded decision gets thrown away — cite it, or
+  supersede it deliberately.
 - **Record the current test baseline.** What runs, what passes, how long it takes.
   You cannot claim "tests pass" later without knowing this now.
 
@@ -196,9 +197,9 @@ lives only in `plan.md` dies with the plan; `plan.md` is per-unit-of-work, an AD
 outlives it.
 
 When the plan makes a call that is **hard to reverse, surprising without context,
-and the result of a real trade-off**, write the ADR (tier 1 is one paragraph —
-see the `adr` and `adr-in-git` skills) and reference it from `plan.md`. Commits
-implementing it carry `Refs: adr-NNNN`.
+and the result of a real trade-off**, write the ADR (the minimal form is one
+paragraph — see the `adr` skill) and reference it from `plan.md`. When commits
+are in scope, changes implementing it carry `Refs: ADR-NNNN`.
 
 Don't ADR every choice. The test is the same three-part one, and most plan
 decisions fail it.
@@ -211,7 +212,7 @@ Ready when someone who has not read this conversation could execute it:
 
 - [ ] Goal, success signal, and out-of-scope answerable in one sentence each
 - [ ] Code read at every seam; conventions found
-- [ ] Prior decisions checked (`adr.sh`, `.memory/`) and cited or superseded
+- [ ] Prior decisions checked (`.adr/`, `.memory/`, git history) and cited or superseded
 - [ ] Current test baseline recorded
 - [ ] Critical-path test commands verbatim
 - [ ] Edge cases enumerated, each marked covered / out-of-scope / unknown

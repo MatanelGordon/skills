@@ -1,19 +1,11 @@
 ---
 name: desktop-interaction
 description: >
-  Drive a webview-based desktop app the way a human tester would - launch or
-  attach to it, click, type, read the window back, report the finding. Use when
-  asked to manually test, try, inspect, or "see if it works" in a desktop app,
-  a webview app, or an embedded browser window - including apps built with
-  Electron, Tauri, pywebview, or Neutralino; to reproduce a bug that only shows
-  up in the packaged app and not in the browser; or to check window, menu, or
-  multi-window behaviour. Always searches for an existing tool first - an MCP
-  server, a published skill, or a CLI - and recommends one rather than
-  hand-rolling, saying so plainly when nothing fits. Covers launching under
-  control versus attaching to a running app over a debugging port, reaching the
-  main process as well as the window, and where each framework's tooling breaks
-  down. Webview apps only, not native Swift, Qt or WinUI. Exploratory
-  verification, not test suites or CI.
+  Manually test webview desktop apps by launching or attaching, interacting,
+  inspecting app and window behavior, and reporting evidence. Use for Electron,
+  Tauri, pywebview, or Neutralino apps; packaged-only bugs; and window, menu, or
+  multi-window flows. Prefer an existing MCP server, skill, or CLI. Not for
+  native Swift, Qt, or WinUI apps, test suites, or CI.
 license: MIT
 metadata:
   author: Matanel Gordon

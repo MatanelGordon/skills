@@ -46,10 +46,10 @@ Each item is a yes/no with evidence. "Probably fine" is a no.
 
 ### Context and correctness
 
-- [ ] **Prior decisions checked.** `adr.sh list` / `.memory/index.md` were
-      consulted, and anything relevant is cited or deliberately superseded.
-- [ ] **The plan doesn't contradict a recorded constraint.** Run
-      `adr.sh constraints` and read the plan against it.
+- [ ] **Prior decisions checked.** `.adr/`, `.memory/index.md`, and relevant git
+      history were consulted; anything relevant is cited or deliberately superseded.
+- [ ] **The plan doesn't contradict a recorded constraint.** Read the relevant
+      ADRs and memory entries against the plan.
 - [ ] **Background links real commits** by sha, not "recent work".
 - [ ] **Unknowns are named**, with how and when each resolves.
 - [ ] **Conventions match the codebase** — error handling, config, test style.
@@ -82,8 +82,8 @@ Your job is to find the flaws that would waste an execution run. In priority ord
 4. UNANSWERED EDGE CASES — any row with no status, and any obvious axis
    (cardinality, boundaries, absence, malformed, time, concurrency, failure,
    scale) that is missing entirely for a unit of work that clearly needs it.
-5. CONTRADICTED DECISIONS — run `adr.sh constraints` and `adr.sh list`; flag
-   anything in the plan that violates a recorded constraint.
+5. CONTRADICTED DECISIONS — check `.adr/`, `.memory/index.md`, and targeted git
+   history; flag anything in the plan that violates a recorded constraint.
 6. MISSING CONTEXT — what would a fresh executor still have to guess?
 
 Do NOT comment on wording, formatting, or style. Do NOT suggest scope additions.

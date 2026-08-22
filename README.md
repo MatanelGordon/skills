@@ -68,7 +68,7 @@ POSIX shell — use Git Bash or WSL for those.
 
 ## What's in the box
 
-Twenty-three skills. The short version of each:
+Twenty-two skills. The short version of each:
 
 **Planning and execution**
 
@@ -124,9 +124,6 @@ Twenty-three skills. The short version of each:
   *before* planning so past decisions don't get undone by accident.
 - **bookkeeper** — durable, non-derivable repository facts as small tagged
   entries in `.memory/`, with an index read first for cheap PageIndex lookup.
-- **adr-in-git** — the same reasoning pushed into git itself: commits that say
-  *why*, decisions as annotated tags, and an `adr.sh` that answers "why is this
-  code like this?" from the CLI, cheapest query first.
 
 **Code style**
 
@@ -182,7 +179,6 @@ platform-locked skills on the wrong OS:
 | `cli-coding-subagents` | codex + copilot CLIs, installed and authenticated |
 | `parallel-build` | the above, plus git worktrees |
 | `terminal-ux` / `tui-builder` | Node ≥ 22 (Ink) |
-| `adr-in-git` | git ≥ 2.35 |
 
 ## Writing your own portable skill
 

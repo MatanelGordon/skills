@@ -1,17 +1,12 @@
 ---
 name: functional-csharp
 description: >
-  Write C# in a functional style — records and immutability, pure static functions,
-  sealed-record discriminated unions with exhaustive switch expressions, and
-  Result/Option types instead of exceptions for expected failures. Use whenever writing,
-  reviewing, or refactoring C# / .NET code: domain models, services, ASP.NET handlers,
-  business rules, error handling, or state machines. Also use when tempted to add a
-  mutable property, an abstract base class, an interface with one implementation, or a
-  `throw` for a validation failure; when a class has nullable fields only valid in
-  certain combinations; or when choosing between exceptions and Result. Covers
-  records/with, ImmutableList/FrozenDictionary, pattern matching, railway-oriented
-  programming, ErrorOr/OneOf/LanguageExt, value objects, and functional core +
-  imperative shell.
+  Apply functional C# conventions when writing, reviewing, or refactoring .NET
+  code, especially domain models, business rules, handlers, state machines, and
+  expected-error handling. Use when mutable state, inheritance, nullable-state
+  combinations, or exceptions obscure the model. Prefer records, immutable
+  data, discriminated unions, pure functions, exhaustive matching, and
+  Result/Option while respecting framework constraints.
 license: MIT
 metadata:
   author: Matanel Gordon

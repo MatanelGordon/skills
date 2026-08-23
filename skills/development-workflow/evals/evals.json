@@ -45,6 +45,20 @@
         "The skip is stated explicitly with its risk",
         "A follow-up (owed tests) is recorded somewhere durable"
       ]
+    },
+    {
+      "id": 5,
+      "prompt": "Change the default request timeout from 30 to 45 seconds. This is a small configuration change; don't run the full feature pipeline.",
+      "expected_output": "Uses the mandatory core without adding full-pipeline ceremony: inspects the current configuration and its consumers, defines the observable result and check, makes the narrow change, verifies it, and reports any omission.",
+      "files": [],
+      "expectations": [
+        "Inspects the existing timeout definition and relevant consumers before editing",
+        "States that done means the effective default is 45 seconds and names a check that proves it",
+        "Makes only the scoped configuration change",
+        "Runs the named check and inspects the final diff",
+        "States anything skipped or unverified, even when there is nothing to report",
+        "Does not invoke registry research, deep-plan, ADR, or independent review for this small change"
+      ]
     }
   ]
 }

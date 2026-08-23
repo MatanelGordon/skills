@@ -32,6 +32,26 @@ what the author cannot see, and a commit that says *why* saves the archaeology.
 Stages defer to dedicated skills where they exist. This skill is the spine that
 keeps them in order.
 
+## Mandatory core
+
+Optional stages scale with the work; this core does not disappear. For every
+change:
+
+1. **Inspect** — read the relevant code, tests, and current behavior before
+   editing. Do not implement from the request alone.
+2. **Define done** — state the observable outcome and the check that will prove
+   it, keeping the original scope intact.
+3. **Implement** — make the smallest coherent change that reaches that outcome
+   and follows the codebase's conventions.
+4. **Verify** — run the named checks and inspect the final diff. A subagent's or
+   tool's success claim is not verification.
+5. **Report omissions** — compare the result with the original request and name
+   anything deliberately skipped, still unverified, or left incomplete.
+
+A trivial change compresses this loop to seconds; it does not acquire research,
+a plan, TDD, or independent review merely because the core is mandatory. The
+stages below are escalation layers for work whose risk and scope justify them.
+
 ## 0. Research and reuse — before any new implementation
 
 Run the `research-first` sweep: registries for the ecosystem, GitHub for prior

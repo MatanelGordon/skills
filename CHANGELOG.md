@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.18.0 — 2026-09-02
+
+- **New skill: `rank`.** Attaches per-claim confidence ranks to answers built
+  from reading undocumented code — automatically on research dives ("how does
+  X work", "why does Y exist", "is it safe to change W"), manually via
+  `/rank` on the previous answer or a single supplied claim.
+- **The tag names the evidence, not the feeling.** VERIFIED (executed it) /
+  TRACED (read the full path including callers) / INFERRED (names, types,
+  partial reading) / PATTERN (convention from similar code) / GUESS — so a
+  reader can tell what was observed from what was extrapolated. Boundary
+  rules pin the edges where inflation lives: a function without its callers
+  is INFERRED, an unrun test is TRACED, types are not execution.
+- **Every rank below VERIFIED carries its upgrade**: one runnable clause
+  (run X, read caller Y, `git log -S` Z) — the answer ships with its own
+  verification to-do list. If the upgrade costs under a minute, it gets
+  executed instead of tagged.
+- **Calibration is anti-inflation by construction.** Torn between two ranks →
+  the lower wins; undocumented + unfamiliar caps the default at INFERRED
+  until the path is walked or run; a downgraded honest rank beats an
+  inflated one because it fails openly instead of exactly when relied on.
+- Over-ranking is named as the failure mode: documented behavior, verbatim
+  quotes and trivia get no tag — ranks on everything are ranks on nothing.
+- Serves as the fixed vocabulary for the confidence labels `research-first`
+  already requires on single-sourced claims.
+
 ## 1.17.0 — 2026-08-22
 
 - **New skill: `get-the-job-done`.** Guards against work that looks finished —

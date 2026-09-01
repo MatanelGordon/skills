@@ -68,7 +68,7 @@ POSIX shell — use Git Bash or WSL for those.
 
 ## What's in the box
 
-Twenty-two skills. The short version of each:
+Twenty-three skills. The short version of each:
 
 **Planning and execution**
 
@@ -120,6 +120,10 @@ Twenty-two skills. The short version of each:
   product that already fits; before any consequential answer, stand it on two
   independent sources ("redundant" code gets checked against both the code and
   its git history; internet answers always cite at least two origins).
+- **rank** — answers dug out of undocumented code carry a per-claim tag naming
+  the evidence behind each substantive claim (VERIFIED / TRACED / INFERRED /
+  PATTERN / GUESS) plus the one concrete step that would upgrade it; `/rank`
+  applies the same scale to the previous answer on demand.
 - **adr** — Architectural Decision Records as small files in `.adr/`, read
   *before* planning so past decisions don't get undone by accident.
 - **bookkeeper** — durable, non-derivable repository facts as small tagged

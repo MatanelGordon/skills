@@ -1,0 +1,50 @@
+{
+  "skill_name": "rank",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "How does the session invalidation in src/auth/ actually work? There are no docs or comments on it.",
+      "expected_output": "Findings from the undocumented dive carry per-claim rank tags (VERIFIED / TRACED / INFERRED / PATTERN / GUESS) matched to the evidence actually held, and every rank below VERIFIED names one concrete upgrade step. Verbatim facts (quoted constants, function names) carry no tag.",
+      "files": [],
+      "expectations": [
+        "Substantive claims each get their own rank, not one blanket rank for the whole answer",
+        "Ranks reflect evidence held: executed = VERIFIED, full path plus callers read = TRACED, partial reading = INFERRED",
+        "Every rank below VERIFIED includes a concrete, runnable upgrade clause",
+        "Trivial or verbatim facts are left untagged"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "What does Array.prototype.flat do with depth Infinity?",
+      "expected_output": "No rank tags. Documented, stable platform behavior gets a cited answer, not a confidence ceremony.",
+      "files": [],
+      "expectations": [
+        "No rank tags on documented behavior",
+        "No manufactured claims table for a simple factual answer"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "/rank",
+      "expected_output": "The previous answer's substantive claims are extracted and ranked against the evidence actually held when it was written, including honest downgrades — a flatly asserted claim with no evidence is reported as GUESS with an upgrade clause, not softened. With 3+ ranked claims, a compact claim/rank/upgrade table is used.",
+      "files": [],
+      "expectations": [
+        "Ranks the previous answer's claims individually",
+        "Downgrades are stated plainly, not softened retroactively",
+        "3+ ranked claims produce the compact table format with an upgrade column"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Is it safe to delete the retry wrapper in queue/consumer.ts? I need a quick read, this area has zero docs.",
+      "expected_output": "The safety judgment is capped at INFERRED by default (undocumented plus unfamiliar) unless callers were actually walked (TRACED) or the path was run (VERIFIED). Torn between two ranks, the lower wins. A sub-minute check (e.g. grep for callers) is executed rather than tagged, and the honest lower rank is preferred over an inflated one.",
+      "files": [],
+      "expectations": [
+        "Undocumented + unfamiliar caps the default rank at INFERRED until verified",
+        "No inflation: the tag names evidence held, not projected confidence",
+        "Cheap verification is performed instead of shipping a low rank with an apology",
+        "The upgrade clause for the final rank is concrete (a runnable command or a specific caller/history check)"
+      ]
+    }
+  ]
+}

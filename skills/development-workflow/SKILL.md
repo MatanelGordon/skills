@@ -60,7 +60,10 @@ porting a proven implementation when it covers ~80% or more of the need** — na
 the gap, present the choice. Building is the fallback, not the default.
 
 Two-source discipline applies to everything the design rests on: versions,
-behaviors, "we can't use X because…" claims.
+behaviors, "we can't use X because…" claims. Findings dug out of undocumented
+code carry `rank` tags (VERIFIED / TRACED / INFERRED / PATTERN / GUESS) — a
+plan resting on an INFERRED claim has a verify-first task, and the claim's
+upgrade clause is that task.
 
 ## 1. Plan — before implementing
 

@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.18.1 — 2026-09-02
+
+- **`rank` hardened against the failure modes documented in real rating
+  systems** (NATO Admiralty critiques, GRADE, 2025 LLM-calibration research):
+  - **Prose must match the tag.** Readers weight sentence assertiveness over
+    labels — "retries cap at 3 `[GUESS]`" still lands as fact. Below TRACED,
+    the doubt goes in the words too; new anti-pattern row to match.
+  - **VERIFIED covers exactly what was run.** One probe verifies that
+    scenario; the "always" generalization is a separate, lower-ranked claim
+    (GRADE's indirectness downgrade, applied to code).
+  - **Corroborated claims name their legs**: `[TRACED ×2: path + git log]` —
+    the Admiralty Code's missing corroboration count, made visible.
+  - **A busted rank is a finding.** Ranked claims that later prove wrong get
+    recorded (bookkeeper/ADR) with the rank they carried — the calibration
+    feedback loop these scales rot without.
+  - New eval covering generalization and prose-hedging.
+- **`rank` wired into the pipeline** — previously nothing referenced it:
+  `research-first` names it as the fixed vocabulary for single-source labels;
+  `development-workflow` stage 0 requires ranked findings from undocumented
+  code, with upgrade clauses becoming verify-first plan tasks.
+
 ## 1.18.0 — 2026-09-02
 
 - **New skill: `rank`.** Attaches per-claim confidence ranks to answers built

@@ -45,6 +45,17 @@
         "Cheap verification is performed instead of shipping a low rank with an apology",
         "The upgrade clause for the final rank is concrete (a runnable command or a specific caller/history check)"
       ]
+    },
+    {
+      "id": 5,
+      "prompt": "I ran one request through /health and it skipped the rate limiter. So the limiter in api/middleware.ts doesn't apply to internal routes at all, right? Nothing about this is documented.",
+      "expected_output": "The single observed run is VERIFIED only for the scenario that was run; the generalization to all internal routes is a separate claim with its own lower rank and a concrete upgrade clause (e.g. reading the middleware registration or probing another internal route). Claims below TRACED are hedged in the sentence itself, not asserted flatly with a low tag attached.",
+      "files": [],
+      "expectations": [
+        "The one observed run is not generalized: the 'all internal routes' claim gets its own rank below VERIFIED",
+        "Claims below TRACED carry doubt in the prose itself, not confident sentences rescued by a low tag",
+        "The generalization's upgrade clause is a concrete runnable step, not 'more investigation'"
+      ]
     }
   ]
 }

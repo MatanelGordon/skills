@@ -71,6 +71,10 @@ Boundary rules, because the edges are where inflation lives:
   VERIFIED.
 - "The types wouldn't compile otherwise" is INFERRED — types constrain, they
   don't execute.
+- **VERIFIED covers exactly what you ran.** One request with one expired
+  token verifies *that scenario*; "expired tokens are always rejected" is a
+  second claim riding on the first, ranked on its own evidence — usually
+  INFERRED, with the wider probe as its upgrade.
 
 ## The upgrade clause
 
@@ -87,6 +91,11 @@ cost, not a license to skip it.
 ## Calibration
 
 - **Rank the evidence, not the feeling.** "Pretty sure" is not a level.
+- **The sentence must match the tag.** Readers weight the prose, not the
+  bracket: "retries cap at 3 `[GUESS]`" still lands as fact, because the flat
+  sentence out-shouts the tag. Below TRACED, put the doubt in the words too —
+  "the cap *looks like* 3" — and let the tag name the evidence. A tag is not
+  a license to write guesses in confident prose.
 - **Never inflate to look competent.** An inflated rank fails exactly when the
   reader relies on it; a downgraded honest rank costs one upgrade step. The
   honest one always wins.
@@ -97,6 +106,11 @@ cost, not a license to skip it.
   Familiarity you don't have doesn't count as evidence.
 - **Conflicting evidence ranks on the weaker leg**, and the conflict itself
   gets reported — per `research-first`, disagreement is a finding.
+- **A busted rank is a finding too.** When a ranked claim later proves wrong,
+  record it where the project keeps learned facts (`bookkeeper`'s `.memory/`,
+  an ADR, the correction itself) — naming the rank it carried. A wrong GUESS
+  is the system working; a wrong TRACED means the tracing was shallower than
+  claimed, and your boundary for TRACED needs tightening.
 
 ## Output format
 
@@ -123,6 +137,13 @@ Compact, inline, no ceremony:
 - **VERIFIED** tags name what was run, in a word or two: `[VERIFIED: ran
   probe]`. No upgrade clause — there's nowhere up from observed.
 
+- **Corroborated claims name their legs.** When independent evidence agrees —
+  code path *and* git history, trace *and* passing test — show it:
+  `[TRACED ×2: path + git log]`. Two legs at a rank beat one at the same
+  rank, and `research-first` demands the second leg on anything
+  consequential; the tag is where that work becomes visible instead of
+  vanishing into the same bracket as a single-leg read.
+
 ## Manual `/rank`
 
 On `/rank` with no argument: re-read your previous answer, pull out its
@@ -145,5 +166,7 @@ opportunity to improvise support.
 | VERIFIED because "the tests would catch it" | Unrun tests are reading, not running |
 | "More investigation needed" as an upgrade clause | Unactionable; the clause must be a runnable next step |
 | Inflating a rank to sound competent | It fails precisely when the reader leans on it |
+| Confident prose over a low tag | The sentence out-shouts the bracket; hedge the words, not just the rank |
+| Generalizing a VERIFIED run | You verified the scenario you ran; the "always" is a separate, lower claim |
 | Ranking documented or quoted facts | The receipt already exists; cite it |
 | Tagging what a one-minute check would verify | Do the check; ship the higher rank |

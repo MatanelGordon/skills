@@ -92,7 +92,9 @@ proved otherwise. Docs are a claim about the code; execution is the code.
 
 When you genuinely have only one non-conclusive leg, say so: "single source —
 X; couldn't cross-check because Y." A labeled one-legged answer is honest; an
-unlabeled one is a guess wearing confidence.
+unlabeled one is a guess wearing confidence. For claims built from reading
+undocumented code, the `rank` skill is the fixed vocabulary for these labels —
+VERIFIED / TRACED / INFERRED / PATTERN / GUESS, each with its upgrade step.
 
 ## 3. Judging code: the fence has a reason
 
@@ -151,7 +153,8 @@ judgment still gets flagged before acting.
 
 - **Cite as you claim**: link or name the source next to the claim it carries,
   not in a pile at the end.
-- Label single-sourced claims explicitly.
+- Label single-sourced claims explicitly — on undocumented-code claims, use
+  the `rank` vocabulary.
 - Name the searches behind a negative result.
 - Keep receipts short — two links and one sentence of method beat a paragraph
   of process narration.

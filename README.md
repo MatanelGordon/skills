@@ -68,7 +68,7 @@ POSIX shell — use Git Bash or WSL for those.
 
 ## What's in the box
 
-Twenty-three skills. The short version of each:
+Twenty-four skills. The short version of each:
 
 **Planning and execution**
 
@@ -80,6 +80,10 @@ Twenty-three skills. The short version of each:
   execute: a clarity gate before anything is written, a file map where every
   path has exactly one owner, edge cases enumerated with a status each, and
   test commands quoted verbatim. Owns the `.plan/` directory.
+- **council** — pressure-tests consequential architecture choices through
+  isolated, contrast-written sub-agent personas, anonymized cross-review, and
+  a chairman verdict that preserves dissent and weights falsifiers over
+  confidence theatre; built for weak single-model harnesses on closed networks.
 - **prototype** — throwaway code that answers a design question before real
   implementation burns tokens on the wrong thing. Greenfield mode is the
   familiar one (no abstractions, hardcode everything, delete it after);

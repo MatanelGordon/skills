@@ -1,0 +1,93 @@
+{
+  "skill_name": "council",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Council this decision: should we split install/index.mjs into per-agent plugin modules, or keep the single file? Existing installations and copy/symlink behavior must stay compatible. Contributors other than the author will add future agents, and live installations already depend on this path.",
+      "expected_output": "Skill triggers. Writes a decision brief with named A/B options, hard compatibility constraints, trust-tagged evidence, and stakes. Convenes Skeptic, Pragmatist, Migrator, Maintainer, and Hupert-Graph as the relevant subset, not the full pool.",
+      "files": [],
+      "expectations": [
+        "The brief is at most 300 words and contains DECISION, enumerated OPTIONS, CONSTRAINTS, trust-tagged EVIDENCE, and STAKES",
+        "The options are real alternatives with a trade-off",
+        "The convened subset is Skeptic, Pragmatist, Migrator, Maintainer, and Hupert-Graph",
+        "MLK, Visionary, and Devil's Advocate are not round-1 voters",
+        "Round-1 prompts use isolated sub-agents and the mandated output slots"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Which HTTP client does this project use? Separately, what are my options for where retry logic could live? I only want the choices, not a deliberated recommendation.",
+      "expected_output": "Skill does not convene. Answers the factual question directly from available evidence and routes the options-only comparison to critical-thinking territory rather than running personas.",
+      "files": [],
+      "expectations": [
+        "No council members are spawned",
+        "The factual question is answered directly",
+        "The options-only request is treated as a comparison, not a council decision",
+        "No decision brief or chairman verdict is manufactured"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Continue this council from the supplied fixture. Apply the convergence check, the Devil's Advocate gate, and the chairman rules mechanically.",
+      "expected_output": "Finds identical A votes with all confidence values in the 4-5 high bucket, runs the Devil's Advocate gate, accepts the literal NO MATERIAL OBJECTION, skips round 2, and writes a chairman verdict whose revisit triggers aggregate the supplied falsifiers.",
+      "files": [
+        "ROUND-1 FIXTURE\n\nSkeptic\nVOTE: A\nPOSITION: Keep the single installer until a concrete failure justifies seams.\nARGUMENT: The first likely failure is agent-specific branching hiding a compatibility regression.\nSTRONGEST OBJECTION TO MY OWN POSITION: The file can become hard to test as agents accumulate.\nCONFIDENCE: 4/5\nWOULD CHANGE MY MIND: A failing compatibility test caused by two agent branches sharing mutable state.\nPREMISE CHALLENGE: NONE\n\nPragmatist\nVOTE: A\nPOSITION: Keep the working file because the split has no measured delivery payoff.\nARGUMENT: The compatible path already ships, while the split consumes time without a named release blocker.\nSTRONGEST OBJECTION TO MY OWN POSITION: A later split could cost more.\nCONFIDENCE: 5/5\nWOULD CHANGE MY MIND: A queued agent integration blocked for more than one workday by the current file.\nPREMISE CHALLENGE: NONE\n\nMaintainer\nVOTE: A\nPOSITION: Keep one traceable control flow while it remains readable end to end.\nARGUMENT: One file lets on-call trace detection through installation without crossing module boundaries.\nSTRONGEST OBJECTION TO MY OWN POSITION: Continued growth can make the trace opaque.\nCONFIDENCE: 4/5\nWOULD CHANGE MY MIND: A code-read trace that requires jumping across more than three unrelated branches (estimate).\nPREMISE CHALLENGE: NONE\n\nDEVIL'S ADVOCATE FIXTURE\nNO MATERIAL OBJECTION"
+      ],
+      "expectations": [
+        "The round-1 result is classified CONVERGED by identical vote strings and high confidence buckets",
+        "The Devil's Advocate runs only because the converged check passed",
+        "The literal NO MATERIAL OBJECTION skips round 2",
+        "The verdict still includes every observable WOULD CHANGE MY MIND item as a revisit trigger",
+        "Confidence numbers are not used as vote weights"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Continue this contested council from the supplied fixture. Validate both supplied casting-director candidate outputs, then prepare the round-2 packet and prompts.",
+      "expected_output": "Classifies the round as NOT CONVERGED. Treats both the hedge and MISSING ROLE: security-expert as NONE NEEDED. Writes a persona-to-label mapping before round 2, re-shuffles labels, and creates round-2 prompts whose response packet contains no persona attribution.",
+      "files": [
+        "CONTESTED ROUND-1 FIXTURE\n\nSkeptic\nVOTE: A\nPOSITION: Keep the current file until its first production failure is named.\nARGUMENT: Splitting can create compatibility gaps at module boundaries.\nSTRONGEST OBJECTION TO MY OWN POSITION: The file may already be too coupled.\nCONFIDENCE: 3/5\nWOULD CHANGE MY MIND: A reproduced cross-agent state leak.\nPREMISE CHALLENGE: NONE\n\nPragmatist\nVOTE: B\nPOSITION: Split only the agent branches that block the next shipped integration.\nARGUMENT: A narrow extraction can unblock delivery without a full redesign.\nSTRONGEST OBJECTION TO MY OWN POSITION: Partial extraction can leave two control paths.\nCONFIDENCE: 4/5\nWOULD CHANGE MY MIND: The next integration lands in one day without extraction.\nPREMISE CHALLENGE: NONE\n\nHupert-Graph\nVOTE: A\nPOSITION: Keep the smallest biggest mission and remove local coupling in-stack.\nARGUMENT: A module split without standalone value creates one mission with extra boundaries.\nSTRONGEST OBJECTION TO MY OWN POSITION: A real plugin boundary could carry standalone value.\nCONFIDENCE: 4/5\nWOULD CHANGE MY MIND: One extracted agent module can install and test independently.\nPREMISE CHALLENGE: The options assume file count is the same thing as architectural coupling.\n\nCASTING-DIRECTOR CANDIDATE 1\nmaybe a security person could help?\n\nCASTING-DIRECTOR CANDIDATE 2\nMISSING ROLE: security-expert"
+      ],
+      "expectations": [
+        "Contested vote letters produce NOT CONVERGED and the Devil's Advocate does not run",
+        "The hedge fails closed to NONE NEEDED",
+        "The non-pool security-expert name fails closed to NONE NEEDED",
+        "A complete persona-to-label mapping is written before round-2 prompts are built",
+        "Round-2 labels differ from any earlier label assignment",
+        "Anonymous responses in every round-2 prompt contain zero persona attribution",
+        "The Hupert-Graph premise challenge is preserved verbatim for the verdict"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Write the chairman verdict from these completed member-output fixtures. Apply usability, credibility, confidence-bucket, and correlated-agreement rules exactly.",
+      "expected_output": "Keeps all three responses usable because each has VOTE, POSITION, and ARGUMENT. Marks the member saying nothing realistically would change its mind as low-credibility. Keeps the member missing CONFIDENCE usable, does not place it in the high bucket, and derives credibility from its observable falsifier.",
+      "files": [
+        "COMPLETED MEMBER OUTPUT FIXTURE\n\nSkeptic\nVOTE: A\nPOSITION: Keep the current path.\nARGUMENT: The alternative has an unnamed compatibility failure.\nSTRONGEST OBJECTION TO MY OWN POSITION: The current path may hide coupling.\nCONFIDENCE: 5/5\nWOULD CHANGE MY MIND: nothing realistically\nPREMISE CHALLENGE: NONE\n\nPragmatist\nVOTE: A\nPOSITION: Keep the current path for this release.\nARGUMENT: The same compatibility risk blocks shipment.\nSTRONGEST OBJECTION TO MY OWN POSITION: Delay can raise later cost.\nWOULD CHANGE MY MIND: A release task blocked for one workday by the current structure.\nPREMISE CHALLENGE: NONE\n\nMaintainer\nVOTE: B\nPOSITION: Split the trace into named agent modules.\nARGUMENT: The next engineer can trace one agent without scanning unrelated branches.\nSTRONGEST OBJECTION TO MY OWN POSITION: Cross-module dispatch can hide the whole flow.\nCONFIDENCE: 3/5\nWOULD CHANGE MY MIND: A code-read trace showing the single file has one linear dispatch path.\nPREMISE CHALLENGE: NONE"
+      ],
+      "expectations": [
+        "All three responses are usable despite one missing CONFIDENCE slot",
+        "The nothing-realistically falsifier is explicitly marked low credibility regardless of 5/5 confidence",
+        "The missing-confidence response cannot enter the high bucket and is not discarded",
+        "The observable falsifier remains the credibility signal for the missing-confidence response",
+        "The two A votes that share the same compatibility-risk reason count as one correlated voice",
+        "The verdict preserves the Maintainer dissent"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Convene the council for this fixed brief. DECISION: How should a load-strained production HTTP service gain headroom? OPTIONS: A) rewrite the service fully in Rust; B) strangler-carve endpoints into Rust incrementally; C) fix the bottleneck in the current TypeScript stack. CONSTRAINTS: preserve the HTTP contract; one engineer owns and operates it alone for the next 12 months; migration must not interrupt production traffic; future endpoints attach through the chosen boundary. EVIDENCE: current hot path from code reading (code-read); Rust and TypeScript throughput claims from generated design notes (unverified-docs); no measured benchmark. STAKES: a failed path can interrupt live traffic, while too little headroom can block growth.",
+      "expected_output": "Runs a live persona-fidelity council. Convenes Visionary directly because this is a rewrite/port decision. Hupert-Graph votes C under the smallest-biggest-mission rule unless the current stack is proved incapable. MLK tags every throughput number as an estimate. Any non-NONE premise challenge is copied verbatim into the verdict.",
+      "files": [],
+      "expectations": [
+        "Visionary is a round-1 member from the rewrite trigger and is not deferred to the casting director",
+        "Hupert-Graph votes C because the in-stack fix has the smallest biggest required mission and the brief contains no proof that the current stack cannot reach the goal",
+        "Hupert-Graph does not mistake an incremental rewrite for three standalone small missions",
+        "Hupert-Graph's reasoning says it would still choose the in-stack option if it shipped slower, separating it from Pragmatist",
+        "MLK marks throughput or capacity numbers with (estimate) because no measured source exists",
+        "Every non-NONE PREMISE CHALLENGE appears verbatim in the chairman verdict",
+        "Round 1 uses VOTE letters and round 2, if reached, uses anonymous re-shuffled labels"
+      ]
+    }
+  ]
+}

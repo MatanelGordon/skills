@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.19.0 — 2026-09-02
+
+- **New skill: `council`.** Convenes a mechanically selected subset of eight
+  contrast-written personas to pressure-test consequential architectural
+  decisions on a weak, closed-network, single-model harness.
+- **Round 1 stays independent.** Members spawn in isolated contexts with a
+  forced vote-and-falsifier format; a string-comparable convergence check sends
+  only unanimous high-confidence results through a Devil's Advocate gate.
+- **Round 2 resists conformity.** Responses are anonymized under freshly
+  shuffled labels, the persona-to-label mapping is recorded before prompts are
+  built, and every member must steelman an opposing response before updating
+  or defending its vote.
+- **The chairman discounts correlated agreement.** Matching reasons count as
+  one voice, confidence is bucketed rather than numerically weighted, and an
+  observable `WOULD CHANGE MY MIND` falsifier is the credibility signal.
+- **Weak-harness failures close mechanically.** Three usable responses make a
+  quorum, malformed casting-director output becomes `NONE NEEDED`, sequential
+  isolated spawning replaces unavailable parallel spawning, and a harness
+  with no sub-agents declines instead of simulating a council in one context.
+- Six behavioral evals cover trigger boundaries, convergence and DA stopping,
+  casting-director rejection, falsifier credibility, and the Hupert-Graph
+  in-stack-fix calibration that prevents incremental rewrites from masquerading
+  as several small missions.
+
 ## 1.18.1 — 2026-09-02
 
 - **`rank` hardened against the failure modes documented in real rating

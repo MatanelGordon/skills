@@ -62,6 +62,8 @@ cheap; a wrong plan executed by four agents is not.
 **Name what you could not determine.** An unknown stated in the plan is a risk
 being managed; an unknown glossed over is a bug waiting.
 
+That's why you need to ask me questions you think are critical for understanding the mission before you start planning.
+
 ## 2. Decide the file structure before the tasks
 
 Map which files will be created or modified and what each is responsible for.

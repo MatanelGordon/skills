@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.19.1 — 2026-10-02
+
+- **Registered [pbakaus/impeccable](https://github.com/pbakaus/impeccable)**
+  (Apache-2.0) under "Good skills that live elsewhere" — frontend design
+  guidance with 24 commands, 61 deterministic detector rules, and live browser
+  iteration; a descendant of Anthropic's `frontend-design`. Installed globally
+  (skill 4.5.0, engine 0.1.11) for Claude Code, Codex and Copilot, not vendored.
+- **Recorded the install caveat worth knowing:** upstream's global provider
+  dirs miss two of the three CLIs here — `copilot` resolves to
+  `~/.github/skills/` (Copilot CLI reads `~/.copilot/skills/`) and `codex` to
+  `~/.agents/skills/` (Codex 0.152.1 reads `$CODEX_HOME/skills`). Both are
+  symlinked from the dirs the CLIs actually read, so `impeccable update` still
+  updates one real copy each. Also: the installer writes a project hook
+  manifest into the current directory unless `--no-hooks` is passed.
+
 ## 1.19.0 — 2026-09-02
 
 - **New skill: `council`.** Convenes a mechanically selected subset of eight

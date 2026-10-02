@@ -256,6 +256,39 @@ upstream:
   [dotnet/AspNetCore.Docs](https://github.com/dotnet/AspNetCore.Docs)),
   `chatgpt-apps` (from [openai/openai-apps-sdk-examples](https://github.com/openai/openai-apps-sdk-examples)),
   `cli-creator`, `frontend-skill`, plus system skills under `~/.codex/skills/.system/`.
+- [pbakaus/impeccable](https://github.com/pbakaus/impeccable) (Apache-2.0, Paul
+  Bakaus) — frontend design guidance with teeth: one skill behind
+  `/impeccable <command>` with 24 commands (`shape`, `critique`, `audit`,
+  `polish`, `bolder`, `quieter`, `distill`, `harden`, `animate`, `live`…), 61
+  deterministic detector rules that run with no LLM and no API key, and live
+  browser iteration. It started from Anthropic's
+  [frontend-design](https://github.com/anthropics/skills/tree/main/skills/frontend-design)
+  and went considerably further. Installed globally 2026-10-02 — skill 4.5.0,
+  engine 0.1.11 — for Claude Code, Codex and Copilot; caveats recorded in each
+  copy's `ATTRIBUTION.txt`:
+  - `npx impeccable install --yes --global --no-hooks --providers=claude,codex,copilot`
+    needs Node ≥ 22.18 (nvm v24 here; the default v18 is too old). Run it from a
+    neutral directory — without `--no-hooks` it also writes a project hook
+    manifest into whatever repo you happen to be standing in.
+  - Frontmatter is clean as shipped (`version` / `user-invocable` /
+    `argument-hint` / `license`), so no normalization is needed for Claude Code.
+  - **Its global provider dirs are not where two of these three CLIs read.**
+    Upstream maps `copilot` → `~/.github/skills/`, but Copilot CLI reads
+    `~/.copilot/skills/` (`copilot skill list` showed nothing until it was
+    linked); and `codex` → `~/.agents/skills/`, while Codex 0.152.1 discovers
+    skills in `$CODEX_HOME/skills` (default `~/.codex/skills`) and uses
+    `~/.agents` only for the plugin marketplace. Fix without forking the
+    install: symlink `~/.codex/skills/impeccable` and
+    `~/.copilot/skills/impeccable` at the upstream directories, so
+    `npx impeccable update` keeps updating one real copy each.
+  - No runtime of its own — `scripts/impeccable` is a POSIX launcher around a
+    self-contained engine binary (vendored per copy under
+    `scripts/bin/<os>-<arch>/`).
+  - Hooks skipped on purpose: upstream's design detector hooks are
+    project-scoped (`${CLAUDE_PROJECT_DIR}`, `.codex/hooks.json`). Re-run the
+    installer inside a project to get them.
+  - Ships four subagents; the installer places them in `~/.claude/agents/` and
+    `~/.copilot/agents/` by itself.
 - [obra/superpowers](https://github.com/obra/superpowers) — the most-adopted
   skills framework; its `writing-plans` shaped `deep-plan`.
 - [mattpocock/skills](https://github.com/mattpocock/skills) — engineering

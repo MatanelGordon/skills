@@ -33,6 +33,33 @@ that they often aren't.
 contract, terse output, merge and cleanup all come from there unchanged. What
 follows is only what differs under `ori`.
 
+**Bundled helpers live with the installed skill, not in the project being
+worked on.** Shell state does not persist between calls, so resolve `SK` in the
+same call that uses it. Select only a complete installation; an older copied
+skill directory may contain `SKILL.md` but no `scripts/`:
+
+```bash
+SK=$(for candidate in \
+  "$HOME/.claude/skills/openrouter-cli-subagent" \
+  "${CODEX_HOME:-$HOME/.codex}/skills/openrouter-cli-subagent" \
+  "$HOME/.codex/skills/openrouter-cli-subagent" \
+  "$HOME/.copilot/skills/openrouter-cli-subagent" \
+  "$HOME/.agents/skills/openrouter-cli-subagent" \
+  "$HOME/.tabnine/agent/skills/openrouter-cli-subagent"
+do
+  [ -x "$candidate/scripts/ori-precheck.sh" ] &&
+    [ -x "$candidate/scripts/ori-models.sh" ] &&
+    [ -x "$candidate/scripts/ori-codex-home.sh" ] && {
+      printf '%s\n' "$candidate"
+      break
+    }
+done)
+[ -n "$SK" ] || { echo "openrouter-cli-subagent helpers not found; reinstall the complete skill directory" >&2; exit 40; }
+```
+
+Never run `./scripts/...` from the project directory and never treat a
+`SKILL.md`-only copy as a complete installation.
+
 > **What was verified, on 2026-08-22 against `ori` v0.1.9:** `--help` on each
 > subcommand used below; both bundled scripts executed through every exit path;
 > and one live `ori claude --model … -- -p` round trip. **Not verified:** the
@@ -44,7 +71,18 @@ follows is only what differs under `ori`.
 ## 1. Pre-flight — always, before dispatching anything
 
 ```bash
-./scripts/ori-precheck.sh          # or --json
+SK=$(for candidate in "$HOME/.claude/skills/openrouter-cli-subagent" \
+  "${CODEX_HOME:-$HOME/.codex}/skills/openrouter-cli-subagent" \
+  "$HOME/.codex/skills/openrouter-cli-subagent" \
+  "$HOME/.copilot/skills/openrouter-cli-subagent" \
+  "$HOME/.agents/skills/openrouter-cli-subagent" \
+  "$HOME/.tabnine/agent/skills/openrouter-cli-subagent"; do
+  [ -x "$candidate/scripts/ori-precheck.sh" ] &&
+    [ -x "$candidate/scripts/ori-models.sh" ] &&
+    [ -x "$candidate/scripts/ori-codex-home.sh" ] && { printf '%s\n' "$candidate"; break; }
+done)
+[ -n "$SK" ] || { echo "openrouter-cli-subagent helpers not found; reinstall the complete skill directory" >&2; exit 40; }
+"$SK/scripts/ori-precheck.sh"          # or --json
 ```
 
 | Exit | Meaning | Do |
@@ -70,11 +108,22 @@ subagents run in. It never prints the key, the contents of
 ## 2. Pick models — from the script, never from memory
 
 ```bash
-./scripts/ori-models.sh                          # default: out <= $0.50 / 1M tokens
-./scripts/ori-models.sh --free-only              # free models only
-./scripts/ori-models.sh --max-output-price 0.10  # tighter ceiling
-./scripts/ori-models.sh --json                   # machine
-./scripts/ori-models.sh --all                    # what was rejected, and why
+SK=$(for candidate in "$HOME/.claude/skills/openrouter-cli-subagent" \
+  "${CODEX_HOME:-$HOME/.codex}/skills/openrouter-cli-subagent" \
+  "$HOME/.codex/skills/openrouter-cli-subagent" \
+  "$HOME/.copilot/skills/openrouter-cli-subagent" \
+  "$HOME/.agents/skills/openrouter-cli-subagent" \
+  "$HOME/.tabnine/agent/skills/openrouter-cli-subagent"; do
+  [ -x "$candidate/scripts/ori-precheck.sh" ] &&
+    [ -x "$candidate/scripts/ori-models.sh" ] &&
+    [ -x "$candidate/scripts/ori-codex-home.sh" ] && { printf '%s\n' "$candidate"; break; }
+done)
+[ -n "$SK" ] || { echo "openrouter-cli-subagent helpers not found; reinstall the complete skill directory" >&2; exit 40; }
+"$SK/scripts/ori-models.sh"                          # default: out <= $0.50 / 1M tokens
+"$SK/scripts/ori-models.sh" --free-only              # free models only
+"$SK/scripts/ori-models.sh" --max-output-price 0.10  # tighter ceiling
+"$SK/scripts/ori-models.sh" --json                   # machine
+"$SK/scripts/ori-models.sh" --all                    # what was rejected, and why
 ```
 
 **Free is not the only sensible ceiling, and often not the best one.** A few
@@ -126,6 +175,17 @@ session state and leaking the wrong model config into a subagent run. Before
 dispatching any `ori codex` subagent, prepare an isolated home:
 
 ```bash
+SK=$(for candidate in "$HOME/.claude/skills/openrouter-cli-subagent" \
+  "${CODEX_HOME:-$HOME/.codex}/skills/openrouter-cli-subagent" \
+  "$HOME/.codex/skills/openrouter-cli-subagent" \
+  "$HOME/.copilot/skills/openrouter-cli-subagent" \
+  "$HOME/.agents/skills/openrouter-cli-subagent" \
+  "$HOME/.tabnine/agent/skills/openrouter-cli-subagent"; do
+  [ -x "$candidate/scripts/ori-precheck.sh" ] &&
+    [ -x "$candidate/scripts/ori-models.sh" ] &&
+    [ -x "$candidate/scripts/ori-codex-home.sh" ] && { printf '%s\n' "$candidate"; break; }
+done)
+[ -n "$SK" ] || { echo "openrouter-cli-subagent helpers not found; reinstall the complete skill directory" >&2; exit 40; }
 "$SK/scripts/ori-codex-home.sh"   # idempotent; creates $HOME/.ori-codex with symlinks to AGENTS.md, rules/, and skills/
 ```
 

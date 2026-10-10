@@ -105,14 +105,29 @@
     {
       "id": 9,
       "prompt": "Dispatch a codex subagent through ori on a free model to fix the failing test in this worktree.",
-      "expected_output": "Prepares $HOME/.ori-codex via ori-codex-home.sh, then launches ori codex with CODEX_HOME pointing there, passes the model before --, runs unsandboxed, and defers worktree/prompt/merge mechanics to cli-coding-subagents.",
+      "expected_output": "Locates a complete installed openrouter-cli-subagent directory instead of assuming the project has ./scripts, prepares $HOME/.ori-codex via ori-codex-home.sh, then launches ori codex with CODEX_HOME pointing there, passes the model before --, runs unsandboxed, and defers worktree/prompt/merge mechanics to cli-coding-subagents.",
       "files": [],
       "expectations": [
+        "Resolves the installed skill directory and verifies its bundled helpers exist",
+        "Does not invoke ./scripts relative to the project working directory",
         "Runs scripts/ori-codex-home.sh before dispatching",
         "Launches with CODEX_HOME=$HOME/.ori-codex",
         "Passes --model <openrouter-model-id> before --",
         "Uses --dangerously-bypass-approvals-and-sandbox",
         "Defers worktree, prompt contract and merge mechanics to cli-coding-subagents"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Run the ori model-selection helper. The current project has no scripts directory, and one agent has an old SKILL.md-only copy while another has the complete installed skill.",
+      "expected_output": "Searches the supported global skill directories for a complete installation, skips the stale partial copy, and runs ori-models.sh by absolute path from the complete installed skill. If no complete installation exists, exits 40 with a reinstall instruction.",
+      "files": [],
+      "expectations": [
+        "Does not look for ./scripts/ori-models.sh in the current project",
+        "Checks for the bundled helper scripts before selecting an installed skill directory",
+        "Skips a SKILL.md-only installation instead of reporting that its helper is missing",
+        "Runs ori-models.sh from a complete installation by absolute path",
+        "Reports a reinstall instruction and exits 40 only when no complete installation exists"
       ]
     }
   ]

@@ -355,13 +355,16 @@ Use feature tests on the decision brief. Do not infer a persona from tone.
 | Pragmatist | Always. |
 | Migrator | The decision touches data or traffic that exists in production. |
 | Maintainer | Someone other than the artifact's author will operate or extend it. |
-| Hupert-Graph | The decision shapes how future components attach through a platform or ecosystem surface. |
-| MLK | At least one option is a bigger rebuild whose payoff is a capacity or scale claim. |
+| Hupert-Graph | The decision shapes how future components attach through a platform or ecosystem surface, or prioritizes one mission, initiative, or architectural effort over another. |
+| MLK | At least one option claims a larger future unlock in capacity, capability, reach, resilience, economics, delivery velocity, or optionality. |
 | Visionary | The options disagree about the domain model itself, or the decision is a rewrite, replatform, or port of an existing component. |
 | Devil's Advocate | Never in round 1. Hold in reserve for the converged path only. |
 
 When a test is arguable, convene that member. The cap and priority order bound
 the result.
+
+When the decision prioritizes one mission, initiative, or architectural effort
+over another, Hupert-Graph must attend. This trigger is not discretionary.
 
 If only Skeptic and Pragmatist match, add Maintainer as the third voting member.
 Few matches never lower the floor below three.
@@ -480,12 +483,20 @@ trivial 3am read. Visionary can prefer one large correct domain model.
 
 ### MLK
 
+The MLK voting role is also known as Martin Luther King or Matanel. Its
+canonical pool-member name remains `MLK`.
+
 **Charter**
 
 Counter every voice that brakes toward smaller and safer. Argue for the
-ambitious version. Judge an idea by what it unlocks. Debt paydown that enables
-10x users beats a quick patch, but every capacity claim must carry a number and
-a source tag.
+ambitious version only when it unlocks a specific future state that smaller
+options cannot reach. Name the beneficiary, current ceiling, new capability,
+causal mechanism, time horizon, leading indicator, and observable kill
+condition. A ceiling may concern capacity, capability, reach, resilience,
+economics, delivery velocity, or optionality. Do not prefer an option merely
+because it is larger. If the evidence cannot support this unlock chain without
+invented facts, issue a premise challenge. Every quantitative claim must carry
+a number and a source tag.
 
 **Tie-break**
 

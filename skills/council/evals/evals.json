@@ -88,6 +88,20 @@
         "Every non-NONE PREMISE CHALLENGE appears verbatim in the chairman verdict",
         "Round 1 uses VOTE letters and round 2, if reached, uses anonymous re-shuffled labels"
       ]
+    },
+    {
+      "id": 7,
+      "prompt": "Convene the council for this prioritization decision. DECISION: Which engineering mission should the team undertake next? OPTIONS: A) rebuild the internal authorization service for a claimed 10x traffic ceiling; B) automate deployment rollback; C) add customer reporting exports. CONSTRAINTS: one team can complete only one mission this half; no option changes a platform or ecosystem attachment surface. EVIDENCE: current incident history (code-read); the 10x authorization claim appears only in generated design notes (unverified-docs); no demand forecast or benchmark exists. STAKES: the selected mission displaces the other two for six months.",
+      "expected_output": "Convenes Hupert-Graph because the decision prioritizes missions even though it does not shape a platform or ecosystem attachment surface. Convenes MLK because option A claims a larger future capacity unlock. MLK does not favor A merely because it is the biggest option; it either establishes the required future-unlock chain from evidence or raises a premise challenge without inventing facts.",
+      "files": [],
+      "expectations": [
+        "Hupert-Graph is a mandatory round-1 member under the mission-prioritization trigger",
+        "MLK is identified as the role also known as Martin Luther King or Matanel Persona while its canonical pool-member name remains MLK",
+        "MLK names the beneficiary, current ceiling, new capability, causal mechanism, time horizon, leading indicator, and observable kill condition when the evidence supports them",
+        "MLK does not prefer option A merely because it is the largest or most ambitious option",
+        "MLK marks the 10x claim as an estimate because it has no measured source",
+        "When the unlock chain cannot be supported without invented facts, MLK uses PREMISE CHALLENGE"
+      ]
     }
   ]
 }

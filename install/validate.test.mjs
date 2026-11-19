@@ -20,7 +20,11 @@ async function writeValidRepo({ malformed = false, changelogVersion = '1.0.0', r
   await writeFile(join(root, 'skills', 'valid-skill', 'SKILL.md'), [
     '---',
     'name: valid-skill',
-    'description: A valid fixture skill.',
+    'description: >',
+    '  A valid fixture skill with a folded description.',
+    'license: MIT',
+    'metadata:',
+    '  requires: Node >= 18',
     '---',
     '# Valid',
     '',

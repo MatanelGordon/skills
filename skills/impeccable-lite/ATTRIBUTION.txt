@@ -1,0 +1,29 @@
+Perception-first lens attribution
+=================================
+
+Upstream project: Perception-First Design
+Upstream repository: https://github.com/skovalik/perception-first-design
+Author: Stefan Kovalik / Aurochs
+Reviewed revision: 1704ff61c18872a66d969e860c9b6e45a8f50f16
+Upstream skill version: 0.7.0
+Upstream framework version: 3.6
+License: Creative Commons Attribution-ShareAlike 4.0 International
+License URL: https://creativecommons.org/licenses/by-sa/4.0/
+Trademark notice: "Perception-First Design" and "PFD" are trademarks of
+Stefan Kovalik / Aurochs. This repository is not affiliated with or endorsed by
+the upstream author.
+
+Integration notes
+-----------------
+
+No upstream skill, framework, corpus, command, script, or learning-log file is
+vendored in this repository, and no substantive passage is copied verbatim. The file
+`references/perception-first-lens.md` is an original, shortened adaptation of
+the five-layer methodology for Impeccable Lite's bounded, local-only interface
+workflow. It removes the broad automatic trigger, mandatory insight logs,
+Ralph-loop repetition, numeric scoring, corpus loading, live URL workflow, and
+fixed output ceremony. Changes were made to resolve conflicts with product
+truth, accessibility, expert-interface density, offline execution, and bounded
+verification. That reference is distributed under CC BY-SA 4.0. The remainder
+of Impeccable Lite retains its existing MIT license except where another file
+states otherwise.

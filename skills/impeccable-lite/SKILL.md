@@ -57,6 +57,18 @@ The generated packet is the complete handoff. Do not give a specialist the
 whole skill or a broad repository walk when its packet and named local files
 are sufficient.
 
+## Load the perception lens only when it changes the decision
+
+For an explicit Perception-First Design request, or when the task genuinely
+depends on cognitive load, first impressions, felt fluency, trust formation,
+stated-versus-observed behavior, or decision architecture, read
+[references/perception-first-lens.md](references/perception-first-lens.md).
+
+Do not load it for ordinary visual polish, a precise implementation request, or
+as a second generic checklist. It is a diagnostic and derivation lens, not a
+mandatory phase. The brief, product truth, accessibility, local-only boundary,
+surface mode, and requested scope always outrank the lens.
+
 ## The working rule
 
 **The brief wins.** Preserve explicit product truth, brand choices, content,
@@ -190,7 +202,10 @@ copy a large upstream playbook back into this skill.
 This is an independently written, local-only distillation inspired by Paul
 Bakaus's [Impeccable](https://github.com/pbakaus/impeccable), licensed
 Apache-2.0. It retains the emphasis on committed art direction, product truth,
-anti-slop judgment, and bounded visual verification. Its original offline
-runtime does not include or copy Impeccable's engine, detector, hooks, updater,
-catalog, telemetry, binaries, prompt text, agent definitions, browser bundle,
-or external-service workflows.
+anti-slop judgment, and bounded visual verification. Its optional perception
+lens is an attributed, compact adaptation informed by Stefan Kovalik's
+[Perception-First Design](https://github.com/skovalik/perception-first-design),
+licensed CC BY-SA 4.0; see `ATTRIBUTION.txt`. The original offline runtime does
+not include or copy either upstream project's engine, hooks, updater, catalog,
+telemetry, binaries, prompt text, agent definitions, browser bundle, or
+external-service workflows.

@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.21.0 — 2026-11-19
+
+- **Added a perception-first reference to `impeccable-lite`.** Explicit PFD,
+  cognitive-load, first-impression, felt-fluency, trust-formation,
+  stated-versus-observed behavior, and decision-architecture tasks can now load
+  one compact local lens without activating a second default workflow.
+- The reference is an original adaptation informed by Stefan Kovalik / Aurochs'
+  [Perception-First Design](https://github.com/skovalik/perception-first-design),
+  pinned to `1704ff61c18872a66d969e860c9b6e45a8f50f16` and attributed under
+  CC BY-SA 4.0. No upstream skill, framework, corpus, commands, scripts, or
+  learning logs are vendored.
+- Resolved overlap explicitly: the user brief, product truth, accessibility,
+  surface mode, local-only execution, evidence-based severity, and bounded
+  verification outrank broad PFD triggers, fixed conversion heuristics, numeric
+  scores, mandatory logs, corpus loading, and repeated Ralph loops.
+- Added four behavioral evals covering perception/trust diagnosis, small-work
+  bypass, expert-tool derivation with brief/accessibility precedence, and
+  descriptive cross-regional analysis with explicit cultural calibration.
+
 ## 1.20.2 — 2026-11-19
 
 - Removed upstream `pbakaus/impeccable` from the README's external-skill

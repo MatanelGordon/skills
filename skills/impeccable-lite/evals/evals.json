@@ -18,6 +18,7 @@
       "expected_output": "Treats the request as a focused refinement, skips concept theater and persistent design documents, improves hierarchy and finish without changing the flow, then performs at most one inspection and one confirmation pass.",
       "expectations": [
         "Does not turn a small refinement into a rebrand or multi-option concept exercise",
+        "Does not load, narrate, or apply the optional perception lens",
         "Does not create PRODUCT.md, DESIGN.md, hooks, configuration, or process artifacts",
         "Improves composition, type, spacing, states, and focus without adding decorative clutter",
         "Stops after bounded verification"
@@ -82,6 +83,51 @@
         "The reviewer is forbidden from editing, browsing, installing, starting a server, or widening scope",
         "The review starts with recapture, rebuild, fix, or ship and limits findings to material evidence",
         "The parent, not the reviewer or runtime, owns any later fix decision"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Use a perception-first analysis on this checkout: usability tests say people understand it, but they still hesitate and call it untrustworthy. Diagnose the existing interface; do not redesign it yet and do not browse.",
+      "expected_output": "Loads the optional perception reference, uses the five dependent gates as a bounded diagnostic, distinguishes observed evidence from hypothesis, starts with the lowest material failure, and remains read-only and offline.",
+      "expectations": [
+        "Routes to perception-first evaluation because trust formation and stated-versus-observed behavior are central to the request",
+        "Reports only material findings with local evidence, mechanism, user impact, and a specific fix",
+        "Does not invent analytics, citations, customers, social proof, or psychological certainty",
+        "Does not use numeric layer scores, create insight logs, run repeated Ralph loops, or access the network"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Tighten the spacing and focus state on this existing profile card. Keep it very small.",
+      "expected_output": "Handles the precise refinement directly without loading or narrating the perception lens, preserves the existing component identity and behavior, and performs bounded local verification.",
+      "expectations": [
+        "Does not turn a small component refinement into a five-layer analysis",
+        "Does not create persistent process files, offer multiple directions, or widen the task",
+        "Preserves product truth, accessibility, and the local-only boundary"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "Use perception-first derivation to improve this dense logistics console for expert dispatchers. Marketing wants fewer visible controls and one oversized conversion-style CTA, but operators need keyboard access to every core tool and the existing workflows are product truth.",
+      "expected_output": "Uses the five gates to derive constraints before choosing a direction, treats expert density as potentially useful rather than inherently overloaded, resolves conflicts among lens constraints bottom-up, then preserves the explicit brief, product truth, operate-mode needs, and accessibility over conversion heuristics.",
+      "expectations": [
+        "Loads the perception reference because the user explicitly requests derivation",
+        "Derives only evidence-supported constraints before proposing a coherent direction",
+        "Does not hide required expert tools merely to reduce visible choice count",
+        "Keeps keyboard access and operator workflows even when a lens-derived or marketing preference conflicts",
+        "Does not create logs, run repeated loops, browse, score layers numerically, or widen the task"
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "Analyze, but do not solve, what would happen if we reused the same onboarding trust cues and default choices for first-time customers in Japan, Germany, and Brazil. We have no regional behavior data yet.",
+      "expected_output": "Uses analysis mode descriptively, traces relevant perceptual gates and bidirectional effects, treats cultural and target-population differences as unverified hypotheses, and stops without prescribing a universal redesign.",
+      "expectations": [
+        "Keeps explanation separate from recommendation because the user asked for analysis only",
+        "Surfaces plausible trade-offs rather than asserting a one-way universal effect",
+        "Does not universalize first-impression or behavioral priors across regions without target-population evidence",
+        "Labels predictions as hypotheses and names the missing regional evidence",
+        "Does not browse, invent citations or analytics, create insight logs, or run repeated loops"
       ]
     }
   ]

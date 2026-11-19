@@ -100,7 +100,21 @@
         "MLK names the beneficiary, current ceiling, new capability, causal mechanism, time horizon, leading indicator, and observable kill condition when the evidence supports them",
         "MLK does not prefer option A merely because it is the largest or most ambitious option",
         "MLK marks the 10x claim as an estimate because it has no measured source",
+        "MLK does not infer a numeric zero baseline or current ceiling from missing evidence",
         "When the unlock chain cannot be supported without invented facts, MLK uses PREMISE CHALLENGE"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Continue this Council numeric-evidence audit without convening new members. Classify these claims for a member ARGUMENT: config/runtime.ts contains MAX_CONNECTIONS = 500 (code-read); a reviewer infers the same design can handle 800 connections (code-read inference); generated design notes promise 10x capacity (unverified-docs); and no rollback inventory exists. State the required inline tag for each number and whether the absent inventory proves there are zero rollback paths.",
+      "expected_output": "Tags the exact configured 500 as code-read with its path or symbol, tags inferred 800 and unverified 10x as estimates, and states that missing rollback evidence does not establish a numeric zero or measured baseline.",
+      "files": [],
+      "expectations": [
+        "500 uses a (code-read: path or symbol) tag because the exact number appears directly in configuration",
+        "800 uses (estimate) because it is inferred rather than directly represented in code",
+        "10x uses (estimate) because unverified documentation cannot make a number measured",
+        "The absent rollback inventory is not converted into zero rollback paths or another numeric baseline",
+        "No council members are spawned for this mechanical continuation"
       ]
     }
   ]

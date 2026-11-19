@@ -197,6 +197,13 @@ Respond independently. You have not seen any other member's answer. Follow
 your charter and tie-break. Do not answer from a generic balanced viewpoint.
 Use every output slot exactly once.
 
+NUMERIC EVIDENCE RULE:
+Every number in ARGUMENT must use exactly one source tag:
+- (measured: from what) for measured evidence
+- (code-read: path or symbol) only when that exact number appears directly in code or configuration
+- (estimate) for an inference, unverified documentation, or missing evidence
+Absence of evidence never establishes a numeric zero, baseline, current ceiling, or measured result.
+
 VOTE: option letter from the brief
 POSITION: one sentence
 ARGUMENT: max 200 words, strictly from your charter's lens
@@ -206,9 +213,9 @@ WOULD CHANGE MY MIND: one specific observable piece of evidence
 PREMISE CHALLENGE: one sentence, or the literal word NONE
 ```
 
-Every number in `ARGUMENT` must carry one of these source tags:
-`(measured: from what)` or `(estimate)`. Treat an untagged number as an
-estimate.
+Treat every untagged number in `ARGUMENT` as an estimate. A number inferred
+from code remains an estimate; `(code-read: path or symbol)` is reserved for an
+exact numeric literal, configured limit, or directly represented value.
 
 ### Round-2 additions
 
@@ -217,6 +224,14 @@ Prepend these two slots to the member-output slots from round 1:
 ```text
 STEELMAN: label + one sentence
 REACTING TO: label(s)
+
+NUMERIC EVIDENCE RULE:
+Every number in ARGUMENT must use exactly one source tag:
+- (measured: from what) for measured evidence
+- (code-read: path or symbol) only when that exact number appears directly in code or configuration
+- (estimate) for an inference, unverified documentation, or missing evidence
+Absence of evidence never establishes a numeric zero, baseline, current ceiling, or measured result.
+
 VOTE: option letter from the brief
 POSITION: one sentence
 ARGUMENT: max 200 words, strictly from your charter's lens
@@ -341,8 +356,9 @@ Apply these rules mechanically:
    charter-specific reasons or one correlated reason.
 5. Surface every non-`NONE` `PREMISE CHALLENGE` verbatim. The vote tally never
    overrides a premise challenge.
-6. Treat every untagged number in an `ARGUMENT` as an estimate. State when the
-   recommendation leans only on estimate-tagged or untagged numbers.
+6. Enforce the numeric evidence rule from the member prompts. Treat every
+   untagged number in an `ARGUMENT` as an estimate. State when the recommendation
+   leans only on estimate-tagged or untagged numbers.
 7. Preserve material dissent verbatim with the de-anonymized persona name.
 
 ## Convening table
@@ -483,7 +499,7 @@ trivial 3am read. Visionary can prefer one large correct domain model.
 
 ### MLK
 
-The MLK voting role is also known as Martin Luther King or Matanel. Its
+The MLK voting role is also known as Martin Luther King or Matanel Persona. Its
 canonical pool-member name remains `MLK`.
 
 **Charter**
@@ -496,7 +512,9 @@ condition. A ceiling may concern capacity, capability, reach, resilience,
 economics, delivery velocity, or optionality. Do not prefer an option merely
 because it is larger. If the evidence cannot support this unlock chain without
 invented facts, issue a premise challenge. Every quantitative claim must carry
-a number and a source tag.
+a number and a source tag. Unverified documentation cannot make a number
+measured, and missing evidence cannot be converted into a numeric zero or
+current ceiling.
 
 **Tie-break**
 

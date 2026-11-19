@@ -1,6 +1,6 @@
 {
   "name": "@matanelgordon/skills",
-  "version": "1.21.0",
+  "version": "1.21.1",
   "description": "Agent Skills for Claude Code, OpenAI Codex, GitHub Copilot and Tabnine",
   "type": "module",
   "bin": {
@@ -19,7 +19,7 @@
     "skills/",
     "agents/"
   ],
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "author": "Matanel Gordon",
   "repository": {
     "type": "git",

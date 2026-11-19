@@ -1,5 +1,21 @@
-Perception-first lens attribution
-=================================
+Impeccable Lite attribution
+===========================
+
+Design-workflow inspiration
+---------------------------
+
+Upstream project: Impeccable
+Upstream repository: https://github.com/pbakaus/impeccable
+Author: Paul Bakaus
+License: Apache License 2.0
+
+Impeccable Lite is independently written. It retains high-level inspiration
+around committed art direction, product truth, anti-slop judgment, and bounded
+visual verification. It does not vendor Impeccable's engine, detector, hooks,
+updater, catalog, telemetry, binaries, prompts, agents, or browser bundle.
+
+Perception-first lens
+---------------------
 
 Upstream project: Perception-First Design
 Upstream repository: https://github.com/skovalik/perception-first-design

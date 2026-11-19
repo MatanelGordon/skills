@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, symlink, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, symlink, writeFile } from 'node:fs/promises';
 import { request } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -12,8 +12,12 @@ test('static server binds to loopback and serves only files within its root', as
   const outside = await mkdtemp(join(tmpdir(), 'impeccable-lite-outside-'));
   await writeFile(join(root, 'index.html'), '<h1>Local only</h1>', 'utf8');
   await writeFile(join(root, '.env'), 'TOKEN=secret', 'utf8');
+  await mkdir(join(root, 'node_modules'));
+  await writeFile(join(root, 'node_modules', 'private.js'), 'private', 'utf8');
   await writeFile(join(outside, 'secret.txt'), 'secret', 'utf8');
   await symlink(join(outside, 'secret.txt'), join(root, 'escape.txt'));
+  await symlink(join(root, '.env'), join(root, 'public-env.txt'));
+  await symlink(join(root, 'node_modules', 'private.js'), join(root, 'public-module.js'));
   const preview = await createStaticServer({ root, port: 0 });
   t.after(() => preview.close());
 
@@ -34,6 +38,8 @@ test('static server binds to loopback and serves only files within its root', as
   assert.equal(dotfile.status, 403);
   const symlinkEscape = await fetch(`${preview.origin}/escape.txt`);
   assert.equal(symlinkEscape.status, 403);
+  assert.equal((await fetch(`${preview.origin}/public-env.txt`)).status, 403);
+  assert.equal((await fetch(`${preview.origin}/public-module.js`)).status, 403);
 
   const target = new URL(preview.origin);
   const badHostStatus = await new Promise((resolveStatus, reject) => {

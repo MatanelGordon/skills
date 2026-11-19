@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 import { createHash, randomUUID } from 'node:crypto';
-import { link, lstat, mkdir, open, readFile, realpath, rename, stat, unlink } from 'node:fs/promises';
-import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { link, lstat, open, readFile, realpath, rename, stat, unlink } from 'node:fs/promises';
+import { basename, dirname, extname, join, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import {
@@ -13,10 +13,12 @@ import {
   createWorkflow,
   formatAuditMarkdown,
   inspectPng,
+  isPathContained,
   resolveWithin,
   transitionWorkflow,
 } from './lib/core.mjs';
 import { captureScreenshots, findBrowser } from './capture.mjs';
+import { ensureSafeDirectory } from './lib/filesystem.mjs';
 
 const DEFAULT_STATE = '.impeccable-lite/session.json';
 
@@ -25,11 +27,10 @@ const HELP = `Impeccable Lite — dependency-free local design workflow
 Commands:
   init --brief <brief.json> [--root <dir>] [--state <path>]
   status [--root <dir>] [--state <path>] [--json true]
-  advance --to <phase> [--note <text>] [--evidence <path> ...] [--review <path>]
-  packet --role <direction|builder|reviewer> [--out <path>]
+  advance --to <phase> [--note <text>] [--owned <path> ...] [--evidence <path> ...] [--review <path>]
+  packet --role <direction|builder|reviewer> [--audit <report>] [--evidence <path> ...] [--out <path>]
   audit [--file <html>] [--out <report-base>]
   capture [--entry <html>] [--out <directory>] [--browser <path>]
-  serve [root]  (use scripts/serve.mjs directly; foreground and loopback only)
   doctor [--json true]
 
 All paths are relative to --root. No command browses, installs, downloads,
@@ -56,11 +57,6 @@ const parseOptions = (tokens) => {
   });
 };
 
-const inside = (root, candidate) => {
-  const fromRoot = relative(root, candidate);
-  return fromRoot === '' || (!isAbsolute(fromRoot) && !fromRoot.startsWith(`..${sep}`) && fromRoot !== '..');
-};
-
 const rejectPromptControlCharacters = (value, label) => {
   if (/[\0\r\n]/.test(value)) throw new Error(`${label} contains unsupported control characters.`);
   return value;
@@ -71,45 +67,15 @@ const existingPath = async (root, requested) => {
   const lexical = resolveWithin(root, requested);
   if (!lexical.ok) throw new Error(lexical.error);
   const physical = await realpath(lexical.value);
-  if (!inside(root, physical)) throw new Error(`Path escapes the project root: ${requested}`);
+  if (!isPathContained(root, physical)) throw new Error(`Path escapes the project root: ${requested}`);
   return physical;
-};
-
-const ensureSafeDirectory = async (root, requestedDirectory) => {
-  const fromRoot = relative(root, requestedDirectory);
-  if (isAbsolute(fromRoot) || fromRoot === '..' || fromRoot.startsWith(`..${sep}`)) {
-    throw new Error('Output directory escapes the project root.');
-  }
-
-  let current = root;
-  for (const segment of fromRoot.split(sep).filter(Boolean)) {
-    const next = join(current, segment);
-    let metadata;
-    try {
-      metadata = await lstat(next);
-    } catch (error) {
-      if (error.code !== 'ENOENT') throw error;
-      try {
-        await mkdir(next, { mode: 0o700 });
-      } catch (mkdirError) {
-        if (mkdirError.code !== 'EEXIST') throw mkdirError;
-      }
-      metadata = await lstat(next);
-    }
-    if (metadata.isSymbolicLink()) throw new Error(`Unsafe symlink in output path: ${relative(root, next)}`);
-    if (!metadata.isDirectory()) throw new Error(`Output parent is not a directory: ${relative(root, next)}`);
-    const physical = await realpath(next);
-    if (!inside(root, physical)) throw new Error(`Output directory escapes the project root: ${relative(root, next)}`);
-    current = physical;
-  }
-  return current;
 };
 
 const writablePath = async (root, requested) => {
   rejectPromptControlCharacters(requested, 'Output path');
   const lexical = resolveWithin(root, requested);
   if (!lexical.ok) throw new Error(lexical.error);
-  const physicalParent = await ensureSafeDirectory(root, dirname(lexical.value));
+  const physicalParent = await ensureSafeDirectory(root, relative(root, dirname(lexical.value)));
   return join(physicalParent, basename(lexical.value));
 };
 
@@ -268,7 +234,24 @@ const withStateLock = async (context, action) => {
 
 const loadState = async (context) => {
   const statePath = await existingPath(context.root, context.stateName);
-  const state = await readJson(statePath);
+  const stored = await readJson(statePath);
+  const legacyPhases = new Set(['brief', 'direction', 'build', 'audit', 'review', 'complete']);
+  const state = stored?.version === 2 && legacyPhases.has(stored.phase) && Array.isArray(stored.history)
+    ? Object.freeze({
+      ...stored,
+      version: WORKFLOW_VERSION,
+      phase: stored.phase === 'review' ? 'audit' : stored.phase,
+      history: stored.phase === 'review'
+        ? Object.freeze([...stored.history, Object.freeze({
+          at: new Date().toISOString(),
+          from: 'review',
+          to: 'audit',
+          note: 'Migrated legacy review state to the v3 audit boundary.',
+          evidence: Object.freeze([]),
+        })])
+        : stored.history,
+    })
+    : stored;
   if (state.version !== WORKFLOW_VERSION
     || !/^[a-f0-9-]{36}$/i.test(state.sessionId || '')
     || !PHASES.includes(state.phase)
@@ -312,9 +295,8 @@ const runInit = async (options) => {
 const nextActions = Object.freeze({
   brief: 'Select a direction, then advance to direction.',
   direction: 'Implement the selected direction, then advance to build.',
-  build: 'Run audit and capture, then advance to audit.',
-  audit: 'Use a fresh reviewer packet, then advance to review.',
-  review: 'Apply one material fix batch or advance to complete.',
+  build: 'Run audit, then advance to audit.',
+  audit: 'Use a fresh reviewer packet; revise via build or complete with current audit, capture, and ship evidence.',
   complete: 'Workflow is complete.',
 });
 
@@ -330,24 +312,55 @@ const normalizeEvidence = async (context, requestedPaths) => Promise.all(request
   return Object.freeze({ physical, relative: relative(context.root, physical) });
 }));
 
+const prospectiveOwnedPath = async (context, requested) => {
+  rejectPromptControlCharacters(requested, 'Owned path');
+  const lexical = resolveWithin(context.root, requested);
+  if (!lexical.ok) throw new Error(lexical.error);
+  const owned = relative(context.root, lexical.value);
+  if (!owned) throw new Error('Owned path must name a file or directory below the project root.');
+
+  let current = context.root;
+  const segments = owned.split(sep).filter(Boolean);
+  for (const [index, segment] of segments.entries()) {
+    current = join(current, segment);
+    let metadata;
+    try {
+      metadata = await lstat(current);
+    } catch (error) {
+      if (error.code === 'ENOENT') return owned;
+      throw error;
+    }
+    if (metadata.isSymbolicLink()) throw new Error(`Owned path contains a symbolic link: ${relative(context.root, current)}`);
+    if (index < segments.length - 1 && !metadata.isDirectory()) {
+      throw new Error(`Owned path ancestor is not a directory: ${relative(context.root, current)}`);
+    }
+    const physical = await realpath(current);
+    if (!isPathContained(context.root, physical)) throw new Error(`Owned path escapes the project root: ${requested}`);
+  }
+  return owned;
+};
+
+const normalizeOwnedPaths = async (context, requestedPaths) => Object.freeze([
+  ...new Set(await Promise.all(requestedPaths.map((requested) => prospectiveOwnedPath(context, requested)))),
+]);
+
+const auditIdentity = (report) => JSON.stringify({
+  ok: report?.ok,
+  source: report?.source,
+  summary: report?.summary,
+  findings: report?.findings,
+  artifactHash: report?.artifactHash,
+  inputs: report?.inputs,
+});
+
 const auditPassed = async (item, expectedSource, context) => {
   if (extname(item.physical).toLowerCase() === '.json') {
     try {
       const report = await readJson(item.physical);
-      if (!(report.ok === true
-        && report.source === expectedSource
-        && Array.isArray(report.findings)
-        && Array.isArray(report.inputs)
-        && ['blocking', 'major', 'minor'].every((key) => Number.isInteger(report.summary?.[key])))) return false;
-      const verifiedInputs = await Promise.all(report.inputs.map(async (input) => {
-        if (!input || typeof input.path !== 'string' || !/^[a-f0-9]{64}$/i.test(input.sha256 || '')) return false;
-        const physical = await existingPath(context.root, input.path);
-        return sha256(await readFile(physical)) === input.sha256;
-      }));
-      const artifactInput = report.inputs.find((input) => input.path === expectedSource);
-      return verifiedInputs.every(Boolean)
-        && artifactInput?.sha256 === report.artifactHash
-        && report.artifactHash === await hashFile(await existingPath(context.root, expectedSource));
+      if (report.ok !== true || report.source !== expectedSource) return false;
+      const input = await existingPath(context.root, expectedSource);
+      const recomputed = await buildAuditReport(context, input);
+      return auditIdentity(report) === auditIdentity(recomputed);
     } catch {
       return false;
     }
@@ -458,18 +471,19 @@ const runAdvance = async (options) => {
   const completed = await withStateLock(context, async () => {
     const { state, statePath } = await loadState(context);
     const target = options.one('to').toLowerCase();
-    const artifact = await existingPath(context.root, state.brief.artifact);
-    const expectedEntry = relative(context.root, artifact);
+    const ownedFiles = await normalizeOwnedPaths(context, options.many('owned'));
     const evidenceItems = [...await normalizeEvidence(context, options.many('evidence'))];
-    if (state.phase === 'build' && target === 'audit') await requirePassingAudit(evidenceItems, expectedEntry, context);
-    if (state.phase === 'audit' && target === 'review') {
-      await requirePassingAudit(evidenceItems, expectedEntry, context);
-      await requireCaptures(evidenceItems, expectedEntry, context);
+    const needsArtifact = (state.phase === 'build' && target === 'audit')
+      || (state.phase === 'audit' && target === 'complete');
+    let expectedEntry = state.brief.artifact;
+    if (needsArtifact) {
+      const artifact = await existingPath(context.root, state.brief.artifact);
+      expectedEntry = relative(context.root, artifact);
     }
-    if (state.phase === 'review' && target === 'complete') {
-      const reviewEvidence = await normalizeEvidence(context, state.history.at(-1)?.evidence || []);
-      await requirePassingAudit(reviewEvidence, expectedEntry, context);
-      const capture = await requireCaptures(reviewEvidence, expectedEntry, context);
+    if (state.phase === 'build' && target === 'audit') await requirePassingAudit(evidenceItems, expectedEntry, context);
+    if (state.phase === 'audit' && target === 'complete') {
+      await requirePassingAudit(evidenceItems, expectedEntry, context);
+      const capture = await requireCaptures(evidenceItems, expectedEntry, context);
       evidenceItems.push(await requireShipReview(
         context,
         options.one('review'),
@@ -478,12 +492,13 @@ const runAdvance = async (options) => {
       ));
     }
     const userNote = options.one('note');
-    const note = state.phase === 'review' && target === 'complete'
+    const note = state.phase === 'audit' && target === 'complete'
       ? `Reviewer disposition: ship.${userNote ? ` ${userNote}` : ''}`
       : userNote;
     const transition = transitionWorkflow(state, target, {
       note,
       evidence: evidenceItems.map((item) => item.relative),
+      ownedFiles,
     });
     if (!transition.ok) throw new Error(transition.error);
     await writeAtomic(statePath, `${JSON.stringify(transition.value, null, 2)}\n`);
@@ -500,6 +515,10 @@ const runPacket = async (options) => {
   const auditName = options.one('audit');
   const auditItems = auditName ? await normalizeEvidence(context, [auditName]) : [];
   let evidenceGeneration = '';
+  if (role === 'builder') {
+    const direction = [...state.history].reverse().find((entry) => entry.to === 'direction');
+    if (Array.isArray(direction?.ownedFiles)) await normalizeOwnedPaths(context, direction.ownedFiles);
+  }
   if (role === 'reviewer') {
     if (auditItems.length === 0) throw new Error('Reviewer packet requires --audit <passing-audit-path>.');
     const artifact = await existingPath(context.root, state.brief.artifact);
@@ -547,6 +566,7 @@ const localAssetReferences = (html) => {
       throw new Error(`Malformed local asset reference: ${raw}`);
     }
     const item = Object.freeze({
+      kind,
       path: decoded.replace(/^\/+/, ''),
       rootRelative: decoded.startsWith('/'),
     });
@@ -570,6 +590,40 @@ const mergeAuditReports = (primary, assetFindings) => {
   });
 };
 
+const buildAuditReport = async (context, input) => {
+  const htmlBytes = await readFile(input);
+  const html = htmlBytes.toString('utf8');
+  const source = relative(context.root, input);
+  const assetFindings = [];
+  const styleSources = [];
+  const inputs = [{ path: source, sha256: sha256(htmlBytes) }];
+  const inputDirectory = relative(context.root, dirname(input));
+  for (const reference of localAssetReferences(html)) {
+    const requested = reference.rootRelative ? reference.path : join(inputDirectory, reference.path);
+    const asset = await existingPath(context.root, requested);
+    const metadata = await stat(asset);
+    if (metadata.size > 1_048_576) throw new Error(`Audit asset exceeds 1 MiB: ${relative(context.root, asset)}`);
+    const assetBytes = await readFile(asset);
+    const assetText = assetBytes.toString('utf8');
+    inputs.push({ path: relative(context.root, asset), sha256: sha256(assetBytes) });
+    if (reference.kind === 'link') styleSources.push(assetText);
+    const auditedAssetText = reference.kind === 'link'
+      ? assetText.replace(/\/\*[\s\S]*?\*\//g, ' ')
+      : assetText;
+    const assetReport = auditHtml(auditedAssetText, { source: relative(context.root, asset) });
+    assetFindings.push(...assetReport.findings.filter((item) => item.id.startsWith('offline-')));
+  }
+  const merged = mergeAuditReports(
+    auditHtml(html, { source, styleText: styleSources.join('\n') }),
+    assetFindings,
+  );
+  return Object.freeze({
+    ...merged,
+    artifactHash: sha256(htmlBytes),
+    inputs: Object.freeze(inputs.map(Object.freeze)),
+  });
+};
+
 const runAudit = async (options) => {
   const context = await contextFrom(options);
   let fileName = options.one('file');
@@ -578,30 +632,7 @@ const runAudit = async (options) => {
     fileName = state.brief.artifact;
   }
   const input = await existingPath(context.root, fileName);
-  const htmlBytes = await readFile(input);
-  const html = htmlBytes.toString('utf8');
-  const assetFindings = [];
-  const inputs = [{ path: relative(context.root, input), sha256: sha256(htmlBytes) }];
-  const inputDirectory = relative(context.root, dirname(input));
-  for (const reference of localAssetReferences(html)) {
-    const requested = reference.rootRelative ? reference.path : join(inputDirectory, reference.path);
-    const asset = await existingPath(context.root, requested);
-    const metadata = await stat(asset);
-    if (metadata.size > 1_048_576) throw new Error(`Audit asset exceeds 1 MiB: ${relative(context.root, asset)}`);
-    const assetBytes = await readFile(asset);
-    inputs.push({ path: relative(context.root, asset), sha256: sha256(assetBytes) });
-    const assetReport = auditHtml(assetBytes.toString('utf8'), { source: relative(context.root, asset) });
-    assetFindings.push(...assetReport.findings.filter((item) => item.id.startsWith('offline-')));
-  }
-  const merged = mergeAuditReports(
-    auditHtml(html, { source: relative(context.root, input) }),
-    assetFindings,
-  );
-  const report = Object.freeze({
-    ...merged,
-    artifactHash: sha256(htmlBytes),
-    inputs: Object.freeze(inputs.map(Object.freeze)),
-  });
+  const report = await buildAuditReport(context, input);
   const outputBase = options.one('out', '.impeccable-lite/reports/audit');
   const jsonPath = await writablePath(context.root, `${outputBase}.json`);
   const markdownPath = await writablePath(context.root, `${outputBase}.md`);

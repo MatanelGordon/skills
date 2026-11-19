@@ -29,7 +29,7 @@ test('createWorkflow creates deterministic, serializable local state', () => {
   });
 
   assert.equal(state.phase, 'brief');
-  assert.equal(state.version, 2);
+  assert.equal(state.version, 3);
   assert.equal(state.sessionId, '11111111-1111-4111-8111-111111111111');
   assert.deepEqual(state.brief, brief);
   assert.deepEqual(state.history, [
@@ -60,9 +60,12 @@ test('transitionWorkflow permits the bounded path and explicit revision loops', 
   assert.match(skipped.error, /cannot move from direction to audit/i);
 
   const build = transitionWorkflow(direction.value, 'build');
+  assert.match(
+    transitionWorkflow(direction.value, 'build', { ownedFiles: ['unexpected.html'] }).error,
+    /only on the brief-to-direction transition/i,
+  );
   const audit = transitionWorkflow(build.value, 'audit');
-  const review = transitionWorkflow(audit.value, 'review');
-  const revision = transitionWorkflow(review.value, 'build', {
+  const revision = transitionWorkflow(audit.value, 'build', {
     note: 'Reviewer requested a hierarchy fix.',
   });
 
@@ -89,7 +92,28 @@ test('buildAgentPacket scopes optional roles and never authorizes network access
   assert.equal(invalid.ok, false);
 });
 
-test('reviewer packet has a machine-stable disposition and provenance contract', () => {
+test('builder packet carries the selected direction and structured ownership', () => {
+  const initial = createWorkflow(brief, {
+    now: '2026-11-19T00:00:00.000Z',
+    sessionId: '11111111-1111-4111-8111-111111111111',
+  });
+  const direction = transitionWorkflow(initial, 'direction', {
+    note: 'Direction: field guide.',
+    ownedFiles: ['index.html', 'styles.css'],
+  }).value;
+  const packet = buildAgentPacket(direction, 'builder', { root: '/tmp/example' });
+
+  assert.equal(packet.ok, true);
+  assert.match(packet.value, /Direction: field guide\./);
+  assert.match(packet.value, /"ownedFiles":\["index\.html","styles\.css"\]/);
+  assert.match(packet.value, /"selectedDirection":"Direction: field guide\."/);
+  assert.doesNotMatch(packet.value, /workflowHistory/);
+
+  const missingOwnership = transitionWorkflow(initial, 'direction').value;
+  assert.match(buildAgentPacket(missingOwnership, 'builder').error, /owned files/i);
+});
+
+test('reviewer packet has a machine-stable disposition and session-binding contract', () => {
   const initial = createWorkflow(brief, {
     now: '2026-11-19T00:00:00.000Z',
     sessionId: '11111111-1111-4111-8111-111111111111',
@@ -103,7 +127,8 @@ test('reviewer packet has a machine-stable disposition and provenance contract',
   });
 
   assert.equal(packet.ok, true);
-  assert.match(packet.value, /Return exactly five lines/);
+  assert.match(packet.value, /If the artifact can ship, return exactly five lines/);
+  assert.match(packet.value, /Otherwise begin with `disposition: <recapture\|rebuild\|fix>`/);
   assert.match(packet.value, /Do not substitute verdict, pass, approve, or another status word/);
   assert.match(packet.value, /session_id: 11111111-1111-4111-8111-111111111111/);
   assert.match(packet.value, /evidence_generation: capture-test/);
@@ -189,6 +214,11 @@ test('auditHtml rejects unquoted, responsive, embedded, refresh, and beacon remo
     '<script>navigator.sendBeacon("https://example.test/event", "x")</script>',
     '<script>const x = new XMLHttpRequest(); x.open("GET", "https://example.test/data")</script>',
     '<script>const socket = new WebSocket("wss://example.test/socket")</script>',
+    '<script type="module">import widget from "https://example.test/widget.js"</script>',
+    '<script type="module">import "https://example.test/setup.js"</script>',
+    '<script type="module">export { widget } from "https://example.test/widget.js"</script>',
+    '<script>importScripts("https://example.test/worker.js")</script>',
+    '<script>const pixel = new Image(); pixel.src = "https://example.test/pixel.png"</script>',
   ];
 
   for (const fragment of cases) {
@@ -220,4 +250,37 @@ test('auditHtml passes a compact, self-contained accessible document', () => {
   const report = auditHtml(html, { source: 'index.html' });
   assert.equal(report.ok, true);
   assert.deepEqual(report.summary, { blocking: 0, major: 0, minor: 0 });
+});
+
+test('auditHtml accepts common valid HTML, native focus, and inert CSS declarations', () => {
+  const html = `<!doctype html><html lang=en><head>
+    <meta name=viewport content="width=device-width"><title>Valid patterns</title>
+    </head><body><main><h1><span>Nested title</span></h1>
+    <!-- <img src=https://example.test/comment.png> -->
+    <label for=email>Email</label><input id=email type=email><input type=hidden>
+    <span id=save-name>Save</span><button type=button aria-labelledby=save-name></button>
+    <button type=button><img src="local.svg" alt=Upload></button>
+    </main></body></html>`;
+  const report = auditHtml(html, {
+    source: 'index.html',
+    styleText: '.control { transition: none; }',
+  });
+
+  assert.equal(report.ok, true);
+  assert.deepEqual(report.summary, { blocking: 0, major: 0, minor: 0 });
+});
+
+test('auditHtml checks linked CSS for overflow and harmful focus suppression', () => {
+  const html = `<!doctype html><html lang=en><head><meta name=viewport content="width=device-width">
+    <title>CSS checks</title></head><body><main><h1>CSS checks</h1>
+    <button type=button>Save</button></main></body></html>`;
+  const report = auditHtml(html, {
+    source: 'index.html',
+    styleText: '.panel { min-width: 2400px; } button:focus { outline: none; }',
+  });
+  const ids = new Set(report.findings.map((item) => item.id));
+
+  assert.equal(report.ok, false);
+  assert.ok(ids.has('fixed-overflow-risk'));
+  assert.ok(ids.has('focus-suppressed'));
 });

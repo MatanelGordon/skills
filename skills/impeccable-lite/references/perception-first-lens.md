@@ -10,30 +10,18 @@ to upstream commit `1704ff61c18872a66d969e860c9b6e45a8f50f16`. It is licensed
 CC BY-SA 4.0; see `../ATTRIBUTION.txt`. No upstream prose, corpus, commands, or
 learning logs are vendored here, and no substantive passage is copied verbatim.
 
-## Routing
-
-Use the lens when the user explicitly asks for PFD/perception-first reasoning,
-or when the deciding question is one of these:
-
-- Is the surface overloading attention before the task can begin?
-- Does the first view create the wrong category, quality, safety, or relevance
-  judgment?
-- Does inconsistency make the experience feel harder or less trustworthy than
-  its functional metrics suggest?
-- Do observed choices conflict with stated preferences or internal opinion?
-- Is the path to the user's next decision unclear, effortful, or coercive?
-
-Do not use it merely because a task is visual. Skip it for routine polish,
-pixel-precise implementation, a small component fix, or work already explained
-by ordinary hierarchy, accessibility, responsive, or interaction defects.
-
-Choose the contract that matches the request:
+## Choose the contract
 
 - **Evaluate:** diagnose an existing artifact. Findings and fixes are allowed.
 - **Derive:** turn an open design problem into constraints before proposing a
   direction.
 - **Analyze:** explain a mechanism, trade-off, or hypothetical. Stay descriptive
   unless the user also asks for a recommendation.
+
+The parent skill governs precedence and scope. Do not browse, load an external
+corpus, invent citations, write insight logs, repeat open-ended loops, or score
+layers numerically. Surface mode decides whether density, a CTA, or exploration
+is appropriate.
 
 ## Five dependent gates
 
@@ -107,10 +95,8 @@ defaults, or other dark patterns.
 
 ### Evaluation
 
-Scan all five gates, then report only material findings. Start with the lowest
-failing gate. For each finding give the local evidence, perceptual mechanism,
-user impact, and one specific fix. Use Impeccable Lite's blocking/major/minor
-severity vocabulary; do not manufacture a numeric score.
+Scan all five gates, then report only material findings, starting with the
+lowest failure. Follow the parent skill's critique format and severity terms.
 
 ### Derivation
 
@@ -136,18 +122,6 @@ device, culture or target population, adjacent workflows, or time horizon.
 Do not universalize first-impression or behavioral priors across regions without
 evidence from the intended population. Keep explanation separate from
 recommendation and label unsupported predictions as hypotheses.
-
-## Precedence and conflict resolution
-
-| Tension | Resolution inside Impeccable Lite |
-|---|---|
-| PFD can trigger on almost any communication task | This lens inherits Impeccable Lite's user-interface scope and narrow routing above. |
-| PFD derivation analyzes every layer before proposing a solution | Use that depth only for open, consequential problems; routine work stays direct. |
-| PFD promotes repeated Ralph loops and persistent insight logs | Do neither. Keep one inspection, one fix batch, and at most one confirmation; create no process files. |
-| PFD audits may use large corpora, live URLs, and citations | Stay local and offline. Do not load a corpus, browse, or invent citations. Ask separately if sourced research is required. |
-| PFD heuristics can favor sparse conversion paths | Surface mode wins: expert tools may be dense, reading surfaces may have no CTA, and experiences may invite exploration. |
-| PFD scoring uses numerical layer ratings | Use evidence and severity; avoid false precision. |
-| Persuasion can optimize business action | Product truth, informed user goals, accessibility, and anti-manipulation constraints win. |
 
 ## Stop condition
 

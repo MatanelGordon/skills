@@ -7,6 +7,7 @@
       "expected_output": "Inspects the existing implementation and assets, treats the task as a redesign inside an established product, states a concise direction, preserves behavior and product truth, and works entirely with existing local capabilities.",
       "expectations": [
         "Does not browse, fetch remote assets, install packages, call an external catalog, or start an external service",
+        "Does not initialize the optional runtime merely because the request is a redesign",
         "Preserves the existing brand, data model, content truth, and flows",
         "Commits to one coherent visual direction rather than mixing generic styles",
         "Includes responsive, state, accessibility, and bounded verification work"
@@ -36,12 +37,12 @@
     },
     {
       "id": 4,
-      "prompt": "Make the landing page more premium. Use whatever inspiration sites and hosted fonts you need.",
-      "expected_output": "Keeps the design work local despite the broad wording, uses existing assets and fonts, and asks for explicit separate authorization or local copies if remote material is genuinely required.",
+      "prompt": "Make the landing page feel more premium using current best practices.",
+      "expected_output": "Treats the broad aesthetic request as design scope, not network authorization, and works from existing local assets and fonts. It identifies a genuinely missing remote dependency rather than silently fetching one.",
       "expectations": [
         "Does not treat a design request as authorization for network access",
         "Does not load hosted fonts, browse inspiration sites, or download imagery",
-        "Offers a local path forward and asks only if missing remote material would materially block the work"
+        "Works locally and surfaces a blocker only when missing material would genuinely change the result"
       ]
     },
     {
@@ -70,7 +71,7 @@
       "expectations": [
         "Reads the offline runtime reference and uses checked-in Node scripts without installing anything",
         "Does not let the runtime spawn models, browse, download a browser, call a catalog, or emit telemetry",
-        "Uses at most one writer and treats direction and reviewer agents as optional fresh-context seams",
+        "Uses at most one writer; the direction explorer is optional, while a fresh finish reviewer is required for the requested completed review handoff",
         "Inspects both desktop and mobile evidence and performs no more than one justified fix and recapture batch"
       ]
     },
@@ -91,19 +92,19 @@
       "expected_output": "Loads the optional perception reference, uses the five dependent gates as a bounded diagnostic, distinguishes observed evidence from hypothesis, starts with the lowest material failure, and remains read-only and offline.",
       "expectations": [
         "Routes to perception-first evaluation because trust formation and stated-versus-observed behavior are central to the request",
-        "Reports only material findings with local evidence, mechanism, user impact, and a specific fix",
+        "Reports only material findings with local evidence, user impact, and a specific fix",
         "Does not invent analytics, citations, customers, social proof, or psychological certainty",
         "Does not use numeric layer scores, create insight logs, run repeated Ralph loops, or access the network"
       ]
     },
     {
       "id": 10,
-      "prompt": "Tighten the spacing and focus state on this existing profile card. Keep it very small.",
-      "expected_output": "Handles the precise refinement directly without loading or narrating the perception lens, preserves the existing component identity and behavior, and performs bounded local verification.",
+      "prompt": "Wire the existing profile Save button to the supplied local form handler. The UI specification is exact; do not change any visuals.",
+      "expected_output": "Does not invoke impeccable-lite because the task is a function-only frontend change with no visual judgment, and implements the supplied behavior without redesigning the component.",
       "expectations": [
-        "Does not turn a small component refinement into a five-layer analysis",
-        "Does not create persistent process files, offer multiple directions, or widen the task",
-        "Preserves product truth, accessibility, and the local-only boundary"
+        "Recognizes the request as outside the skill's visual-judgment trigger",
+        "Does not load or narrate the perception lens or optional runtime",
+        "Does not alter spacing, styling, copy, or other visual behavior"
       ]
     },
     {

@@ -15,7 +15,6 @@ import {
 test('Chrome capture is pinned to loopback and blocks external networking', () => {
   const args = buildChromeArgs({
     url: 'http://127.0.0.1:8123/index.html',
-    output: resolve('/tmp/desktop.png'),
     profile: resolve('/tmp/impeccable-lite-profile'),
     width: 1440,
     height: 1000,
@@ -31,7 +30,6 @@ test('Chrome capture is pinned to loopback and blocks external networking', () =
   assert.throws(
     () => buildChromeArgs({
       url: 'https://example.test',
-      output: '/tmp/remote.png',
       profile: '/tmp/profile',
       width: 390,
       height: 844,
@@ -82,26 +80,6 @@ test('real Chrome capture uses the requested CSS viewport, not a cropped desktop
   assert.match(report.reportPath, new RegExp(`${report.generation}/capture\\.json$`));
 });
 
-test('capture rejects a symlinked canonical output leaf without clobbering its target', {
-  skip: !localBrowser,
-  timeout: 30_000,
-}, async () => {
-  const root = await mkdtemp(join(tmpdir(), 'impeccable-lite-capture-leaf-'));
-  const outside = await mkdtemp(join(tmpdir(), 'impeccable-lite-capture-target-'));
-  const output = join(root, '.impeccable-lite', 'evidence');
-  const target = join(outside, 'keep.txt');
-  await mkdir(output, { recursive: true });
-  await writeFile(join(root, 'index.html'), '<!doctype html><title>Safe</title>', 'utf8');
-  await writeFile(target, 'unchanged', 'utf8');
-  await symlink(target, join(output, 'desktop.png'));
-
-  await assert.rejects(
-    captureScreenshots({ root, browserPath: localBrowser }),
-    /symbolic link/i,
-  );
-  assert.equal(await readFile(target, 'utf8'), 'unchanged');
-});
-
 test('capture rejects an output ancestor symlink before creating outside directories', {
   skip: !localBrowser,
   timeout: 30_000,
@@ -148,6 +126,8 @@ test('capture blocks requests to a different loopback origin', {
   assert.equal(report.ok, false);
   assert.equal(report.captures[0].blockedRequests.length, 1);
   assert.match(report.captures[0].blockedRequests[0], new RegExp(`:${address.port}/probe$`));
+  await access(report.reportPath);
+  assert.equal(JSON.parse(await readFile(report.reportPath, 'utf8')).ok, false);
 });
 
 test('failed capture never mixes a new screenshot into existing evidence', {
@@ -156,11 +136,12 @@ test('failed capture never mixes a new screenshot into existing evidence', {
 }, async () => {
   const root = await mkdtemp(join(tmpdir(), 'impeccable-lite-capture-atomic-'));
   const output = join(root, '.impeccable-lite', 'evidence');
-  await mkdir(output, { recursive: true });
+  const existing = join(output, 'capture-existing');
+  await mkdir(existing, { recursive: true });
   await writeFile(join(root, 'index.html'), '<!doctype html><title>Atomic</title>', 'utf8');
-  await writeFile(join(output, 'desktop.png'), 'old-desktop', 'utf8');
-  await writeFile(join(output, 'mobile.png'), 'old-mobile', 'utf8');
-  await writeFile(join(output, 'capture.json'), 'old-report', 'utf8');
+  await writeFile(join(existing, 'desktop.png'), 'old-desktop', 'utf8');
+  await writeFile(join(existing, 'mobile.png'), 'old-mobile', 'utf8');
+  await writeFile(join(existing, 'capture.json'), 'old-report', 'utf8');
 
   await assert.rejects(
     captureScreenshots({
@@ -174,17 +155,16 @@ test('failed capture never mixes a new screenshot into existing evidence', {
     /viewport mismatch/i,
   );
 
-  assert.equal(await readFile(join(output, 'desktop.png'), 'utf8'), 'old-desktop');
-  assert.equal(await readFile(join(output, 'mobile.png'), 'utf8'), 'old-mobile');
-  assert.equal(await readFile(join(output, 'capture.json'), 'utf8'), 'old-report');
-  assert.deepEqual((await readdir(output)).sort(), ['capture.json', 'desktop.png', 'mobile.png']);
+  assert.equal(await readFile(join(existing, 'desktop.png'), 'utf8'), 'old-desktop');
+  assert.equal(await readFile(join(existing, 'mobile.png'), 'utf8'), 'old-mobile');
+  assert.equal(await readFile(join(existing, 'capture.json'), 'utf8'), 'old-report');
+  assert.deepEqual(await readdir(output), ['capture-existing']);
 });
 
 test('Chrome capture rejects nonsensical viewport sizes', () => {
   assert.throws(
     () => buildChromeArgs({
       url: 'http://127.0.0.1:8123/',
-      output: '/tmp/mobile.png',
       profile: '/tmp/profile',
       width: 0,
       height: 844,

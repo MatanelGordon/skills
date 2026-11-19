@@ -2,13 +2,13 @@
 
 import { createHash, randomUUID } from 'node:crypto';
 import { constants } from 'node:fs';
-import { access, lstat, mkdir, mkdtemp, open, readFile, realpath, rename, rm, stat } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, open, readFile, realpath, rename, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { basename, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { basename, join, relative, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
-import { pathToFileURL } from 'node:url';
 
-import { inspectPng, resolveWithin } from './lib/core.mjs';
+import { inspectPng, isPathContained, resolveWithin } from './lib/core.mjs';
+import { ensureSafeDirectory } from './lib/filesystem.mjs';
 import { createStaticServer } from './serve.mjs';
 
 const DEFAULT_BROWSERS = Object.freeze([
@@ -20,11 +20,6 @@ const DEFAULT_BROWSERS = Object.freeze([
   '/usr/bin/chromium-browser',
 ]);
 
-const isWithin = (root, candidate) => {
-  const fromRoot = relative(root, candidate);
-  return fromRoot === '' || (!isAbsolute(fromRoot) && !fromRoot.startsWith(`..${sep}`) && fromRoot !== '..');
-};
-
 const sha256 = (content) => createHash('sha256').update(content).digest('hex');
 
 const validateViewport = (width, height) => {
@@ -33,13 +28,13 @@ const validateViewport = (width, height) => {
   }
 };
 
-export const buildChromeArgs = ({ url, output, profile, width, height }) => {
+export const buildChromeArgs = ({ url, profile, width, height }) => {
   const target = new URL(url);
   if (target.protocol !== 'http:' || target.hostname !== '127.0.0.1') {
     throw new TypeError('Capture URL must use the 127.0.0.1 loopback origin.');
   }
   validateViewport(width, height);
-  if (!resolve(output) || !resolve(profile)) throw new TypeError('Output and profile paths are required.');
+  if (typeof profile !== 'string' || !profile.trim()) throw new TypeError('Profile path is required.');
 
   return Object.freeze([
     '--headless=new',
@@ -344,47 +339,6 @@ const runChromeCapture = async ({ browser, args, url, width, height, timeoutMs }
   return result;
 };
 
-const safeDirectory = async (root, requested) => {
-  const lexical = resolveWithin(root, requested);
-  if (!lexical.ok) throw new Error(lexical.error);
-  const fromRoot = relative(root, lexical.value);
-  if (isAbsolute(fromRoot)) throw new Error('Output directory escapes the project root.');
-  let current = root;
-  for (const segment of fromRoot.split(sep).filter(Boolean)) {
-    current = join(current, segment);
-    let metadata;
-    try {
-      metadata = await lstat(current);
-    } catch (error) {
-      if (error.code !== 'ENOENT') throw error;
-      try {
-        await mkdir(current, { mode: 0o700 });
-      } catch (mkdirError) {
-        if (mkdirError.code !== 'EEXIST') throw mkdirError;
-      }
-      metadata = await lstat(current);
-    }
-    if (metadata.isSymbolicLink()) {
-      throw new Error(`Output path contains a symbolic link: ${relative(root, current)}`);
-    }
-    if (!metadata.isDirectory()) throw new Error(`Output path component is not a directory: ${relative(root, current)}`);
-    const physical = await realpath(current);
-    if (!isWithin(root, physical)) throw new Error('Output directory escapes the project root.');
-  }
-  return current;
-};
-
-const rejectSymlinkLeaves = async (directory, names) => {
-  for (const name of names) {
-    try {
-      const metadata = await lstat(join(directory, name));
-      if (metadata.isSymbolicLink()) throw new Error(`Output leaf is a symbolic link: ${name}`);
-    } catch (error) {
-      if (error.code !== 'ENOENT') throw error;
-    }
-  }
-};
-
 const writeExclusive = async (path, content) => {
   const handle = await open(path, 'wx', 0o600);
   try {
@@ -421,7 +375,7 @@ export const captureScreenshots = async ({
   const target = resolveWithin(physicalRoot, entry);
   if (!target.ok) throw new Error(target.error);
   const physicalTarget = await realpath(target.value);
-  if (!isWithin(physicalRoot, physicalTarget)) throw new Error('Entry escapes the project root.');
+  if (!isPathContained(physicalRoot, physicalTarget)) throw new Error('Entry escapes the project root.');
   const artifactHash = sha256(await readFile(physicalTarget));
 
   for (const viewport of viewports) {
@@ -429,11 +383,7 @@ export const captureScreenshots = async ({
     if (!/^[a-z0-9-]+$/i.test(viewport.name)) throw new TypeError('Viewport name is invalid.');
   }
 
-  const physicalOutput = await safeDirectory(physicalRoot, outDir);
-  await rejectSymlinkLeaves(physicalOutput, [
-    ...viewports.map((viewport) => `${viewport.name}.png`),
-    'capture.json',
-  ]);
+  const physicalOutput = await ensureSafeDirectory(physicalRoot, outDir);
 
   const browser = await findBrowser(browserPath);
   if (!browser) throw new Error('No supported local Chromium browser found; no download was attempted.');
@@ -456,7 +406,7 @@ export const captureScreenshots = async ({
     await mkdir(staging, { mode: 0o700 });
     stagingPending = true;
     physicalStaging = await realpath(staging);
-    if (!isWithin(physicalOutput, physicalStaging)) throw new Error('Capture staging directory escapes the output root.');
+    if (!isPathContained(physicalOutput, physicalStaging)) throw new Error('Capture staging directory escapes the output root.');
     preview = await createStaticServer({
       root: physicalRoot,
       port: 0,
@@ -476,7 +426,6 @@ export const captureScreenshots = async ({
       const url = `${preview.origin}/${encodeEntry(relative(physicalRoot, physicalTarget))}`;
       const args = buildChromeArgs({
         url,
-        output: stagePath,
         profile,
         width: viewport.width,
         height: viewport.height,
@@ -506,7 +455,7 @@ export const captureScreenshots = async ({
       const resource = resolveWithin(physicalRoot, resourcePath);
       if (!resource.ok) throw new Error(resource.error);
       const physicalResource = await realpath(resource.value);
-      if (!isWithin(physicalRoot, physicalResource) || sha256(await readFile(physicalResource)) !== resourceHash) {
+      if (!isPathContained(physicalRoot, physicalResource) || sha256(await readFile(physicalResource)) !== resourceHash) {
         throw new Error(`A served resource changed during capture: ${resourcePath}`);
       }
       resources.push(Object.freeze({ path: resourcePath, sha256: resourceHash }));
@@ -572,32 +521,3 @@ export const captureScreenshots = async ({
   }
   return report;
 };
-
-const parseMainArgs = (args) => {
-  const options = {};
-  for (let index = 0; index < args.length; index += 1) {
-    const token = args[index];
-    if (!token.startsWith('--') || index + 1 >= args.length) throw new Error(`Invalid option: ${token}`);
-    options[token.slice(2)] = args[index + 1];
-    index += 1;
-  }
-  return options;
-};
-
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  let exitCode = 0;
-  try {
-    const options = parseMainArgs(process.argv.slice(2));
-    const report = await captureScreenshots({
-      root: options.root || '.',
-      entry: options.entry || 'index.html',
-      outDir: options.out || '.impeccable-lite/evidence',
-      browserPath: options.browser || '',
-    });
-    process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
-  } catch (error) {
-    process.stderr.write(`impeccable-lite capture: ${error.message}\n`);
-    exitCode = 1;
-  }
-  process.exitCode = exitCode;
-}

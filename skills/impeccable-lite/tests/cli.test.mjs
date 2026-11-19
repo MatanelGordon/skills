@@ -136,12 +136,76 @@ test('CLI initializes, advances, emits a packet, and audits without dependencies
 
   const advanced = run(root, ['advance', '--to', 'direction', '--note', 'Chose the seed index.']);
   assert.equal(advanced.status, 0, advanced.stderr);
+  const unownedBuilder = run(root, ['packet', '--role', 'builder']);
+  assert.notEqual(unownedBuilder.status, 0);
+  assert.match(unownedBuilder.stderr, /owned files/i);
 
   const audited = run(root, ['audit']);
   assert.equal(audited.status, 0, audited.stderr);
   const report = JSON.parse(await readFile(join(root, '.impeccable-lite', 'reports', 'audit.json'), 'utf8'));
   assert.equal(report.ok, true);
   assert.equal(dirname(join(root, '.impeccable-lite', 'reports', 'audit.json')), join(root, '.impeccable-lite', 'reports'));
+});
+
+test('standalone audit works without workflow state when the file is named', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'impeccable-lite-cli-standalone-audit-'));
+  await writeFile(join(root, 'standalone.html'), `<!doctype html><html lang="en"><head>
+    <meta name="viewport" content="width=device-width"><title>Standalone</title>
+    <link rel="stylesheet" href="theme.css"></head><body><main>
+    <h1><span>Standalone</span></h1><label>Email <input type="email"></label>
+    <button type="button">Save</button></main></body></html>`, 'utf8');
+  await writeFile(join(root, 'theme.css'), ':focus-visible { outline: 2px solid currentColor; }', 'utf8');
+
+  const audited = run(root, ['audit', '--file', 'standalone.html', '--out', 'audit/standalone']);
+  assert.equal(audited.status, 0, audited.stderr);
+  const report = JSON.parse(await readFile(join(root, 'audit', 'standalone.json'), 'utf8'));
+  assert.equal(report.ok, true);
+  assert.equal(report.source, 'standalone.html');
+  await assert.rejects(access(join(root, '.impeccable-lite', 'session.json')));
+});
+
+test('new HTML workflow can select direction before the artifact exists', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'impeccable-lite-cli-new-page-'));
+  await writeFile(join(root, 'brief.json'), JSON.stringify({
+    goal: 'Create a new local page.',
+    audience: 'Local readers',
+    artifact: 'new-page.html',
+    mode: 'read',
+    scope: 'new',
+    thesis: 'A quiet field note.',
+    hierarchy: 'Title, summary, detail.',
+    constraints: ['Offline'],
+  }), 'utf8');
+
+  assert.equal(run(root, ['init', '--brief', 'brief.json']).status, 0);
+  assert.equal(run(root, [
+    'advance', '--to', 'direction',
+    '--note', 'Direction: quiet field note.',
+    '--owned', 'new-page.html',
+  ]).status, 0);
+  const builderPacket = run(root, ['packet', '--role', 'builder']);
+  assert.equal(builderPacket.status, 0, builderPacket.stderr);
+  assert.match(builderPacket.stdout, /"ownedFiles":\["new-page\.html"\]/);
+  assert.equal(run(root, ['advance', '--to', 'build']).status, 0);
+
+  const missingArtifact = run(root, ['advance', '--to', 'audit']);
+  assert.notEqual(missingArtifact.status, 0);
+  assert.match(missingArtifact.stderr, /new-page\.html|ENOENT/i);
+});
+
+test('builder packet rechecks ownership paths after the direction transition', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'impeccable-lite-cli-owned-race-'));
+  const outside = await mkdtemp(join(tmpdir(), 'impeccable-lite-cli-owned-target-'));
+  await writeBriefAndPage(root);
+  assert.equal(run(root, ['init', '--brief', 'brief.json']).status, 0);
+  assert.equal(run(root, [
+    'advance', '--to', 'direction', '--owned', 'future.html',
+  ]).status, 0);
+  await symlink(join(outside, 'future.html'), join(root, 'future.html'));
+
+  const packet = run(root, ['packet', '--role', 'builder']);
+  assert.notEqual(packet.status, 0);
+  assert.match(packet.stderr, /owned path.*symbolic link/i);
 });
 
 test('CLI never creates output directories through an outside symlink', async () => {
@@ -158,6 +222,60 @@ test('CLI never creates output directories through an outside symlink', async ()
   assert.notEqual(attempted.status, 0);
   assert.match(attempted.stderr, /symlink|escapes|unsafe/i);
   await assert.rejects(access(join(outside, 'created')));
+
+  const ownedEscape = run(root, [
+    'advance', '--to', 'direction', '--owned', 'escape/new-page.html',
+  ]);
+  assert.notEqual(ownedEscape.status, 0);
+  assert.match(ownedEscape.stderr, /owned path.*symbolic link/i);
+});
+
+test('legacy v2 review state migrates to the v3 audit boundary', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'impeccable-lite-cli-migrate-'));
+  await writeBriefAndPage(root);
+  assert.equal(run(root, ['init', '--brief', 'brief.json']).status, 0);
+  const statePath = join(root, '.impeccable-lite', 'session.json');
+  const state = JSON.parse(await readFile(statePath, 'utf8'));
+  await writeFile(statePath, `${JSON.stringify({
+    ...state,
+    version: 2,
+    phase: 'review',
+    history: [...state.history, {
+      at: '2026-11-19T00:00:00.000Z', from: 'audit', to: 'review', note: 'Legacy review.', evidence: [],
+    }],
+  }, null, 2)}\n`, 'utf8');
+
+  const status = run(root, ['status']);
+  assert.equal(status.status, 0, status.stderr);
+  assert.match(status.stdout, /Phase: audit/);
+  assert.equal(run(root, ['advance', '--to', 'build']).status, 0);
+  const migrated = JSON.parse(await readFile(statePath, 'utf8'));
+  assert.equal(migrated.version, 3);
+  assert.equal(migrated.phase, 'build');
+});
+
+test('audit gate recomputes findings instead of trusting edited report fields', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'impeccable-lite-cli-forged-audit-'));
+  await writeBriefAndPage(root);
+  await writeFile(join(root, 'index.html'), pageHtml.replace('</main>', '<img src="local.png"></main>'), 'utf8');
+  assert.equal(run(root, ['init', '--brief', 'brief.json']).status, 0);
+  assert.equal(run(root, ['advance', '--to', 'direction']).status, 0);
+  assert.equal(run(root, ['advance', '--to', 'build']).status, 0);
+  assert.equal(run(root, ['audit']).status, 1);
+  const auditPath = join(root, '.impeccable-lite', 'reports', 'audit.json');
+  const report = JSON.parse(await readFile(auditPath, 'utf8'));
+  await writeFile(auditPath, `${JSON.stringify({
+    ...report,
+    ok: true,
+    summary: { blocking: 0, major: 0, minor: 0 },
+    findings: [],
+  }, null, 2)}\n`, 'utf8');
+
+  const forged = run(root, [
+    'advance', '--to', 'audit', '--evidence', '.impeccable-lite/reports/audit.json',
+  ]);
+  assert.notEqual(forged.status, 0);
+  assert.match(forged.stderr, /passing audit evidence/i);
 });
 
 test('concurrent initialization is serialized and never overwrites state', async () => {
@@ -252,12 +370,6 @@ test('CLI gates audit, review, and completion on validated local evidence', asyn
     'advance', '--to', 'audit', '--evidence', 'reports/custom-check.json',
   ]).status, 0);
 
-  const missingCaptures = run(root, [
-    'advance', '--to', 'review', '--evidence', 'reports/custom-check.json',
-  ]);
-  assert.notEqual(missingCaptures.status, 0);
-  assert.match(missingCaptures.stderr, /desktop\.png.*mobile\.png/i);
-
   const unrelatedCapture = await writeCaptureEvidence(root, { entry: 'other.html', generation: 'capture-other' });
   const unrelated = run(root, [
     'packet', '--role', 'reviewer',
@@ -270,20 +382,33 @@ test('CLI gates audit, review, and completion on validated local evidence', asyn
   assert.match(unrelated.stderr, /does not belong to `index\.html`/);
 
   const capture = await writeCaptureEvidence(root);
-  assert.equal(run(root, [
-    'advance', '--to', 'review',
+  const missingCaptures = run(root, [
+    'advance', '--to', 'complete',
+    '--evidence', 'reports/custom-check.json',
+  ]);
+  assert.notEqual(missingCaptures.status, 0);
+  assert.match(missingCaptures.stderr, /desktop\.png.*mobile\.png/i);
+
+  const missingDisposition = run(root, [
+    'advance', '--to', 'complete',
     '--evidence', 'reports/custom-check.json',
     '--evidence', capture.desktop,
     '--evidence', capture.mobile,
     '--evidence', capture.manifest,
-  ]).status, 0);
-
-  const missingDisposition = run(root, ['advance', '--to', 'complete']);
+  ]);
   assert.notEqual(missingDisposition.status, 0);
   assert.match(missingDisposition.stderr, /review/i);
 
   await writeFile(join(root, 'review-bad.md'), 'Verdict: PASS\n', 'utf8');
-  const wrongDisposition = run(root, ['advance', '--to', 'complete', '--review', 'review-bad.md']);
+  const evidenceArgs = [
+    '--evidence', 'reports/custom-check.json',
+    '--evidence', capture.desktop,
+    '--evidence', capture.mobile,
+    '--evidence', capture.manifest,
+  ];
+  const wrongDisposition = run(root, [
+    'advance', '--to', 'complete', ...evidenceArgs, '--review', 'review-bad.md',
+  ]);
   assert.notEqual(wrongDisposition.status, 0);
   assert.match(wrongDisposition.stderr, /disposition: ship/i);
 
@@ -296,13 +421,16 @@ evidence_generation: capture-test
 `, 'utf8');
 
   await writeFile(join(root, 'index.html'), `${pageHtml}\n<!-- changed after capture -->\n`, 'utf8');
-  const staleEvidence = run(root, ['advance', '--to', 'complete', '--review', 'review.md']);
+  const staleEvidence = run(root, [
+    'advance', '--to', 'complete', ...evidenceArgs, '--review', 'review.md',
+  ]);
   assert.notEqual(staleEvidence.status, 0);
   assert.match(staleEvidence.stderr, /passing audit evidence|capture evidence/i);
   await writeFile(join(root, 'index.html'), pageHtml, 'utf8');
 
   assert.equal(run(root, [
-    'advance', '--to', 'complete', '--review', 'review.md', '--note', 'No material findings.',
+    'advance', '--to', 'complete', ...evidenceArgs,
+    '--review', 'review.md', '--note', 'No material findings.',
   ]).status, 0);
   const state = JSON.parse(await readFile(join(root, '.impeccable-lite', 'session.json'), 'utf8'));
   assert.equal(state.phase, 'complete');
@@ -328,13 +456,6 @@ test('completion rejects capture evidence after a served visual dependency chang
     generation: 'capture-assets',
     resources: ['index.html', 'hero.svg'],
   });
-  assert.equal(run(root, [
-    'advance', '--to', 'review',
-    '--evidence', '.impeccable-lite/reports/audit.json',
-    '--evidence', capture.desktop,
-    '--evidence', capture.mobile,
-    '--evidence', capture.manifest,
-  ]).status, 0);
   const state = JSON.parse(await readFile(join(root, '.impeccable-lite', 'session.json'), 'utf8'));
   await writeFile(join(root, 'review.md'), `disposition: ship
 material_findings: none
@@ -344,7 +465,14 @@ evidence_generation: capture-assets
 `, 'utf8');
 
   await writeFile(join(root, 'hero.svg'), '<svg xmlns="http://www.w3.org/2000/svg"><circle r="5"/></svg>', 'utf8');
-  const completed = run(root, ['advance', '--to', 'complete', '--review', 'review.md']);
+  const completed = run(root, [
+    'advance', '--to', 'complete',
+    '--evidence', '.impeccable-lite/reports/audit.json',
+    '--evidence', capture.desktop,
+    '--evidence', capture.mobile,
+    '--evidence', capture.manifest,
+    '--review', 'review.md',
+  ]);
   assert.notEqual(completed.status, 0);
   assert.match(completed.stderr, /capture evidence/i);
 });

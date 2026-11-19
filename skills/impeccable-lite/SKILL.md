@@ -1,8 +1,8 @@
 ---
 name: impeccable-lite
 description: >
-  Design, redesign, critique, or polish user-facing interfaces with strong visual direction and a bounded, local-only workflow. Use for web pages, app screens, components, documentation, and frontend UX when the user wants better hierarchy, typography, layout, color, motion, accessibility, responsiveness, or finish without external services or a large design pipeline. Do not use for backend-only work.
-license: MIT
+  Design, redesign, critique, or polish user-facing interfaces when visual judgment is central. Use for web pages, app screens, components, documentation sites, and frontend UX that needs stronger hierarchy, typography, layout, color, motion, accessibility, responsiveness, perception, or finish. Do not use for backend work, function-only frontend changes, exact implementation with no design judgment, or non-interface documents.
+license: "MIT; references/perception-first-lens.md is CC BY-SA 4.0"
 metadata:
   author: Matanel Gordon
   source: https://github.com/MatanelGordon/skills
@@ -18,14 +18,15 @@ in front of you. Use ordinary repository tools and existing local capabilities.
 
 ## Local-only boundary
 
-This skill authorizes no external access. Its optional runtime is checked-in,
-dependency-free Node.js and fails closed when a local capability is absent.
+This skill grants no external-access authority. Work from local project files
+and capabilities already in scope. A separate explicit user request may
+authorize an external tool, but that action is outside this skill and does not
+weaken its offline runtime.
 
 - Do not browse, fetch remote pages, call catalogs, send telemetry, or run an
   updater.
 - Do not install packages, download fonts or images, start an external service,
   or add hooks. A foreground preview may bind only to `127.0.0.1`.
-- Do not invoke remote image generation unless the user explicitly asks for it.
 - Existing local files, local development servers, installed tools, and local
   browser automation are allowed when already within the task's scope. Capture
   uses an already-installed Chromium browser and blocks external traffic; it
@@ -34,28 +35,31 @@ dependency-free Node.js and fails closed when a local capability is absent.
   copy or explicitly authorize that separate access.
 
 Do not create `PRODUCT.md`, `DESIGN.md`, a design system, or persistent process
-files unless the user asks for them. Do not spawn subagents merely because the
-task is visual.
+files unless the user asks. The only exception is `.impeccable-lite/` state
+after explicit runtime opt-in. Do not spawn subagents merely because a task is
+visual.
 
 ## Use the offline runtime only when it earns its state
 
-For a focused refinement, work directly and keep this skill instruction-only.
-For a multi-stage redesign, new page, handoff, or task that needs resumable
-evidence, read [references/offline-runtime.md](references/offline-runtime.md)
-and use the bundled CLI. It provides explicit phases, role packets, static
-audit, loopback preview, and desktop/mobile capture. It never launches a model
-or chooses a design for you.
+Work directly by default. Use the runtime only when the user explicitly wants
+resumable state, evidence-gated handoffs, or locally bound screenshots for a
+locally servable HTML artifact. Then read
+[references/offline-runtime.md](references/offline-runtime.md). Standalone audit
+and capture work without subagents; completing the full state machine requires
+an independent reviewer.
 
 Subagents are optional seams, not a default team:
 
 - use a direction explorer only when the brief is genuinely open-ended;
-- give writing ownership to one builder only;
-- use a fresh, read-only reviewer for a meaningful redesign or new surface;
+- give edit ownership to one builder only;
+- use a fresh, read-only reviewer when completing an opted-in runtime workflow
+  for a meaningful redesign or new surface;
 - stay solo for small, precise work or when the harness cannot isolate roles.
 
-The generated packet is the complete handoff. Do not give a specialist the
-whole skill or a broad repository walk when its packet and named local files
-are sufficient.
+The packet is the role boundary, not a substitute for missing decisions. Record
+the selected direction in the transition note and pass builder-owned files with
+the runtime's structured `--owned` option. Do not send the whole skill or a
+broad repository walk when the packet and named local files are sufficient.
 
 ## Load the perception lens only when it changes the decision
 
@@ -76,10 +80,8 @@ behavior, constraints, and requested aesthetics. Do not redirect a clear brief
 toward your own taste.
 
 Before editing, inspect the relevant implementation, real content, nearby
-components, tokens, and available assets. A missing design document does not
-mean the product has no visual identity.
-
-Choose the smallest correct mode:
+components, tokens, and available assets. For a precise request, then proceed
+directly. For open-ended or whole-surface work, choose the smallest useful mode:
 
 | Mode | Visitor success | Design priority |
 |---|---|---|
@@ -88,7 +90,7 @@ Choose the smallest correct mode:
 | **Read** | Understand | Structure, typography, and wayfinding |
 | **Experience** | Explore the work | The artifact and its transitions lead |
 
-Then decide the scope:
+Decide scope only when the request leaves it open:
 
 - **Refinement:** preserve identity, behavior, and content; improve execution.
 - **Redesign:** preserve product truth and function; replace the visual system
@@ -102,17 +104,16 @@ assumption.
 
 ## Set a direction before building
 
-Write three short working notes in the conversation or your scratch context,
-not in new project files:
+For open-ended or whole-surface work, write three short notes in conversation or
+scratch context, not new project files:
 
 1. **Goal:** what the user or visitor should accomplish.
 2. **Visual thesis:** one sentence naming the composition, material, and energy.
 3. **Hierarchy:** what dominates first, what supports it, and what action or
    information comes next.
 
-For an open-ended redesign, offer at most three genuinely different directions.
-Each should name its structure, visual character, and honest risk. For a precise
-request or a small refinement, skip options and implement directly.
+Offer at most three genuinely different directions only when choosing among
+directions would help.
 
 ## Build with commitment
 
@@ -199,13 +200,5 @@ copy a large upstream playbook back into this skill.
 
 ## Provenance
 
-This is an independently written, local-only distillation inspired by Paul
-Bakaus's [Impeccable](https://github.com/pbakaus/impeccable), licensed
-Apache-2.0. It retains the emphasis on committed art direction, product truth,
-anti-slop judgment, and bounded visual verification. Its optional perception
-lens is an attributed, compact adaptation informed by Stefan Kovalik's
-[Perception-First Design](https://github.com/skovalik/perception-first-design),
-licensed CC BY-SA 4.0; see `ATTRIBUTION.txt`. The original offline runtime does
-not include or copy either upstream project's engine, hooks, updater, catalog,
-telemetry, binaries, prompt text, agent definitions, browser bundle, or
-external-service workflows.
+This is an independently written local skill. Its inspirations, licenses, and
+the separately licensed perception reference are recorded in `ATTRIBUTION.txt`.

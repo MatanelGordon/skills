@@ -1,13 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 
-export const WORKFLOW_VERSION = 2;
+export const WORKFLOW_VERSION = 3;
 export const PHASES = Object.freeze([
   'brief',
   'direction',
   'build',
   'audit',
-  'review',
   'complete',
 ]);
 
@@ -17,8 +16,7 @@ const TRANSITIONS = Object.freeze({
   brief: new Set(['direction']),
   direction: new Set(['build']),
   build: new Set(['audit']),
-  audit: new Set(['review', 'build']),
-  review: new Set(['complete', 'build']),
+  audit: new Set(['complete', 'build']),
   complete: new Set(),
 });
 
@@ -95,12 +93,17 @@ export const transitionWorkflow = (state, to, options = {}) => {
     return resultError(`Cannot move from ${state.phase} to ${target}.`);
   }
 
+  const ownedFiles = cleanList(options.ownedFiles);
+  if (ownedFiles.length > 0 && !(state.phase === 'brief' && target === 'direction')) {
+    return resultError('Owned files are valid only on the brief-to-direction transition.');
+  }
   const entry = Object.freeze({
     at: clean(options.now) || new Date().toISOString(),
     from: state.phase,
     to: target,
     note: clean(options.note) || `Advanced from ${state.phase} to ${target}.`,
     evidence: cleanList(options.evidence),
+    ...(ownedFiles.length > 0 ? { ownedFiles } : {}),
   });
 
   return resultOk(
@@ -146,36 +149,48 @@ const roleDefinitions = Object.freeze({
     name: 'Interface builder',
     phases: new Set(['direction', 'build']),
     purpose: 'Implement the selected direction in the named artifact without changing product truth.',
-    boundary: 'Edit only the artifact and directly required local files named by the parent.',
+    boundary: 'Edit only the paths listed in `ownedFiles`.',
     returnShape:
       'Return paths changed, behavior preserved, checks run, and any unresolved material issue.',
   }),
   reviewer: Object.freeze({
     name: 'Finish reviewer',
-    phases: new Set(['audit', 'review']),
+    phases: new Set(['audit']),
     purpose: 'Judge the finished artifact with fresh eyes against the brief, audit, and captures.',
     boundary: 'Read-only. Do not edit, recapture, start a server, or widen the brief.',
     returnShape:
-      'Return exactly five lines: `disposition: <recapture|rebuild|fix|ship>`, `material_findings:` with at most six evidence-based items or `none`, one `keep:` line, then the exact `session_id:` and `evidence_generation:` values supplied below. Do not substitute verdict, pass, approve, or another status word. Return no other sections or prose.',
+      'If the artifact can ship, return exactly five lines: `disposition: ship`, `material_findings: none`, one concrete `keep:` line, then the exact `session_id:` and `evidence_generation:` values supplied below. Otherwise begin with `disposition: <recapture|rebuild|fix>`, then give at most six concise evidence-based findings and one concrete strength to keep. Do not substitute verdict, pass, approve, or another status word.',
   }),
 });
 
 export const buildAgentPacket = (state, role, context = {}) => {
-  const definition = roleDefinitions[clean(role).toLowerCase()];
+  const normalizedRole = clean(role).toLowerCase();
+  const definition = roleDefinitions[normalizedRole];
   if (!definition) return resultError(`Unknown role: ${role}.`);
   if (!state || !state.brief || typeof state.brief !== 'object' || !definition.phases.has(state.phase)) {
     return resultError(`Role ${role} is not available during phase ${state?.phase || '(unknown)'}.`);
+  }
+  if (normalizedRole === 'builder') {
+    const direction = [...state.history].reverse().find((entry) => entry.to === 'direction');
+    if (!Array.isArray(direction?.ownedFiles) || direction.ownedFiles.length === 0) {
+      return resultError('Builder packet requires explicit owned files in the direction transition.');
+    }
   }
 
   const root = clean(context.root) || '.';
   const evidence = cleanList(context.evidence);
   const auditReport = clean(context.auditReport);
   const evidenceGeneration = clean(context.evidenceGeneration);
+  const direction = [...state.history].reverse().find((entry) => entry.to === 'direction');
   const contextData = JSON.stringify({
     projectRoot: root,
     sessionId: state.sessionId,
     artifact: state.brief.artifact,
     brief: state.brief,
+    ...(normalizedRole === 'builder' ? {
+      selectedDirection: direction.note,
+      ownedFiles: direction.ownedFiles,
+    } : {}),
     evidence,
     auditReport: auditReport || null,
     evidenceGeneration: evidenceGeneration || null,
@@ -278,8 +293,9 @@ const stripTags = (value) => value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ')
 const hasAttribute = (attributes, name) =>
   new RegExp(`\\b${name}\\s*=`, 'i').test(attributes);
 const attributeValue = (attributes, name) => {
-  const match = attributes.match(new RegExp(`\\b${name}\\s*=\\s*(["'])(.*?)\\1`, 'i'));
-  return match ? match[2].trim() : '';
+  const pattern = new RegExp(`\\b${name}\\s*=\\s*(?:(["'])(.*?)\\1|([^\\s"'=<>` + '`' + `]+))`, 'i');
+  const match = attributes.match(pattern);
+  return (match?.[2] || match?.[3] || '').trim();
 };
 
 const summarize = (findings) =>
@@ -292,7 +308,10 @@ const summarize = (findings) =>
 
 export const auditHtml = (html, options = {}) => {
   const source = clean(options.source) || 'HTML document';
-  const text = typeof html === 'string' ? html : '';
+  const rawText = typeof html === 'string' ? html : '';
+  const text = rawText.replace(/<!--[\s\S]*?-->/g, ' ');
+  const styleText = (typeof options.styleText === 'string' ? options.styleText : '')
+    .replace(/\/\*[\s\S]*?\*\//g, ' ');
   const findings = [];
   const add = (...args) => findings.push(finding(...args));
 
@@ -310,8 +329,10 @@ export const auditHtml = (html, options = {}) => {
       source,
     );
   }
-  const remoteScriptCall = /(?:fetch|WebSocket|EventSource|Worker|SharedWorker|import|sendBeacon)\s*\(\s*(["'`])\s*(?:(?:https?|wss?):)?\/\//i.test(text)
-    || /\.open\s*\(\s*(["'`])(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\1\s*,\s*(["'`])\s*(?:https?:)?\/\//i.test(text);
+  const remoteScriptCall = /(?:fetch|WebSocket|EventSource|Worker|SharedWorker|import|importScripts|sendBeacon)\s*\(\s*(["'`])\s*(?:(?:https?|wss?):)?\/\//i.test(text)
+    || /\.open\s*\(\s*(["'`])(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\1\s*,\s*(["'`])\s*(?:https?:)?\/\//i.test(text)
+    || /\b(?:import\s+(?:(?:[\w*{},\s]+)\s+from\s+)?|export\s+(?:[\w*{},\s]+)\s+from\s+)(["'])\s*(?:https?:)?\/\//i.test(text)
+    || /\.(?:src|href|poster)\s*=\s*(["'`])\s*(?:https?:)?\/\//i.test(text);
   if (remoteScriptCall) {
     add(
       'offline-script-network',
@@ -321,19 +342,24 @@ export const auditHtml = (html, options = {}) => {
     );
   }
 
-  if (!/<html\b[^>]*\blang\s*=\s*(["'])[^"']+\1/i.test(text)) {
+  const htmlAttributes = text.match(/<html\b([^>]*)>/i)?.[1] || '';
+  if (!attributeValue(htmlAttributes, 'lang')) {
     add('document-language', 'major', 'Add a non-empty lang attribute to <html>.', source);
   }
   if (!/<title\b[^>]*>\s*[^<\s][^<]*<\/title>/i.test(text)) {
     add('document-title', 'major', 'Add a descriptive document title.', source);
   }
-  if (!/<meta\b[^>]*\bname\s*=\s*(["'])viewport\1/i.test(text)) {
+  const hasViewport = [...text.matchAll(/<meta\b([^>]*)>/gi)]
+    .some((match) => attributeValue(match[1], 'name').toLowerCase() === 'viewport');
+  if (!hasViewport) {
     add('viewport-meta', 'major', 'Add a responsive viewport meta tag.', source);
   }
   if (!/<main\b/i.test(text)) {
     add('main-landmark', 'minor', 'Wrap the primary content in a <main> landmark.', source);
   }
-  if (!/<h1\b[^>]*>\s*[^<\s]/i.test(text)) {
+  const hasPrimaryHeading = [...text.matchAll(/<h1\b[^>]*>([\s\S]*?)<\/h1>/gi)]
+    .some((match) => stripTags(match[1]).length > 0);
+  if (!hasPrimaryHeading) {
     add('primary-heading', 'major', 'Provide one visible primary heading.', source);
   }
 
@@ -343,8 +369,9 @@ export const auditHtml = (html, options = {}) => {
     add('image-alt', 'major', `${imagesWithoutAlt.length} image(s) lack an alt attribute.`, source);
   }
 
-  const documentIds = [...text.matchAll(/\bid\s*=\s*(["'])([^"']+)\1/gi)]
-    .map((match) => match[2]);
+  const documentIds = [...text.matchAll(/<[a-z][^>]*>/gi)]
+    .map((match) => attributeValue(match[0], 'id'))
+    .filter(Boolean);
   const repeatedIds = [...new Set(documentIds.filter((id, index) => documentIds.indexOf(id) !== index))];
   if (repeatedIds.length > 0) {
     add('duplicate-id', 'major', 'Duplicate IDs break label and fragment relationships.', repeatedIds.join(', '));
@@ -353,9 +380,13 @@ export const auditHtml = (html, options = {}) => {
   const buttons = [...text.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/gi)];
   const unnamedButtons = buttons.filter((match) => {
     const attributes = match[1];
+    const namedImage = [...match[2].matchAll(/<img\b([^>]*)>/gi)]
+      .some((image) => attributeValue(image[1], 'alt').length > 0);
     return !stripTags(match[2])
       && !attributeValue(attributes, 'aria-label')
-      && !attributeValue(attributes, 'title');
+      && !attributeValue(attributes, 'aria-labelledby')
+      && !attributeValue(attributes, 'title')
+      && !namedImage;
   });
   if (unnamedButtons.length > 0) {
     add('button-name', 'major', `${unnamedButtons.length} button(s) lack an accessible name.`, source);
@@ -366,28 +397,37 @@ export const auditHtml = (html, options = {}) => {
   }
 
   const controls = [...text.matchAll(/<(input|select|textarea)\b([^>]*)>/gi)]
-    .filter((match) => !/\btype\s*=\s*(["'])(?:hidden|button|submit|reset)\1/i.test(match[2]));
+    .filter((match) => !new Set(['hidden', 'button', 'submit', 'reset'])
+      .has(attributeValue(match[2], 'type').toLowerCase()));
+  const labels = [...text.matchAll(/<label\b([^>]*)>/gi)];
   const unlabeled = controls.filter((match) => {
     const attributes = match[2];
     if (attributeValue(attributes, 'aria-label') || attributeValue(attributes, 'aria-labelledby')) return false;
+    const before = text.slice(0, match.index).toLowerCase();
+    const wrappedByLabel = before.lastIndexOf('<label') > before.lastIndexOf('</label')
+      && text.toLowerCase().indexOf('</label>', match.index) >= 0;
+    if (wrappedByLabel) return false;
     const id = attributeValue(attributes, 'id');
     if (!id) return true;
-    const escapedId = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return !new RegExp(`<label\\b[^>]*\\bfor\\s*=\\s*(["'])${escapedId}\\1`, 'i').test(text);
+    return !labels.some((label) => attributeValue(label[1], 'for') === id);
   });
   if (unlabeled.length > 0) {
     add('form-label', 'major', `${unlabeled.length} form control(s) lack a programmatic label.`, source);
   }
 
   const hasInteractive = /<(?:button|input|select|textarea)\b|<a\b[^>]*\bhref\s*=/i.test(text);
-  if (hasInteractive && !/:focus(?:-visible)?\b/i.test(text)) {
-    add('focus-visible', 'major', 'Interactive controls have no authored focus style.', source);
+  const authoredStyles = `${text}\n${styleText}`;
+  const suppressesFocus = [...authoredStyles.matchAll(/:focus\b[^,{]*\{([^}]*)\}/gi)]
+    .some((match) => /\boutline\s*:\s*(?:none|0(?:px|rem|em)?)\b/i.test(match[1]));
+  if (hasInteractive && suppressesFocus && !/:focus-visible\b/i.test(authoredStyles)) {
+    add('focus-suppressed', 'major', 'Authored CSS suppresses focus without a visible focus replacement.', source);
   }
-  const hasMotion = /\b(?:animation|transition)\s*:/i.test(text);
-  if (hasMotion && !/@media\s*\([^)]*prefers-reduced-motion\s*:\s*reduce[^)]*\)/i.test(text)) {
+  const hasMotion = [...authoredStyles.matchAll(/\b(?:animation|transition)\s*:\s*([^;}]+)/gi)]
+    .some((match) => !/^(?:none|0(?:ms|s)?)(?:\s|$)/i.test(match[1].trim()));
+  if (hasMotion && !/@media\s*\([^)]*prefers-reduced-motion\s*:\s*reduce[^)]*\)/i.test(authoredStyles)) {
     add('reduced-motion', 'major', 'Motion exists without a prefers-reduced-motion fallback.', source);
   }
-  const oversizedWidth = [...text.matchAll(/\b(?:width|min-width)\s*:\s*(\d{4,})px/gi)]
+  const oversizedWidth = [...authoredStyles.matchAll(/\b(?:width|min-width)\s*:\s*(\d{4,})px/gi)]
     .map((match) => Number(match[1]))
     .filter((value) => value > 1024);
   if (oversizedWidth.length > 0) {

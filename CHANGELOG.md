@@ -1,5 +1,49 @@
 # Changelog
 
+## 1.21.1 — 2026-11-20
+
+- Simplified `impeccable-lite` from a fresh contradiction audit: visual
+  judgment is now the trigger, precise/function-only work bypasses the skill,
+  open-ended ceremony is conditional, and the offline runtime is explicit
+  opt-in for locally servable HTML.
+- Clarified that the skill grants no network authority, `.impeccable-lite/` is
+  the only runtime-state exception, standalone audit/capture work without an
+  agent, and full workflow completion requires an independent reviewer.
+- Fixed new-page workflows so direction and build can advance before the HTML
+  artifact exists. Builder packets now carry only the selected direction and
+  refuse to run without structured, path-contained edit ownership.
+- Collapsed the redundant review phase into `audit`: non-ship findings return
+  directly to `build`, while completion validates the audit, one isolated
+  desktop/mobile capture generation, and the reviewer's session-bound ship
+  return together. These project-local checks detect stale or altered evidence;
+  they do not attest authorship or resist a malicious project writer.
+- Documented and tested policy-failed capture generations as diagnostic output,
+  while operational failures still publish nothing. Removed dead canonical-leaf
+  and Chrome-argument code left over from the pre-generation capture layout.
+- Expanded the bounded offline audit to catch remote static module imports,
+  `importScripts`, and script-assigned remote resource URLs.
+- Recompute audit findings at every evidence gate, recognize focus/reduced-motion
+  rules in directly linked CSS, accept common valid unquoted/implicit/nested
+  HTML patterns, and flag focus suppression or fixed-width CSS without requiring
+  custom focus styling. Builder ownership now rejects symlinked paths both when
+  recorded and when a packet is generated.
+- Prevent preview symlinks from exposing dotfiles or `node_modules`, consolidate
+  path-containment and safe-directory code, and remove an undocumented duplicate
+  capture CLI wrapper.
+- Correct the repository-wide MIT statement with the perception reference's
+  explicit CC BY-SA 4.0 exception in the README, package metadata, and root
+  license notice.
+- Added automatic version 2 session migration to the smaller version 3 audit
+  boundary, preserving resumability across this patch release.
+- Corrected runtime documentation to distinguish persistent project outputs
+  from temporary browser files, name the transitions with enforced evidence,
+  and scope focus/reduced-motion checks to HTML plus directly linked CSS.
+- Shortened repeated perception/runtime policy text, made mixed MIT/CC BY-SA
+  licensing explicit, and replaced a duplicate refinement eval with a negative
+  function-only frontend trigger. Regression coverage now exercises the smaller
+  state machine, structured ownership, diagnostic publication, and added remote
+  script patterns.
+
 ## 1.21.0 — 2026-11-19
 
 - **Added a perception-first reference to `impeccable-lite`.** Explicit PFD,
@@ -81,9 +125,9 @@
   exclusion, narrow manual training, optional runtime routing, and a fresh
   read-only review handoff.
 - The offline runtime fails closed at its boundaries: symlink-safe output,
-  exact-origin browser interception, self-only preview CSP, immutable capture
-  generations, atomic lock ownership, content-hashed audit/capture provenance,
-  session-bound reviewer evidence, phase gates, inert JSON prompt data, and
+  exact-origin browser interception, self-only preview CSP, isolated capture
+  generations, atomic lock ownership, content-hashed audit/capture staleness
+  checks, session-bound reviewer evidence, phase gates, inert JSON prompt data, and
   bounded inspection of local JS/CSS dependencies.
 - Thirty Node tests cover workflow transitions, prompt containment, path
   and server boundaries, audit rules, CLI integration, browser isolation,

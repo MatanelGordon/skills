@@ -400,10 +400,14 @@ blind-synced. Provenance for each file is recorded in
 
 ## Credits
 
-Everything here is by **Matanel Gordon**, MIT licensed. Where a skill builds on
-published thinking, it says so inline. Notable sources:
+Everything here is by **Matanel Gordon** and MIT licensed except
+`skills/impeccable-lite/references/perception-first-lens.md`, which is an
+attributed CC BY-SA 4.0 adaptation. Where a skill builds on published thinking,
+it says so inline. Notable sources:
 [Nygard](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions)
 and [MADR](https://adr.github.io/madr/) for the ADR templates, and the
 [Lore protocol](https://arxiv.org/html/2603.15566v1) for the git trailer schema.
 
-Changes are tracked in [CHANGELOG.md](CHANGELOG.md). License: [MIT](LICENSE).
+Changes are tracked in [CHANGELOG.md](CHANGELOG.md). Default license:
+[MIT](LICENSE); the named reference records its separate terms in
+[`ATTRIBUTION.txt`](skills/impeccable-lite/ATTRIBUTION.txt).

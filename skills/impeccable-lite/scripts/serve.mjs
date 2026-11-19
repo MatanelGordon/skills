@@ -34,6 +34,10 @@ const sendText = (response, status, message) => {
   response.end(`${message}\n`);
 };
 
+const isPrivatePath = (path) => path.split(/[\\/]/)
+  .filter(Boolean)
+  .some((segment) => segment.startsWith('.') || segment === 'node_modules');
+
 const resolveRequest = async (root, requestUrl) => {
   let pathname;
   try {
@@ -44,8 +48,7 @@ const resolveRequest = async (root, requestUrl) => {
   if (pathname.includes('\0')) return { ok: false, status: 400, error: 'Malformed request path.' };
 
   const relativePath = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
-  const segments = relativePath.split('/');
-  if (segments.some((segment) => segment.startsWith('.') || segment === 'node_modules')) {
+  if (isPrivatePath(relativePath)) {
     return { ok: false, status: 403, error: 'Private paths are not served.' };
   }
   const lexical = resolveWithin(root, relativePath);
@@ -58,6 +61,9 @@ const resolveRequest = async (root, requestUrl) => {
     const physical = await realpath(candidate);
     if (!isPathContained(root, physical)) {
       return { ok: false, status: 403, error: 'Path escapes the preview root.' };
+    }
+    if (isPrivatePath(relative(root, physical))) {
+      return { ok: false, status: 403, error: 'Private paths are not served.' };
     }
     const physicalMetadata = await stat(physical);
     if (!physicalMetadata.isFile()) return { ok: false, status: 404, error: 'Not found.' };

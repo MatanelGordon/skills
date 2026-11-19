@@ -402,8 +402,14 @@ test('live smoke ledger proves distinct spawns and exact round-two packet propag
 });
 
 test('protocol references contain the helper-owned literal prompt blocks', async () => {
-  const protocol = await readFile(new URL('../references/protocol.md', import.meta.url), 'utf8');
-  const personas = await readFile(new URL('../references/personas.md', import.meta.url), 'utf8');
+  const normalizeNewlines = (text) => text.replace(/\r\n?/g, '\n');
+  assert.equal(normalizeNewlines('one\r\ntwo\rthree'), 'one\ntwo\nthree');
+  const protocol = normalizeNewlines(
+    await readFile(new URL('../references/protocol.md', import.meta.url), 'utf8'),
+  );
+  const personas = normalizeNewlines(
+    await readFile(new URL('../references/personas.md', import.meta.url), 'utf8'),
+  );
   assert.ok(protocol.includes(ROUND_ONE_INSTRUCTIONS));
   assert.ok(protocol.includes(ANTI_CONFORMITY));
   assert.ok(protocol.includes(ROUND_TWO_INSTRUCTIONS));

@@ -446,8 +446,10 @@ export const captureScreenshots = async ({
   let temporaryProfileRoot;
   let physicalStaging = staging;
   const captures = [];
+  const servedResources = new Map();
   let report;
   let primaryError;
+  let resourceError;
   let stagingPending = false;
   let readyToPublish = false;
   try {
@@ -455,7 +457,17 @@ export const captureScreenshots = async ({
     stagingPending = true;
     physicalStaging = await realpath(staging);
     if (!isWithin(physicalOutput, physicalStaging)) throw new Error('Capture staging directory escapes the output root.');
-    preview = await createStaticServer({ root: physicalRoot, port: 0 });
+    preview = await createStaticServer({
+      root: physicalRoot,
+      port: 0,
+      onServed: (resource) => {
+        const existingHash = servedResources.get(resource.path);
+        if (existingHash && existingHash !== resource.sha256) {
+          resourceError ||= new Error(`A served resource changed during capture: ${resource.path}`);
+        }
+        servedResources.set(resource.path, resource.sha256);
+      },
+    });
     temporaryProfileRoot = await mkdtemp(join(tmpdir(), 'impeccable-lite-chrome-'));
     for (const viewport of viewports) {
       const stagePath = join(physicalStaging, `${viewport.name}.png`);
@@ -488,6 +500,21 @@ export const captureScreenshots = async ({
     if (sha256(await readFile(physicalTarget)) !== artifactHash) {
       throw new Error('The artifact changed during capture; no evidence was published.');
     }
+    if (resourceError) throw resourceError;
+    const resources = [];
+    for (const [resourcePath, resourceHash] of [...servedResources.entries()].sort(([left], [right]) => left.localeCompare(right))) {
+      const resource = resolveWithin(physicalRoot, resourcePath);
+      if (!resource.ok) throw new Error(resource.error);
+      const physicalResource = await realpath(resource.value);
+      if (!isWithin(physicalRoot, physicalResource) || sha256(await readFile(physicalResource)) !== resourceHash) {
+        throw new Error(`A served resource changed during capture: ${resourcePath}`);
+      }
+      resources.push(Object.freeze({ path: resourcePath, sha256: resourceHash }));
+    }
+    const artifactResource = resources.find((resource) => resource.path === relative(physicalRoot, physicalTarget));
+    if (!artifactResource || artifactResource.sha256 !== artifactHash) {
+      throw new Error('The captured artifact was not bound to the served resource set.');
+    }
     report = Object.freeze({
       ok: captures.every((capture) => !capture.overflow && capture.blockedRequests.length === 0),
       browser: basename(browser),
@@ -496,6 +523,7 @@ export const captureScreenshots = async ({
       generation,
       reportPath: join(published, 'capture.json'),
       network: 'only the exact preview origin was allowed; all other HTTP(S) requests were blocked',
+      resources: Object.freeze(resources),
       captures: Object.freeze(captures),
     });
     await writeExclusive(join(physicalStaging, 'capture.json'), `${JSON.stringify(report, null, 2)}\n`);

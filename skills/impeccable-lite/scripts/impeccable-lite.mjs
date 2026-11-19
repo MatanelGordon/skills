@@ -405,10 +405,25 @@ const requireCaptures = async (evidence, expectedEntry, context) => {
     const png = inspectPng(bytes);
     return png.ok && png.value.width === width && png.value.height === height && sha256(bytes) === record.sha256;
   }));
+  const resources = Array.isArray(report.resources) ? report.resources : [];
+  const resourcePaths = new Set(resources.map((resource) => resource?.path));
+  const validResources = resources.length > 0
+    && resourcePaths.size === resources.length
+    && (await Promise.all(resources.map(async (resource) => {
+      if (!resource || typeof resource.path !== 'string' || !/^[a-f0-9]{64}$/i.test(resource.sha256 || '')) return false;
+      try {
+        return await hashFile(await existingPath(context.root, resource.path)) === resource.sha256;
+      } catch {
+        return false;
+      }
+    }))).every(Boolean);
+  const artifactResource = resources.find((resource) => resource.path === expectedEntry);
   const validManifest = report.ok === true
     && report.entry === expectedEntry
+    && artifactResource?.sha256 === report.artifactHash
     && report.artifactHash === await hashFile(await existingPath(context.root, expectedEntry))
     && report.generation === basename(generationDirectory)
+    && validResources
     && validCaptures.every(Boolean);
   let recordedReportPath;
   try {

@@ -56,7 +56,7 @@
   generations, atomic lock ownership, content-hashed audit/capture provenance,
   session-bound reviewer evidence, phase gates, inert JSON prompt data, and
   bounded inspection of local JS/CSS dependencies.
-- Twenty-eight Node tests cover workflow transitions, prompt containment, path
+- Thirty Node tests cover workflow transitions, prompt containment, path
   and server boundaries, audit rules, CLI integration, browser isolation,
   capture rollback, and real 390px CSS viewport evidence.
 - Synchronized the stale package-lock version metadata with the package version.

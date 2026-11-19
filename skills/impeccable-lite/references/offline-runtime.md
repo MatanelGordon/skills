@@ -77,8 +77,9 @@ desktop and mobile PNG evidence from the same generation; `review → complete`
 requires a local reviewer-return file that follows the strict ship contract.
 Invocation or containment errors return non-zero with a clear message. State
 changes are locked and published atomically. Audit inputs, the captured artifact,
-and both PNGs are SHA-256 bound to their evidence; changing them invalidates the
-gate instead of silently reusing stale proof.
+every same-origin resource actually served during capture, and both PNGs are
+SHA-256 bound to their evidence; changing them invalidates the gate instead of
+silently reusing stale proof.
 
 ## Prompt packets and role routing
 

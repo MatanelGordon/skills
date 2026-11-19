@@ -60,7 +60,8 @@ test('real Chrome capture uses the requested CSS viewport, not a cropped desktop
   const root = await mkdtemp(join(tmpdir(), 'impeccable-lite-capture-'));
   await writeFile(join(root, 'index.html'), `<!doctype html><html lang="en"><head>
     <meta name="viewport" content="width=device-width"><title>Viewport probe</title></head>
-    <body><main><h1>Viewport probe</h1></main></body></html>`, 'utf8');
+    <body><main><h1>Viewport probe</h1><img src="hero.svg" alt=""></main></body></html>`, 'utf8');
+  await writeFile(join(root, 'hero.svg'), '<svg xmlns="http://www.w3.org/2000/svg"><rect width="10" height="10"/></svg>', 'utf8');
 
   const report = await captureScreenshots({
     root,
@@ -74,6 +75,8 @@ test('real Chrome capture uses the requested CSS viewport, not a cropped desktop
   assert.equal(report.captures[0].blockedRequests.length, 0);
   assert.match(report.artifactHash, /^[a-f0-9]{64}$/);
   assert.match(report.captures[0].sha256, /^[a-f0-9]{64}$/);
+  assert.deepEqual(report.resources.map((resource) => resource.path), ['hero.svg', 'index.html']);
+  assert.ok(report.resources.every((resource) => /^[a-f0-9]{64}$/.test(resource.sha256)));
   assert.match(report.generation, /^capture-[a-f0-9-]+$/);
   assert.match(report.captures[0].path, new RegExp(`${report.generation}/mobile\\.png$`));
   assert.match(report.reportPath, new RegExp(`${report.generation}/capture\\.json$`));

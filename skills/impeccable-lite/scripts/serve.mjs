@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
+import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
 import { realpath, stat } from 'node:fs/promises';
 import { createServer } from 'node:http';
-import { extname, resolve } from 'node:path';
+import { extname, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { isPathContained, resolveWithin } from './lib/core.mjs';
@@ -66,8 +67,10 @@ const resolveRequest = async (root, requestUrl) => {
   }
 };
 
-export const createStaticServer = async ({ root = '.', port = 0 } = {}) => {
+export const createStaticServer = async ({ root = '.', port = 0, onServed = () => {} } = {}) => {
+  if (typeof onServed !== 'function') throw new TypeError('onServed must be a function.');
   const physicalRoot = await realpath(resolve(root));
+  let servedError;
   const server = createServer(async (request, response) => {
     const host = request.headers.host || '';
     if (!/^(?:127\.0\.0\.1|localhost)(?::\d+)?$/i.test(host)) {
@@ -94,6 +97,18 @@ export const createStaticServer = async ({ root = '.', port = 0 } = {}) => {
     if (request.method === 'HEAD') response.end();
     else {
       const stream = createReadStream(target.value);
+      const hash = createHash('sha256');
+      stream.on('data', (chunk) => hash.update(chunk));
+      stream.once('end', () => {
+        try {
+          onServed(Object.freeze({
+            path: relative(physicalRoot, target.value),
+            sha256: hash.digest('hex'),
+          }));
+        } catch (error) {
+          servedError ||= error;
+        }
+      });
       stream.once('error', () => response.destroy());
       stream.pipe(response);
     }
@@ -112,7 +127,7 @@ export const createStaticServer = async ({ root = '.', port = 0 } = {}) => {
   return Object.freeze({
     origin: `http://127.0.0.1:${address.port}`,
     close: () => new Promise((resolveClose, reject) => {
-      server.close((error) => (error ? reject(error) : resolveClose()));
+      server.close((error) => (error || servedError ? reject(error || servedError) : resolveClose()));
       server.closeIdleConnections?.();
     }),
   });

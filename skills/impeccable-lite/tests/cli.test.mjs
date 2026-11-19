@@ -75,7 +75,10 @@ const createPng = (width, height) => {
   ]);
 };
 
-const writeCaptureEvidence = async (root, { entry = 'index.html', generation = 'capture-test' } = {}) => {
+const writeCaptureEvidence = async (
+  root,
+  { entry = 'index.html', generation = 'capture-test', resources = ['index.html'] } = {},
+) => {
   const directory = join(root, '.impeccable-lite', 'evidence', generation);
   await mkdir(directory, { recursive: true });
   const desktop = join(directory, 'desktop.png');
@@ -86,12 +89,17 @@ const writeCaptureEvidence = async (root, { entry = 'index.html', generation = '
   await writeFile(desktop, desktopPng);
   await writeFile(mobile, mobilePng);
   const artifactHash = sha256(await readFile(join(root, 'index.html')));
+  const capturedResources = await Promise.all(resources.map(async (path) => ({
+    path,
+    sha256: sha256(await readFile(join(root, path))),
+  })));
   await writeFile(manifest, `${JSON.stringify({
     ok: true,
     entry,
     artifactHash,
     generation,
     reportPath: manifest,
+    resources: capturedResources,
     captures: [
       {
         name: 'desktop', width: 1440, height: 1000, cssWidth: 1440, cssHeight: 1000,
@@ -299,6 +307,46 @@ evidence_generation: capture-test
   const state = JSON.parse(await readFile(join(root, '.impeccable-lite', 'session.json'), 'utf8'));
   assert.equal(state.phase, 'complete');
   assert.match(state.history.at(-1).note, /^Reviewer disposition: ship\./);
+});
+
+test('completion rejects capture evidence after a served visual dependency changes', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'impeccable-lite-cli-resource-stale-'));
+  await writeBriefAndPage(root);
+  await writeFile(join(root, 'hero.svg'), '<svg xmlns="http://www.w3.org/2000/svg"><rect width="10" height="10"/></svg>', 'utf8');
+  await writeFile(join(root, 'index.html'), pageHtml.replace(
+    '</main>',
+    '<img src="hero.svg" alt=""></main>',
+  ), 'utf8');
+  assert.equal(run(root, ['init', '--brief', 'brief.json']).status, 0);
+  assert.equal(run(root, ['advance', '--to', 'direction']).status, 0);
+  assert.equal(run(root, ['advance', '--to', 'build']).status, 0);
+  assert.equal(run(root, ['audit']).status, 0);
+  assert.equal(run(root, [
+    'advance', '--to', 'audit', '--evidence', '.impeccable-lite/reports/audit.json',
+  ]).status, 0);
+  const capture = await writeCaptureEvidence(root, {
+    generation: 'capture-assets',
+    resources: ['index.html', 'hero.svg'],
+  });
+  assert.equal(run(root, [
+    'advance', '--to', 'review',
+    '--evidence', '.impeccable-lite/reports/audit.json',
+    '--evidence', capture.desktop,
+    '--evidence', capture.mobile,
+    '--evidence', capture.manifest,
+  ]).status, 0);
+  const state = JSON.parse(await readFile(join(root, '.impeccable-lite', 'session.json'), 'utf8'));
+  await writeFile(join(root, 'review.md'), `disposition: ship
+material_findings: none
+keep: the hierarchy
+session_id: ${state.sessionId}
+evidence_generation: capture-assets
+`, 'utf8');
+
+  await writeFile(join(root, 'hero.svg'), '<svg xmlns="http://www.w3.org/2000/svg"><circle r="5"/></svg>', 'utf8');
+  const completed = run(root, ['advance', '--to', 'complete', '--review', 'review.md']);
+  assert.notEqual(completed.status, 0);
+  assert.match(completed.stderr, /capture evidence/i);
 });
 
 test('reviewer packet requires passing audit plus desktop and mobile captures', async () => {

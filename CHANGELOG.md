@@ -17,7 +17,10 @@
   and lockfile versions, and caught/fixed a duplicate `adr` eval key.
 - **Eval suites can run.** `install/run-evals.mjs` executes a selected skill eval
   through caller-supplied candidate and judge processes with timeouts and a
-  machine-readable verdict. Installer, validator, eval-runner, and npm-package
+  machine-readable verdict. A timeout or runner interruption terminates the
+  spawned process group and ordinary descendants, so model helpers do not
+  normally survive the failed evaluation. Installer, validator,
+  eval-runner, and npm-package
   integration tests run in CI on Linux, macOS, and Windows across Node 18–22.
 - **Published package contents are allowlisted.** Runtime installer, skills, and
   agents ship; `.github` and the sanctioned `skills/rank-workspace/` scratch

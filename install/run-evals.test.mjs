@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -79,4 +81,72 @@ test('runEvalCases enforces process timeouts', async () => {
     runEvalCases({ skillText: '# Fixture', doc, candidate: slow, judge, timeoutMs: 50 }),
     /timed out/,
   );
+});
+
+test('runEvalCases timeout terminates candidate descendants', async () => {
+  const root = await makeTemp();
+  const marker = join(root, 'orphan-was-alive');
+  const descendantCode = `
+    const { writeFileSync } = require('node:fs');
+    setTimeout(() => writeFileSync(${JSON.stringify(marker)}, 'orphan'), 800);
+    setInterval(() => {}, 1_000);
+  `;
+  const candidate = await executable(root, 'spawner.mjs', `
+    import { spawn } from 'node:child_process';
+    const descendant = spawn(process.execPath, ['-e', ${JSON.stringify(descendantCode)}], { stdio: 'ignore' });
+    descendant.unref();
+    setInterval(() => {}, 1_000);
+  `);
+  const judge = await executable(root, 'judge.mjs', 'process.stdout.write("{}");');
+
+  await assert.rejects(
+    runEvalCases({ skillText: '# Fixture', doc, candidate, judge, timeoutMs: 50 }),
+    /timed out/,
+  );
+  await new Promise((resolvePromise) => setTimeout(resolvePromise, 1_000));
+  assert.equal(existsSync(marker), false, 'candidate descendant survived the timeout');
+});
+
+test('runEvalCases terminates the candidate tree when its runner receives SIGTERM', {
+  skip: process.platform === 'win32',
+}, async () => {
+  const root = await makeTemp();
+  const ready = join(root, 'candidate-ready');
+  const marker = join(root, 'orphan-after-signal');
+  const descendantCode = `
+    const { writeFileSync } = require('node:fs');
+    setTimeout(() => writeFileSync(${JSON.stringify(marker)}, 'orphan'), 800);
+    setInterval(() => {}, 1_000);
+  `;
+  const candidate = await executable(root, 'signal-candidate.mjs', `
+    import { writeFileSync } from 'node:fs';
+    import { spawn } from 'node:child_process';
+    writeFileSync(${JSON.stringify(ready)}, 'ready');
+    const descendant = spawn(process.execPath, ['-e', ${JSON.stringify(descendantCode)}], { stdio: 'ignore' });
+    descendant.unref();
+    setInterval(() => {}, 1_000);
+  `);
+  const judge = await executable(root, 'signal-judge.mjs', 'process.stdout.write("{}");');
+  const runner = await executable(root, 'signal-runner.mjs', `
+    import { runEvalCases } from ${JSON.stringify(new URL('./run-evals.mjs', import.meta.url).href)};
+    const doc = ${JSON.stringify(doc)};
+    await runEvalCases({
+      skillText: '# Fixture',
+      doc,
+      candidate: ${JSON.stringify(candidate)},
+      judge: ${JSON.stringify(judge)},
+      timeoutMs: 5_000,
+    });
+  `);
+
+  const processUnderTest = spawn(runner[0], runner.slice(1), { stdio: 'ignore' });
+  const readyDeadline = Date.now() + 2_000;
+  while (!existsSync(ready) && Date.now() < readyDeadline) {
+    await new Promise((resolvePromise) => setTimeout(resolvePromise, 20));
+  }
+  assert.equal(existsSync(ready), true, 'candidate never reached its running state');
+  processUnderTest.kill('SIGTERM');
+  await new Promise((resolvePromise) => processUnderTest.once('close', resolvePromise));
+  await new Promise((resolvePromise) => setTimeout(resolvePromise, 1_000));
+  assert.equal(existsSync(marker), false, 'candidate descendant survived runner interruption');
 });

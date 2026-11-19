@@ -1,0 +1,31 @@
+{
+  "name": "council-isolated-two-round-smoke",
+  "decisionBrief": "DECISION: Choose the state boundary for a production authorization service.\nOPTIONS: A) keep the current shared in-memory policy state and add synchronization B) replace it with an append-only policy event boundary\nCONSTRAINTS: preserve the public API; one engineer has eight weeks; production traffic cannot stop; engineers other than the author will operate the result.\nEVIDENCE: current shared-state implementation (code-read); three authorization incidents in the last quarter (measured: incident review); event-boundary performance claims (unverified-docs)\nSTAKES: a wrong boundary can either repeat authorization incidents or consume the only delivery window without shipping.",
+  "routing": {
+    "decisionKind": "architecture",
+    "consequential": true,
+    "hardToReverse": true,
+    "optionCount": 2,
+    "hasTradeoff": true,
+    "canSpawn": true,
+    "explicitRequest": false
+  },
+  "features": {
+    "touchesProduction": true,
+    "operatedByOthers": true,
+    "platformSurface": false,
+    "prioritizesMission": false,
+    "futureUnlock": false,
+    "domainModelDispute": false,
+    "rewriteOrPort": false
+  },
+  "expectedMembers": [
+    "Skeptic",
+    "Pragmatist",
+    "Migrator",
+    "Maintainer"
+  ],
+  "expectedRoundOneState": "NOT_CONVERGED",
+  "requireRoundTwo": true,
+  "maxPromptChars": 50000
+}

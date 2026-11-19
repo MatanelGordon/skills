@@ -116,6 +116,43 @@
         "The absent rollback inventory is not converted into zero rollback paths or another numeric baseline",
         "No council members are spawned for this mechanical continuation"
       ]
+    },
+    {
+      "id": 9,
+      "prompt": "We need to choose our durable authorization architecture. Option A keeps policy evaluation inside the monolith; option B creates a separate policy service. Both can preserve the public API, but either choice will shape every future permission feature and will be expensive to reverse. Please recommend an approach.",
+      "expected_output": "Council activates without requiring the user to say Council because this is a consequential, hard-to-reverse architecture choice with two real options and a trade-off. It prepares the validated brief and isolated-member run.",
+      "files": [],
+      "expectations": [
+        "The architecture decision triggers Council automatically",
+        "The absence of an explicit Council phrase does not block architecture routing",
+        "The readiness gates are still checked before spawning",
+        "The response does not downgrade the request to an options-only comparison"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Which technical initiative should the team prioritize next: improve deployment rollback, rebuild authorization for future scale, or add reporting exports? Give me your recommendation.",
+      "expected_output": "Council does not activate because this is broader technical-strategy and mission prioritization without an explicit Council request. The assistant may recommend directly or use an ordinary decision method.",
+      "files": [],
+      "expectations": [
+        "No Council members are spawned",
+        "Mission prioritization is recognized as non-architectural technical strategy in this request",
+        "The skill requires an explicit Council request for this category",
+        "The assistant can still answer the underlying strategy question directly"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "Continue this contested Council. The host reports that a complete round-two prompt is 24001 characters and its maximum context budget for this run is 24000 characters. Prepare the round-two prompts without losing evidence.",
+      "expected_output": "The protocol aborts with PACKET_TOO_LARGE, reports the required and available sizes, and does not summarize, truncate, deduplicate, excerpt, or omit any round-one response.",
+      "files": [],
+      "expectations": [
+        "The one-character overflow fails closed",
+        "PACKET_TOO_LARGE is surfaced",
+        "The required 24001 and available 24000 character sizes are reported",
+        "No compacted or partial round-two prompt is produced",
+        "The assistant does not silently raise the host budget"
+      ]
     }
   ]
 }

@@ -4,4 +4,5 @@ node_modules/
 __pycache__/
 *.pyc
 .plan
+# Local evaluation sandboxes are disposable and must never become skill packages.
 *-workspace/

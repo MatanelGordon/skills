@@ -11,6 +11,7 @@ license: MIT
 metadata:
   author: Matanel Gordon
   source: https://github.com/MatanelGordon/skills
+  depends: confidence-ranker
 ---
 
 # Research first
@@ -92,9 +93,10 @@ proved otherwise. Docs are a claim about the code; execution is the code.
 
 When you genuinely have only one non-conclusive leg, say so: "single source —
 X; couldn't cross-check because Y." A labeled one-legged answer is honest; an
-unlabeled one is a guess wearing confidence. For claims built from reading
-undocumented code, the `rank` skill is the fixed vocabulary for these labels —
-VERIFIED / TRACED / INFERRED / PATTERN / GUESS, each with its upgrade step.
+unlabeled one is a guess wearing confidence. When the claim controls an action,
+`confidence-ranker` supplies the fixed evidence vocabulary — VERIFIED /
+CORROBORATED / TRACED / INFERRED / UNSUPPORTED — and decides whether the
+evidence meets that action's threshold.
 
 ## 3. Judging code: the fence has a reason
 
@@ -153,8 +155,8 @@ judgment still gets flagged before acting.
 
 - **Cite as you claim**: link or name the source next to the claim it carries,
   not in a pile at the end.
-- Label single-sourced claims explicitly — on undocumented-code claims, use
-  the `rank` vocabulary.
+- Label single-sourced claims explicitly. When they control an action, use the
+  `confidence-ranker` vocabulary and give the action-readiness verdict.
 - Name the searches behind a negative result.
 - Keep receipts short — two links and one sentence of method beat a paragraph
   of process narration.

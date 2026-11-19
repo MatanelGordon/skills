@@ -14,7 +14,7 @@ license: MIT
 metadata:
   author: Matanel Gordon
   source: https://github.com/MatanelGordon/skills
-  depends: research-first, deep-plan, adr
+  depends: research-first, confidence-ranker, deep-plan, adr
 ---
 
 # Development workflow
@@ -60,10 +60,11 @@ porting a proven implementation when it covers ~80% or more of the need** — na
 the gap, present the choice. Building is the fallback, not the default.
 
 Two-source discipline applies to everything the design rests on: versions,
-behaviors, "we can't use X because…" claims. Findings dug out of undocumented
-code carry `rank` tags (VERIFIED / TRACED / INFERRED / PATTERN / GUESS) — a
-plan resting on an INFERRED claim has a verify-first task, and the claim's
-upgrade clause is that task.
+behaviors, "we can't use X because…" claims. When an uncertain finding controls
+whether work is safe to start, `confidence-ranker` isolates that claim, raises
+it with the cheapest decisive check, and reports whether the action is ready.
+A plan resting on a claim below its required evidence threshold gets a
+verify-first task; the claim's concrete next check is that task.
 
 ## 1. Plan — before implementing
 

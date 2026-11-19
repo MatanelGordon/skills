@@ -1,0 +1,183 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 330" width="960" height="330" role="img" aria-labelledby="title desc">
+  <title id="title">The development workflow</title>
+  <desc id="desc">Six steps run in order. Step 0, Research: does it already exist? Uses research-first and confidence-ranker. Step 1, Plan: what changes and what proves it, using deep-plan, adr and the plan-reviewer agent. Step 2, Test first: the test fails red, then passes green, then refactor. Step 3, Implement: the smallest change, with parallel-build for big work. Step 4, Review by a fresh subagent, with CRITICAL and HIGH findings fixed before merge. Step 5, Commit: say why, recording one-way calls with adr. Each step is highlighted in turn and then checked off.</desc>
+  <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Helvetica, Arial, sans-serif; fill: #1f2328; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+      .muted { fill: #59636e; font-size: 11.5px; }
+      .label { fill: #59636e; font-size: 10.5px; letter-spacing: .12em; font-weight: 600; }
+      .title { font-size: 15px; font-weight: 650; }
+      .skill { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; fill: #8250df; font-size: 11px; }
+      .wire { fill: none; stroke: #c8d1da; stroke-width: 2; stroke-linecap: round; }
+      .card { fill: #ffffff; stroke: #1a7f37; }
+      .node { fill: #1a7f37; stroke: #1a7f37; }
+      .rail-fill { fill: none; stroke: #8250df; stroke-width: 2; stroke-linecap: round;
+        stroke-dasharray: 760.0 760.0; animation: rail 10.0s linear infinite; }
+      @keyframes rail { 0%, 6.00% { stroke-dashoffset: 760.0; opacity: 1; } 71.00%, 92.00% { stroke-dashoffset: 0; opacity: 1; }
+        97.00% { stroke-dashoffset: 0; opacity: 0; } 100% { stroke-dashoffset: 760.0; opacity: 0; } }
+      
+      @keyframes card0 { 0%, 5.50% { stroke: #d0d7de; fill: #ffffff; } 7.00%, 18.50% { stroke: #8250df; fill: #fbefff; }
+        20.00%, 92.00% { stroke: #1a7f37; fill: #ffffff; } 97.00%, 100% { stroke: #d0d7de; fill: #ffffff; } }
+      @keyframes node0 { 0%, 5.50% { fill: #ffffff; stroke: #c8d1da; } 7.00%, 18.50% { fill: #8250df; stroke: #8250df; }
+        20.00%, 92.00% { fill: #1a7f37; stroke: #1a7f37; } 97.00%, 100% { fill: #ffffff; stroke: #c8d1da; } }
+      @keyframes check0 { 0%, 19.00% { opacity: 0; } 21.00%, 92.00% { opacity: 1; }
+        97.00%, 100% { opacity: 0; } }
+      .s0 .card { animation: card0 10.0s linear infinite; }
+      .s0 .node { animation: node0 10.0s linear infinite; }
+      .s0 .check { animation: check0 10.0s linear infinite; }
+      @keyframes card1 { 0%, 18.50% { stroke: #d0d7de; fill: #ffffff; } 20.00%, 31.50% { stroke: #8250df; fill: #fbefff; }
+        33.00%, 92.00% { stroke: #1a7f37; fill: #ffffff; } 97.00%, 100% { stroke: #d0d7de; fill: #ffffff; } }
+      @keyframes node1 { 0%, 18.50% { fill: #ffffff; stroke: #c8d1da; } 20.00%, 31.50% { fill: #8250df; stroke: #8250df; }
+        33.00%, 92.00% { fill: #1a7f37; stroke: #1a7f37; } 97.00%, 100% { fill: #ffffff; stroke: #c8d1da; } }
+      @keyframes check1 { 0%, 32.00% { opacity: 0; } 34.00%, 92.00% { opacity: 1; }
+        97.00%, 100% { opacity: 0; } }
+      .s1 .card { animation: card1 10.0s linear infinite; }
+      .s1 .node { animation: node1 10.0s linear infinite; }
+      .s1 .check { animation: check1 10.0s linear infinite; }
+      @keyframes card2 { 0%, 31.50% { stroke: #d0d7de; fill: #ffffff; } 33.00%, 44.50% { stroke: #8250df; fill: #fbefff; }
+        46.00%, 92.00% { stroke: #1a7f37; fill: #ffffff; } 97.00%, 100% { stroke: #d0d7de; fill: #ffffff; } }
+      @keyframes node2 { 0%, 31.50% { fill: #ffffff; stroke: #c8d1da; } 33.00%, 44.50% { fill: #8250df; stroke: #8250df; }
+        46.00%, 92.00% { fill: #1a7f37; stroke: #1a7f37; } 97.00%, 100% { fill: #ffffff; stroke: #c8d1da; } }
+      @keyframes check2 { 0%, 45.00% { opacity: 0; } 47.00%, 92.00% { opacity: 1; }
+        97.00%, 100% { opacity: 0; } }
+      .s2 .card { animation: card2 10.0s linear infinite; }
+      .s2 .node { animation: node2 10.0s linear infinite; }
+      .s2 .check { animation: check2 10.0s linear infinite; }
+      @keyframes card3 { 0%, 44.50% { stroke: #d0d7de; fill: #ffffff; } 46.00%, 57.50% { stroke: #8250df; fill: #fbefff; }
+        59.00%, 92.00% { stroke: #1a7f37; fill: #ffffff; } 97.00%, 100% { stroke: #d0d7de; fill: #ffffff; } }
+      @keyframes node3 { 0%, 44.50% { fill: #ffffff; stroke: #c8d1da; } 46.00%, 57.50% { fill: #8250df; stroke: #8250df; }
+        59.00%, 92.00% { fill: #1a7f37; stroke: #1a7f37; } 97.00%, 100% { fill: #ffffff; stroke: #c8d1da; } }
+      @keyframes check3 { 0%, 58.00% { opacity: 0; } 60.00%, 92.00% { opacity: 1; }
+        97.00%, 100% { opacity: 0; } }
+      .s3 .card { animation: card3 10.0s linear infinite; }
+      .s3 .node { animation: node3 10.0s linear infinite; }
+      .s3 .check { animation: check3 10.0s linear infinite; }
+      @keyframes card4 { 0%, 57.50% { stroke: #d0d7de; fill: #ffffff; } 59.00%, 70.50% { stroke: #8250df; fill: #fbefff; }
+        72.00%, 92.00% { stroke: #1a7f37; fill: #ffffff; } 97.00%, 100% { stroke: #d0d7de; fill: #ffffff; } }
+      @keyframes node4 { 0%, 57.50% { fill: #ffffff; stroke: #c8d1da; } 59.00%, 70.50% { fill: #8250df; stroke: #8250df; }
+        72.00%, 92.00% { fill: #1a7f37; stroke: #1a7f37; } 97.00%, 100% { fill: #ffffff; stroke: #c8d1da; } }
+      @keyframes check4 { 0%, 71.00% { opacity: 0; } 73.00%, 92.00% { opacity: 1; }
+        97.00%, 100% { opacity: 0; } }
+      .s4 .card { animation: card4 10.0s linear infinite; }
+      .s4 .node { animation: node4 10.0s linear infinite; }
+      .s4 .check { animation: check4 10.0s linear infinite; }
+      @keyframes card5 { 0%, 70.50% { stroke: #d0d7de; fill: #ffffff; } 72.00%, 83.50% { stroke: #8250df; fill: #fbefff; }
+        85.00%, 92.00% { stroke: #1a7f37; fill: #ffffff; } 97.00%, 100% { stroke: #d0d7de; fill: #ffffff; } }
+      @keyframes node5 { 0%, 70.50% { fill: #ffffff; stroke: #c8d1da; } 72.00%, 83.50% { fill: #8250df; stroke: #8250df; }
+        85.00%, 92.00% { fill: #1a7f37; stroke: #1a7f37; } 97.00%, 100% { fill: #ffffff; stroke: #c8d1da; } }
+      @keyframes check5 { 0%, 84.00% { opacity: 0; } 86.00%, 92.00% { opacity: 1; }
+        97.00%, 100% { opacity: 0; } }
+      .s5 .card { animation: card5 10.0s linear infinite; }
+      .s5 .node { animation: node5 10.0s linear infinite; }
+      .s5 .check { animation: check5 10.0s linear infinite; }
+      @keyframes pill-idle { 0%, 32.00% { opacity: 1; } 33.00%, 96.00% { opacity: 0; } 97.00%, 100% { opacity: 1; } }
+      @keyframes pill-red { 0%, 32.00% { opacity: 0; } 33.00%, 38.50% { opacity: 1; } 39.50%, 100% { opacity: 0; } }
+      @keyframes pill-green { 0%, 38.50% { opacity: 0; } 39.50%, 92.00% { opacity: 1; } 97.00%, 100% { opacity: 0; } }
+      .pill-idle { animation: pill-idle 10.0s linear infinite; }
+      .pill-red { opacity: 0; animation: pill-red 10.0s linear infinite; }
+      .pill-green { animation: pill-green 10.0s linear infinite; }
+      .pill-red, .pill-idle { opacity: 0; }
+      @media (prefers-reduced-motion: reduce) {
+        * { animation: none !important; }
+        .rail-fill { stroke-dashoffset: 0; stroke: #1a7f37; }
+      }
+  </style>
+  
+  <defs>
+    <pattern id="grid" width="16" height="16" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="#d8dee4"/>
+    </pattern>
+  </defs>
+  <rect x=".5" y=".5" width="959" height="329" rx="16" fill="#f6f8fa" stroke="#d0d7de"/>
+  <rect x=".5" y=".5" width="959" height="329" rx="16" fill="url(#grid)" opacity=".7"/>
+  <text class="label" x="30" y="36">ONE CHANGE, START TO FINISH · development-workflow</text>
+  <line class="wire" x1="100.0" x2="860.0" y1="292" y2="292"/>
+  <line class="rail-fill" x1="100.0" x2="860.0" y1="292" y2="292"/>
+  
+  <g class="s0">
+    <rect class="card" x="30" y="56" width="140" height="196" rx="12" stroke-width="1.25"/>
+    <text class="label" x="46" y="85">STEP 0</text>
+    <g class="check"><circle cx="148" cy="80" r="9" fill="#dafbe1" stroke="#1a7f37" stroke-width="1.25"/><path d="M144 80.3 l2.8 2.8 l5.2-5.6" fill="none" stroke="#1a7f37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <text class="title" x="46" y="116">Research</text>
+    <text class="muted" x="46" y="140">does it already</text>
+    <text class="muted" x="46" y="156">exist somewhere?</text>
+    <line x1="46" x2="154" y1="178" y2="178" stroke="#d0d7de"/>
+    <text class="skill" x="46" y="202">research-first</text>
+    <text class="skill" x="46" y="220">confidence-ranker</text>
+    <circle class="node" cx="100.0" cy="292" r="6" stroke-width="2"/>
+  </g>
+  <g class="s1">
+    <rect class="card" x="182" y="56" width="140" height="196" rx="12" stroke-width="1.25"/>
+    <text class="label" x="198" y="85">STEP 1</text>
+    <g class="check"><circle cx="300" cy="80" r="9" fill="#dafbe1" stroke="#1a7f37" stroke-width="1.25"/><path d="M296 80.3 l2.8 2.8 l5.2-5.6" fill="none" stroke="#1a7f37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <text class="title" x="198" y="116">Plan</text>
+    <text class="muted" x="198" y="140">what changes, and</text>
+    <text class="muted" x="198" y="156">what proves it?</text>
+    <line x1="198" x2="306" y1="178" y2="178" stroke="#d0d7de"/>
+    <text class="skill" x="198" y="202">deep-plan</text>
+    <text class="skill" x="198" y="220">adr</text>
+    <text class="skill" x="198" y="238">plan-reviewer</text>
+    <circle class="node" cx="252.0" cy="292" r="6" stroke-width="2"/>
+  </g>
+  <g class="s2">
+    <rect class="card" x="334" y="56" width="140" height="196" rx="12" stroke-width="1.25"/>
+    <text class="label" x="350" y="85">STEP 2</text>
+    <g class="check"><circle cx="452" cy="80" r="9" fill="#dafbe1" stroke="#1a7f37" stroke-width="1.25"/><path d="M448 80.3 l2.8 2.8 l5.2-5.6" fill="none" stroke="#1a7f37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <text class="title" x="350" y="116">Test first</text>
+    <text class="muted" x="350" y="140">watch it fail,</text>
+    <text class="muted" x="350" y="156">then make it pass</text>
+    <line x1="350" x2="458" y1="178" y2="178" stroke="#d0d7de"/>
+    
+      <g class="pill-idle">
+        <rect x="350" y="194" width="108" height="24" rx="12" fill="#ffffff" stroke="#d0d7de"/>
+        <text x="404.0" y="210" text-anchor="middle" class="mono" font-size="11" font-weight="600" style="fill:#59636e">red → green</text>
+      </g>
+      <g class="pill-red">
+        <rect x="350" y="194" width="108" height="24" rx="12" fill="#ffebe9" stroke="#cf222e"/>
+        <text x="404.0" y="210" text-anchor="middle" class="mono" font-size="11" font-weight="600" style="fill:#cf222e">✗ RED</text>
+      </g>
+      <g class="pill-green">
+        <rect x="350" y="194" width="108" height="24" rx="12" fill="#dafbe1" stroke="#1a7f37"/>
+        <text x="404.0" y="210" text-anchor="middle" class="mono" font-size="11" font-weight="600" style="fill:#1a7f37">✓ GREEN</text>
+      </g>
+    <text class="muted" x="350" y="238">then refactor</text>
+    <circle class="node" cx="404.0" cy="292" r="6" stroke-width="2"/>
+  </g>
+  <g class="s3">
+    <rect class="card" x="486" y="56" width="140" height="196" rx="12" stroke-width="1.25"/>
+    <text class="label" x="502" y="85">STEP 3</text>
+    <g class="check"><circle cx="604" cy="80" r="9" fill="#dafbe1" stroke="#1a7f37" stroke-width="1.25"/><path d="M600 80.3 l2.8 2.8 l5.2-5.6" fill="none" stroke="#1a7f37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <text class="title" x="502" y="116">Implement</text>
+    <text class="muted" x="502" y="140">the smallest change</text>
+    <text class="muted" x="502" y="156">that does it</text>
+    <line x1="502" x2="610" y1="178" y2="178" stroke="#d0d7de"/>
+    <text class="skill" x="502" y="202">parallel-build</text>
+    <text class="muted" x="502" y="220">for big work</text>
+    <circle class="node" cx="556.0" cy="292" r="6" stroke-width="2"/>
+  </g>
+  <g class="s4">
+    <rect class="card" x="638" y="56" width="140" height="196" rx="12" stroke-width="1.25"/>
+    <text class="label" x="654" y="85">STEP 4</text>
+    <g class="check"><circle cx="756" cy="80" r="9" fill="#dafbe1" stroke="#1a7f37" stroke-width="1.25"/><path d="M752 80.3 l2.8 2.8 l5.2-5.6" fill="none" stroke="#1a7f37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <text class="title" x="654" y="116">Review</text>
+    <text class="muted" x="654" y="140">by eyes that</text>
+    <text class="muted" x="654" y="156">didn't write it</text>
+    <line x1="654" x2="762" y1="178" y2="178" stroke="#d0d7de"/>
+    <text class="muted" x="654" y="202">fresh subagent</text>
+    <text class="muted" x="654" y="220">CRITICAL + HIGH</text>
+    <text class="muted" x="654" y="238">fixed before merge</text>
+    <circle class="node" cx="708.0" cy="292" r="6" stroke-width="2"/>
+  </g>
+  <g class="s5">
+    <rect class="card" x="790" y="56" width="140" height="196" rx="12" stroke-width="1.25"/>
+    <text class="label" x="806" y="85">STEP 5</text>
+    <g class="check"><circle cx="908" cy="80" r="9" fill="#dafbe1" stroke="#1a7f37" stroke-width="1.25"/><path d="M904 80.3 l2.8 2.8 l5.2-5.6" fill="none" stroke="#1a7f37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <text class="title" x="806" y="116">Commit</text>
+    <text class="muted" x="806" y="140">say why,</text>
+    <text class="muted" x="806" y="156">not what</text>
+    <line x1="806" x2="914" y1="178" y2="178" stroke="#d0d7de"/>
+    <text class="skill" x="806" y="202">adr</text>
+    <text class="muted" x="806" y="220">for one-way calls</text>
+    <circle class="node" cx="860.0" cy="292" r="6" stroke-width="2"/>
+  </g>
+</svg>

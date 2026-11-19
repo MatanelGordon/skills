@@ -1,0 +1,168 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 320" width="880" height="320" role="img" aria-labelledby="title desc">
+  <title id="title">How the installer works</title>
+  <desc id="desc">One clone of this repository, holding 25 skills and 2 agents, feeds install/index.mjs, which symlinks or copies them into five skill directories: Claude Code at ~/.claude/skills/, OpenAI Codex at ~/.codex/skills/, GitHub Copilot at ~/.copilot/skills/, Tabnine at ~/.tabnine/agent/skills/, and the shared ~/.agents/skills/.</desc>
+  <defs>
+    <pattern id="grid" width="16" height="16" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="#21262d"/>
+    </pattern>
+    <radialGradient id="glow">
+      <stop offset="0" stop-color="#bc8cff" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#bc8cff" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Helvetica, Arial, sans-serif; fill: #e6edf3; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+      .muted { fill: #9198a1; font-size: 12px; }
+      .label { fill: #9198a1; font-size: 10.5px; letter-spacing: .12em; font-weight: 600; }
+      .name { font-size: 13px; font-weight: 600; }
+      .path { font-size: 12px; fill: #9198a1; }
+      .card { fill: #0d1117; stroke: #30363d; stroke-width: 1; }
+      .wire { fill: none; stroke: #3d444d; stroke-width: 1.5; }
+      .flow { fill: none; stroke: #bc8cff; stroke-width: 1.5; stroke-dasharray: 2 12; stroke-linecap: round; opacity: .45; animation: flow 1.4s linear infinite; }
+      .dot-core { fill: #bc8cff; }
+      .inst { fill: #0d1117; stroke: #30363d; stroke-width: 1; animation: pulse 6s ease-out infinite; }
+      .t-card { fill: #0d1117; stroke: #30363d; stroke-width: 1; }
+      .t-ring { fill: none; stroke: #30363d; stroke-width: 1.5; }
+      .t-check { fill: none; stroke: #3fb950; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 12; stroke-dashoffset: 12; }
+      .target .t-card { animation: lit-card 6s ease-out infinite; animation-delay: inherit; }
+      .target .t-ring { animation: lit-ring 6s ease-out infinite; animation-delay: inherit; }
+      .target .t-check { animation: lit-check 6s ease-out infinite; animation-delay: inherit; }
+      @keyframes flow { to { stroke-dashoffset: -14; } }
+      @keyframes pulse {
+        0%, 11% { stroke: #30363d; fill: #0d1117; }
+        14% { stroke: #bc8cff; fill: #271a3d; }
+        26%, 100% { stroke: #30363d; fill: #0d1117; }
+      }
+      @keyframes lit-card {
+        0%, 29% { stroke: #30363d; fill: #0d1117; }
+        32%, 84% { stroke: #3fb950; fill: #12261e; }
+        94%, 100% { stroke: #30363d; fill: #0d1117; }
+      }
+      @keyframes lit-ring {
+        0%, 29% { stroke: #30363d; }
+        32%, 84% { stroke: #3fb950; }
+        94%, 100% { stroke: #30363d; }
+      }
+      @keyframes lit-check {
+        0%, 29% { stroke-dashoffset: 12; }
+        34%, 84% { stroke-dashoffset: 0; }
+        94%, 100% { stroke-dashoffset: 12; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .dot, .flow { display: none; }
+        .inst, .target .t-card, .target .t-ring, .target .t-check { animation: none; }
+        .t-check { stroke-dashoffset: 0; }
+        .t-ring, .target .t-card { stroke: #3fb950; }
+      }
+    </style>
+  </defs>
+
+  <rect x=".5" y=".5" width="879" height="319" rx="16" fill="#161b22" stroke="#30363d"/>
+  <rect x=".5" y=".5" width="879" height="319" rx="16" fill="url(#grid)" opacity=".7"/>
+
+  <path id="feed" class="wire" d="M224 160 H280"/>
+  <path class="flow" d="M224 160 H280"/>
+  <path id="b0" class="wire" d="M460 160 C 512 160, 508 50.0, 556 50.0"/><path id="b1" class="wire" d="M460 160 C 512 160, 508 106.0, 556 106.0"/><path id="b2" class="wire" d="M460 160 C 512 160, 508 162.0, 556 162.0"/><path id="b3" class="wire" d="M460 160 C 512 160, 508 218.0, 556 218.0"/><path id="b4" class="wire" d="M460 160 C 512 160, 508 274.0, 556 274.0"/>
+  <path class="flow" d="M460 160 C 512 160, 508 50.0, 556 50.0"/><path class="flow" d="M460 160 C 512 160, 508 106.0, 556 106.0"/><path class="flow" d="M460 160 C 512 160, 508 162.0, 556 162.0"/><path class="flow" d="M460 160 C 512 160, 508 218.0, 556 218.0"/><path class="flow" d="M460 160 C 512 160, 508 274.0, 556 274.0"/>
+
+  <g>
+    <rect class="card" x="24" y="96" width="200" height="128" rx="12"/>
+    <text class="label" x="44" y="124">ONE CLONE</text>
+    <text class="mono" x="44" y="152" font-size="17" font-weight="600">skills/</text>
+    <text class="muted" x="44" y="176">25 skills · 2 agents</text>
+    <text class="muted" x="44" y="198">one source of truth</text>
+  </g>
+
+  <g>
+    <rect class="inst" x="280" y="118" width="180" height="84" rx="12"/>
+    <text class="label" x="298" y="144">INSTALLER</text>
+    <text class="mono" x="298" y="168" font-size="13.5" font-weight="600">install/index.mjs</text>
+    <text class="muted" x="298" y="189">symlink · or copy</text>
+  </g>
+
+  
+  <g class="target" style="animation-delay:0.00s">
+    <rect class="t-card" x="556" y="30" width="300" height="40" rx="10"/>
+    <circle class="t-ring" cx="576" cy="50.0" r="8"/>
+    <path class="t-check" d="M572.2 50.3 l2.6 2.6 l5-5.4"/>
+    <text class="name" x="594" y="54.5">Claude Code</text>
+    <text class="mono path" x="842" y="54.5" text-anchor="end">~/.claude/skills/</text>
+  </g>
+  <g class="target" style="animation-delay:0.18s">
+    <rect class="t-card" x="556" y="86" width="300" height="40" rx="10"/>
+    <circle class="t-ring" cx="576" cy="106.0" r="8"/>
+    <path class="t-check" d="M572.2 106.3 l2.6 2.6 l5-5.4"/>
+    <text class="name" x="594" y="110.5">OpenAI Codex</text>
+    <text class="mono path" x="842" y="110.5" text-anchor="end">~/.codex/skills/</text>
+  </g>
+  <g class="target" style="animation-delay:0.36s">
+    <rect class="t-card" x="556" y="142" width="300" height="40" rx="10"/>
+    <circle class="t-ring" cx="576" cy="162.0" r="8"/>
+    <path class="t-check" d="M572.2 162.3 l2.6 2.6 l5-5.4"/>
+    <text class="name" x="594" y="166.5">GitHub Copilot</text>
+    <text class="mono path" x="842" y="166.5" text-anchor="end">~/.copilot/skills/</text>
+  </g>
+  <g class="target" style="animation-delay:0.54s">
+    <rect class="t-card" x="556" y="198" width="300" height="40" rx="10"/>
+    <circle class="t-ring" cx="576" cy="218.0" r="8"/>
+    <path class="t-check" d="M572.2 218.3 l2.6 2.6 l5-5.4"/>
+    <text class="name" x="594" y="222.5">Tabnine</text>
+    <text class="mono path" x="842" y="222.5" text-anchor="end">~/.tabnine/agent/skills/</text>
+  </g>
+  <g class="target" style="animation-delay:0.72s">
+    <rect class="t-card" x="556" y="254" width="300" height="40" rx="10"/>
+    <circle class="t-ring" cx="576" cy="274.0" r="8"/>
+    <path class="t-check" d="M572.2 274.3 l2.6 2.6 l5-5.4"/>
+    <text class="name" x="594" y="278.5">Shared</text>
+    <text class="mono path" x="842" y="278.5" text-anchor="end">~/.agents/skills/</text>
+  </g>
+  
+    <g class="dot">
+      <circle r="9" fill="url(#glow)"/>
+      <circle r="3.5" class="dot-core"/>
+      <animateMotion dur="6s" repeatCount="indefinite" calcMode="linear"
+        keyPoints="0;0;1;1" keyTimes="0;0.000;0.120;1"><mpath href="#feed"/></animateMotion>
+      <animate attributeName="opacity" dur="6s" repeatCount="indefinite"
+        values="0;0;1;1;0;0" keyTimes="0;0.000;0.010;0.120;0.140;1"/>
+    </g>
+    <g class="dot">
+      <circle r="9" fill="url(#glow)"/>
+      <circle r="3.5" class="dot-core"/>
+      <animateMotion dur="6s" repeatCount="indefinite" calcMode="linear"
+        keyPoints="0;0;1;1" keyTimes="0;0.150;0.300;1"><mpath href="#b0"/></animateMotion>
+      <animate attributeName="opacity" dur="6s" repeatCount="indefinite"
+        values="0;0;1;1;0;0" keyTimes="0;0.150;0.160;0.300;0.320;1"/>
+    </g>
+    <g class="dot">
+      <circle r="9" fill="url(#glow)"/>
+      <circle r="3.5" class="dot-core"/>
+      <animateMotion dur="6s" repeatCount="indefinite" calcMode="linear"
+        keyPoints="0;0;1;1" keyTimes="0;0.180;0.330;1"><mpath href="#b1"/></animateMotion>
+      <animate attributeName="opacity" dur="6s" repeatCount="indefinite"
+        values="0;0;1;1;0;0" keyTimes="0;0.180;0.190;0.330;0.350;1"/>
+    </g>
+    <g class="dot">
+      <circle r="9" fill="url(#glow)"/>
+      <circle r="3.5" class="dot-core"/>
+      <animateMotion dur="6s" repeatCount="indefinite" calcMode="linear"
+        keyPoints="0;0;1;1" keyTimes="0;0.210;0.360;1"><mpath href="#b2"/></animateMotion>
+      <animate attributeName="opacity" dur="6s" repeatCount="indefinite"
+        values="0;0;1;1;0;0" keyTimes="0;0.210;0.220;0.360;0.380;1"/>
+    </g>
+    <g class="dot">
+      <circle r="9" fill="url(#glow)"/>
+      <circle r="3.5" class="dot-core"/>
+      <animateMotion dur="6s" repeatCount="indefinite" calcMode="linear"
+        keyPoints="0;0;1;1" keyTimes="0;0.240;0.390;1"><mpath href="#b3"/></animateMotion>
+      <animate attributeName="opacity" dur="6s" repeatCount="indefinite"
+        values="0;0;1;1;0;0" keyTimes="0;0.240;0.250;0.390;0.410;1"/>
+    </g>
+    <g class="dot">
+      <circle r="9" fill="url(#glow)"/>
+      <circle r="3.5" class="dot-core"/>
+      <animateMotion dur="6s" repeatCount="indefinite" calcMode="linear"
+        keyPoints="0;0;1;1" keyTimes="0;0.270;0.420;1"><mpath href="#b4"/></animateMotion>
+      <animate attributeName="opacity" dur="6s" repeatCount="indefinite"
+        values="0;0;1;1;0;0" keyTimes="0;0.270;0.280;0.420;0.440;1"/>
+    </g>
+</svg>

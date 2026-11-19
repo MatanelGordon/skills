@@ -52,6 +52,13 @@ and footer. The mobile frame recomposes rather than crops, keeps the call to
 action visible, wraps the headline deliberately, and shows no clipped or
 overlapping content.
 
+Review copies of the inspected frames are committed with this report:
+
+- [`evidence/desktop.png`](evidence/desktop.png) — 1440×1000, SHA-256
+  `00556871a6a8cbcb70db7d0277c4dff4d9c50f4c4ad995a6326d818a4ad47422`
+- [`evidence/mobile.png`](evidence/mobile.png) — 390×844, SHA-256
+  `b190e5331e816a0d9b28ffec3d1df07868b79efc12da451f571085b675a1fb48`
+
 ## Scope notes
 
 - The Chrome DevTools terminal client was installed and its version/help were

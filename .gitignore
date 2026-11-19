@@ -7,5 +7,7 @@ __pycache__/
 !.plan/puppeteer-browser-capture/
 !.plan/puppeteer-browser-capture/plan.md
 !.plan/puppeteer-browser-capture/verification.md
+!.plan/puppeteer-browser-capture/evidence/
+!.plan/puppeteer-browser-capture/evidence/*.png
 # Local evaluation sandboxes are disposable and must never become skill packages.
 *-workspace/

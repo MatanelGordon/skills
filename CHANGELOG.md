@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.20.0 — 2026-11-19
+
+- **New skill: `impeccable-lite`.** A compact design workflow for designing,
+  redesigning, critiquing and polishing user-facing interfaces. Its optional
+  self-hosted runtime uses Node.js built-ins only: explicit phase state, bounded
+  direction/builder/reviewer packets, static offline and accessibility checks,
+  a loopback preview, and desktop/mobile captures through installed Chromium.
+  It has no downloaded binaries, hooks, updater, telemetry, external catalog,
+  package install, Docker dependency or mandatory product/design documents.
+- **Kept the useful design core:** the brief outranks taste; refinement preserves
+  while redesign may replace; the surface's job determines its priorities; one
+  coherent direction beats averaged safe styles; common AI-design habits are
+  warnings rather than universal bans; verification is one batched inspection,
+  one fix batch and at most one confirmation.
+- **Credited, but did not vendor, upstream Impeccable.** The new skill is an
+  independently written local distillation inspired by
+  [pbakaus/impeccable](https://github.com/pbakaus/impeccable) (Apache-2.0, Paul
+  Bakaus). None of its 16 MB runtime, command system, detector, catalog, hooks,
+  binaries or external-service machinery is copied into this repository.
+- Eight behavioral evals cover established-product redesign, focused
+  refinement, read-only critique, the no-network boundary, backend trigger
+  exclusion, narrow manual training, optional runtime routing, and a fresh
+  read-only review handoff.
+- The offline runtime fails closed at its boundaries: symlink-safe output,
+  exact-origin browser interception, self-only preview CSP, immutable capture
+  generations, atomic lock ownership, content-hashed audit/capture provenance,
+  session-bound reviewer evidence, phase gates, inert JSON prompt data, and
+  bounded inspection of local JS/CSS dependencies.
+- Twenty-eight Node tests cover workflow transitions, prompt containment, path
+  and server boundaries, audit rules, CLI integration, browser isolation,
+  capture rollback, and real 390px CSS viewport evidence.
+- Synchronized the stale package-lock version metadata with the package version.
+
 ## 1.19.1 — 2026-10-02
 
 - **Registered [pbakaus/impeccable](https://github.com/pbakaus/impeccable)**

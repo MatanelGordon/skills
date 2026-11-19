@@ -1,6 +1,6 @@
 {
   "name": "@matanelgordon/skills",
-  "version": "1.19.1",
+  "version": "1.20.0",
   "description": "Agent Skills for Claude Code, OpenAI Codex, GitHub Copilot and Tabnine",
   "type": "module",
   "bin": {
@@ -9,6 +9,7 @@
   "scripts": {
     "install-skills": "node install/index.mjs",
     "start": "node install/index.mjs",
+    "test:impeccable-lite": "node --test skills/impeccable-lite/tests/*.test.mjs",
     "validate": "node install/validate.mjs"
   },
   "license": "MIT",

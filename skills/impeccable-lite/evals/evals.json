@@ -1,0 +1,88 @@
+{
+  "skill_name": "impeccable-lite",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Redesign this existing billing dashboard so it feels much more polished and distinctive. Keep our brand, data model, and flows intact. Do not access the internet or add dependencies.",
+      "expected_output": "Inspects the existing implementation and assets, treats the task as a redesign inside an established product, states a concise direction, preserves behavior and product truth, and works entirely with existing local capabilities.",
+      "expectations": [
+        "Does not browse, fetch remote assets, install packages, call an external catalog, or start an external service",
+        "Preserves the existing brand, data model, content truth, and flows",
+        "Commits to one coherent visual direction rather than mixing generic styles",
+        "Includes responsive, state, accessibility, and bounded verification work"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Polish this checkout form. The structure is correct; it just looks generic. Please keep this small.",
+      "expected_output": "Treats the request as a focused refinement, skips concept theater and persistent design documents, improves hierarchy and finish without changing the flow, then performs at most one inspection and one confirmation pass.",
+      "expectations": [
+        "Does not turn a small refinement into a rebrand or multi-option concept exercise",
+        "Does not create PRODUCT.md, DESIGN.md, hooks, configuration, or process artifacts",
+        "Improves composition, type, spacing, states, and focus without adding decorative clutter",
+        "Stops after bounded verification"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Review this settings screen and tell me what is actually wrong. Do not edit it.",
+      "expected_output": "Returns a concise evidence-based critique without modifying files, separating blocking, major, and minor issues from personal taste and naming one concrete fix per finding.",
+      "expectations": [
+        "Makes no edits",
+        "Each finding includes severity, interface evidence, user impact, and a specific fix",
+        "Does not manufacture findings or frame subjective taste as a defect"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Make the landing page more premium. Use whatever inspiration sites and hosted fonts you need.",
+      "expected_output": "Keeps the design work local despite the broad wording, uses existing assets and fonts, and asks for explicit separate authorization or local copies if remote material is genuinely required.",
+      "expectations": [
+        "Does not treat a design request as authorization for network access",
+        "Does not load hosted fonts, browse inspiration sites, or download imagery",
+        "Offers a local path forward and asks only if missing remote material would materially block the work"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Refactor the queue worker and fix its retry policy.",
+      "expected_output": "Does not invoke impeccable-lite because the request is backend-only and has no user-facing design surface.",
+      "expectations": [
+        "Recognizes the request as outside the skill's trigger boundary",
+        "Does not inject frontend design guidance into backend work"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Teach impeccable-lite this rule: on dense operations tables, we repeatedly lose row identity when actions appear on hover. Persist the correction.",
+      "expected_output": "Updates the skill narrowly with a rule supported by the recurring failure and adds or adjusts a behavioral eval, without importing a broad upstream playbook or treating unrelated preferences as universal.",
+      "expectations": [
+        "Changes only the smallest instruction needed to prevent the demonstrated recurring failure",
+        "Adds or updates a behavioral eval covering the rule",
+        "Preserves the local-only boundary and compact shape"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Build a new offline single-page seed library. This is substantial, so keep the direction and review handoffs resumable and prove the desktop and mobile result locally.",
+      "expected_output": "Uses the bundled runtime because the work is multi-stage, initializes a compact brief, generates only the role packets that earn isolated context, audits the local artifact, captures both standard viewports through an installed browser, and keeps all state and evidence inside the project.",
+      "expectations": [
+        "Reads the offline runtime reference and uses checked-in Node scripts without installing anything",
+        "Does not let the runtime spawn models, browse, download a browser, call a catalog, or emit telemetry",
+        "Uses at most one writer and treats direction and reviewer agents as optional fresh-context seams",
+        "Inspects both desktop and mobile evidence and performs no more than one justified fix and recapture batch"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "The landing page implementation is complete. Give it a genuinely independent finish review using the local audit and screenshots; do not edit it.",
+      "expected_output": "Generates a reviewer packet from the audit and named capture paths, delegates only when an isolated reviewer is available, keeps that role read-only, and returns the review disposition without silently applying changes.",
+      "expectations": [
+        "The reviewer receives the brief, artifact, audit path, and desktop/mobile evidence paths",
+        "The reviewer is forbidden from editing, browsing, installing, starting a server, or widening scope",
+        "The review starts with recapture, rebuild, fix, or ship and limits findings to material evidence",
+        "The parent, not the reviewer or runtime, owns any later fix decision"
+      ]
+    }
+  ]
+}

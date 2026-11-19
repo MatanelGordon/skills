@@ -1,158 +1,254 @@
 #!/usr/bin/env node
-/**
- * Repo validator — every failure class we have actually hit, checked on CI.
- *
- * Per skill: frontmatter keys/limits, name rules, description rules, balanced
- * code fences, no control characters, scripts parse (bash -n / node --check /
- * python3 py_compile), declared depends exist.
- */
+/** Repository validator: structure, executable syntax, eval schemas, and release docs. */
 import { readdir, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { join, extname } from 'node:path';
+import { extname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
-const ROOT = new URL('..', import.meta.url).pathname;
-const SKILLS = join(ROOT, 'skills');
+const DEFAULT_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const ALLOWED_KEYS = new Set(['name', 'description', 'license', 'allowed-tools', 'metadata', 'compatibility']);
+const SANCTIONED_WORKSPACES = new Set(['rank-workspace']);
 
-let failures = 0;
-const fail = (skill, msg) => { failures++; console.error(`  ✖ ${skill}: ${msg}`); };
-const has = (cmd) => spawnSync('sh', ['-c', `command -v ${cmd}`], { stdio: 'ignore' }).status === 0;
+const has = (cmd) => spawnSync(cmd, ['--version'], { stdio: 'ignore' }).status === 0;
 const HAVE = { bash: has('bash'), python3: has('python3') };
 
 /** Fence balance with nesting: a longer fence opens inside a shorter one. */
 function fencesBalanced(text) {
   const stack = [];
   for (const line of text.split('\n')) {
-    const m = /^(`{3,})/.exec(line);
-    if (!m) continue;
-    const t = m[1];
-    if (stack.length && t.length >= stack[stack.length - 1].length) stack.pop();
-    else stack.push(t);
+    const match = /^(`{3,})/.exec(line);
+    if (!match) continue;
+    const token = match[1];
+    if (stack.length && token.length >= stack[stack.length - 1].length) stack.pop();
+    else stack.push(token);
   }
   return stack.length === 0;
 }
 
-const dirs = (await readdir(SKILLS, { withFileTypes: true }))
-  .filter((e) => e.isDirectory()).map((e) => e.name).sort();
-const names = new Set(dirs);
+const idKeyCount = (text) => [...text.matchAll(/"id"\s*:/g)].length;
+const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-for (const dir of dirs) {
-  const mdPath = join(SKILLS, dir, 'SKILL.md');
-  if (!existsSync(mdPath)) { fail(dir, 'SKILL.md missing'); continue; }
-  const text = await readFile(mdPath, 'utf8');
+export async function validateRepository(root = DEFAULT_ROOT) {
+  root = resolve(root);
+  const skillsRoot = join(root, 'skills');
+  const failures = [];
+  const fail = (scope, message) => failures.push(`${scope}: ${message}`);
 
-  // frontmatter
-  const fmMatch = /^---\n([\s\S]*?)\n---\n/.exec(text);
-  if (!fmMatch) { fail(dir, 'no YAML frontmatter'); continue; }
-  const fm = fmMatch[1];
-
-  const topKeys = [...fm.matchAll(/^([A-Za-z][\w-]*):/gm)].map((m) => m[1]);
-  for (const k of topKeys) if (!ALLOWED_KEYS.has(k)) fail(dir, `frontmatter key '${k}' — Claude Code rejects unknown keys`);
-
-  const name = /^name:\s*(.+)$/m.exec(fm)?.[1]?.trim();
-  if (!name) fail(dir, 'missing name');
-  else {
-    if (name !== dir) fail(dir, `name '${name}' does not match directory`);
-    if (!/^[a-z0-9-]+$/.test(name) || name.length > 64 || /^-|-$|--/.test(name)) fail(dir, `name '${name}' breaks kebab-case rules`);
+  if (!existsSync(skillsRoot)) {
+    return { failures: ['repository: skills/ missing'], skills: [], agentCount: 0 };
   }
 
-  const descBlock = /description:\s*>-?\s*\n((?:\s{2,}.*\n?)+)/.exec(fm)?.[1];
-  const desc = descBlock
-    ? descBlock.split('\n').map((l) => l.trim()).filter(Boolean).join(' ')
-    : /^description:\s*(.+)$/m.exec(fm)?.[1]?.trim();
-  if (!desc) fail(dir, 'missing description');
-  else {
-    if (desc.length > 1024) fail(dir, `description ${desc.length} chars (max 1024)`);
-    if (/[<>]/.test(desc)) fail(dir, 'description contains angle brackets');
-  }
+  const dirs = (await readdir(skillsRoot, { withFileTypes: true }))
+    .filter((entry) => entry.isDirectory() && !SANCTIONED_WORKSPACES.has(entry.name))
+    .map((entry) => entry.name)
+    .sort();
+  const names = new Set(dirs);
 
-  // declared dependencies must exist in this repo
-  const depends = /^\s{2}depends:\s*(.+)$/m.exec(fm)?.[1] ?? '';
-  for (const d of depends.split(',').map((x) => x.trim()).filter(Boolean)) {
-    if (!names.has(d)) fail(dir, `depends on '${d}' which is not in this repo`);
-  }
-  const platform = /^\s{2}platform:\s*(.+)$/m.exec(fm)?.[1]?.trim();
-  if (platform && !['darwin', 'linux', 'win32'].includes(platform)) fail(dir, `unknown platform '${platform}'`);
-
-  // every markdown file: fences + control chars
-  const walk = async (d) => {
-    for (const e of await readdir(d, { withFileTypes: true })) {
-      const full = join(d, e.name);
-      if (e.isDirectory()) { await walk(full); continue; }
-      const ext = extname(e.name);
+  const walk = async (skill, dir) => {
+    for (const entry of await readdir(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        await walk(skill, full);
+        continue;
+      }
+      const ext = extname(entry.name);
       if (ext === '.md') {
-        const t = await readFile(full, 'utf8');
-        if (!fencesBalanced(t)) fail(dir, `${e.name}: unbalanced code fences`);
+        const text = await readFile(full, 'utf8');
+        if (!fencesBalanced(text)) fail(skill, `${entry.name}: unbalanced code fences`);
         // eslint-disable-next-line no-control-regex
-        if (/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(t)) fail(dir, `${e.name}: literal control characters (write \\u001B, not ESC)`);
+        if (/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(text)) {
+          fail(skill, `${entry.name}: literal control characters (write \\u001B, not ESC)`);
+        }
       } else if (ext === '.sh' && HAVE.bash) {
-        const r = spawnSync('bash', ['-n', full], { encoding: 'utf8' });
-        if (r.status !== 0) fail(dir, `${e.name}: bash -n → ${r.stderr.trim().split('\n')[0]}`);
+        const result = spawnSync('bash', ['-n', full], { encoding: 'utf8' });
+        if (result.status !== 0) fail(skill, `${entry.name}: bash -n → ${result.stderr.trim().split('\n')[0]}`);
       } else if (ext === '.mjs' || ext === '.js') {
-        const r = spawnSync(process.execPath, ['--check', full], { encoding: 'utf8' });
-        if (r.status !== 0) fail(dir, `${e.name}: node --check → ${r.stderr.trim().split('\n')[0]}`);
+        const result = spawnSync(process.execPath, ['--check', full], { encoding: 'utf8' });
+        if (result.status !== 0) fail(skill, `${entry.name}: node --check → ${result.stderr.trim().split('\n')[0]}`);
       } else if (ext === '.py' && HAVE.python3) {
-        const r = spawnSync('python3', ['-m', 'py_compile', full], { encoding: 'utf8' });
-        if (r.status !== 0) fail(dir, `${e.name}: py_compile → ${r.stderr.trim().split('\n').pop()}`);
+        const result = spawnSync('python3', ['-m', 'py_compile', full], {
+          encoding: 'utf8',
+          env: { ...process.env, PYTHONPYCACHEPREFIX: join(root, '.pycache-validation') },
+        });
+        if (result.status !== 0) fail(skill, `${entry.name}: py_compile → ${result.stderr.trim().split('\n').pop()}`);
       }
     }
   };
-  await walk(join(SKILLS, dir));
-}
 
-// ---- evals: every skill must have a verifiable suite
-for (const dir of dirs) {
-  const evPath = join(SKILLS, dir, 'evals', 'evals.json');
-  if (!existsSync(evPath)) { fail(dir, 'evals/evals.json missing — every skill needs a verification suite'); continue; }
-  let doc;
-  try { doc = JSON.parse(await readFile(evPath, 'utf8')); }
-  catch (e) { fail(dir, `evals.json: invalid JSON — ${e.message}`); continue; }
-  if (doc.skill_name !== dir) fail(dir, `evals skill_name '${doc.skill_name}' does not match directory`);
-  if (!Array.isArray(doc.evals) || doc.evals.length === 0) { fail(dir, 'evals array empty'); continue; }
-  const ids = new Set();
-  for (const ev of doc.evals) {
-    if (!ev.prompt?.trim()) fail(dir, `eval ${ev.id}: empty prompt`);
-    if (!ev.expected_output?.trim()) fail(dir, `eval ${ev.id}: empty expected_output`);
-    if (!Array.isArray(ev.expectations) || !ev.expectations.length) fail(dir, `eval ${ev.id}: no expectations`);
-    if (ids.has(ev.id)) fail(dir, `duplicate eval id ${ev.id}`);
-    ids.add(ev.id);
-  }
-}
+  for (const dir of dirs) {
+    const mdPath = join(skillsRoot, dir, 'SKILL.md');
+    if (!existsSync(mdPath)) {
+      fail(dir, 'SKILL.md missing');
+      continue;
+    }
+    const text = await readFile(mdPath, 'utf8');
+    const fmMatch = /^---\n([\s\S]*?)\n---\n/.exec(text);
+    if (!fmMatch) {
+      fail(dir, 'no YAML frontmatter');
+      continue;
+    }
+    const fm = fmMatch[1];
+    const topKeys = [...fm.matchAll(/^([A-Za-z][\w-]*):/gm)].map((match) => match[1]);
+    for (const key of topKeys) {
+      if (!ALLOWED_KEYS.has(key)) fail(dir, `frontmatter key '${key}' — Claude Code rejects unknown keys`);
+    }
 
-// ---- agents: frontmatter + paired evals
-const AGENTS = join(ROOT, 'agents');
-let agentCount = 0;
-if (existsSync(AGENTS)) {
-  for (const f of (await readdir(AGENTS)).filter((n) => n.endsWith('.md'))) {
-    agentCount++;
-    const label = `agents/${f}`;
-    const text = await readFile(join(AGENTS, f), 'utf8');
-    const fm = /^---\n([\s\S]*?)\n---\n/.exec(text)?.[1];
-    if (!fm) { fail(label, 'no YAML frontmatter'); continue; }
     const name = /^name:\s*(.+)$/m.exec(fm)?.[1]?.trim();
-    if (name !== f.replace(/\.md$/, '')) fail(label, `name '${name}' does not match filename`);
-    if (!/^description:/m.test(fm)) fail(label, 'missing description');
-    if (!fencesBalanced(text)) fail(label, 'unbalanced code fences');
-    const ev = join(AGENTS, f.replace(/\.md$/, '.evals.json'));
-    if (!existsSync(ev)) fail(label, 'missing paired .evals.json');
+    if (!name) fail(dir, 'missing name');
     else {
-      try {
-        const doc = JSON.parse(await readFile(ev, 'utf8'));
-        if (!Array.isArray(doc.evals) || !doc.evals.length) fail(label, 'agent evals empty');
-      } catch (e) { fail(label, `evals JSON invalid — ${e.message}`); }
+      if (name !== dir) fail(dir, `name '${name}' does not match directory`);
+      if (!/^[a-z0-9-]+$/.test(name) || name.length > 64 || /^-|-$|--/.test(name)) {
+        fail(dir, `name '${name}' breaks kebab-case rules`);
+      }
+    }
+
+    const descBlock = /description:\s*>-?\s*\n((?:\s{2,}.*\n?)+)/.exec(fm)?.[1];
+    const desc = descBlock
+      ? descBlock.split('\n').map((line) => line.trim()).filter(Boolean).join(' ')
+      : /^description:\s*(.+)$/m.exec(fm)?.[1]?.trim();
+    if (!desc) fail(dir, 'missing description');
+    else {
+      if (desc.length > 1024) fail(dir, `description ${desc.length} chars (max 1024)`);
+      if (/[<>]/.test(desc)) fail(dir, 'description contains angle brackets');
+    }
+
+    const depends = /^\s{2}depends:\s*(.+)$/m.exec(fm)?.[1] ?? '';
+    for (const dependency of depends.split(',').map((value) => value.trim()).filter(Boolean)) {
+      if (!names.has(dependency)) fail(dir, `depends on '${dependency}' which is not in this repo`);
+    }
+    const platform = /^\s{2}platform:\s*(.+)$/m.exec(fm)?.[1]?.trim();
+    if (platform && !['darwin', 'linux', 'win32'].includes(platform)) fail(dir, `unknown platform '${platform}'`);
+
+    await walk(dir, join(skillsRoot, dir));
+  }
+
+  for (const dir of dirs) {
+    const evalPath = join(skillsRoot, dir, 'evals', 'evals.json');
+    if (!existsSync(evalPath)) {
+      fail(dir, 'evals/evals.json missing — every skill needs a verification suite');
+      continue;
+    }
+    let raw;
+    let doc;
+    try {
+      raw = await readFile(evalPath, 'utf8');
+      doc = JSON.parse(raw);
+    } catch (error) {
+      fail(dir, `evals.json: invalid JSON — ${error.message}`);
+      continue;
+    }
+    if (doc.skill_name !== dir) fail(dir, `evals skill_name '${doc.skill_name}' does not match directory`);
+    if (!Array.isArray(doc.evals) || doc.evals.length === 0) {
+      fail(dir, 'evals array empty');
+      continue;
+    }
+    if (idKeyCount(raw) !== doc.evals.length) fail(dir, 'evals.json: duplicate id key');
+    const ids = new Set();
+    for (const evaluation of doc.evals) {
+      if (!evaluation.prompt?.trim()) fail(dir, `eval ${evaluation.id}: empty prompt`);
+      if (!evaluation.expected_output?.trim()) fail(dir, `eval ${evaluation.id}: empty expected_output`);
+      if (!Array.isArray(evaluation.expectations) || !evaluation.expectations.length) {
+        fail(dir, `eval ${evaluation.id}: no expectations`);
+      }
+      if (ids.has(evaluation.id)) fail(dir, `duplicate eval id ${evaluation.id}`);
+      ids.add(evaluation.id);
     }
   }
+
+  const agentsRoot = join(root, 'agents');
+  let agentCount = 0;
+  if (existsSync(agentsRoot)) {
+    for (const file of (await readdir(agentsRoot)).filter((name) => name.endsWith('.md'))) {
+      agentCount++;
+      const label = `agents/${file}`;
+      const text = await readFile(join(agentsRoot, file), 'utf8');
+      const fm = /^---\n([\s\S]*?)\n---\n/.exec(text)?.[1];
+      if (!fm) {
+        fail(label, 'no YAML frontmatter');
+        continue;
+      }
+      const name = /^name:\s*(.+)$/m.exec(fm)?.[1]?.trim();
+      if (name !== file.replace(/\.md$/, '')) fail(label, `name '${name}' does not match filename`);
+      if (!/^description:/m.test(fm)) fail(label, 'missing description');
+      if (!fencesBalanced(text)) fail(label, 'unbalanced code fences');
+      const evalPath = join(agentsRoot, file.replace(/\.md$/, '.evals.json'));
+      if (!existsSync(evalPath)) {
+        fail(label, 'missing paired .evals.json');
+      } else {
+        try {
+          const raw = await readFile(evalPath, 'utf8');
+          const doc = JSON.parse(raw);
+          if (!Array.isArray(doc.evals) || !doc.evals.length) fail(label, 'agent evals empty');
+          else if (idKeyCount(raw) !== doc.evals.length) fail(label, 'evals JSON has duplicate id key');
+        } catch (error) {
+          fail(label, `evals JSON invalid — ${error.message}`);
+        }
+      }
+    }
+  }
+
+  const readmePath = join(root, 'README.md');
+  if (!existsSync(readmePath)) fail('README.md', 'missing');
+  else {
+    const readme = await readFile(readmePath, 'utf8');
+    for (const dir of dirs) {
+      const target = `skills/${dir}/SKILL.md`;
+      const formattedName = new RegExp(`(?:\\*\\*|\\\`)${escapeRegex(dir)}(?:\\*\\*|\\\`)`);
+      if (!readme.includes(target) && !formattedName.test(readme)) {
+        fail('README.md', `missing registry entry for ${dir}`);
+      }
+    }
+  }
+
+  const packagePath = join(root, 'package.json');
+  const changelogPath = join(root, 'CHANGELOG.md');
+  if (!existsSync(packagePath)) fail('package.json', 'missing');
+  if (!existsSync(changelogPath)) fail('CHANGELOG.md', 'missing');
+  if (existsSync(packagePath) && existsSync(changelogPath)) {
+    try {
+      const pkg = JSON.parse(await readFile(packagePath, 'utf8'));
+      const changelog = await readFile(changelogPath, 'utf8');
+      const latest = /^##\s+(\d+\.\d+\.\d+)\b/m.exec(changelog)?.[1];
+      if (latest !== pkg.version) {
+        fail('CHANGELOG.md', `latest version '${latest ?? 'missing'}' does not match package.json ${pkg.version}`);
+      }
+      const lockPath = join(root, 'package-lock.json');
+      if (existsSync(lockPath)) {
+        const lock = JSON.parse(await readFile(lockPath, 'utf8'));
+        if (lock.version !== pkg.version || lock.packages?.['']?.version !== pkg.version) {
+          fail('package-lock.json', `version metadata does not match package.json ${pkg.version}`);
+        }
+      }
+    } catch (error) {
+      fail('release metadata', error.message);
+    }
+  }
+
+  const installRoot = join(root, 'install');
+  if (existsSync(installRoot)) {
+    for (const file of ['install/index.mjs', 'install/validate.mjs', 'install/run-evals.mjs']) {
+      const path = join(root, file);
+      if (!existsSync(path)) {
+        fail(file, 'missing');
+        continue;
+      }
+      const result = spawnSync(process.execPath, ['--check', path], { encoding: 'utf8' });
+      if (result.status !== 0) fail(file, `node --check → ${result.stderr.trim().split('\n')[0]}`);
+    }
+  }
+
+  return { failures, skills: dirs, agentCount };
 }
 
-// the installer itself must parse
-for (const f of ['install/index.mjs', 'install/validate.mjs']) {
-  const r = spawnSync(process.execPath, ['--check', join(ROOT, f)], { encoding: 'utf8' });
-  if (r.status !== 0) fail(f, `node --check → ${r.stderr.trim().split('\n')[0]}`);
+const invokedDirectly = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (invokedDirectly) {
+  const result = await validateRepository();
+  for (const failure of result.failures) console.error(`  ✖ ${failure}`);
+  if (result.failures.length) {
+    console.error(`\n${result.failures.length} problem(s).`);
+    process.exitCode = 1;
+  } else {
+    console.log(`✔ ${result.skills.length} skills + ${result.agentCount} agents valid (frontmatter, fences, scripts, dependencies, evals, docs)`);
+  }
 }
-
-if (failures) {
-  console.error(`\n${failures} problem(s).`);
-  process.exit(1);
-}
-console.log(`✔ ${dirs.length} skills + ${agentCount} agents valid (frontmatter, fences, scripts, dependencies, evals)`);

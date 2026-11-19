@@ -13,8 +13,20 @@
  *   install-skills uninstall      remove this repo's skills from your agents
  *   install-skills --help
  */
-import { readdir, readFile, mkdir, symlink, rm, lstat, readlink, cp, chmod, copyFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import {
+  readdir,
+  readFile,
+  mkdir,
+  symlink,
+  rm,
+  lstat,
+  readlink,
+  cp,
+  copyFile,
+  rename,
+  writeFile,
+} from 'node:fs/promises';
+import { constants, existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -31,6 +43,9 @@ const AGENT_TARGET = { label: 'Claude Code agents', dir: join(HOME, '.claude', '
 
 // Running out of the npx cache: symlinks would dangle when npm prunes it.
 const EPHEMERAL = ROOT.includes(`_npx`) || ROOT.includes(join('.npm', '_cacache'));
+const OWNER = 'github.com/MatanelGordon/skills';
+const DIR_MARKER = '.matanelgordon-skills-install.json';
+const FILE_MARKER_SUFFIX = '.matanelgordon-skills-install.json';
 
 /** Verified 2026-08: personal-scope skill directories per platform. */
 const PLATFORMS = [
@@ -59,23 +74,235 @@ async function readAgents() {
     .map((n) => ({ name: n.replace(/\.md$/, ''), file: n, path: join(AGENTS_DIR, n) }));
 }
 
-async function installAgents(mode) {
-  const agents = await readAgents();
-  if (!agents.length || !existsSync(AGENT_TARGET.detect)) return;
-  log.title(AGENT_TARGET.label);
-  await mkdir(AGENT_TARGET.dir, { recursive: true });
-  for (const a of agents) {
-    const dest = join(AGENT_TARGET.dir, a.file);
-    try { await lstat(dest); await rm(dest, { force: true }); } catch {}
+const markerPath = (dest, kind) => kind === 'dir' ? join(dest, DIR_MARKER) : `${dest}${FILE_MARKER_SUFFIX}`;
+
+async function readMarker(dest, kind) {
+  try {
+    const marker = JSON.parse(await readFile(markerPath(dest, kind), 'utf8'));
+    return marker.owner === OWNER && marker.kind === kind ? marker : null;
+  } catch {
+    return null;
+  }
+}
+
+async function sameContent(source, dest, kind) {
+  if (kind === 'file') {
     try {
-      if (mode === 'copy') throw new Error('copy');
-      await symlink(a.path, dest, 'file');
-      log.ok(`${chalk.bold(a.name)} ${chalk.gray('linked')}`);
+      const [left, right] = await Promise.all([readFile(source), readFile(dest)]);
+      return left.equals(right);
     } catch {
-      await copyFile(a.path, dest);
-      log.ok(`${chalk.bold(a.name)} ${chalk.gray('copied')}`);
+      return false;
     }
   }
+
+  const compareDir = async (leftDir, rightDir) => {
+    let leftEntries;
+    let rightEntries;
+    try {
+      [leftEntries, rightEntries] = await Promise.all([
+        readdir(leftDir, { withFileTypes: true }),
+        readdir(rightDir, { withFileTypes: true }),
+      ]);
+    } catch {
+      return false;
+    }
+    rightEntries = rightEntries.filter((entry) => entry.name !== DIR_MARKER);
+    const sort = (entries) => entries.sort((a, b) => a.name.localeCompare(b.name));
+    sort(leftEntries);
+    sort(rightEntries);
+    if (leftEntries.length !== rightEntries.length) return false;
+    for (let i = 0; i < leftEntries.length; i++) {
+      const left = leftEntries[i];
+      const right = rightEntries[i];
+      if (left.name !== right.name) return false;
+      const leftPath = join(leftDir, left.name);
+      const rightPath = join(rightDir, right.name);
+      if (left.isDirectory() !== right.isDirectory()
+        || left.isFile() !== right.isFile()
+        || left.isSymbolicLink() !== right.isSymbolicLink()) return false;
+      if (left.isDirectory()) {
+        if (!await compareDir(leftPath, rightPath)) return false;
+      } else if (left.isSymbolicLink()) {
+        const [leftTarget, rightTarget] = await Promise.all([readlink(leftPath), readlink(rightPath)]);
+        if (leftTarget !== rightTarget) return false;
+      } else {
+        const [leftBytes, rightBytes] = await Promise.all([readFile(leftPath), readFile(rightPath)]);
+        if (!leftBytes.equals(rightBytes)) return false;
+      }
+    }
+    return true;
+  };
+  return compareDir(source, dest);
+}
+
+/** Classify a destination without mutating it. */
+export async function classifyDestination(source, dest, kind) {
+  let st;
+  try {
+    st = await lstat(dest);
+  } catch (error) {
+    if (error?.code === 'ENOENT') return { state: 'absent' };
+    throw error;
+  }
+
+  if (st.isSymbolicLink()) {
+    const target = await readlink(dest);
+    const resolvedTarget = resolve(dirname(dest), target);
+    const ours = resolvedTarget === resolve(source);
+    const broken = !existsSync(dest);
+    return {
+      state: broken
+        ? (ours ? 'broken-owned-link' : 'broken-foreign-link')
+        : (ours ? 'owned-link' : 'foreign-link'),
+      target,
+    };
+  }
+
+  const expectedType = kind === 'dir' ? st.isDirectory() : st.isFile();
+  const marker = expectedType ? await readMarker(dest, kind) : null;
+  const identical = expectedType ? await sameContent(source, dest, kind) : false;
+  if (identical) return { state: marker ? 'owned-copy' : 'identical-copy' };
+  if (marker) return { state: 'edited-copy' };
+  return { state: 'foreign-copy' };
+}
+
+const safeStates = new Set(['absent', 'owned-link', 'broken-owned-link', 'owned-copy']);
+
+const backupStamp = (date) => date.toISOString().replace(/\.\d{3}Z$/, 'Z').replace(/[-:]/g, '');
+
+async function nextBackupPath(dest, now) {
+  const base = `${dest}.backup-${backupStamp(now)}`;
+  let candidate = base;
+  let suffix = 2;
+  while (existsSync(candidate) || existsSync(`${candidate}${FILE_MARKER_SUFFIX}`)) {
+    candidate = `${base}-${suffix++}`;
+  }
+  return candidate;
+}
+
+async function removeManagedDestination(dest, kind) {
+  await rm(dest, { recursive: kind === 'dir', force: true });
+  if (kind === 'file') await rm(markerPath(dest, kind), { force: true });
+}
+
+async function backUpDestination(dest, kind, now) {
+  const backup = await nextBackupPath(dest, now);
+  await rename(dest, backup);
+  if (kind === 'file' && existsSync(markerPath(dest, kind))) {
+    await rename(markerPath(dest, kind), markerPath(backup, kind));
+  }
+  return backup;
+}
+
+async function writeMarker(dest, source, kind) {
+  const marker = {
+    owner: OWNER,
+    kind,
+    source: resolve(source),
+    installed_at: new Date().toISOString(),
+  };
+  await writeFile(markerPath(dest, kind), `${JSON.stringify(marker, null, 2)}\n`, 'utf8');
+}
+
+/** Install one directory or file after ownership-aware conflict handling. */
+export async function installPath({
+  source,
+  dest,
+  kind,
+  mode,
+  onConflict = 'skip',
+  now = new Date(),
+}) {
+  await mkdir(dirname(dest), { recursive: true });
+  const classification = await classifyDestination(source, dest, kind);
+  let backup = null;
+  if (!safeStates.has(classification.state)) {
+    const decision = typeof onConflict === 'function'
+      ? await onConflict({ ...classification, source, dest, kind })
+      : onConflict;
+    if (decision !== 'backup') {
+      return { status: 'conflict', previousState: classification.state };
+    }
+    backup = await backUpDestination(dest, kind, now);
+  } else if (classification.state !== 'absent') {
+    await removeManagedDestination(dest, kind);
+  }
+
+  if (mode !== 'copy') {
+    try {
+      const linkType = kind === 'dir' && process.platform === 'win32' ? 'junction' : kind;
+      await symlink(source, dest, linkType);
+      return { status: 'linked', previousState: classification.state, ...(backup ? { backup } : {}) };
+    } catch (error) {
+      // A concurrent writer may have claimed the destination after classification.
+      // Never turn a symlink failure into a recursive copy over their content.
+      const current = await classifyDestination(source, dest, kind);
+      if (current.state !== 'absent') {
+        return {
+          status: 'conflict',
+          previousState: current.state,
+          ...(backup ? { backup } : {}),
+        };
+      }
+      // Filesystems without symlink support safely fall back to a managed copy.
+      if (!error?.code) throw error;
+    }
+  }
+
+  if (kind === 'dir') await cp(source, dest, { recursive: true, errorOnExist: true, force: false });
+  else await copyFile(source, dest, constants.COPYFILE_EXCL);
+  await writeMarker(dest, source, kind);
+  return {
+    status: mode === 'copy' ? 'copied' : 'copied (symlink unavailable)',
+    previousState: classification.state,
+    ...(backup ? { backup } : {}),
+  };
+}
+
+async function conflictPolicy(label, YES) {
+  if (YES) return 'skip';
+  return async ({ state }) => {
+    const answer = await prompts({
+      type: 'confirm',
+      name: 'backup',
+      initial: false,
+      message: `${label} is ${state.replaceAll('-', ' ')}. Back it up and replace it?`,
+    });
+    return answer.backup ? 'backup' : 'skip';
+  };
+}
+
+async function installAgents(mode, { YES = false, force = false } = {}) {
+  const agents = await readAgents();
+  if (!agents.length || (!force && !existsSync(AGENT_TARGET.detect))) return { installed: 0, conflicts: 0 };
+  log.title(AGENT_TARGET.label);
+  await mkdir(AGENT_TARGET.dir, { recursive: true });
+  let installed = 0;
+  let conflicts = 0;
+  for (const a of agents) {
+    const dest = join(AGENT_TARGET.dir, a.file);
+    try {
+      const result = await installPath({
+        source: a.path,
+        dest,
+        kind: 'file',
+        mode,
+        onConflict: await conflictPolicy(`${a.name} at ${AGENT_TARGET.label}`, YES),
+      });
+      if (result.status === 'conflict') {
+        log.warn(`${a.name} — conflict (${result.previousState}); kept existing file`);
+        conflicts++;
+      } else {
+        const backup = result.backup ? `; backup: ${result.backup.replace(HOME, '~')}` : '';
+        log.ok(`${chalk.bold(a.name)} ${chalk.gray(result.status + backup)}`);
+        installed++;
+      }
+    } catch (error) {
+      log.err(`${a.name} — ${error.message}`);
+      conflicts++;
+    }
+  }
+  return { installed, conflicts };
 }
 
 async function readSkills() {
@@ -101,7 +328,7 @@ async function readSkills() {
   return out.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-const platformOk = (skill) => !skill.platform || skill.platform === process.platform;
+const platformOk = (skill, platform = process.platform) => !skill.platform || skill.platform === platform;
 
 /** Expand a selection to include everything it depends on. Returns added names. */
 function withDependencies(selection, skills) {
@@ -120,29 +347,29 @@ function withDependencies(selection, skills) {
   return { selection: [...chosen], added };
 }
 
-async function installOne(skill, targetDir, mode) {
-  const dest = join(targetDir, skill.name);
-  await mkdir(targetDir, { recursive: true });
-  try { await lstat(dest); await rm(dest, { recursive: true, force: true }); } catch {}
-  if (mode !== 'copy') {
-    try { await symlink(skill.path, dest, 'dir'); return 'linked'; } catch {}
+export function resolveSkillSelection(selection, skills, platform = process.platform) {
+  const expanded = withDependencies(selection, skills);
+  for (const name of expanded.selection) {
+    const skill = skills.find((candidate) => candidate.name === name);
+    if (skill && !platformOk(skill, platform)) {
+      throw new Error(`${name} is ${skill.platform}-only and cannot run on ${platform}`);
+    }
   }
-  await cp(skill.path, dest, { recursive: true });
-  return mode === 'copy' ? 'copied' : 'copied (symlink unavailable)';
+  return expanded;
 }
 
-/** Classify what sits at <platform>/<name>: absent | linked | stale-link | copy. */
-async function classify(dir, name) {
-  const dest = join(dir, name);
-  let st;
-  try { st = await lstat(dest); } catch { return { state: 'absent' }; }
-  if (st.isSymbolicLink()) {
-    const target = await readlink(dest).catch(() => '?');
-    if (!existsSync(dest)) return { state: 'broken-link', target };            // dangling
-    const ours = resolve(target) === resolve(join(SKILLS_DIR, name));
-    return { state: ours ? 'linked' : 'foreign-link', target };
-  }
-  return { state: 'copy' };
+async function installOne(skill, targetDir, mode, onConflict) {
+  return installPath({
+    source: skill.path,
+    dest: join(targetDir, skill.name),
+    kind: 'dir',
+    mode,
+    onConflict,
+  });
+}
+
+async function classify(dir, skill) {
+  return classifyDestination(skill.path, join(dir, skill.name), 'dir');
 }
 
 // ---------------------------------------------------------------- subcommands
@@ -153,22 +380,26 @@ async function cmdList(skills) {
     log.title(`${AGENT_TARGET.label}  ${chalk.gray(AGENT_TARGET.dir.replace(HOME, '~'))}`);
     for (const a of agents) {
       const dest = join(AGENT_TARGET.dir, a.file);
-      const st = await lstat(dest).catch(() => null);
-      if (!st) log.skip(`${a.name} — not installed`);
-      else if (st.isSymbolicLink()) log.ok(`${a.name} ${chalk.gray('→ this repo')}`);
-      else log.ok(`${a.name} ${chalk.gray('(copy)')}`);
+      const state = (await classifyDestination(a.path, dest, 'file')).state;
+      if (state === 'absent') log.skip(`${a.name} — not installed`);
+      else if (state === 'owned-link') log.ok(`${a.name} ${chalk.gray('→ this repo')}`);
+      else if (state === 'owned-copy') log.ok(`${a.name} ${chalk.gray('(managed copy)')}`);
+      else if (state === 'edited-copy') log.warn(`${a.name} — managed copy has local edits`);
+      else log.warn(`${a.name} — conflict (${state})`);
     }
   }
   for (const p of PLATFORMS) {
     if (!existsSync(p.detect)) continue;
     log.title(`${p.label}  ${chalk.gray(p.dir.replace(HOME, '~'))}`);
     for (const s of skills) {
-      const c = await classify(p.dir, s.name);
+      const c = await classify(p.dir, s);
       if (c.state === 'absent') log.skip(`${s.name} — not installed`);
-      else if (c.state === 'linked') log.ok(`${s.name} ${chalk.gray('→ this repo')}`);
-      else if (c.state === 'copy') log.ok(`${s.name} ${chalk.gray('(copy — will not follow git pull)')}`);
-      else if (c.state === 'broken-link') log.err(`${s.name} — BROKEN link → ${c.target}`);
-      else log.warn(`${s.name} — links elsewhere: ${c.target}`);
+      else if (c.state === 'owned-link') log.ok(`${s.name} ${chalk.gray('→ this repo')}`);
+      else if (c.state === 'owned-copy') {
+        log.ok(`${s.name} ${chalk.gray('(copy — will not follow git pull)')}`);
+      } else if (c.state === 'broken-owned-link') log.err(`${s.name} — BROKEN link → ${c.target}`);
+      else if (c.state === 'edited-copy') log.warn(`${s.name} — managed copy has local edits`);
+      else log.warn(`${s.name} — conflict (${c.state})${c.target ? `: ${c.target}` : ''}`);
     }
   }
   console.log();
@@ -212,14 +443,24 @@ async function cmdUninstall(skills, YES) {
     const p = PLATFORMS.find((x) => x.id === pid);
     log.title(p.label);
     for (const s of skills) {
-      const c = await classify(p.dir, s.name);
-      if (c.state === 'absent' || c.state === 'foreign-link') continue;
-      if (c.state === 'copy' && !YES) {
-        const a = await prompts({ type: 'confirm', name: 'y', initial: false,
-          message: `${s.name} at ${p.label} is a copy (may have local edits) — remove?` });
-        if (!a.y) { log.skip(`${s.name} — kept`); continue; }
+      const c = await classify(p.dir, s);
+      if (c.state === 'absent') continue;
+      if (['foreign-link', 'broken-foreign-link', 'foreign-copy', 'identical-copy'].includes(c.state)) {
+        log.skip(`${s.name} — kept (${c.state})`);
+        continue;
       }
-      await rm(join(p.dir, s.name), { recursive: true, force: true });
+      if (c.state === 'edited-copy') {
+        if (YES) {
+          log.skip(`${s.name} — kept (managed copy has local edits)`);
+          continue;
+        }
+        const answer = await prompts({
+          type: 'confirm', name: 'remove', initial: false,
+          message: `${s.name} at ${p.label} is a managed copy with local edits — remove it?`,
+        });
+        if (!answer.remove) { log.skip(`${s.name} — kept`); continue; }
+      }
+      await removeManagedDestination(join(p.dir, s.name), 'dir');
       log.ok(`${s.name} removed`);
       removed++;
     }
@@ -229,9 +470,24 @@ async function cmdUninstall(skills, YES) {
     log.title(AGENT_TARGET.label);
     for (const a of agents) {
       const dest = join(AGENT_TARGET.dir, a.file);
-      const st = await lstat(dest).catch(() => null);
-      if (!st) continue;
-      await rm(dest, { force: true });
+      const c = await classifyDestination(a.path, dest, 'file');
+      if (c.state === 'absent') continue;
+      if (['foreign-link', 'broken-foreign-link', 'foreign-copy', 'identical-copy'].includes(c.state)) {
+        log.skip(`${a.name} — kept (${c.state})`);
+        continue;
+      }
+      if (c.state === 'edited-copy') {
+        if (YES) {
+          log.skip(`${a.name} — kept (managed copy has local edits)`);
+          continue;
+        }
+        const answer = await prompts({
+          type: 'confirm', name: 'remove', initial: false,
+          message: `${a.name} is a managed agent copy with local edits — remove it?`,
+        });
+        if (!answer.remove) { log.skip(`${a.name} — kept`); continue; }
+      }
+      await removeManagedDestination(dest, 'file');
       log.ok(`${a.name} removed`); removed++;
     }
   }
@@ -239,28 +495,31 @@ async function cmdUninstall(skills, YES) {
 }
 
 
-async function cmdInstall(skills, YES) {
+async function cmdInstall(skills, options) {
+  const { yes: YES, copy: COPY, all: ALL } = options;
   const detected = PLATFORMS.filter((p) => existsSync(p.detect));
+  const available = ALL ? PLATFORMS : detected;
   log.title('Detected agents');
   for (const p of PLATFORMS) {
     existsSync(p.detect)
       ? log.ok(`${p.label} ${chalk.gray(p.dir.replace(HOME, '~'))}`)
       : log.skip(`${p.label} — not installed`);
   }
-  if (!detected.length && !process.argv.includes('--all')) {
+  if (!available.length) {
     log.err('No supported agent found. Install one, or pass --all to force.');
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
   if (EPHEMERAL) log.warn('Running from a temporary npx cache — installing copies (symlinks would break when the cache is pruned).');
 
   let answers;
   if (YES) {
     answers = {
-      platforms: detected.map((p) => p.id),
+      platforms: available.map((p) => p.id),
       skills: skills.filter(platformOk).map((s) => s.name),
-      mode: EPHEMERAL || process.argv.includes('--copy') ? 'copy' : 'link',
+      mode: EPHEMERAL || COPY ? 'copy' : 'link',
     };
-    log.info('--yes: all applicable skills into all detected agents');
+    log.info(`--yes: all applicable skills into ${ALL ? 'all supported' : 'all detected'} agents`);
     const skipped = skills.filter((s) => !platformOk(s));
     for (const s of skipped) log.skip(`${s.name} — skipped (${s.platform}-only, this is ${process.platform})`);
   } else {
@@ -282,6 +541,7 @@ async function cmdInstall(skills, YES) {
             : `${s.name} ${chalk.red(`(${s.platform}-only)`)}`,
           value: s.name, description: s.summary,
           selected: platformOk(s),
+          disabled: platformOk(s) ? false : `${s.platform}-only on ${process.platform}`,
         })),
         min: 1, hint: '— space to toggle, enter to confirm',
       },
@@ -297,24 +557,50 @@ async function cmdInstall(skills, YES) {
   }
   if (!answers.platforms?.length || !answers.skills?.length) return;
 
-  const { selection, added } = withDependencies(answers.skills, skills);
+  let selection;
+  let added;
+  try {
+    ({ selection, added } = resolveSkillSelection(answers.skills, skills));
+  } catch (error) {
+    log.err(error.message);
+    process.exitCode = 2;
+    return;
+  }
   for (const name of added) log.warn(`${name} added — required by something you selected`);
 
   const chosen = skills.filter((s) => selection.includes(s.name));
   let count = 0;
+  let conflicts = 0;
   for (const pid of answers.platforms) {
     const p = PLATFORMS.find((x) => x.id === pid);
     log.title(p.label);
     for (const s of chosen) {
       try {
-        const how = await installOne(s, p.dir, answers.mode);
-        log.ok(`${chalk.bold(s.name)} ${chalk.gray(how)}`);
-        count++;
-      } catch (e) { log.err(`${s.name} — ${e.message}`); }
+        const result = await installOne(
+          s,
+          p.dir,
+          answers.mode,
+          await conflictPolicy(`${s.name} at ${p.label}`, YES),
+        );
+        if (result.status === 'conflict') {
+          log.warn(`${s.name} — conflict (${result.previousState}); kept existing destination`);
+          conflicts++;
+        } else {
+          const backup = result.backup ? `; backup: ${result.backup.replace(HOME, '~')}` : '';
+          log.ok(`${chalk.bold(s.name)} ${chalk.gray(result.status + backup)}`);
+          count++;
+        }
+      } catch (e) {
+        log.err(`${s.name} — ${e.message}`);
+        conflicts++;
+      }
     }
   }
 
-  if (answers.platforms.includes('claude')) await installAgents(answers.mode);
+  if (answers.platforms.includes('claude')) {
+    const agentResult = await installAgents(answers.mode, { YES, force: ALL });
+    conflicts += agentResult.conflicts;
+  }
 
   const tied = chosen.filter((s) => s.requires);
   if (tied.length) {
@@ -324,6 +610,10 @@ async function cmdInstall(skills, YES) {
 
   log.title('Done');
   log.info(`${count} installation${count === 1 ? '' : 's'} across ${answers.platforms.length} agent(s).`);
+  if (conflicts) {
+    log.warn(`${conflicts} conflict${conflicts === 1 ? '' : 's'} kept unchanged.`);
+    process.exitCode = 1;
+  }
   if (answers.mode === 'link') log.info('Symlinked — `git pull` in this repo updates every agent.');
   else if (EPHEMERAL) log.info('Copied. For symlinked installs that track git, clone the repo and run the installer from the clone.');
   if (answers.platforms.includes('tabnine')) log.info('Tabnine: run `tabnine skills list` to pick them up.');
@@ -332,30 +622,88 @@ async function cmdInstall(skills, YES) {
 }
 
 // ----------------------------------------------------------------------- main
-async function main() {
-  console.log(chalk.bold.magenta('\n  skills') + chalk.gray('  ·  github.com/MatanelGordon/skills'));
-  const args = process.argv.slice(2);
-  const cmd = args.find((a) => !a.startsWith('-')) ?? 'install';
-  const YES = args.includes('--yes') || args.includes('-y');
-
-  if (args.includes('--help') || args.includes('-h') || cmd === 'help') {
-    console.log(`
-  ${chalk.bold('install-skills')}                interactive install (default)
-  ${chalk.bold('install-skills --yes')} [--copy] everything, into every detected agent
-  ${chalk.bold('install-skills list')}           what is installed where, and how
-  ${chalk.bold('install-skills doctor')}         find broken or stale symlinks
-  ${chalk.bold('install-skills uninstall')} [-y] remove this repo's skills from your agents
-`);
-    return;
+export class UsageError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'UsageError';
   }
-
-  const skills = await readSkills();
-  if (!skills.length) { log.err('No skills found in ./skills'); process.exit(1); }
-
-  if (cmd === 'list') return cmdList(skills);
-  if (cmd === 'doctor') return cmdDoctor();
-  if (cmd === 'uninstall') return cmdUninstall(skills, YES);
-  return cmdInstall(skills, YES);
 }
 
-main().catch((e) => { log.err(e.stack ?? String(e)); process.exit(1); });
+export function parseArgs(args) {
+  const commands = new Set(['install', 'list', 'doctor', 'uninstall', 'help']);
+  const knownFlags = new Set(['--yes', '-y', '--copy', '--all', '--help', '-h']);
+  const positionals = [];
+  const seenFlags = new Set();
+  const canonicalFlag = (arg) => arg === '-y' ? '--yes' : arg === '-h' ? '--help' : arg;
+  for (const arg of args) {
+    if (arg.startsWith('-')) {
+      if (!knownFlags.has(arg)) throw new UsageError(`Unknown flag: ${arg}`);
+      const canonical = canonicalFlag(arg);
+      if (seenFlags.has(canonical)) throw new UsageError(`Duplicate flag: ${canonical}`);
+      seenFlags.add(canonical);
+    } else {
+      positionals.push(arg);
+    }
+  }
+  if (positionals.length > 1) throw new UsageError(`Expected one command, received: ${positionals.join(', ')}`);
+  const command = positionals[0] ?? 'install';
+  if (!commands.has(command)) throw new UsageError(`Unknown command: ${command}`);
+
+  const help = command === 'help' || args.includes('--help') || args.includes('-h');
+  const yes = args.includes('--yes') || args.includes('-y');
+  const copy = args.includes('--copy');
+  const all = args.includes('--all');
+  if (!help) {
+    if (command === 'install') {
+      if (copy && !yes) throw new UsageError('--copy requires --yes');
+      if (all && !yes) throw new UsageError('--all requires --yes');
+    } else if (command === 'uninstall') {
+      if (copy || all) throw new UsageError(`${copy ? '--copy' : '--all'} is not valid with uninstall`);
+    } else if (yes || copy || all) {
+      const flag = yes ? '--yes' : copy ? '--copy' : '--all';
+      throw new UsageError(`${flag} is not valid with ${command}`);
+    }
+  }
+  return { command: help ? (command === 'help' ? 'help' : command) : command, yes, copy, all, help };
+}
+
+function printHelp() {
+  console.log(`
+  ${chalk.bold('install-skills')}                       interactive install (default)
+  ${chalk.bold('install-skills --yes')} [--copy] [--all] install every applicable skill
+  ${chalk.bold('install-skills list')}                  what is installed where, and how
+  ${chalk.bold('install-skills doctor')}                find broken or stale symlinks
+  ${chalk.bold('install-skills uninstall')} [-y]        remove this repo's owned skills
+
+  Existing foreign links, foreign files, and edited copies are never replaced
+  noninteractively. Interactive installs can back them up before replacement.
+`);
+}
+
+async function main() {
+  console.log(chalk.bold.magenta('\n  skills') + chalk.gray('  ·  github.com/MatanelGordon/skills'));
+  const options = parseArgs(process.argv.slice(2));
+  if (options.help) return printHelp();
+
+  const skills = await readSkills();
+  if (!skills.length) { log.err('No skills found in ./skills'); process.exitCode = 1; return; }
+
+  if (options.command === 'list') return cmdList(skills);
+  if (options.command === 'doctor') return cmdDoctor();
+  if (options.command === 'uninstall') return cmdUninstall(skills, options.yes);
+  return cmdInstall(skills, options);
+}
+
+const invokedDirectly = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (invokedDirectly) {
+  main().catch((error) => {
+    if (error instanceof UsageError) {
+      log.err(error.message);
+      printHelp();
+      process.exitCode = 2;
+      return;
+    }
+    log.err(error.stack ?? String(error));
+    process.exitCode = 1;
+  });
+}

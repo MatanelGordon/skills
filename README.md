@@ -44,11 +44,18 @@ npm install
 npm run install-skills
 ```
 
+Reinstalls identify links and copies created by this repo. An edited managed
+copy, an unmarked copy, a foreign link, or unrelated same-named content is a
+conflict: interactive installs can move it to a timestamped backup first;
+noninteractive installs keep it in place, report the conflict, and exit
+nonzero.
+
 **Non-interactive.** For when you're in a hurry, or scripting it:
 
 ```bash
 node install/index.mjs --yes          # everything, every detected agent
 node install/index.mjs --yes --copy   # copies instead of symlinks
+node install/index.mjs --yes --all    # force every platform, detected or not
 ```
 
 **Without cloning.** Run `npx github:MatanelGordon/skills` to try it. This
@@ -81,14 +88,16 @@ Claude Code and Codex pick skills up on the next session.
 | Agent | Where the installer puts skills |
 |---|---|
 | Claude Code | `~/.claude/skills/` (plus the two agents in `~/.claude/agents/`) |
-| OpenAI Codex | `~/.codex/skills/` |
+| OpenAI Codex | `~/.codex/skills/` and the shared `.agents/skills/` convention |
 | GitHub Copilot | `~/.copilot/skills/` |
 | Tabnine | `~/.tabnine/agent/skills/` |
 | Shared convention | `~/.agents/skills/` |
 
 **Symlink or copy.** A symlinked skill *is* the folder in this repo, so it
 follows every `git pull`. A copy is independent: edit it per agent if you like,
-but it won't see updates. `list` tells you which is which.
+but it won't see updates. Managed copies carry an ownership marker, so a later
+install can distinguish them from content it must preserve. `list` tells you
+which is which.
 
 **About `~/.agents/skills/`.** It's a cross-tool convention that Tabnine reads,
 as do OpenCode, Cursor and Gemini CLI, so installing there also covers tools this
@@ -299,12 +308,25 @@ installation by OS).
 > load the skill.
 
 ```bash
+npm test
 npm run validate
 ```
 
-This checks all of the above plus the subtle stuff (unbalanced code fences,
-literal escape characters, script syntax), and runs in CI on every push to
-`main` and every PR.
+These exercise the installer, validator, package contents, and eval harness,
+then check the subtle repository invariants: unbalanced code fences, literal
+escape characters, script syntax, eval schemas, README coverage, and aligned
+release metadata. CI runs them across Node 18/20/22 on Linux, macOS, and
+Windows.
+
+Eval JSON is executable rather than decorative. Provide any candidate and
+judge commands that read a prompt from stdin and write their answer to stdout;
+the judge must return `{ "pass": boolean, "details": string }`:
+
+```bash
+node install/run-evals.mjs --skill research-first --id 4 \
+  --candidate codex --candidate-arg exec --candidate-arg=- \
+  --judge codex --judge-arg exec --judge-arg=-
+```
 
 ## Good skills that live elsewhere
 
@@ -313,10 +335,12 @@ fine from upstream.
 
 | Upstream | Why it's on this list |
 |---|---|
-| Codex CLI built-ins (Apache-2.0, OpenAI) | `aspnet-core` (from [dotnet/AspNetCore.Docs](https://github.com/dotnet/AspNetCore.Docs)), `chatgpt-apps` (from [openai/openai-apps-sdk-examples](https://github.com/openai/openai-apps-sdk-examples)), `cli-creator`, `frontend-skill`, plus system skills under `~/.codex/skills/.system/` |
+| [openai/skills](https://github.com/openai/skills) (Apache-2.0, OpenAI) | Four independent Codex copies are installed with bundled licenses and per-copy attribution: `aspnet-core`, `chatgpt-apps`, `cli-creator`, and `frontend-skill`. Their installed revisions were not recorded; update through the curated installer rather than assuming they track `main`. |
+| [github/awesome-copilot](https://github.com/github/awesome-copilot) (MIT, GitHub) | 29 independent Copilot copies: `acquire-codebase-knowledge`, `batch-files`, `context-map`, `conventional-branch`, `conventional-commit`, `csharp-async`, `csharp-docs`, `csharp-xunit`, `dotnet-best-practices`, `dotnet-design-pattern-review`, `doublecheck`, `draw-io-diagram-generator`, `drawio`, `first-ask`, `mini-context-graph`, `nuget-manager`, `postgresql-code-review`, `postgresql-optimization`, `prd`, `premium-frontend-ui`, `prompt-optimizer`, `react-audit-grep-patterns`, `react-container-presentation-component`, `react18-batching-patterns`, `react18-dep-compatibility`, `react18-lifecycle-patterns`, `refactor`, `sql-code-review`, and `sql-optimization`. Each attribution pins the tree SHA retained by `gh skills install`; these copies do not auto-update. |
 | [pbakaus/impeccable](https://github.com/pbakaus/impeccable) (Apache-2.0, Paul Bakaus) | Frontend design guidance with teeth. Installed with caveats; see below. |
 | [obra/superpowers](https://github.com/obra/superpowers) | The most-adopted skills framework. Its `writing-plans` shaped `deep-plan`. |
-| [mattpocock/skills](https://github.com/mattpocock/skills) | Engineering workflow. His ADR format seeded the `adr` skill here. |
+| [mattpocock/skills](https://github.com/mattpocock/skills) (MIT, Matt Pocock) | Engineering workflow; his ADR format seeded `adr`. Twelve independent Copilot copies are installed: `codebase-design`, `domain-modeling`, `grill-me`, `grill-with-docs`, `grilling`, `handoff`, `improve-codebase-architecture`, `setup-matt-pocock-skills`, `tdd`, `teach`, `to-prd`, and `triage`. Their exact revisions were not preserved. |
+| Local Copilot skill | `git-guardrails-copilot` has no discoverable external upstream or separate license declaration. Its attribution records that limitation instead of inventing provenance. |
 | [rampstackco/claude-skills](https://github.com/rampstackco/claude-skills) | `after-action-report`: a blameless postmortem/AAR framework (timeline, root cause, contributing factors, action items). Needs a frontmatter fix; see below. |
 | [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd) | ADHD-friendly output shaping: lead with the next action, numbered bounded steps, visible wins. 22k+ stars, actively maintained. Opt in with `/i-have-adhd`; installs cleanly alongside these skills. |
 | [tjboudreaux/cc-thinking-skills](https://github.com/tjboudreaux/cc-thinking-skills) | 28 mental-model skills. `thinking-kepner-tregoe` and `thinking-pre-mortem` pair well with `critical-thinking`, which escalates to them for one-way, expensive decisions. |
@@ -350,10 +374,11 @@ Codex and Copilot. The caveats are also recorded in each copy's `ATTRIBUTION.txt
   read here.** Upstream maps `copilot` → `~/.github/skills/`, but Copilot CLI
   reads `~/.copilot/skills/` (`copilot skill list` showed nothing until it was
   linked there). Upstream maps `codex` → `~/.agents/skills/`. OpenAI documents
-  both `~/.agents/skills/` and `~/.codex/skills/`, but the Codex 0.152.1 on this
-  machine discovered skills only in `$CODEX_HOME/skills` (default
-  `~/.codex/skills`) at install time, and used `~/.agents` for its plugin
-  marketplace. The fix needs no fork: symlink `~/.codex/skills/impeccable` and
+  both `~/.agents/skills/` and `~/.codex/skills/`. At install time, Codex
+  0.152.1 on this machine discovered the upstream copy only after it was linked
+  into `$CODEX_HOME/skills` (default `~/.codex/skills`); behavior can vary by
+  version and installation method. The compatibility fix needs no fork: symlink
+  `~/.codex/skills/impeccable` and
   `~/.copilot/skills/impeccable` to the upstream directories, so
   `npx impeccable update` keeps updating one real copy of each.
 - **No runtime of its own.** `scripts/impeccable` is a POSIX launcher around a

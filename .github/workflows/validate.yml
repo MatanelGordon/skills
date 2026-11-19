@@ -4,10 +4,20 @@ on:
   pull_request:
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    name: ${{ matrix.os }} / Node ${{ matrix.node }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, node: 18 }
+          - { os: ubuntu-latest, node: 22 }
+          - { os: macos-latest, node: 20 }
+          - { os: windows-latest, node: 20 }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 20 }
+        with: { node-version: ${{ matrix.node }} }
       - run: npm ci
+      - run: npm test
       - run: npm run validate

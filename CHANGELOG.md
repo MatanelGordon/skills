@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.21.2 — 2026-11-20
+
+- Replaced Impeccable Lite's bespoke Chrome/CDP capture client with a reusable
+  repository `browser-capture` CLI powered by exact-pinned
+  `puppeteer-core@25.18.1`. It discovers installed standard Chrome channels,
+  renders exact desktop/mobile CSS viewports, and preserves the existing
+  hash-bound, isolated-generation evidence contract.
+- Kept capture local and fail-closed: loopback-only preview, private-path and
+  symlink rejection, self-only CSP, dead proxy and DNS defenses, service-worker
+  bypass, HTTP(S)/WebSocket origin blocking, temporary profiles, cleanup before
+  atomic publication, and no browser download, updater, telemetry, or public
+  browsing command.
+- Isolated the current audit-clean Puppeteer graph under Node 22.12+ while the
+  registry and Impeccable workflow/audit stay Node 18 compatible. A portable
+  launcher selects a compatible installed Node without changing the default;
+  copied skills can use `BROWSER_CAPTURE_CLI`, and missing capture tooling does
+  not disable static audit or preview.
+- Changed `browser-interaction` to capability-first routing: native search for
+  sourced facts, native browser control for real sessions, and the official
+  `chrome-devtools` terminal client only as a CLI-only deep-inspection fallback.
+  The optional client is pinned to 1.13.0 and documents telemetry, update-check,
+  CrUX, isolation, headless, and workspace hardening instead of adding a broad
+  MCP tool surface.
+- Added real-Chrome, network-blocking, rollback, path-containment, manifest,
+  launcher, server, Impeccable-adapter, Node-floor, package-content, and
+  repository-validator coverage. The shipped nested shrinkwrap contains no
+  known audit vulnerabilities and the root package excludes development
+  `node_modules`.
+
 ## 1.21.1 — 2026-11-20
 
 - Simplified `impeccable-lite` from a fresh contradiction audit: visual

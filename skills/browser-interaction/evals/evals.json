@@ -4,10 +4,10 @@
     {
       "id": 1,
       "prompt": "Can you click through the checkout flow on localhost:3000 and tell me if anything looks broken?",
-      "expected_output": "Searches for an existing browser tool first, drives the flow, captures structured page state plus console messages, and reports the finding with a reproduction.",
+      "expected_output": "Uses native browser control when the harness exposes it; otherwise selects one installed fallback, drives the flow, captures structured page state plus console messages, and reports the finding with a reproduction.",
       "files": [],
       "expectations": [
-        "Checks for an MCP browser server or host browser control before writing automation",
+        "Prefers host-native browser control and does not start a second browser system for the same job",
         "Attaches the console listener before navigating, so load-time errors are captured",
         "Captures an ARIA or accessibility snapshot rather than relying on a screenshot alone",
         "Reports actions, evidence, finding and reproduction including browser and viewport",
@@ -29,13 +29,13 @@
     {
       "id": 3,
       "prompt": "Write a Playwright script to click through our admin dashboard.",
-      "expected_output": "Searches for an existing tool before writing anything, names what it found or that nothing fits, and recommends installing the right tool rather than silently hand-rolling.",
+      "expected_output": "Treats the requested Playwright script as the deliverable, reuses the project's installed dependency when available, and writes explicit maintainable automation without inventing a raw CDP layer.",
       "files": [],
       "expectations": [
-        "Runs a search for MCP browser servers and published skills",
-        "Names what it found and whether it fits the task",
-        "Recommends a specific tool with its install command when nothing is configured",
-        "Only writes bespoke automation after stating nothing suitable exists"
+        "Checks whether the project already uses Playwright before adding another dependency",
+        "Writes the requested script instead of substituting an MCP installation",
+        "Uses state-based waits and captures console evidence before navigation",
+        "Does not hand-roll CDP transport or put credentials in the script"
       ]
     },
     {
@@ -71,6 +71,31 @@
         "Considers that the capture happened before content finished rendering",
         "Waits for a specific condition rather than adding a fixed delay",
         "Checks viewport size as a possible cause"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Find the current Chrome release notes and tell me whether a storage change could affect our app.",
+      "expected_output": "Uses the harness's native web search for current source-backed facts. It does not start Chrome DevTools, Puppeteer, Playwright, or an MCP browser merely to retrieve documentation.",
+      "files": [],
+      "expectations": [
+        "Routes the factual current-information request to native web search",
+        "Cites the release notes or another primary Chrome source",
+        "Does not start a controllable browser or background service",
+        "Separates sourced facts from any inference about the app"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "I'm in Codex CLI with shell access but no browser tools. Inspect localhost for console and network failures without adding an MCP server.",
+      "expected_output": "Checks for the exact pinned, hardened official chrome-devtools terminal client, uses it only if its service policy can be verified, and otherwise gives one actionable setup or reports the limitation.",
+      "files": [],
+      "expectations": [
+        "Recognizes this as the CLI-only fallback case rather than a native-search task",
+        "Requires chrome-devtools-mcp 1.13.0 and a compatible Node runtime",
+        "Disables usage statistics, update checks, and CrUX and uses isolated headless mode with an explicit workspace",
+        "Does not register an MCP server or trust an already-running daemon with unknown policy",
+        "Reports console and failed-request evidence with browser and viewport"
       ]
     }
   ]

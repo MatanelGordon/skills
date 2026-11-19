@@ -1,61 +1,23 @@
-import test from 'node:test';
 import assert from 'node:assert/strict';
+import test from 'node:test';
 import { access, mkdir, mkdtemp, readFile, readdir, symlink, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
 
 import {
-  buildChromeArgs,
   captureScreenshots,
-  combineCaptureErrors,
+  captureViewportWithPuppeteer,
   findBrowser,
-} from '../scripts/capture.mjs';
-
-test('Chrome capture is pinned to loopback and blocks external networking', () => {
-  const args = buildChromeArgs({
-    url: 'http://127.0.0.1:8123/index.html',
-    profile: resolve('/tmp/impeccable-lite-profile'),
-    width: 1440,
-    height: 1000,
-  });
-
-  assert.ok(args.includes('--disable-background-networking'));
-  assert.ok(args.some((arg) => arg.startsWith('--host-resolver-rules=')));
-  assert.ok(args.some((arg) => arg.startsWith('--proxy-server=')));
-  assert.ok(args.includes('--proxy-bypass-list=127.0.0.1:8123'));
-  assert.ok(args.includes('--remote-debugging-pipe'));
-  assert.equal(args.at(-1), 'about:blank');
-
-  assert.throws(
-    () => buildChromeArgs({
-      url: 'https://example.test',
-      profile: '/tmp/profile',
-      width: 390,
-      height: 844,
-    }),
-    /loopback/i,
-  );
-});
-
-test('capture preserves both rendering and cleanup failures', () => {
-  const rendering = new Error('render failed');
-  const cleanup = new Error('cleanup failed');
-  const combined = combineCaptureErrors(rendering, cleanup);
-
-  assert.ok(combined instanceof AggregateError);
-  assert.deepEqual(combined.errors, [rendering, cleanup]);
-  assert.equal(combineCaptureErrors(rendering, null), rendering);
-  assert.equal(combineCaptureErrors(null, cleanup), cleanup);
-});
+} from '../lib/capture.mjs';
 
 const localBrowser = await findBrowser();
 
-test('real Chrome capture uses the requested CSS viewport, not a cropped desktop viewport', {
+test('real Puppeteer capture uses the requested CSS viewport and versioned manifest', {
   skip: !localBrowser,
   timeout: 30_000,
 }, async () => {
-  const root = await mkdtemp(join(tmpdir(), 'impeccable-lite-capture-'));
+  const root = await mkdtemp(join(tmpdir(), 'browser-capture-viewport-'));
   await writeFile(join(root, 'index.html'), `<!doctype html><html lang="en"><head>
     <meta name="viewport" content="width=device-width"><title>Viewport probe</title></head>
     <body><main><h1>Viewport probe</h1><img src="hero.svg" alt=""></main></body></html>`, 'utf8');
@@ -67,10 +29,14 @@ test('real Chrome capture uses the requested CSS viewport, not a cropped desktop
     viewports: [{ name: 'mobile', width: 390, height: 844 }],
   });
 
+  assert.equal(report.schemaVersion, 1);
+  assert.equal(report.producer, 'browser-capture');
   assert.equal(report.ok, true);
   assert.equal(report.captures[0].cssWidth, 390);
   assert.equal(report.captures[0].cssHeight, 844);
   assert.equal(report.captures[0].blockedRequests.length, 0);
+  assert.match(report.browser, /chrome/i);
+  assert.match(report.browserVersion, /\d+/);
   assert.match(report.artifactHash, /^[a-f0-9]{64}$/);
   assert.match(report.captures[0].sha256, /^[a-f0-9]{64}$/);
   assert.deepEqual(report.resources.map((resource) => resource.path), ['hero.svg', 'index.html']);
@@ -80,17 +46,14 @@ test('real Chrome capture uses the requested CSS viewport, not a cropped desktop
   assert.match(report.reportPath, new RegExp(`${report.generation}/capture\\.json$`));
 });
 
-test('capture rejects an output ancestor symlink before creating outside directories', {
-  skip: !localBrowser,
-  timeout: 30_000,
-}, async () => {
-  const root = await mkdtemp(join(tmpdir(), 'impeccable-lite-capture-ancestor-'));
-  const outside = await mkdtemp(join(tmpdir(), 'impeccable-lite-capture-outside-'));
+test('capture rejects an output ancestor symlink before creating outside directories', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'browser-capture-ancestor-'));
+  const outside = await mkdtemp(join(tmpdir(), 'browser-capture-outside-'));
   await writeFile(join(root, 'index.html'), '<!doctype html><title>Safe</title>', 'utf8');
   await symlink(outside, join(root, 'escape'));
 
   await assert.rejects(
-    captureScreenshots({ root, outDir: 'escape/created', browserPath: localBrowser }),
+    captureScreenshots({ root, outDir: 'escape/created', browserPath: localBrowser || '/missing/chrome' }),
     /symbolic link/i,
   );
   await assert.rejects(access(join(outside, 'created')), /ENOENT/);
@@ -112,9 +75,10 @@ test('capture blocks requests to a different loopback origin', {
   });
   t.after(() => new Promise((resolveClose) => other.close(resolveClose)));
   const address = other.address();
-  const root = await mkdtemp(join(tmpdir(), 'impeccable-lite-capture-origin-'));
+  const root = await mkdtemp(join(tmpdir(), 'browser-capture-origin-'));
   await writeFile(join(root, 'index.html'), `<!doctype html><html><head><title>Origin</title></head>
-    <body><img src="http://127.0.0.1:${address.port}/probe" alt=""></body></html>`, 'utf8');
+    <body><img src="http://127.0.0.1:${address.port}/probe" alt="">
+    <script>new WebSocket('ws://127.0.0.1:${address.port}/socket')</script></body></html>`, 'utf8');
 
   const report = await captureScreenshots({
     root,
@@ -124,18 +88,19 @@ test('capture blocks requests to a different loopback origin', {
 
   assert.equal(hits, 0);
   assert.equal(report.ok, false);
-  assert.equal(report.captures[0].blockedRequests.length, 1);
-  assert.match(report.captures[0].blockedRequests[0], new RegExp(`:${address.port}/probe$`));
+  assert.equal(report.captures[0].blockedRequests.length, 2);
+  assert.ok(report.captures[0].blockedRequests.some((request) => request.endsWith(`:${address.port}/probe`)));
+  assert.ok(report.captures[0].blockedRequests.some((request) => request.endsWith(`:${address.port}/socket`)));
   await access(report.reportPath);
   assert.equal(JSON.parse(await readFile(report.reportPath, 'utf8')).ok, false);
 });
 
-test('failed capture never mixes a new screenshot into existing evidence', {
+test('operational failure never publishes a partial new generation', {
   skip: !localBrowser,
   timeout: 30_000,
 }, async () => {
-  const root = await mkdtemp(join(tmpdir(), 'impeccable-lite-capture-atomic-'));
-  const output = join(root, '.impeccable-lite', 'evidence');
+  const root = await mkdtemp(join(tmpdir(), 'browser-capture-atomic-'));
+  const output = join(root, '.browser-capture', 'evidence');
   const existing = join(output, 'capture-existing');
   await mkdir(existing, { recursive: true });
   await writeFile(join(root, 'index.html'), '<!doctype html><title>Atomic</title>', 'utf8');
@@ -143,16 +108,23 @@ test('failed capture never mixes a new screenshot into existing evidence', {
   await writeFile(join(existing, 'mobile.png'), 'old-mobile', 'utf8');
   await writeFile(join(existing, 'capture.json'), 'old-report', 'utf8');
 
+  let calls = 0;
   await assert.rejects(
     captureScreenshots({
       root,
       browserPath: localBrowser,
       viewports: [
-        { name: 'desktop-new', width: 800, height: 600 },
-        { name: 'mobile-bad', width: 390, height: 844 },
+        { name: 'desktop', width: 800, height: 600 },
+        { name: 'mobile', width: 390, height: 844 },
       ],
+    }, {
+      captureViewport: async (input) => {
+        calls += 1;
+        if (calls === 2) throw new Error('injected second viewport failure');
+        return captureViewportWithPuppeteer(input);
+      },
     }),
-    /viewport mismatch/i,
+    /injected second viewport failure/i,
   );
 
   assert.equal(await readFile(join(existing, 'desktop.png'), 'utf8'), 'old-desktop');
@@ -161,14 +133,12 @@ test('failed capture never mixes a new screenshot into existing evidence', {
   assert.deepEqual(await readdir(output), ['capture-existing']);
 });
 
-test('Chrome capture rejects nonsensical viewport sizes', () => {
-  assert.throws(
-    () => buildChromeArgs({
-      url: 'http://127.0.0.1:8123/',
-      profile: '/tmp/profile',
-      width: 0,
-      height: 844,
-    }),
-    /viewport/i,
+test('capture rejects missing browser executable without publishing evidence', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'browser-capture-missing-'));
+  await writeFile(join(root, 'index.html'), '<!doctype html><title>Missing</title>', 'utf8');
+  await assert.rejects(
+    captureScreenshots({ root, browserPath: join(root, 'missing-chrome') }),
+    /browser|executable/i,
   );
+  await assert.rejects(access(join(root, '.browser-capture')), /ENOENT/);
 });

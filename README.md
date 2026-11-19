@@ -209,7 +209,7 @@ cross-model review is actually possible.
 
 | Skill | What it does |
 |---|---|
-| [impeccable-lite](skills/impeccable-lite/SKILL.md) | Compact interface direction and finish with an optional perception-first diagnostic plus a dependency-free offline runtime: bounded workflow state, local role packets, static audit, loopback preview, and installed-Chromium captures. |
+| [impeccable-lite](skills/impeccable-lite/SKILL.md) | Compact interface direction and finish with an optional perception-first diagnostic, a built-ins-only workflow/audit, and deterministic local screenshots through the repository's narrow Puppeteer capture companion. |
 | [ux](skills/ux/SKILL.md) | A style-agnostic way to answer "is this good UX?" with a rubric instead of an opinion: severity-rated heuristics plus metrics with published thresholds. |
 | [terminal-ux](skills/terminal-ux/SKILL.md) | Terminal dashboards and visualisations with Ink, including the testing traps I hit so you don't have to. |
 | [tui-builder](skills/tui-builder/SKILL.md) | Full-screen TUI work, with hard-won terminal-resize rules. |
@@ -222,7 +222,7 @@ Manual testing by hand, not test suites.
 | Skill | What it does |
 |---|---|
 | [terminal-interaction](skills/terminal-interaction/SKILL.md) | Drives a CLI, TUI, REPL or installer the way a human tester would: launch, send keys, read the screen back, report. Looks for an existing MCP server or skill first, ships a zero-install PTY driver as a fallback, and polls for the expected output instead of using `sleep 2`. |
-| [browser-interaction](skills/browser-interaction/SKILL.md) | Clicks through a page and reports what happened, with evidence: ARIA snapshots rather than pixels, plus console and network errors. Knows that a green WebKit run is not Safari coverage. Looks for an MCP browser server first. |
+| [browser-interaction](skills/browser-interaction/SKILL.md) | Clicks through a page and reports what happened with structured, console, network, and visual evidence. Uses native search/browser capability first; shell-only agents can fall back to a pinned, hardened Chrome DevTools terminal client without registering an MCP surface. |
 | [desktop-interaction](skills/desktop-interaction/SKILL.md) | Drives Electron, Tauri and pywebview apps, launched under control or attached over a debugging port. Electron support is strong. `tauri-driver` has no macOS support, and pywebview on macOS can't be driven. Webview apps only. |
 
 ### Architecture
@@ -239,11 +239,37 @@ and skips platform-locked skills on the wrong OS.
 
 | Skill | Needs |
 |---|---|
-| `impeccable-lite` | Node ≥ 18 for its optional local workflow/audit; installed Chromium only for screenshots |
+| `impeccable-lite` | Node ≥ 18 for workflow/audit; optional screenshots need pre-provisioned `browser-capture`, Node ≥ 22.12, and an installed Chrome channel |
 | `cli-coding-subagents` | codex + copilot CLIs, installed and authenticated |
 | `parallel-build` | the above, plus git worktrees |
 | `openrouter-cli-subagent` | the `ori` CLI on PATH and an OpenRouter credential |
 | `terminal-ux` / `tui-builder` | Node ≥ 22 (Ink) |
+
+### Optional local browser capture
+
+`browser-capture` is a repository tool, not a general browsing skill and not an
+MCP server. It uses exact-pinned `puppeteer-core` with an already-installed
+Chrome channel to render local HTML at explicit viewports. The preview binds to
+loopback, external requests are blocked, evidence is hash-bound and atomically
+published, and no browser is downloaded.
+
+Provision it once from this checkout, then verify the launcher:
+
+```bash
+npm run setup:browser-capture
+node tools/browser-capture/launcher.mjs doctor
+```
+
+The core registry remains Node 18 compatible. The launcher selects a local Node
+22.12+ runtime without changing the machine default. A copied Impeccable Lite
+skill can set `BROWSER_CAPTURE_CLI` to the launcher's absolute path; symlinked
+installs resolve the repository tool automatically. `npm run
+test:browser-capture` runs the isolated unit and real-Chrome security suite.
+
+General browsing stays in `browser-interaction`: native harness search/control
+comes first. In a shell-only CLI, the optional official `chrome-devtools`
+client is a deep-inspection fallback, pinned and hardened as documented in the
+skill. It is deliberately separate from Impeccable's offline capture boundary.
 
 ## Original agents
 

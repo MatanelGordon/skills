@@ -2,7 +2,7 @@
 /** Repository validator: structure, executable syntax, eval schemas, and release docs. */
 import { readdir, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { extname, join, resolve } from 'node:path';
+import { extname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
@@ -236,6 +236,27 @@ export async function validateRepository(root = DEFAULT_ROOT) {
       const result = spawnSync(process.execPath, ['--check', path], { encoding: 'utf8' });
       if (result.status !== 0) fail(file, `node --check → ${result.stderr.trim().split('\n')[0]}`);
     }
+  }
+
+  const toolsRoot = join(root, 'tools');
+  if (existsSync(toolsRoot)) {
+    const walkTools = async (directory) => {
+      for (const entry of await readdir(directory, { withFileTypes: true })) {
+        if (entry.name === 'node_modules') continue;
+        const full = join(directory, entry.name);
+        if (entry.isDirectory()) {
+          await walkTools(full);
+          continue;
+        }
+        const ext = extname(entry.name);
+        if (ext !== '.mjs' && ext !== '.js') continue;
+        const result = spawnSync(process.execPath, ['--check', full], { encoding: 'utf8' });
+        if (result.status !== 0) {
+          fail(relative(root, full), `node --check → ${result.stderr.trim().split('\n')[0]}`);
+        }
+      }
+    };
+    await walkTools(toolsRoot);
   }
 
   return { failures, skills: dirs, agentCount };

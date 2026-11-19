@@ -24,6 +24,7 @@ test('npm package manifest is an allowlist and excludes sanctioned scratch trees
     assert(!paths.some((path) => path.startsWith('skills/package-test-workspace/')), paths.join('\n'));
     assert(!paths.some((path) => path.startsWith('skills/rank-workspace/')), paths.join('\n'));
     assert(!paths.some((path) => path.startsWith('.github/')), paths.join('\n'));
+    assert(!paths.some((path) => path.startsWith('tools/browser-capture/node_modules/')), paths.join('\n'));
     for (const required of [
       'install/index.mjs',
       'install/validate.mjs',
@@ -31,6 +32,10 @@ test('npm package manifest is an allowlist and excludes sanctioned scratch trees
       'agents/code-archaeologist.md',
       'skills/adr/SKILL.md',
       'skills/adr/evals/evals.json',
+      'tools/browser-capture/cli.mjs',
+      'tools/browser-capture/test.mjs',
+      'tools/browser-capture/package.json',
+      'tools/browser-capture/npm-shrinkwrap.json',
     ]) assert(paths.includes(required), `missing ${required}`);
   } finally {
     await rm(scratch, { recursive: true, force: true });

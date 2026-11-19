@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { access, mkdir, mkdtemp, readFile, symlink, writeFile } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -162,6 +162,50 @@ test('standalone audit works without workflow state when the file is named', asy
   assert.equal(report.ok, true);
   assert.equal(report.source, 'standalone.html');
   await assert.rejects(access(join(root, '.impeccable-lite', 'session.json')));
+});
+
+test('doctor reports the isolated browser-capture runtime', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'impeccable-lite-cli-doctor-'));
+  const checked = run(root, ['doctor', '--json', 'true']);
+  assert.equal(checked.status, 0, checked.stderr);
+  const report = JSON.parse(checked.stdout);
+  assert.equal(report.compatible, true);
+  assert.equal(report.dependencies, 'puppeteer-core 25.18.1');
+  assert.match(report.network, /exact loopback preview origin/);
+});
+
+test('missing capture companion fails capture but leaves standalone audit available', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'impeccable-lite-cli-no-capture-'));
+  await writeFile(join(root, 'index.html'), pageHtml, 'utf8');
+  const env = { ...process.env, BROWSER_CAPTURE_CLI: join(root, 'missing-launcher.mjs') };
+  const invoke = (args) => spawnSync(process.execPath, [cli, ...args], { cwd: root, env, encoding: 'utf8' });
+
+  const checked = invoke(['doctor', '--json', 'true']);
+  assert.equal(checked.status, 0, checked.stderr);
+  assert.equal(JSON.parse(checked.stdout).captureAvailable, false);
+  const audited = invoke(['audit', '--file', 'index.html']);
+  assert.equal(audited.status, 0, audited.stderr);
+  const captured = invoke(['capture', '--entry', 'index.html']);
+  assert.equal(captured.status, 64);
+  assert.match(captured.stderr, /BROWSER_CAPTURE_CLI does not exist/i);
+});
+
+test('capture delegates to browser-capture while preserving Impeccable defaults', {
+  timeout: 30_000,
+}, async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'impeccable-lite-cli-capture-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await writeFile(join(root, 'index.html'), pageHtml, 'utf8');
+  const captured = run(root, ['capture', '--entry', 'index.html']);
+  if (captured.status === 64 && /No supported local Chrome/i.test(captured.stderr)) t.skip('Chrome is not installed.');
+  assert.equal(captured.status, 0, captured.stderr);
+  const report = JSON.parse(captured.stdout);
+  assert.equal(report.producer, 'browser-capture');
+  assert.deepEqual(report.captures.map(({ name, width, height }) => ({ name, width, height })), [
+    { name: 'desktop', width: 1440, height: 1000 },
+    { name: 'mobile', width: 390, height: 844 },
+  ]);
+  assert.match(report.reportPath, /\.impeccable-lite\/evidence\/capture-[a-f0-9-]+\/capture\.json$/i);
 });
 
 test('new HTML workflow can select direction before the artifact exists', async () => {

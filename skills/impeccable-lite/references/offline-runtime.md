@@ -6,14 +6,19 @@ captured evidence; ordinary design rules still govern the work.
 
 ## Guarantees
 
-- Node.js 18+ built-ins only; no package manager, Docker image, binary bundle,
-  catalog, API key, updater, telemetry, hook, or model subprocess.
+- Workflow state, packets, audit, and preview use Node.js 18+ built-ins only.
+  Screenshot capture delegates to the repository's narrow `browser-capture`
+  companion: an isolated Node.js 22.12+ package with exact-pinned
+  `puppeteer-core`. The skill never invokes a package manager. Provisioning the
+  companion is a one-time operator action outside an invoked design task.
+- There is no Docker image, bundled browser, catalog, API key, updater,
+  telemetry, hook, model subprocess, or public-web browsing command.
 - All project artifacts and persistent outputs stay under the declared project
   root, with physical symlink checks. Chromium's temporary profile uses the
   system temp directory and is deleted before evidence is published.
 - Preview is foreground-only on `127.0.0.1`. It refuses dotfiles,
   `node_modules`, directory listings, symlink escapes, and foreign Host values.
-- Capture uses an already-installed Chromium browser. Chrome request
+- Capture uses an already-installed standard Chrome channel. Puppeteer request
   interception, a strict self-only preview policy, a dead loopback proxy, and
   DNS rules allow only the exact ephemeral preview origin. Missing Chrome
   disables capture, not audit.
@@ -27,6 +32,20 @@ node <skill-dir>/scripts/serve.mjs <site-root>
 ```
 
 Run `doctor` first only when runtime availability is uncertain.
+
+In a registry checkout, an operator can provision and verify the optional
+companion once:
+
+```text
+npm run setup:browser-capture
+node tools/browser-capture/launcher.mjs doctor
+```
+
+The launcher finds a compatible local Node runtime without changing the
+machine's default. Impeccable first checks `BROWSER_CAPTURE_CLI` for an absolute
+launcher path, then the repository-relative tool, then `browser-capture` on
+`PATH`. This keeps symlink installs automatic and gives managed copies an
+explicit, portable override. Missing capture tooling never disables audit.
 
 ## Brief and state
 
@@ -150,9 +169,9 @@ an isolated `.impeccable-lite/evidence/capture-<uuid>/` generation. Overflow
 or a blocked request publishes a diagnostic generation with `ok: false`; it
 cannot pass the completion gate. Rendering, cleanup, or publication failures
 publish nothing, so reviewers cannot receive mixed evidence from two runs.
-Before publication it stops the direct Chromium process, closes its ephemeral
-server, and deletes its temporary browser profile. It sets the real CSS
-viewport through Chrome's local debugging pipe and returns non-zero for a
+Before publication Puppeteer closes Chrome, the runtime closes its ephemeral
+server, and the temporary browser profile is deleted. It sets the real CSS
+viewport through Puppeteer and returns non-zero for a
 diagnostic generation. Use only the paths returned by that run. Inspect both
 images together, apply at most one material fix batch, recapture once when
 warranted, and stop.
@@ -183,9 +202,11 @@ evidence_generation: <exact capture generation from the packet>
 
 ## Failure handling
 
-- If Node is missing or below 18, use the skill without its runtime.
-- If Chromium is missing, keep the audit and inspect through an already-open
-  local browser or the host's local image tools; do not install a browser.
+- If Node is missing or below 18, use the skill without its runtime. If only
+  the Node 22.12+ capture runtime is missing, keep audit and preview.
+- If the companion or Chrome is missing, keep the audit and inspect through an
+  already-open local browser or the host's local image tools; do not install a
+  package or browser during the design task.
 - If audit finds a remote reference, remove or localize it. Do not weaken the
   rule merely to make the report green.
 - If capture fails operationally, report capture as unverified. If it publishes

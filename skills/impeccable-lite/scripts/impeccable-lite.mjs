@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 
+import { spawn } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
+import { existsSync } from 'node:fs';
 import { link, lstat, open, readFile, realpath, rename, stat, unlink } from 'node:fs/promises';
-import { basename, dirname, extname, join, relative, resolve, sep } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import {
   PHASES,
@@ -17,12 +19,12 @@ import {
   resolveWithin,
   transitionWorkflow,
 } from './lib/core.mjs';
-import { captureScreenshots, findBrowser } from './capture.mjs';
 import { ensureSafeDirectory } from './lib/filesystem.mjs';
 
 const DEFAULT_STATE = '.impeccable-lite/session.json';
+const REPOSITORY_CAPTURE_LAUNCHER = fileURLToPath(new URL('../../../tools/browser-capture/launcher.mjs', import.meta.url));
 
-const HELP = `Impeccable Lite — dependency-free local design workflow
+const HELP = `Impeccable Lite — local design workflow with optional browser evidence
 
 Commands:
   init --brief <brief.json> [--root <dir>] [--state <path>]
@@ -642,6 +644,46 @@ const runAudit = async (options) => {
   if (!report.ok) process.exitCode = 1;
 };
 
+const browserCaptureInvocation = () => {
+  const explicit = process.env.BROWSER_CAPTURE_CLI;
+  if (explicit) {
+    if (!isAbsolute(explicit)) {
+      throw new Error('BROWSER_CAPTURE_CLI must be an absolute path.');
+    }
+    if (!existsSync(explicit)) throw new Error(`BROWSER_CAPTURE_CLI does not exist: ${explicit}`);
+    return ['.js', '.mjs'].includes(extname(explicit).toLowerCase())
+      ? Object.freeze({ command: process.execPath, prefix: Object.freeze([explicit]) })
+      : Object.freeze({ command: explicit, prefix: Object.freeze([]) });
+  }
+  if (existsSync(REPOSITORY_CAPTURE_LAUNCHER)) {
+    return Object.freeze({ command: process.execPath, prefix: Object.freeze([REPOSITORY_CAPTURE_LAUNCHER]) });
+  }
+  return Object.freeze({ command: 'browser-capture', prefix: Object.freeze([]) });
+};
+
+const invokeBrowserCapture = async (args) => {
+  const invocation = browserCaptureInvocation();
+  return new Promise((resolveRun, rejectRun) => {
+    const child = spawn(invocation.command, [...invocation.prefix, ...args], {
+      env: process.env,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+    });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.setEncoding('utf8');
+    child.stderr.setEncoding('utf8');
+    child.stdout.on('data', (chunk) => { stdout += chunk; });
+    child.stderr.on('data', (chunk) => { stderr += chunk; });
+    child.once('error', (error) => {
+      if (error.code === 'ENOENT') {
+        rejectRun(new Error('browser-capture is unavailable. Install the repository tool or set BROWSER_CAPTURE_CLI to its absolute launcher path.'));
+      } else rejectRun(error);
+    });
+    child.once('close', (status, signal) => resolveRun(Object.freeze({ status, signal, stdout, stderr })));
+  });
+};
+
 const runCapture = async (options) => {
   const context = await contextFrom(options);
   let entry = options.one('entry');
@@ -649,26 +691,50 @@ const runCapture = async (options) => {
     const { state } = await loadState(context);
     entry = state.brief.artifact;
   }
-  const report = await captureScreenshots({
-    root: context.root,
-    entry,
-    outDir: options.one('out', '.impeccable-lite/evidence'),
-    browserPath: options.one('browser'),
-  });
-  process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
-  if (!report.ok) process.exitCode = 1;
+  const args = [
+    'capture',
+    '--root', context.root,
+    '--entry', entry,
+    '--out', options.one('out', '.impeccable-lite/evidence'),
+  ];
+  const browserPath = options.one('browser');
+  if (browserPath) args.push('--browser', browserPath);
+  const result = await invokeBrowserCapture(args);
+  if (result.signal) throw new Error(`browser-capture stopped after signal ${result.signal}.`);
+  if (result.status === 64 || (result.status !== 0 && result.status !== 1)) {
+    const detail = result.stderr.trim().replace(/^browser-capture:\s*/i, '');
+    throw new Error(detail || `browser-capture exited with status ${result.status}.`);
+  }
+  process.stdout.write(result.stdout);
+  if (result.stderr) process.stderr.write(result.stderr);
+  if (result.status === 1) process.exitCode = 1;
 };
 
 const runDoctor = async (options) => {
-  const report = Object.freeze({
-    node: process.version,
-    compatible: Number(process.versions.node.split('.')[0]) >= 18,
-    browser: await findBrowser(),
-    dependencies: 'Node.js built-ins only',
-    network: 'never required',
-  });
+  let report;
+  try {
+    const delegated = await invokeBrowserCapture(['doctor', '--json', 'true']);
+    if (delegated.signal || ![0, 1].includes(delegated.status)) throw new Error(delegated.stderr.trim() || 'browser-capture doctor failed.');
+    const captureReport = JSON.parse(delegated.stdout);
+    report = Object.freeze({
+      ...captureReport,
+      captureAvailable: captureReport.captureAvailable ?? true,
+      auditNode: process.version,
+    });
+  } catch (error) {
+    report = Object.freeze({
+      node: process.version,
+      compatible: Number(process.versions.node.split('.')[0]) >= 18,
+      browser: null,
+      browserVersion: null,
+      dependencies: 'browser-capture unavailable',
+      network: 'static audit remains local and requires no network',
+      captureAvailable: false,
+      captureError: error.message,
+    });
+  }
   if (options.one('json') === 'true') process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
-  else process.stdout.write(`Node ${report.node}: ${report.compatible ? 'ready' : 'unsupported'}\nBrowser: ${report.browser || 'not found (static audit still works)'}\nDependencies: ${report.dependencies}\nNetwork: ${report.network}\n`);
+  else process.stdout.write(`Capture Node ${report.node}: ${report.compatible ? 'ready' : 'unsupported'}\nBrowser: ${report.browser || 'not found (static audit still works)'}\nDependencies: ${report.dependencies}\nNetwork: ${report.network}\n`);
   if (!report.compatible) process.exitCode = 1;
 };
 

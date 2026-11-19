@@ -66,3 +66,15 @@ test('validator detects duplicate id keys hidden by JSON.parse', async () => {
   const result = await validateRepository(root);
   assert(result.failures.some((line) => line.includes('duplicate id key')));
 });
+
+test('validator syntax-checks repository tools without entering node_modules', async () => {
+  const root = await writeValidRepo();
+  await mkdir(join(root, 'tools', 'browser-capture', 'node_modules', 'ignored-package'), { recursive: true });
+  await writeFile(join(root, 'tools', 'browser-capture', 'broken.mjs'), 'export const broken = ;\n');
+  await writeFile(join(root, 'tools', 'browser-capture', 'node_modules', 'ignored-package', 'broken.mjs'), 'export const ignored = ;\n');
+
+  const result = await validateRepository(root);
+  const toolFailures = result.failures.filter((line) => line.startsWith('tools/'));
+  assert.equal(toolFailures.length, 1, toolFailures.join('\n'));
+  assert.match(toolFailures[0], /tools\/browser-capture\/broken\.mjs: node --check/);
+});

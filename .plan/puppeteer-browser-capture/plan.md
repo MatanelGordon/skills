@@ -321,3 +321,8 @@ checked against the installed official 1.13.0 command.
   nine high-severity advisories in Puppeteer Core 24's transitive graph, while
   fixed release 25.18.1 no longer supports Node 18. The root installer and
   non-browser skill runtime retain Node-18 compatibility.
+- 2026-11-20 — Added the official CLI's page-scoped user-agent override after a
+  user follow-up. It is deliberately one explicit, matching-UA diagnostic
+  retry: the local probe changed the request header and `navigator.userAgent`
+  but left client-hint brands/platform empty, so the skill never promises
+  stealth or repeated identity rotation.

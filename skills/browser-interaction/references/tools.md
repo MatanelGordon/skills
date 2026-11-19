@@ -67,6 +67,41 @@ applies. A request to inspect a local page does not authorize unrelated public
 browsing, account mutations, purchases, form submission, or use of stored
 credentials.
 
+### Page-scoped user-agent override
+
+Version 1.13.0 supports `emulate <pageId> --userAgent=<value>`. Use it for a
+confirmed headless-UA rejection or explicit compatibility test, not as a
+default stealth setting. Start from `about:blank`, set the override before the
+first target navigation, and keep the UA consistent with the actual Chrome
+engine, major version, operating system, and viewport.
+
+```bash
+chrome-devtools list_pages --output-format=json
+chrome-devtools emulate 1 \
+  --userAgent='Mozilla/5.0 (<matching OS>) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/<installed-major>.0.0.0 Safari/537.36' \
+  --output-format=json
+chrome-devtools navigate_page 1 --type=url --url='https://authorized.example/' --output-format=json
+chrome-devtools evaluate_script \
+  '() => ({userAgent: navigator.userAgent, userAgentData: navigator.userAgentData?.toJSON?.() ?? null})' \
+  --pageId 1 --output-format=json
+chrome-devtools list_network_requests 1 --output-format=json
+chrome-devtools get_network_request 1 --reqid=<document-request-id> --output-format=json
+```
+
+The final request inspection proves the sent `user-agent` header. Clear the
+override with `chrome-devtools emulate 1 --userAgent=''`.
+
+A local probe confirmed that the header and `navigator.userAgent` changed, but
+`navigator.userAgentData` returned empty brands and platform values because
+this CLI option supplies only the UA string, not coherent client-hint metadata.
+Sites can also inspect browser behavior, cookies, IP reputation, TLS, and other
+automation signals. Therefore this can fix a simplistic `HeadlessChrome`
+compatibility block, but it cannot guarantee admission and may make a
+fingerprint less coherent. Do not impersonate Safari/Firefox with a Chrome
+engine, rotate identities, bypass a site's access policy, or hide the override
+from the verification report. If one matching-UA retry fails, prefer native
+browser control or report the block.
+
 ## MCP when it is already part of the host
 
 Do not broadly register a browser MCP just for this skill. If the user selected

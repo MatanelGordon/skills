@@ -269,7 +269,9 @@ test:browser-capture` runs the isolated unit and real-Chrome security suite.
 General browsing stays in `browser-interaction`: native harness search/control
 comes first. In a shell-only CLI, the optional official `chrome-devtools`
 client is a deep-inspection fallback, pinned and hardened as documented in the
-skill. It is deliberately separate from Impeccable's offline capture boundary.
+skill. Its explicit page-scoped user-agent override is a one-retry compatibility
+diagnostic, not a guaranteed anti-blocking or stealth mode. It is deliberately
+separate from Impeccable's offline capture boundary.
 
 ## Original agents
 

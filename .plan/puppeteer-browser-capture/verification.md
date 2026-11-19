@@ -61,3 +61,13 @@ overlapping content.
   another-origin HTTP and WebSocket blocking, missing Chrome, output-symlink
   refusal, and rollback on injected viewport failure. Additional guards listed
   in the plan are not represented as tested when no focused probe exists.
+
+## User-agent follow-up
+
+The hardened official CLI was started against the same loopback demo with an
+exact allowed-URL pattern. On page 1, `emulate --userAgent` changed both the
+document request's `user-agent` header and `navigator.userAgent` from
+`HeadlessChrome/157.0.0.0` to the matching `Chrome/157.0.0.0` value. The probe
+also returned empty `navigator.userAgentData.brands` and `platform`, confirming
+that this string override is not a coherent or guaranteed stealth fingerprint.
+The daemon and preview were stopped after the probe.

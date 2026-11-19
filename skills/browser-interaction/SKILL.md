@@ -50,6 +50,20 @@ Always state the route used and its boundary: for example, "native search for
 the release facts", "host browser for the signed-in flow", or "pinned
 chrome-devtools CLI for console/network evidence".
 
+## Treat a user-agent override as one diagnostic retry
+
+When a site explicitly rejects the headless user agent, or the user asks to
+test UA-dependent behavior, the CLI can set a page-scoped user-agent string.
+Read the user-agent section in [references/tools.md](references/tools.md).
+
+Capture the original behavior first. Then use one UA that matches the installed
+Chrome engine, major version, operating system, and viewport; record it and
+verify both `navigator.userAgent` and the outgoing request header. Do not rotate
+through identities or claim the override makes automation indistinguishable
+from a normal browser. If the matching-UA retry is still blocked, stop and use
+native browser control or report the limitation. Never add spoofing to
+Impeccable's local-only `browser-capture` path.
+
 ## Read the page as structure, not pixels
 
 The instinct is to screenshot everything. For an agent, a **structured snapshot
@@ -198,6 +212,7 @@ false.
 | Starting a CLI daemon when native search/control already answers the task | Duplicates capability, loses real-session fidelity, and adds lifecycle and policy state. |
 | Using browser automation for a factual lookup | Search is smaller, source-oriented, and does not need a page-control session. |
 | Hand-writing a raw CDP client | Recreates a large transport and lifecycle surface already owned by maintained tools. |
+| Cycling user agents until a site admits the session | Turns a diagnostic compatibility control into brittle access-control evasion; use one matching-UA retry and report the result. |
 | Screenshot as the only evidence | Can't show console errors, failed requests, or a button with no accessible name. |
 | `page.accessibility.snapshot()` | Removed from current Playwright. Use `locator.aria_snapshot()`. |
 | Attaching the console listener after `goto` | Load-time errors are the interesting ones and you just missed them. |

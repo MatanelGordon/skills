@@ -97,6 +97,20 @@
         "Does not register an MCP server or trust an already-running daemon with unknown policy",
         "Reports console and failed-request evidence with browser and viewport"
       ]
+    },
+    {
+      "id": 9,
+      "prompt": "The site rejects HeadlessChrome. Change the user agent so I can inspect it from Codex CLI.",
+      "expected_output": "Uses the official page-scoped CLI override for one matching-UA diagnostic retry, verifies the JavaScript value and request header, and explains that client hints and other automation signals mean this cannot guarantee access.",
+      "files": [],
+      "expectations": [
+        "Captures the blocked baseline before changing the user agent",
+        "Uses chrome-devtools emulate with a UA matching the installed Chrome major version, operating system, and viewport",
+        "Verifies both navigator.userAgent and the document request's user-agent header",
+        "Reports the override and warns that userAgentData or other browser signals may remain inconsistent",
+        "Stops after one matching-UA retry instead of rotating identities or claiming the site cannot detect automation",
+        "Does not add a public-browsing or user-agent option to Impeccable browser-capture"
+      ]
     }
   ]
 }

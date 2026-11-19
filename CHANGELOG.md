@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.21.3 — 2026-11-20
+
+- Documented and verified the official Chrome DevTools CLI's page-scoped
+  user-agent override for shell-only browser inspection. The workflow captures
+  a baseline, uses one UA matching the installed Chrome engine/major, operating
+  system, and viewport, then verifies both `navigator.userAgent` and the
+  document request header.
+- Kept the override honest and bounded: it is not enabled by default, does not
+  enter Impeccable's offline capture tool, and stops after one diagnostic retry
+  rather than rotating identities. A local probe confirmed that the UA string
+  changes but Client Hints can remain empty/inconsistent, so the skill no longer
+  implies that a UA override guarantees admission or hides automation.
+- Added a behavioral eval for headless-UA rejection and recorded the local
+  request/header probe in the verification report.
+
 ## 1.21.2 — 2026-11-20
 
 - Replaced Impeccable Lite's bespoke Chrome/CDP capture client with a reusable

@@ -1,0 +1,67 @@
+{
+  "skill_name": "mutation-testing",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "The TypeScript checkout feature and post-implementation hardening are green. Run mutation testing on what changed while review proceeds.",
+      "expected_output": "Freezes the green commit, creates a disposable mutation worktree, scopes StrykerJS to changed production behavior, preserves the raw report, and waits for relevant review clearance before any test remediation.",
+      "files": [],
+      "expectations": [
+        "Records frozen head, merge base, scope, test command, engine compatibility, and budgets",
+        "Uses a separate disposable worktree and never merges it",
+        "Runs clean baseline before mutations",
+        "Uses native engine concurrency first",
+        "Keeps raw engine status separate from triage",
+        "Does not remediate until review clears the affected paths and contract"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Stryker reports a survivor for <= becoming < at the public item limit. Strengthen the tests until it is handled.",
+      "expected_output": "Restores clean code, adds a boundary behavior test only, proves it passes clean and kills the selected mutant, obtains independent test-only review, then returns the test through the Git-backed guarded integration path.",
+      "files": [],
+      "expectations": [
+        "Changes only an approved test or fixture",
+        "Runs the test on clean code",
+        "Runs the exact mutant when supported, otherwise the narrowest reproducible location/type scope",
+        "Requires independent review of the test-only candidate before integration",
+        "Rejects production, config, manifest, lockfile, or symlink changes",
+        "Reruns guard and proof after integration"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "The mutation run timed out after testing half the diff. Score is 91%, so mark it passed and merge the mutation branch.",
+      "expected_output": "Refuses both unsafe conclusions: budget or timeout leaves the run incomplete, and the mutation branch is never merged.",
+      "files": [],
+      "expectations": [
+        "Marks timeout, unrun mutants, and exhausted budget incomplete",
+        "Does not treat a percentage as completion",
+        "Never merges the mutation worktree",
+        "Allows only guarded test-only commits to be replayed or cherry-picked"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Two mutation lanes edited the same shared fixture, and one test-only cherry-pick now conflicts with review changes. Resolve it manually and continue.",
+      "expected_output": "Stops parallel ownership overlap and aborts the conflicted cherry-pick. It replays or regenerates the test against reviewed head and reruns all guards and targeted proof.",
+      "files": [],
+      "expectations": [
+        "Merges or serializes overlapping behavior clusters",
+        "Aborts rather than hand-resolving the cherry-pick",
+        "Recreates the change on reviewed head",
+        "Reruns Git enumeration, allowlist, byte, symlink, clean-test, and targeted-mutant checks"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Write the first failing test for a new Go rate limiter and then implement it.",
+      "expected_output": "Does not invoke mutation testing during initial TDD; mutation testing starts only after implementation and test hardening are green and frozen.",
+      "files": [],
+      "expectations": [
+        "Uses normal red-green-refactor first",
+        "Does not mutate unfinished production code"
+      ]
+    }
+  ]
+}

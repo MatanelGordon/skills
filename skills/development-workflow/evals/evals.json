@@ -4,13 +4,18 @@
     {
       "id": 1,
       "prompt": "Add CSV export to the reports page.",
-      "expected_output": "Pipeline order holds: research for existing CSV libraries first, a plan (or stated one-paragraph plan for small scope), a failing test before the implementation, review before merge, and a why-commit. No code before research and plan.",
+      "expected_output": "Pipeline order holds: research, plan, failing test, implementation, post-implementation test hardening, then review and isolated mutation discovery in parallel. Mutation remediation waits for review clearance, joined verification precedes a why-commit, and the mutation worktree is never merged.",
       "files": [],
       "expectations": [
         "Sweeps for an existing CSV library before writing serialization code",
         "States a plan before implementing",
         "Writes the test first and runs it to observe the failure",
+        "Runs fresh test hardening after implementation and before the frozen green checkpoint",
         "Runs a review by eyes that did not write the code, triaged by severity",
+        "Runs mutation discovery in a disposable worktree beside review",
+        "Waits for relevant review clearance before mutation-driven test edits",
+        "Imports only guarded test or fixture changes and never merges the mutation worktree",
+        "Runs final clean and combined scoped mutation verification",
         "Commit message explains why, conventional format"
       ]
     },
@@ -58,6 +63,41 @@
         "Runs the named check and inspects the final diff",
         "States anything skipped or unverified, even when there is nothing to report",
         "Does not invoke registry research, deep-plan, ADR, or independent review for this small change"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "The feature is green and test hardening is complete. Start review and mutation testing. Review then changes the same boundary condition that produced a surviving mutant.",
+      "expected_output": "Review and mutation discovery start from the same frozen commit. The boundary result becomes stale when review changes that path or contract; remediation waits and the targeted mutation scope is rerun on the reviewed code.",
+      "files": [],
+      "expectations": [
+        "Starts review and mutation discovery in parallel from the frozen green commit",
+        "Uses a separate disposable mutation worktree but keeps review in the feature worktree",
+        "Does not remediate the survivor before review clearance",
+        "Invalidates and reruns the affected mutation result after the review change"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Mutation testing added a valuable boundary test, but cherry-picking it now conflicts with review changes. Resolve the conflict and finish.",
+      "expected_output": "Aborts the conflicted cherry-pick, regenerates or replays the test on reviewed head, obtains fresh test-only review, then reruns Git enumeration, path, byte, symlink, clean-test, targeted-mutant, and combined verification gates.",
+      "files": [],
+      "expectations": [
+        "Never hand-resolves the mutation-worktree conflict",
+        "Never merges the mutation branch",
+        "Recreates the test against reviewed head",
+        "Reruns every import and proof gate after integration"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "The mutation budget expired with no-coverage and timed-out mutants. The tests that did run scored 95%, so finish the workflow.",
+      "expected_output": "Reports the mutation evidence as incomplete rather than passed. A percentage cannot override unrun, no-coverage, timed-out, failed-harness, or budget-exhausted work.",
+      "files": [],
+      "expectations": [
+        "Does not claim the mutation gate passed",
+        "Reports the incomplete categories and residual risk",
+        "Does not rewrite raw engine statuses through human triage"
       ]
     }
   ]

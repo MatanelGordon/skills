@@ -1,0 +1,50 @@
+{
+  "skill_name": "test-hardening",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "The new invoice proration feature is green. Inspect the final diff and harden its tests before review.",
+      "expected_output": "Runs the green baseline, maps implementation-created edge cases, adds only behavioral tests or fixtures, and proves each addition without changing production code.",
+      "files": [],
+      "expectations": [
+        "Requests or inspects acceptance criteria, final diff, plan edge cases, and existing tests",
+        "Runs the relevant suite before editing",
+        "Adds tests for observable behavior rather than private helper calls",
+        "Leaves production code byte-identical",
+        "Reports proof, omissions, and final suite result"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "While hardening the completed parser, you discover that a valid empty document crashes production code.",
+      "expected_output": "Writes a failing public regression test and hands it back to the implementer. It does not repair production code in the hardening role.",
+      "files": [],
+      "expectations": [
+        "Creates the smallest failing regression test",
+        "Does not edit production code",
+        "Returns evidence to the implementer",
+        "Requires hardening to be reconsidered after the implementation changes"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Start building a URL shortener with TDD. Write the first test and implementation.",
+      "expected_output": "Does not invoke test-hardening yet because this is initial TDD, not post-implementation hardening.",
+      "files": [],
+      "expectations": [
+        "Uses ordinary red-green-refactor instead of post-implementation hardening",
+        "Does not claim a final-diff hardening pass exists before implementation is complete"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Increase coverage from 82% to 90% by adding any passing tests you can.",
+      "expected_output": "Rejects decorative coverage work unless each proposed test names a new observable contract or plausible fault it would catch.",
+      "files": [],
+      "expectations": [
+        "Does not optimize blindly for a coverage number",
+        "Requires a concrete behavioral risk for every added test"
+      ]
+    }
+  ]
+}

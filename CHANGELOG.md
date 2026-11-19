@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.22.0 — 2026-11-20
+
+- **Added `test-hardening`.** A fresh post-implementation subagent inspects the
+  final diff for public edge cases created by the code, changes tests and
+  fixtures only, and returns production defects as failing regression tests.
+- **Added `mutation-testing`.** Five native-engine adapters cover Python
+  (Mutmut), C# (Stryker.NET), Rust (cargo-mutants), Go (Gremlins), and
+  JavaScript/TypeScript (StrykerJS), with changed-scope selection, native-first
+  concurrency, adapter-specific raw status mapping, immutable per-run reports,
+  independently reviewed remediation, and a Git-backed fail-closed test-only
+  import path from disposable worktrees.
+- Extended `development-workflow` so hardening precedes a frozen green commit,
+  review and mutation discovery fan out in parallel, affected results become
+  stale after review changes, and joined verification blocks incomplete runs.
+- Added deterministic protocol tests and a real Node 22 calculator CLI smoke:
+  Vitest proves division-by-zero hardening first, StrykerJS then exposes a
+  separate display-boundary survivor, and a test-only remediation kills that
+  exact mutant while production file hashes stay unchanged.
+- Recorded the native, agent-neutral architecture in ADR 0001. Selected PSTACK
+  principles are pinned as versioned design evidence with exact blob hashes and
+  an upstream re-review trigger; no external skill or runtime is vendored.
+
 ## 1.21.1 — 2026-11-20
 
 - Simplified `impeccable-lite` from a fresh contradiction audit: visual

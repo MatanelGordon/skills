@@ -41,6 +41,20 @@ test('validator ignores sanctioned *-workspace directories without inspecting th
   assert.deepEqual(result.skills, ['valid-skill']);
 });
 
+test('validator accepts CRLF frontmatter from Windows checkouts', async () => {
+  const root = await writeValidRepo();
+  await writeFile(join(root, 'skills', 'valid-skill', 'SKILL.md'), [
+    '---',
+    'name: valid-skill',
+    'description: A valid fixture skill.',
+    '---',
+    '# Valid',
+    '',
+  ].join('\r\n'));
+  const result = await validateRepository(root);
+  assert.equal(result.failures.length, 0, result.failures.join('\n'));
+});
+
 test('validator still catches a malformed ordinary skill directory', async () => {
   const root = await writeValidRepo({ malformed: true });
   const result = await validateRepository(root);

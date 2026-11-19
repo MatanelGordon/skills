@@ -7,25 +7,80 @@ import { fileURLToPath } from 'node:url';
 
 const DEFAULT_ROOT = fileURLToPath(new URL('..', import.meta.url));
 
+async function terminateProcessTree(child) {
+  if (!child.pid) return;
+  if (process.platform === 'win32') {
+    await new Promise((resolvePromise) => {
+      const killer = spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], {
+        stdio: 'ignore',
+        windowsHide: true,
+      });
+      let complete = false;
+      const finish = (fallback = false) => {
+        if (complete) return;
+        complete = true;
+        clearTimeout(deadline);
+        if (fallback) child.kill('SIGKILL');
+        resolvePromise();
+      };
+      const deadline = setTimeout(() => {
+        killer.kill('SIGKILL');
+        finish(true);
+      }, 5_000);
+      killer.once('error', () => finish(true));
+      killer.once('close', (code) => finish(code !== 0));
+    });
+    return;
+  }
+
+  try {
+    process.kill(-child.pid, 'SIGKILL');
+  } catch (error) {
+    if (error?.code !== 'ESRCH') child.kill('SIGKILL');
+  }
+}
+
 function runProcess(command, input, timeoutMs, label) {
   if (!Array.isArray(command) || command.length === 0 || command.some((part) => typeof part !== 'string')) {
     throw new TypeError(`${label} command must be a non-empty string array`);
   }
 
   return new Promise((resolvePromise, reject) => {
-    const child = spawn(command[0], command.slice(1), { stdio: ['pipe', 'pipe', 'pipe'] });
+    const child = spawn(command[0], command.slice(1), {
+      detached: process.platform !== 'win32',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
     let stdout = '';
     let stderr = '';
     let settled = false;
+    const removeSignalHandlers = () => {
+      process.off('SIGINT', onSigint);
+      process.off('SIGTERM', onSigterm);
+    };
     const finish = (callback) => {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+      removeSignalHandlers();
       callback();
     };
+    const forwardSignal = (signal) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      removeSignalHandlers();
+      void terminateProcessTree(child).finally(() => process.kill(process.pid, signal));
+    };
+    const onSigint = () => forwardSignal('SIGINT');
+    const onSigterm = () => forwardSignal('SIGTERM');
+    process.once('SIGINT', onSigint);
+    process.once('SIGTERM', onSigterm);
     const timer = setTimeout(() => {
-      child.kill('SIGKILL');
-      finish(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)));
+      if (settled) return;
+      settled = true;
+      removeSignalHandlers();
+      void terminateProcessTree(child)
+        .finally(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)));
     }, timeoutMs);
 
     child.stdout.setEncoding('utf8');

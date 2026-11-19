@@ -1,6 +1,6 @@
 {
   "name": "@matanelgordon/skills",
-  "version": "1.19.1",
+  "version": "1.19.2",
   "description": "Agent Skills for Claude Code, OpenAI Codex, GitHub Copilot and Tabnine",
   "type": "module",
   "bin": {
@@ -9,8 +9,15 @@
   "scripts": {
     "install-skills": "node install/index.mjs",
     "start": "node install/index.mjs",
-    "validate": "node install/validate.mjs"
+    "validate": "node install/validate.mjs",
+    "test": "node --test install/index.test.mjs install/package.test.mjs install/run-evals.test.mjs install/validate.test.mjs",
+    "eval": "node install/run-evals.mjs"
   },
+  "files": [
+    "install/",
+    "skills/",
+    "agents/"
+  ],
   "license": "MIT",
   "author": "Matanel Gordon",
   "repository": {

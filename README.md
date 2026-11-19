@@ -23,13 +23,17 @@ npm run install-skills
 It detects your agents, asks which skills you want, and symlinks them in. That
 last part matters: symlinks mean a single `git pull` here updates every agent at
 once. If you'd rather have independent copies you can edit per agent, pick copy
-mode when it asks.
+mode when it asks. Reinstalls identify links and copies created by this repo.
+An edited managed copy, a foreign link, or an unrelated same-named file is a
+conflict: interactive installs offer to move it to a timestamped backup first;
+noninteractive installs keep it in place, report the conflict, and exit nonzero.
 
 In a hurry, or scripting it:
 
 ```bash
 node install/index.mjs --yes          # everything, every detected agent
 node install/index.mjs --yes --copy   # copies instead of symlinks
+node install/index.mjs --yes --all    # force every platform, detected or not
 ```
 
 You can also try it without cloning — `npx github:MatanelGordon/skills` — which
@@ -49,15 +53,20 @@ node install/index.mjs uninstall   # clean removal from any or all agents
 | Agent | Skills directory |
 |---|---|
 | Claude Code | `~/.claude/skills/` |
-| OpenAI Codex | `~/.codex/skills/` |
+| OpenAI Codex | `~/.codex/skills/` and the shared `.agents/skills/` convention |
 | GitHub Copilot | `~/.copilot/skills/` |
 | Tabnine | `~/.tabnine/agent/skills/` |
 | Shared convention | `~/.agents/skills/` |
 
 That last row is worth knowing about: `~/.agents/skills/` is a cross-tool
-convention that Copilot and Tabnine already read, and so do OpenCode, Cursor,
-and Gemini CLI. Installing there once covers tools this repo doesn't even
-target yet.
+convention used by several agents. OpenAI's
+[current CLI installation table](https://developers.openai.com/api/reference/cli)
+documents project `.agents/skills/` and user `~/.agents/skills/`, while its
+[skills-eval article](https://developers.openai.com/blog/eval-skills) uses
+project `.codex/skills/` and user `~/.codex/skills/`.
+Both conventions therefore remain supported here; discovery behavior can vary
+by Codex version and installation method. Copilot, Tabnine, OpenCode, Cursor,
+and Gemini CLI also use the shared convention.
 
 After installing: `copilot skill list` or `tabnine skills list` to confirm;
 Claude Code and Codex pick skills up on the next session.
@@ -214,7 +223,20 @@ shown after install), `depends` (machine-read by the installer), and `platform`
 skill.
 
 `npm run validate` checks all of this plus the subtle stuff (unbalanced code
-fences, literal escape characters, script syntax) and runs on CI for every PR.
+fences, literal escape characters, script syntax, eval schemas, README coverage,
+and aligned release metadata). `npm test` exercises the installer, validator,
+package contents, and eval harness. CI runs both across Node 18/20/22 on Linux,
+macOS, and Windows.
+
+Eval JSON is executable rather than decorative. To run one case, provide any
+candidate and judge commands that read a prompt from stdin and write their
+answer to stdout; the judge must return `{ "pass": boolean, "details": string }`:
+
+```bash
+node install/run-evals.mjs --skill research-first --id 4 \
+  --candidate codex --candidate-arg exec --candidate-arg=- \
+  --judge codex --judge-arg exec --judge-arg=-
+```
 
 ## Agents
 
@@ -252,10 +274,28 @@ they'll land here in an `agents/` directory with the same installer treatment.
 Deliberately not vendored — they belong to their authors and install fine from
 upstream:
 
-- The Codex CLI ships its own set (Apache-2.0, OpenAI): `aspnet-core` (from
-  [dotnet/AspNetCore.Docs](https://github.com/dotnet/AspNetCore.Docs)),
-  `chatgpt-apps` (from [openai/openai-apps-sdk-examples](https://github.com/openai/openai-apps-sdk-examples)),
-  `cli-creator`, `frontend-skill`, plus system skills under `~/.codex/skills/.system/`.
+- [openai/skills](https://github.com/openai/skills) (Apache-2.0, OpenAI):
+  `aspnet-core`, `chatgpt-apps`, `cli-creator`, and `frontend-skill` are installed
+  as independent Codex copies with their bundled licenses and per-copy
+  `ATTRIBUTION.txt`. Their exact installed revision was not recorded; update
+  through the Codex curated installer rather than assuming they track `main`.
+  `aspnet-core` incorporates material from
+  [dotnet/AspNetCore.Docs](https://github.com/dotnet/AspNetCore.Docs), and
+  `chatgpt-apps` references
+  [openai/openai-apps-sdk-examples](https://github.com/openai/openai-apps-sdk-examples).
+- [github/awesome-copilot](https://github.com/github/awesome-copilot) (MIT,
+  GitHub): 29 Copilot copies are installed independently — `acquire-codebase-knowledge`,
+  `batch-files`, `context-map`, `conventional-branch`, `conventional-commit`,
+  `csharp-async`, `csharp-docs`, `csharp-xunit`, `dotnet-best-practices`,
+  `dotnet-design-pattern-review`, `doublecheck`, `draw-io-diagram-generator`,
+  `drawio`, `first-ask`, `mini-context-graph`, `nuget-manager`,
+  `postgresql-code-review`, `postgresql-optimization`, `prd`,
+  `premium-frontend-ui`, `prompt-optimizer`, `react-audit-grep-patterns`,
+  `react-container-presentation-component`, `react18-batching-patterns`,
+  `react18-dep-compatibility`, `react18-lifecycle-patterns`, `refactor`,
+  `sql-code-review`, and `sql-optimization`. Each attribution pins the upstream
+  tree SHA embedded by `gh skills install`; no frontmatter normalization was
+  recorded. These are editable copies, not auto-updating links.
 - [pbakaus/impeccable](https://github.com/pbakaus/impeccable) (Apache-2.0, Paul
   Bakaus) — frontend design guidance with teeth: one skill behind
   `/impeccable <command>` with 24 commands (`shape`, `critique`, `audit`,
@@ -275,10 +315,12 @@ upstream:
   - **Its global provider dirs are not where two of these three CLIs read.**
     Upstream maps `copilot` → `~/.github/skills/`, but Copilot CLI reads
     `~/.copilot/skills/` (`copilot skill list` showed nothing until it was
-    linked); and `codex` → `~/.agents/skills/`, while Codex 0.152.1 discovers
-    skills in `$CODEX_HOME/skills` (default `~/.codex/skills`) and uses
-    `~/.agents` only for the plugin marketplace. Fix without forking the
-    install: symlink `~/.codex/skills/impeccable` and
+    linked); and `codex` → `~/.agents/skills/`. OpenAI material currently
+    documents both `.agents/skills/` and `.codex/skills/`; in this installation,
+    Codex 0.152.1 did not discover the upstream `.agents` copy, so the existing
+    compatibility link into `$CODEX_HOME/skills` (default `~/.codex/skills`) is
+    retained. Fix without forking the install: symlink
+    `~/.codex/skills/impeccable` and
     `~/.copilot/skills/impeccable` at the upstream directories, so
     `npx impeccable update` keeps updating one real copy each.
   - No runtime of its own — `scripts/impeccable` is a POSIX launcher around a
@@ -291,8 +333,16 @@ upstream:
     `~/.copilot/agents/` by itself.
 - [obra/superpowers](https://github.com/obra/superpowers) — the most-adopted
   skills framework; its `writing-plans` shaped `deep-plan`.
-- [mattpocock/skills](https://github.com/mattpocock/skills) — engineering
-  workflow; his ADR format seeded the `adr` skill here.
+- [mattpocock/skills](https://github.com/mattpocock/skills) (MIT, Matt Pocock):
+  engineering workflow; his ADR format seeded the `adr` skill here. Twelve
+  independent Copilot copies are installed: `codebase-design`, `domain-modeling`,
+  `grill-me`, `grill-with-docs`, `grilling`, `handoff`,
+  `improve-codebase-architecture`, `setup-matt-pocock-skills`, `tdd`, `teach`,
+  `to-prd`, and `triage`. Their exact revisions were not preserved; no content
+  or frontmatter normalization was identified during the provenance audit.
+- `git-guardrails-copilot` is a local Copilot-only skill, not an external
+  dependency. No upstream or separate license declaration was discoverable;
+  its `ATTRIBUTION.txt` records that limitation rather than inventing provenance.
 - [rampstackco/claude-skills](https://github.com/rampstackco/claude-skills) —
   `after-action-report`: blameless postmortem/AAR framework (timeline, root
   cause, contributing factors, action items). Note: its upstream frontmatter

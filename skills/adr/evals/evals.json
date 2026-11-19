@@ -24,7 +24,6 @@
     },
     {
       "id": 3,
-      "id": 3,
       "prompt": "We're reversing ADR-0004 - we're adopting the CSV library after all. The old ADR is titled 'JSON only - no CSV parsing' and records that we chose JSON because we feared CSV quoting bugs. There is no .adr/ directory in this repo yet.",
       "expected_output": "Proposes writing a NEW ADR superseding 0004 that references it by number and title, marks 0004 'Status: superseded by' rather than editing or deleting it, and carries the old decision's reasoning forward intact.",
       "files": [],

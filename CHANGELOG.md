@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.19.2 — 2026-11-19
+
+- **Installer ownership is now checked before replacement.** Links owned by
+  this repository and byte-identical copies can be refreshed; foreign links,
+  unrelated same-named content, and edited managed copies are preserved.
+  Interactive installs can make a timestamped backup before replacement, while
+  noninteractive installs report conflicts and exit nonzero. Agent files use
+  the same policy.
+- **Command parsing is strict and tested.** Unknown commands/flags fail before
+  installation, `--all --yes` really targets every platform, and incompatible
+  platform selections (including dependencies) are rejected.
+- **Validation now covers behavior and release surfaces.** It ignores sanctioned
+  `*-workspace` scratch directories without inspecting them, still rejects
+  malformed ordinary skills, checks eval schemas, README coverage, changelog
+  and lockfile versions, and caught/fixed a duplicate `adr` eval key.
+- **Eval suites can run.** `install/run-evals.mjs` executes a selected skill eval
+  through caller-supplied candidate and judge processes with timeouts and a
+  machine-readable verdict. Installer, validator, eval-runner, and npm-package
+  integration tests run in CI on Linux, macOS, and Windows across Node 18–22.
+- **Published package contents are allowlisted.** Runtime installer, skills, and
+  agents ship; `.github` and the sanctioned `skills/rank-workspace/` scratch
+  tree do not.
+- **External-skill provenance was backfilled.** Attribution now covers 42
+  Copilot copies and four Codex curated copies, and the README records upstream,
+  license, revision limitations, normalization, and update caveats. Codex docs
+  now acknowledge both `.agents/skills` and `.codex/skills` conventions.
+- Regenerated lockfile release metadata at 1.19.2.
+
 ## 1.19.1 — 2026-10-02
 
 - **Registered [pbakaus/impeccable](https://github.com/pbakaus/impeccable)**

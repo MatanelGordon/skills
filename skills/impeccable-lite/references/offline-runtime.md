@@ -173,3 +173,7 @@ evidence_generation: <exact capture generation from the packet>
   required fields without re-reviewing, changing findings, or adding prose.
 - If a reviewer says `recapture`, repair the evidence before interpreting its
   design verdict. If it says `fix` or `rebuild`, return to `build` explicitly.
+- A hard crash during stale-lock recovery may leave the exact
+  `<state-path>.lock.recovery` file behind. The runtime fails closed. After
+  confirming no Impeccable Lite process is active, remove only that named file
+  and retry; never delete the surrounding state directory.

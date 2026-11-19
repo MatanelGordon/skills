@@ -337,7 +337,6 @@ fine from upstream.
 |---|---|
 | [openai/skills](https://github.com/openai/skills) (Apache-2.0, OpenAI) | Four independent Codex copies are installed with bundled licenses and per-copy attribution: `aspnet-core`, `chatgpt-apps`, `cli-creator`, and `frontend-skill`. Their installed revisions were not recorded; update through the curated installer rather than assuming they track `main`. |
 | [github/awesome-copilot](https://github.com/github/awesome-copilot) (MIT, GitHub) | 29 independent Copilot copies: `acquire-codebase-knowledge`, `batch-files`, `context-map`, `conventional-branch`, `conventional-commit`, `csharp-async`, `csharp-docs`, `csharp-xunit`, `dotnet-best-practices`, `dotnet-design-pattern-review`, `doublecheck`, `draw-io-diagram-generator`, `drawio`, `first-ask`, `mini-context-graph`, `nuget-manager`, `postgresql-code-review`, `postgresql-optimization`, `prd`, `premium-frontend-ui`, `prompt-optimizer`, `react-audit-grep-patterns`, `react-container-presentation-component`, `react18-batching-patterns`, `react18-dep-compatibility`, `react18-lifecycle-patterns`, `refactor`, `sql-code-review`, and `sql-optimization`. Each attribution pins the tree SHA retained by `gh skills install`; these copies do not auto-update. |
-| [pbakaus/impeccable](https://github.com/pbakaus/impeccable) (Apache-2.0, Paul Bakaus) | Frontend design guidance with teeth. Installed with caveats; see below. |
 | [obra/superpowers](https://github.com/obra/superpowers) | The most-adopted skills framework. Its `writing-plans` shaped `deep-plan`. |
 | [mattpocock/skills](https://github.com/mattpocock/skills) (MIT, Matt Pocock) | Engineering workflow; his ADR format seeded `adr`. Twelve independent Copilot copies are installed: `codebase-design`, `domain-modeling`, `grill-me`, `grill-with-docs`, `grilling`, `handoff`, `improve-codebase-architecture`, `setup-matt-pocock-skills`, `tdd`, `teach`, `to-prd`, and `triage`. Their exact revisions were not preserved. |
 | Local Copilot skill | `git-guardrails-copilot` has no discoverable external upstream or separate license declaration. Its attribution records that limitation instead of inventing provenance. |
@@ -347,50 +346,6 @@ fine from upstream.
 | [affaan-m/ECC](https://github.com/affaan-m/ECC) | An agent-harness system with ~39 skills under `.agents/skills/`. Four are installed as a set; see below. |
 | [TerminalSkills/skills](https://github.com/TerminalSkills/skills) | ~1000 tool-specific skills. |
 | [Claude plugin marketplace](https://github.com/anthropics/claude-plugins-official) | Includes `skill-creator`, whose validator these skills pass. |
-
-<details>
-<summary><strong>pbakaus/impeccable</strong>: install notes and provider-path caveats</summary>
-
-<br>
-
-One skill behind `/impeccable <command>` with 24 commands (`shape`, `critique`,
-`audit`, `polish`, `bolder`, `quieter`, `distill`, `harden`, `animate`, `live`…),
-61 deterministic detector rules that run with no LLM and no API key, and live
-browser iteration. It started from Anthropic's
-[frontend-design](https://github.com/anthropics/skills/tree/main/skills/frontend-design)
-and went considerably further.
-
-Installed globally 2026-10-02 (skill 4.5.0, engine 0.1.11) for Claude Code,
-Codex and Copilot. The caveats are also recorded in each copy's `ATTRIBUTION.txt`:
-
-- **Install command.**
-  `npx impeccable install --yes --global --no-hooks --providers=claude,codex,copilot`
-  needs Node ≥ 22.18 (nvm v24 here; the default v18 is too old). Run it from a
-  neutral directory. Without `--no-hooks`, it also writes a project hook
-  manifest into whatever repo you happen to be standing in.
-- **Frontmatter** is clean as shipped (`version` / `user-invocable` /
-  `argument-hint` / `license`), so Claude Code needs no normalization.
-- **Its global provider directories didn't match what two of the three CLIs
-  read here.** Upstream maps `copilot` → `~/.github/skills/`, but Copilot CLI
-  reads `~/.copilot/skills/` (`copilot skill list` showed nothing until it was
-  linked there). Upstream maps `codex` → `~/.agents/skills/`. OpenAI documents
-  both `~/.agents/skills/` and `~/.codex/skills/`. At install time, Codex
-  0.152.1 on this machine discovered the upstream copy only after it was linked
-  into `$CODEX_HOME/skills` (default `~/.codex/skills`); behavior can vary by
-  version and installation method. The compatibility fix needs no fork: symlink
-  `~/.codex/skills/impeccable` and
-  `~/.copilot/skills/impeccable` to the upstream directories, so
-  `npx impeccable update` keeps updating one real copy of each.
-- **No runtime of its own.** `scripts/impeccable` is a POSIX launcher around a
-  self-contained engine binary, vendored per copy under
-  `scripts/bin/<os>-<arch>/`.
-- **Hooks skipped on purpose.** Upstream's design detector hooks are
-  project-scoped (`${CLAUDE_PROJECT_DIR}`, `.codex/hooks.json`). Re-run the
-  installer inside a project to get them.
-- **Ships four subagents.** Its installer places them in `~/.claude/agents/`
-  and `~/.copilot/agents/` by itself.
-
-</details>
 
 <details>
 <summary><strong>rampstackco/claude-skills</strong>: frontmatter normalization</summary>

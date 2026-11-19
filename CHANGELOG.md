@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.20.2 — 2026-11-19
+
+- Removed upstream `pbakaus/impeccable` from the README's external-skill
+  recommendations, including its download command and provider-path caveats.
+  The repository now directs interface work to its checked-in, offline
+  `impeccable-lite` skill instead. Upstream inspiration and license credit stay
+  in `impeccable-lite`'s provenance and historical changelog entries.
+- Documented the fail-closed manual recovery step for the unlikely case where a
+  hard crash leaves Impeccable Lite's stale-lock recovery mutex behind.
+
 ## 1.20.1 — 2026-11-19
 
 - **Installer ownership is now checked before replacement.** Only links owned

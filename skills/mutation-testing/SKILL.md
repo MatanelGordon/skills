@@ -1,159 +1,176 @@
 ---
 name: mutation-testing
 description: >
-  Measure whether tests catch small production-code faults, then strengthen
-  tests for meaningful survivors in a disposable worktree. Use after a green
-  implementation is frozen, when explicitly asked for mutation testing, or
-  when development-workflow starts mutation discovery beside review. Never
-  merge mutated code; only guarded test and fixture changes may return.
+  Run an explicit, bounded mutation-testing investigation with a native engine,
+  preserve raw outcomes, and optionally return reviewed test-only changes. Use
+  when the user asks for mutation testing, an existing project engine makes a
+  scoped run cheap, or a plan marks changed decision logic as critical. This is
+  opt-in evidence, not a mandatory gate for ordinary features.
 license: MIT
 metadata:
   author: Matanel Gordon
   source: https://github.com/MatanelGordon/skills
   depends: test-hardening
+  requires: Node >= 18 and git for protocol gates; a compatible native mutation engine for execution
 ---
 
 # Mutation testing
 
-Mutation testing deliberately introduces small faults—reversed conditions,
-changed boundaries, removed calls—and asks whether the existing tests fail.
-Native engines create and restore those mutations. This skill supplies the
-portable protocol around them: scope, isolation, evidence, remediation, and a
-fail-closed path for returning tests without returning mutated code.
+Mutation testing asks whether tests catch small faults such as reversed
+conditions or changed boundaries. Native engines normally mutate sandboxed
+copies; this skill controls scope, evidence, remediation, and the boundary that
+keeps production changes out of the reviewed branch.
 
-## Preconditions
+## When to run
 
-Dispatch a fresh `mutation-testing` subagent so it does not inherit the
-implementer's assumptions. Start only when all are true:
+Run only when at least one trigger is explicit:
 
-- initial TDD and post-implementation `test-hardening` are complete;
-- the relevant suite is green at a named frozen commit;
-- the production diff and acceptance criteria are available;
-- the repository permits a disposable worktree;
-- a compatible native engine can be selected explicitly.
+- the user asks for mutation testing and names a module or behavior;
+- the project already configures a compatible engine and a scoped run fits the
+  agreed time/mutant budget; or
+- the plan marks changed security, financial, authorization, concurrency, data
+  integrity, or other decision logic as critical and records why mutation
+  evidence is worth its cost.
 
-Read [adapter-contract.md](references/adapter-contract.md), then only the
-language adapter matching the selected project. Multiple ecosystems require an
-explicit project scope; do not guess.
+An explicit standalone request may start from a user-named scope after a green
+baseline; it does not require a prior `test-hardening` session. In the full
+development workflow, start after hardening is green and the commit is frozen.
+
+Do not use for documentation, prototypes, generated code, presentation/UI glue
+without decision logic, an unsupported runner, or a suite that cannot be scoped
+inside the approved budget. Report the skip and use focused behavioral tests.
+
+## Roles and host capabilities
+
+The orchestrator selects scope, engine, budget, and isolation. A mutation worker
+runs the protocol and never dispatches itself.
+
+Prefer a fresh subagent and Git worktree. If the host lacks subagents, reset or
+summarize context and run sequentially, naming the loss of independent judgment.
+If `git worktree` is unavailable, use a disposable clone/copy and verify source
+hashes before and after. With neither safe isolation nor an engine that keeps
+mutations out of the working tree, perform report-only analysis or stop; never
+apply mutations in the feature checkout.
 
 ## Protocol
 
 ### 1. Freeze and isolate
 
-Record the reviewed base, frozen green commit, merge base, changed production
-paths, test command, production hashes, time budget, and mutant budget. Create a
-new disposable branch and worktree from the frozen commit. Mutation worktrees
-are **never merged**.
+Record the frozen green commit, merge base, user-approved mutation scope, clean
+test command, production hashes, time budget, and mutant budget.
 
-### 2. Establish the baseline
+```bash
+git worktree add -b mutation/<topic> <temporary-path> <frozen-commit>
+```
 
-Run the clean relevant suite inside the disposable worktree. Stop on failure.
-Detect fixed ports, databases, shared files, global caches, clocks, or external
-services that could make parallel workers lie; isolate them or serialize.
+Install/configure tools only in the disposable worktree. Read
+[adapter-contract.md](references/adapter-contract.md), then one language adapter.
 
-### 3. Scope changed behavior
+### 2. Baseline and discover
 
-Derive candidate production files or lines from the merge-base diff, then
-include dependencies only when the engine or behavior requires them. Mutation
-scope and test scope are distinct: mutate changed behavior, but run every test
-the engine proves covers it. Do not infer scope from the branch name.
+Run the clean relevant suite first; a red baseline makes the run incomplete.
+Use the adapter's honest scope: native diff selection where supported, otherwise
+an explicit file/function/range that may be broader than the change. Prefer the
+engine's workers. Additional lanes are optional and require disjoint projects,
+tests, fixtures, resources, and a predicted wall-clock saving.
 
-### 4. Run discovery beside review
+Review and discovery may overlap from the same frozen commit, but remediation
+waits until review clears the affected contract and source paths. Review changes
+make those results stale.
 
-Code review and mutation discovery may start in parallel from the same frozen
-commit. Discovery may report evidence, but **test remediation waits for explicit
-review clearance of the affected contract and production paths**. If review
-changes those paths, their dependencies, or acceptance criteria, mark affected
-results stale and rerun them.
+### 3. Preserve and classify evidence
 
-Use the native engine's workers first. Extra subagent lanes are allowed only
-for disjoint projects or behavior clusters, with disjoint test/fixture ownership
-and predicted wall-clock savings after duplicated setup. Use at most three.
+Keep the native report unchanged and hash it. Raw status, engine meaning, human
+triage, and workflow decision are separate fields. Use the reachable classifier
+for a status when needed:
 
-### 5. Preserve engine truth
+```bash
+node <mutation-testing-skill-dir>/scripts/mutation-protocol.mjs classify \
+  --engine stryker-js --status NoCoverage --mutant 42 \
+  --location src/calculator.js:8 --report-sha256 <sha256>
+```
 
-Keep the raw machine report unchanged. Normalize without rewriting statuses;
-record human triage separately using [result-model.md](references/result-model.md).
-A raw survivor does not become “killed” or “equivalent” because a person labels
-it. Never overwrite the raw artifact.
+`Timeout` remains native detected evidence and is flagged for a spot check;
+`NoCoverage` remains undetected and actionable; compile/unviable outcomes are
+excluded; engine `Ignored`/`SKIPPED` results are out of scope. Pending, unrun,
+red-baseline, harness-failure, or budget-exhausted work is incomplete. See
+[result-model.md](references/result-model.md).
 
-### 6. Remediate tests only
+### 4. Remediate tests only
 
-For each review-cleared, meaningful survivor:
+For each review-cleared actionable survivor:
 
-1. restore clean production code;
-2. name the public behavior the mutant violates;
-3. add or strengthen a test or fixture only;
-4. prove the test passes on clean code;
-5. run the targeted mutant proof: the exact mutant when the engine supports it,
-   otherwise the narrowest reproducible location/type scope, and prove the same
-   fault no longer survives;
-6. commit only the test/fixture change.
+1. restore clean production;
+2. name the violated public behavior;
+3. add one focused test or fixture;
+4. run it on clean code;
+5. rerun the exact mutant, or the narrowest supported location/type scope;
+6. obtain focused review of the assertion and test-only diff; and
+7. commit one direct child of the frozen approved commit.
 
-If a survivor reveals a production defect or ambiguous requirement, return it
-to implementation or product clarification. Do not change production code in
-the mutation role.
+Equivalent triage does not block completion only when it includes a reachability
+rationale and independent reviewer. A production defect or ambiguous contract
+returns to implementation. Rust tests embedded in `src/*.rs` cannot cross this
+path-based test-only guard; add them in the ordinary reviewed feature workflow
+before the freeze, or report the limitation.
 
-Before import, a fresh reviewer must approve the test-only candidate: the public
-assertion is meaningful, the fixture is deterministic, and no production,
-configuration, dependency, or generated change is hidden in the diff.
+### 5. Import by construction
 
-### 7. Return through the guard
+Follow [import-guard.md](references/import-guard.md). Validate the exact approved
+commit, current integration target, and one-commit candidate. Import only the
+reported paths with `git restore --source=<candidate>`, never candidate history.
+Rerun the guard, clean tests, and targeted proof after the imported test is
+committed.
 
-Follow [import-guard.md](references/import-guard.md). The mutation branch stays
-disposable. Test-only commits may be replayed or cherry-picked only after path,
-file-type, byte-equality, clean-test, and targeted-mutant checks. Any conflict is an
-abort: regenerate or replay on the reviewed head; never hand-resolve it.
+### 6. Finish
 
-### 8. Join and finish
+A scoped run is complete when no actionable survivor remains and no selected
+work is incomplete. Equivalent, excluded, and out-of-scope counts stay visible;
+they are not rewritten as kills.
 
-After review fixes and accepted test remediations are integrated, rerun:
+`FINAL: incomplete` means: report counts and residual risk, stop for the user's
+decision, and do not commit or present the mutation stage as complete. The user
+may explicitly accept that residual risk, narrow/rerun the scope, or stop the
+optional investigation. Actionable survivors return to remediation or
+implementation; they never pass on score alone.
 
-- the import guard on the integrated target;
-- the clean relevant and repository suites;
-- every targeted mutant proof affected by review;
-- one combined scoped mutation run.
+Cleanup after evidence and any test-only import are secured:
 
-Finish at **no actionable survivors**, not a vanity 100% score. Reachable
-changed behavior with a meaningful public assertion must be killed or returned
-to implementation. No-coverage, timeouts, compile/harness errors, or exhausted
-budgets mean incomplete evidence—not a waiver or pass.
+```bash
+git worktree remove <temporary-path>
+git branch -D mutation/<topic>
+```
 
 ## Report
 
 ```text
-FROZEN HEAD / MERGE BASE:
+FROZEN HEAD / MERGE BASE / USER-NAMED SCOPE:
 ADAPTER / ENGINE / VERSION:
-MUTATION SCOPE / TEST SCOPE:
+MUTATION SCOPE / TEST SCOPE / BUDGET:
 BASELINE:
-RAW REPORT PATH + HASH:
-STATUS COUNTS:
-TRIAGE: mutant → disposition → evidence → reviewer
-REMEDIATION: reviewed test-only commit → clean proof → targeted-mutant proof
+RAW REPORT PATH + SHA256:
+NATIVE STATUS COUNTS:
+WORKFLOW: verified / actionable / equivalent / excluded / out-of-scope / incomplete
+TRIAGE: mutant → disposition → rationale → reviewer
+REMEDIATION: candidate SHA → clean proof → targeted proof → imported paths
 STALE/RERUN RESULTS:
-IMPORT GUARD:
-BUDGET: used / remaining / exhausted
+ISOLATION / CLEANUP:
 FINAL: complete | incomplete | returned-to-implementation
 ```
 
 ## Safety invariants
 
-- Never merge a mutation worktree or commit mutated production code.
-- Never edit production, runner configuration, dependency metadata, or lockfiles
-  during remediation.
-- Never share an owned test or fixture path across parallel lanes.
-- Never call equivalent without written reachability evidence and reviewer
-  confirmation.
-- Never count a timeout, no-coverage mutant, harness failure, or unrun mutant as
-  success.
-- Never trust a clean-code test alone; prove the selected mutant goes red, using
-  the exact mutant when supported or the narrowest reproducible location/type
-  scope otherwise.
+- Never merge or replay a mutation branch.
+- Never return production, runner configuration, dependency, lock, generated,
+  symlink, submodule, or executable changes as mutation remediation.
+- Never overwrite native evidence or call an incomplete run complete.
+- Never hand-resolve a mutation-candidate conflict; regenerate from the current
+  reviewed head.
 
 ## Supporting resources
 
-- [adapter-contract.md](references/adapter-contract.md) — common adapter rules
-- [result-model.md](references/result-model.md) — immutable raw status and triage
-- [import-guard.md](references/import-guard.md) — test-only integration
-- [provenance.json](references/provenance.json) — versioned design evidence
-- `scripts/mutation-protocol.mjs` — deterministic protocol gates
+- [adapter-contract.md](references/adapter-contract.md) — shared engine contract
+- [result-model.md](references/result-model.md) — raw truth and workflow decisions
+- [import-guard.md](references/import-guard.md) — direct-parent test-only import
+- `scripts/mutation-protocol.mjs` — reachable classify/import/provenance commands
+

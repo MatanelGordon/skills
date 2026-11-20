@@ -1,6 +1,7 @@
 # Result model
 
-Store engine evidence and human judgment in different objects.
+Store native evidence, engine meaning, human triage, and workflow decision in
+separate fields.
 
 ```json
 {
@@ -11,32 +12,37 @@ Store engine evidence and human judgment in different objects.
     "location": "src/calculator.js:8:10",
     "reportSha256": "..."
   },
+  "nativeMeaning": "undetected",
   "triage": {
     "disposition": "meaningful",
-    "behavior": "The display limit includes the exact maximum",
-    "rationale": "The public CLI accepts the boundary and no test asserts it",
+    "behavior": "The public limit includes its exact boundary",
+    "rationale": "No existing test observes the exact limit",
     "reviewer": "review-agent-id"
   },
-  "completion": "actionable-survivor"
+  "workflowDecision": "actionable-survivor",
+  "blocksCompletion": true
 }
 ```
 
-## Allowed triage dispositions
+## Triage dispositions
 
-- `meaningful` — reachable behavior; add a public assertion.
-- `equivalent` — no observable distinction under the contract; requires a
-  reachability argument and reviewer confirmation.
-- `unreachable` — dead or excluded path; requires code evidence and should
-  usually return to implementation for cleanup.
-- `invalid-mutant` — engine output cannot compile or represent a valid program;
-  retain the engine's original status.
-- `returned-to-implementation` — reveals a production defect or requirement
-  ambiguity rather than a missing test.
+- `meaningful` — reachable public behavior needs a stronger test.
+- `equivalent` — no observable difference under the contract; requires a
+  reachability rationale and independent reviewer.
+- `unreachable` — excluded/dead behavior; requires code evidence and usually
+  returns to implementation for cleanup.
+- `invalid-mutant` — supports an engine-native excluded result; raw label stays.
+- `returned-to-implementation` — production defect or ambiguous requirement.
 
-## Completion
+## Effects
 
-A scoped run is complete only when every selected mutant ran and every raw
-survivor has an evidenced disposition. `NoCoverage`, timeouts, harness failures,
-compile errors without evidence, skipped mutants, and budget exhaustion keep the
-run incomplete. “No actionable survivors” means nothing meaningful remains
-unaddressed; it does not mean the raw report was rewritten to 100%.
+- `verified`, `equivalent`, `resolved`: do not block completion; report counts.
+- `actionable-survivor`: blocks completion and goes to test remediation or
+  implementation.
+- `returned-to-implementation`: blocks this stage until the production decision
+  is handled.
+- `incomplete`: stop for the user's decision and do not claim/commit a complete
+  mutation stage.
+
+No score, waiver, or triage label changes the raw engine artifact.
+

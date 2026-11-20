@@ -1,11 +1,10 @@
 ---
 name: test-hardening
 description: >
-  Add post-implementation tests for observable edge cases revealed by the final
-  code and diff. Use after a feature or refactor is green, when explicitly asked
-  to harden tests, or when development-workflow reaches its hardening stage.
-  Changes tests and fixtures only; it is not ordinary TDD, code review, mutation
-  testing, or a request to fix production code.
+  Add focused post-implementation tests for observable edge cases revealed by
+  the final code and diff. Use after executable behavior is green, when asked to
+  harden tests, or when development-workflow reaches its default hardening
+  stage. Changes tests and fixtures only and stops at explicit value limits.
 license: MIT
 metadata:
   author: Matanel Gordon
@@ -14,92 +13,82 @@ metadata:
 
 # Test hardening
 
-TDD proves the behavior planned before implementation. Test hardening asks a
-different question afterward: **what new failure windows did this implementation
-create?** A fresh subagent studies the final code without inheriting the
-implementer's assumptions, then adds only tests and fixtures for observable
-behavior that the existing suite misses.
+TDD proves behavior planned before implementation. Test hardening asks what
+failure windows the finished implementation created and whether public behavior
+already proves them.
 
 ## Entry contract
 
-Collect before starting:
+Inspect the acceptance criteria, final diff, plan edge cases/amendments, existing
+tests/fixtures, and test commands. If any input is absent, name it instead of
+inventing work already performed. Start only after the relevant baseline is
+green.
 
-- acceptance criteria and public contracts;
-- the final implementation diff against its merge base;
-- the plan's edge-case table and amendments;
-- existing tests, fixtures, and test commands.
-
-If any input is unavailable, name it. Do not reconstruct intent from code alone.
-For non-trivial workflow work, run this as a fresh subagent after implementation
-is green and before the frozen mutation/review checkpoint.
+Prefer fresh eyes. On a host without subagents, reset or summarize context and
+run sequentially; state that the pass was not independent. A worker follows this
+procedure directly and does not dispatch another copy of itself.
 
 ## Procedure
 
-1. **Establish the baseline.** Run the narrow relevant tests. Stop if they are
-   not green; hardening must not disguise an existing failure.
-2. **Map new behavior.** Trace changed public behavior, branches, state
-   transitions, error paths, boundaries, and integration seams. Read
-   [edge-case-lenses.md](references/edge-case-lenses.md) for the applicable
-   lenses only.
-3. **Inventory existing proof.** Map each plausible failure to an existing test
-   or mark it unproved. Do not count a test merely because it executes the line.
-4. **Select high-value cases.** A proposed test must name either a new observable
-   contract or a plausible small mutant it would kill. Reject decorative cases.
-5. **Edit tests or fixtures only.** Do not change production code, dependency
-   files, test-runner configuration, snapshots unrelated to the behavior, or
-   generated artifacts.
-6. **Prove each addition.** For a regression, demonstrate the test fails for the
-   identified defect or mutant and passes on correct production code. For a
-   contract test that already passes, explain the distinct failure it guards.
-7. **Run the full relevant suite.** Report additions, omissions, and remaining
-   uncertainty. When the workflow or user authorizes commits, return a green
-   test-only commit; otherwise return the test-only diff and evidence.
+1. **Baseline.** Run the narrow relevant tests. Stop on failure.
+2. **Behavior map.** Trace changed public behavior, boundaries, state
+   transitions, errors, and integration seams. Read only the applicable lenses
+   in [edge-case-lenses.md](references/edge-case-lenses.md).
+3. **Existing proof.** Map each risk to a behavioral test or mark it unproved.
+   Executing a line is not proof.
+4. **Select value.** Add at most one focused test per changed public behavior
+   per applicable lens. Each must name the distinct externally visible failure
+   or small fault it detects.
+5. **Edit tests/fixtures only.** Do not edit production, dependencies, runner
+   configuration, unrelated snapshots, or generated files.
+6. **Prove the addition.** Run it green on the correct implementation. For a
+   red proof, use a scratch copy/worktree or the known pre-fix commit, introduce
+   only the named fault there, observe failure, then discard it. Never hand-
+   mutate the feature checkout. Hash/check the production diff before and after.
+7. **Finish.** Run the full relevant suite and report additions, omissions, and
+   residual risk.
+
+Stop when every applicable risk is covered, deliberately omitted with a reason,
+or returned as a production defect. Do not keep generating tests for coverage.
 
 ## Production defects
 
-If inspection exposes a real production bug:
+Write the smallest failing public regression and return it to the implementer;
+do not fix production in this role. After the fix, rerun the regression and only
+the hardening risks affected by the changed implementation.
 
-1. write the smallest failing public-behavior regression test;
-2. do not fix production code in this role;
-3. return the failing test and evidence to the implementer;
-4. after the fix, rerun the regression and relevant suite;
-5. repeat hardening only for implementation paths changed by the fix.
+Rust repositories that keep `#[cfg(test)]` modules inside `src/*.rs` cannot add
+those tests while satisfying this skill's path-level test-only boundary. Report
+that limitation and ask the ordinary implementation/review workflow to add the
+in-file test; do not pretend the production file stayed byte-identical.
 
-A red handoff is a valid hardening result. Quietly repairing production code is
-not.
+## Quality rules
 
-## Test quality rules
-
-- Assert public results, externally visible state, documented errors, durable
-  side effects, or protocol messages—not private helpers or call order.
-- Prefer the narrowest test level that proves the contract. Use integration or
-  end-to-end tests when the risk lives at a seam.
-- Keep one behavioral reason per test. Parameterize genuine boundary families.
-- Use deterministic clocks, seeds, fixtures, and resources.
-- Avoid broad snapshots when a semantic assertion is available.
-- A test that cannot name the failure it guards is not added.
+- Assert public results, visible state, documented errors, durable side effects,
+  or protocol messages—not private helpers or incidental call order.
+- Keep one behavioral reason per test; parameterize real boundary families.
+- Use deterministic clocks, seeds, fixtures, ports, and resources.
+- Prefer semantic assertions to broad snapshots.
+- A test that cannot name its distinct failure is not added.
 
 ## Output
 
-Return:
-
 ```text
 BASELINE: command and result
-BEHAVIOR MAP: changed public behaviors and uncovered risks
-ADDED: test path → observable contract or named mutant
-PROOF: failure evidence → green evidence
+BEHAVIOR MAP: behavior → lens → existing proof or gap
+ADDED: test path → observable failure
+PROOF: scratch/pre-fix red evidence → clean green evidence
+PRODUCTION HASH/DIFF CHECK:
 PRODUCTION BUGS: failing handoffs, if any
-OMITTED: case, reason, and residual risk
+OMITTED: case → reason → residual risk
 FINAL: relevant suite command and result
 ```
 
-The production diff before and after this stage must be byte-identical.
-
 ## Do not use
 
-- During initial red-green TDD; write the planned behavior test there.
-- For a typo, documentation-only edit, or other change with no executable
-  behavior.
-- As a substitute for independent code review.
-- To chase a coverage percentage without a concrete behavioral risk.
-- To repair surviving mutants; use `mutation-testing` after the green freeze.
+- During initial red-green TDD.
+- For documentation-only or non-executable changes.
+- As a substitute for independent review.
+- To chase a coverage percentage without a named behavioral risk.
+- To repair mutation survivors; use opt-in `mutation-testing` after a freeze.
+

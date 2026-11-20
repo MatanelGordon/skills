@@ -1,60 +1,54 @@
 # Mutation adapter contract
 
-Every language adapter supplies the same evidence. Read the chosen language
-file under `adapters/` for commands and engine-specific limitations.
+Read one language adapter after selecting an explicit project root. Multiple
+ecosystems are separate scopes; do not infer a monorepo-wide command.
 
 ## Inputs
 
-- frozen green commit and merge base;
-- changed production paths and lines;
-- explicit project root when multiple manifests exist;
-- clean test command and supported runner;
-- wall-clock and mutant budgets;
-- isolated resource configuration;
-- compatible engine version selected from its current official documentation.
+- frozen commit and merge base, or a user-named standalone scope;
+- changed production paths/lines and clean test command;
+- runtime, runner, and pinned engine version;
+- isolated resource configuration; and
+- wall-clock and mutant budgets with an owner-approved stop time.
 
-## Required phases
+## Required evidence
 
-1. **Compatibility check** — report runtime, test runner, engine version, and
-   whether the combination is stable, preview, or unsupported.
-2. **Clean baseline** — run the unmutated suite and stop if it is not green.
-3. **Changed scope** — configure exact files or diff lines where supported;
-   record any unavoidable broader scope.
-4. **Native run** — prefer the engine's worker pool before agent sharding.
-5. **Machine artifact** — retain the raw JSON or native outcome files and hash
-   them before triage.
-6. **Normalization** — copy engine status into the shared raw field unchanged.
-7. **Targeted proof** — after a test change, run clean code and the exact mutant
-   when supported. Otherwise rerun the narrowest reproducible location/type
-   scope and verify the same native mutant location/type no longer survives.
-8. **Combined rerun** — rerun the accepted scope after integration.
+1. Confirm the runtime, runner, executable, and pinned engine version.
+2. Run the unmutated baseline and stop if red.
+3. Record native diff/file/function/range scope; disclose broader fallback scope.
+4. Prefer engine-native workers before extra agent lanes.
+5. Retain and hash the raw machine artifact before triage.
+6. Keep the raw label and engine meaning separate from workflow decisions.
+7. After remediation, run clean code and the exact mutant when supported;
+   otherwise use the narrowest reproducible selector and match location/type.
+8. Rerun the accepted combined scope after any imported tests.
 
-## Shared statuses
+## Engine truth and workflow decisions
 
-Map only to these normalized completion classes:
+| Native meaning | Typical raw evidence | Workflow decision |
+|---|---|---|
+| detected | killed/caught; timeout where the engine counts it detected | verified; timeouts are visible and spot-checked |
+| undetected | survived/lived/no coverage/no tests | actionable survivor unless evidenced equivalent |
+| excluded | compile error/unviable/runtime-invalid mutant | resolved and counted; no remediation required |
+| out of scope | ignored/diff-skipped/explicit filter | resolved and counted outside selected scope |
+| pending | pending/not checked/interrupted/unrun | incomplete |
 
-| Engine evidence | Completion class |
-|---|---|
-| killed/caught | verified |
-| survived/lived | actionable-survivor pending separate triage |
-| no coverage | incomplete |
-| timeout | incomplete |
-| compile/unviable/runtime/harness error | incomplete until disposition is evidenced |
-| skipped/unrun/budget-exhausted | incomplete |
+A red baseline, harness-wide failure, missing report, or exhausted budget also
+makes the run incomplete. A timeout is not a kill label; it retains its native
+label even where the engine counts it as detected. A human equivalent decision
+requires a rationale and independent reviewer and never rewrites raw evidence.
 
-The raw engine label remains alongside the normalized class. Human triage never
-replaces it.
+Use the classifier for audited status mappings:
+
+```bash
+node <mutation-testing-skill-dir>/scripts/mutation-protocol.mjs classify \
+  --engine cargo-mutants --status Unviable --mutant 12 --location src/lib.rs:8
+```
 
 ## Concurrency
 
 One coordinator owns scope and the final report. Native workers are the default.
-Additional lanes require:
+Additional lanes are optional and require disjoint source scopes, test/fixture
+ownership, isolated resources, and a predicted saving larger than duplicated
+setup. Merge raw reports before assigning remediation.
 
-- disjoint projects or behavior clusters;
-- disjoint test and fixture paths;
-- isolated ports, databases, files, caches, and services;
-- a measured or estimated saving larger than duplicated setup;
-- at most three lanes;
-- one merged report before assigning remediation.
-
-If ownership overlaps, merge the clusters or run them serially.

@@ -1,0 +1,13 @@
+{
+  "engine": "stryker-js",
+  "counts": {
+    "Killed": 3,
+    "Timeout": 1,
+    "NoCoverage": 2,
+    "CompileError": 1,
+    "Ignored": 8,
+    "Pending": 1
+  },
+  "budgetExhausted": false
+}
+

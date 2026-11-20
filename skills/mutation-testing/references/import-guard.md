@@ -1,62 +1,60 @@
 # Test-only import guard
 
-The mutation worktree is disposable and never merged. A candidate test commit
-may return only through this fail-closed sequence.
+The mutation worktree/clone is disposable and never merged. A return candidate
+must be exactly one non-merge commit whose parent is the frozen approved commit.
+That makes the complete candidate history inspectable and prevents a branch that
+mutated then restored production from replaying hidden commits.
 
-## Before integration
+## Validate
 
-1. Identify the reviewed target commit and candidate parent.
-2. Enumerate every changed path, including modes and symlink targets.
-3. Allow only repository-approved test and fixture paths.
-4. Reject production paths, generated output, snapshots unrelated to the
-   behavior, runner configuration, manifests, dependency metadata, and lockfiles.
-5. Reject every symlink, submodule, device, or other non-regular file.
-6. Compare all nonallowed paths byte-for-byte with the reviewed target.
-7. Run the candidate test on clean production code.
-8. Run the targeted mutant proof and observe the new test fail for that fault.
-
-9. Obtain focused approval from an independent reviewer for the public
-   assertion, deterministic fixture, and test-only diff.
-
-Run the Git-backed guard so it enumerates the trees itself rather than trusting
-a caller-supplied file list:
+Run from any directory; `<mutation-testing-skill-dir>` is the installed skill
+folder, not the user's repository:
 
 ```bash
-node scripts/mutation-protocol.mjs git-import \
+node <mutation-testing-skill-dir>/scripts/mutation-protocol.mjs git-import \
   --repo /absolute/repository/path \
-  --approved <reviewed-ref> \
-  --candidate <test-only-ref> \
+  --approved <frozen-reviewed-sha> \
+  --integration <current-integration-ref> \
+  --candidate <one-test-only-commit> \
   --allow 'tests/**' \
-  --allow '**/*.test.js'
+  --allow '**/*_test.go'
 ```
 
-It fails on an empty candidate, unsafe/non-canonical path, deletion, rename,
-mode change, symlink, submodule, runner/config/manifest/dependency change,
-or any changed path outside the repository-specific test/fixture allowlist. The
-metadata rule is deliberately conservative: manifest-shaped TOML, lock, project,
-toolchain, requirements/constraints, and build files are rejected even under a
-test directory. Hidden path segments and repository/editor/linter metadata are
-also rejected because they can alter checkout or test behavior. Rename
-legitimate fixture data to an explicitly non-metadata name before replaying it
-on the reviewed head. Paths must also be portable: controls, non-NFC Unicode,
-Windows-invalid characters/device names, trailing dot/space, and conservative
-Unicode case-fold collisions across the entire candidate tree are rejected.
+The current integration ref must still resolve to the approved SHA. The command
+uses Git plumbing with replacement refs and inherited `GIT_*` selectors disabled,
+and enumerates modes, object IDs, submodules, and every changed path. It rejects
+production paths, deletions, type/mode changes, symlinks, submodules, new
+executables, runner/dependency/build configuration, hidden/dependency paths,
+unsafe names, portable collisions involving a changed path, unsupported globs,
+and an empty candidate.
 
-## Integration
+Allowed fixture/testdata paths may contain canonical data names such as
+`package.json` or `.toml`; ordinary ecosystem test names such as
+`config.test.js`, `test_config.py`, `config_test.go`, and `*Tests.cs` are valid.
+The configuration-name filter is best effort. Repository-specific allow patterns
+remain a reviewed trust boundary; use narrow paths. Supported syntax is literal
+text plus `*` and `**`; `[`, `?`, `{}`, a leading `./`, and trailing `/` fail
+with `INVALID_ALLOWLIST` instead of silently mis-matching.
 
-Cherry-pick or replay the test-only commit onto the reviewed target. If any
-conflict occurs:
+Success requires both exit status 0 **and** JSON stdout containing `"ok": true`.
+Never treat an empty stdout or exit status alone as approval. Failure writes JSON
+to stderr and exits nonzero, including through a symlink-installed skill.
 
-```text
-abort the cherry-pick → regenerate or replay on reviewed head → rerun every gate
+## Import paths, never history
+
+Use the exact `candidate` and `changed` values from the success JSON:
+
+```bash
+git restore --source=<candidate-sha> --staged --worktree -- <changed-paths...>
+git diff --quiet --no-ext-diff --no-relative --ignore-submodules=none \
+  --no-renames <approved-sha> -- . ':(exclude,glob)tests/**'
 ```
 
-Never hand-resolve a conflict from a mutation branch. Manual reconstruction can
-silently import mutated code or invalidate the original proof.
+Inspect, run clean tests and the targeted fault proof, then commit the restored
+paths on the reviewed branch. Do not cherry-pick, merge, or replay candidate
+history. A stale target or conflict means regenerate one new direct-child
+candidate from the current reviewed head.
 
-## After integration
+Run the guard again on the resulting one-commit import, then the clean suite and
+targeted proof. Rust tests embedded in production files are outside this guard.
 
-Rerun the path allowlist, file-type and symlink checks, nonallowed-path byte
-comparison, clean suite, and targeted-mutant proof on the integrated target. Then
-run the combined scoped mutation suite. Only this post-integration evidence
-counts at the workflow join.

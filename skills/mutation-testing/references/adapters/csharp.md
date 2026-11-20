@@ -1,50 +1,45 @@
 # C# adapter — Stryker.NET
 
-Official documentation:
-<https://stryker-mutator.io/docs/stryker-net/getting-started/> and
-<https://stryker-mutator.io/docs/stryker-net/configuration/>
+Official docs: <https://stryker-mutator.io/docs/stryker-net/getting-started/>
+and <https://stryker-mutator.io/docs/stryker-net/configuration/>.
 
 ## Compatibility and setup
 
-Use Stryker.NET 5.1.0 as the audited baseline and re-check the official release
-notes before pinning. This release requires the .NET 10 runtime to execute even
-when the project targets an older framework.
+Use Stryker.NET 5.1.0 (requires .NET 10 to execute):
 
 ```bash
 dotnet tool install dotnet-stryker --version 5.1.0 --tool-path .mutation-tools
-.mutation-tools/dotnet-stryker --version
+dotnet tool list --tool-path .mutation-tools
 ```
 
-Prefer an ephemeral tool path or an already approved tool manifest. Do not
-return tool manifests or lock changes in a mutation test-only commit.
-
-## Runner selection
-
-- xUnit, NUnit, and MSTest normally use the VSTest runner.
-- TUnit and xUnit v3 require `--test-runner mtp`.
-- The Microsoft Testing Platform integration is preview. Preserve that fact in
-  the report and spot-check suspicious results; MTP does not create different
-  result categories.
+`--version` is project/dashboard metadata in this release; it is not the tool
+version check. Tool manifests/config changes stay in the disposable worktree.
 
 ## Scope and run
 
-Stryker.NET `mutate` patterns support file globs and span filters. Generate a
-temporary config outside the candidate commit or pass approved CLI options:
+Run from the test project directory so project-relative paths are honest. Use
+native Git scoping against the exact merge base:
 
 ```bash
-.mutation-tools/dotnet-stryker \
-  --mutate 'src/**/*.cs' \
+cd tests/App.Tests
+../../.mutation-tools/dotnet-stryker \
+  --since:<merge-base> \
   --reporter json \
-  --output .mutation-tmp/stryker-output
+  --output ../../.mutation-tmp/discovery
 ```
 
-For TUnit or xUnit v3 add `--test-runner mtp`. Stryker.NET normally selects
-covering tests and uses roughly half the logical processors. Use its native
-concurrency before creating agent lanes.
+For TUnit or xUnit v3 add `--test-runner mtp` and report that MTP support is
+preview. If a targeted proof needs a span, use a test-project-relative source
+pattern such as:
 
-## Evidence and limits
+```bash
+../../.mutation-tools/dotnet-stryker \
+  --mutate '../../src/App/Calculator.cs{42..42}' \
+  --reporter json --output ../../.mutation-tmp/targeted
+```
 
-Retain the JSON report plus runtime, runner, target framework, mutation pattern,
-and command. Treat timeout, no coverage, compile error, and preview-runner
-anomalies as incomplete until evidenced. Restore production code before every
-test edit and targeted proof.
+`--since` is native diff selection; `--mutate` is explicit project-relative
+scope. Native `NoCoverage` is undetected/actionable, timeout detected with a
+spot check, compile/runtime errors excluded, `Ignored` out of scope, and
+`Pending` incomplete.
+

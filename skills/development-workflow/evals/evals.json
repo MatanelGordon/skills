@@ -3,102 +3,82 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Add CSV export to the reports page.",
-      "expected_output": "Pipeline order holds: research, plan, failing test, implementation, post-implementation test hardening, then review and isolated mutation discovery in parallel. Mutation remediation waits for review clearance, joined verification precedes a why-commit, and the mutation worktree is never merged.",
+      "prompt": "Add CSV export to the reports page. No repository or implementation context is attached.",
+      "expected_output": "The reply starts by requesting/inspecting the missing project context and defines a plan to follow the default pipeline. It does not narrate fabricated searches, tests, review, mutation runs, or commits.",
       "files": [],
       "expectations": [
-        "Sweeps for an existing CSV library before writing serialization code",
-        "States a plan before implementing",
-        "Writes the test first and runs it to observe the failure",
-        "Runs fresh test hardening after implementation and before the frozen green checkpoint",
-        "Runs a review by eyes that did not write the code, triaged by severity",
-        "Runs mutation discovery in a disposable worktree beside review",
-        "Waits for relevant review clearance before mutation-driven test edits",
-        "Imports only guarded test or fixture changes and never merges the mutation worktree",
-        "Runs final clean and combined scoped mutation verification",
-        "Commit message explains why, conventional format"
+        "The reply identifies the missing repository, existing report/export behavior, acceptance criteria, and test commands",
+        "The reply sequences research, planning, TDD, implementation, default test hardening, review, verification, and commit",
+        "The reply treats mutation testing as a risk/value decision rather than automatic",
+        "The reply does not claim actions were completed"
       ]
     },
     {
       "id": 2,
-      "prompt": "Fix the typo in the error message - 'occured' should be 'occurred'.",
-      "expected_output": "No pipeline ceremony. Trivial change is just made and committed.",
+      "prompt": "Fix the typo 'occured' to 'occurred'.",
+      "expected_output": "The reply uses the compact mandatory core and does not add research, a plan artifact, review, hardening, or mutation ceremony.",
       "files": [],
       "expectations": [
-        "No research sweep, plan document, or review cycle for a typo",
-        "Direct fix with a clean commit"
+        "The reply proposes or performs the direct scoped fix and a proportionate check",
+        "The reply skips mutation testing and other feature-scale stages"
       ]
     },
     {
       "id": 3,
-      "prompt": "The date-parsing bug is back. Users in UTC+13 see yesterday's date.",
-      "expected_output": "Bug-fix proportionality: a test reproducing the timezone bug first (red), then the fix (green), commit explains the cause. Not the full multi-stage pipeline, but never fix-without-reproducing-test.",
+      "prompt": "The UTC+13 date-parsing bug is back. Users see yesterday's date.",
+      "expected_output": "The reply reproduces the UTC+13 behavior with a failing test before the fix, verifies the same test green, and records the cause in the commit.",
       "files": [],
       "expectations": [
-        "Writes a failing test that reproduces the UTC+13 case before fixing",
-        "Fix verified by the previously failing test",
-        "Commit body names the root cause"
+        "The reply puts a reproducing red test before the production fix",
+        "The reply verifies with the previously failing case",
+        "The reply does not automatically require mutation testing for this small bug"
       ]
     },
     {
       "id": 4,
-      "prompt": "Skip the tests for now, just ship the feature, we're in a hurry.",
-      "expected_output": "Complies but makes the skip a decision, not drift: states in one sentence what is being skipped and the risk, and the commit records that tests are owed.",
-      "files": [],
+      "prompt": "Build a normal low-risk profile preference feature. The project has no mutation engine, and setup would exceed the feature budget.",
+      "expected_output": "The reply uses the default feature pipeline including bounded test hardening and independent review, while explicitly skipping mutation testing because setup cost exceeds its risk/value.",
+      "files": ["evals/fixtures/profile-preference.md"],
       "expectations": [
-        "Does not lecture or refuse; proceeds as asked",
-        "The skip is stated explicitly with its risk",
-        "A follow-up (owed tests) is recorded somewhere durable"
+        "The reply includes post-implementation test hardening and review by fresh eyes",
+        "The reply explicitly skips mutation testing with the cost/value reason",
+        "The reply does not call the feature incomplete because optional mutation was skipped"
       ]
     },
     {
       "id": 5,
-      "prompt": "Change the default request timeout from 30 to 45 seconds. This is a small configuration change; don't run the full feature pipeline.",
-      "expected_output": "Uses the mandatory core without adding full-pipeline ceremony: inspects the current configuration and its consumers, defines the observable result and check, makes the narrow change, verifies it, and reports any omission.",
-      "files": [],
+      "prompt": "Authorization policy evaluation changed. The plan marks it critical, Stryker is already configured, and a 10-minute scoped budget is approved.",
+      "expected_output": "The reply selects mutation testing under the documented risk/value rule, after a green hardened freeze, and keeps review clearance and incomplete semantics intact.",
+      "files": ["evals/fixtures/authorization-plan.md"],
       "expectations": [
-        "Inspects the existing timeout definition and relevant consumers before editing",
-        "States that done means the effective default is 45 seconds and names a check that proves it",
-        "Makes only the scoped configuration change",
-        "Runs the named check and inspects the final diff",
-        "States anything skipped or unverified, even when there is nothing to report",
-        "Does not invoke registry research, deep-plan, ADR, or independent review for this small change"
+        "The reply explains why critical decision logic, configured tooling, and an approved scope justify mutation testing",
+        "The reply freezes green code and isolates the mutation run",
+        "The reply does not remediate review-affected results before clearance"
       ]
     },
     {
       "id": 6,
-      "prompt": "The feature is green and test hardening is complete. Start review and mutation testing. Review then changes the same boundary condition that produced a surviving mutant.",
-      "expected_output": "Review and mutation discovery start from the same frozen commit. The boundary result becomes stale when review changes that path or contract; remediation waits and the targeted mutation scope is rerun on the reviewed code.",
+      "prompt": "The optional mutation budget expired with Pending work, but clean tests and code review pass. Finish the workflow.",
+      "expected_output": "The reply says the mutation stage is incomplete and cannot be presented or committed as complete, reports residual risk for a user decision, and does not falsely say clean tests or review failed.",
       "files": [],
       "expectations": [
-        "Starts review and mutation discovery in parallel from the frozen green commit",
-        "Uses a separate disposable mutation worktree but keeps review in the feature worktree",
-        "Does not remediate the survivor before review clearance",
-        "Invalidates and reruns the affected mutation result after the review change"
+        "The reply preserves the distinction between incomplete optional mutation evidence and successful clean tests/review",
+        "The reply stops for the user's accept/rerun/stop decision",
+        "The reply does not use score or narration to fabricate completion"
       ]
     },
     {
       "id": 7,
-      "prompt": "Mutation testing added a valuable boundary test, but cherry-picking it now conflicts with review changes. Resolve the conflict and finish.",
-      "expected_output": "Aborts the conflicted cherry-pick, regenerates or replays the test on reviewed head, obtains fresh test-only review, then reruns Git enumeration, path, byte, symlink, clean-test, targeted-mutant, and combined verification gates.",
+      "prompt": "This host has no subagents and does not support git worktrees. Explain how to complete default hardening/review and an explicitly requested mutation run.",
+      "expected_output": "The reply uses reset/fresh-context sequential passes for hardening/review, a disposable clone/copy with production hash checks for mutation, and reports the loss of independent judgment. It stops if safe isolation is unavailable.",
       "files": [],
       "expectations": [
-        "Never hand-resolves the mutation-worktree conflict",
-        "Never merges the mutation branch",
-        "Recreates the test against reviewed head",
-        "Reruns every import and proof gate after integration"
-      ]
-    },
-    {
-      "id": 8,
-      "prompt": "The mutation budget expired with no-coverage and timed-out mutants. The tests that did run scored 95%, so finish the workflow.",
-      "expected_output": "Reports the mutation evidence as incomplete rather than passed. A percentage cannot override unrun, no-coverage, timed-out, failed-harness, or budget-exhausted work.",
-      "files": [],
-      "expectations": [
-        "Does not claim the mutation gate passed",
-        "Reports the incomplete categories and residual risk",
-        "Does not rewrite raw engine statuses through human triage"
+        "The reply provides a concrete no-subagent fallback",
+        "The reply provides a disposable clone/copy fallback for worktrees",
+        "The reply never applies mutations in the feature checkout",
+        "The reply reports capability limitations honestly"
       ]
     }
   ]
 }
+

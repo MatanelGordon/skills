@@ -1,41 +1,41 @@
 # Rust adapter — cargo-mutants
 
-Official documentation: <https://mutants.rs/in-diff.html> and
-<https://mutants.rs/mutants-out.html>
+Official docs: <https://mutants.rs/in-diff.html> and
+<https://mutants.rs/mutants-out.html>.
 
 ## Compatibility and setup
 
-Use cargo-mutants 27.1.0 as the audited baseline and confirm the current crate
-release before pinning:
+Use cargo-mutants 27.1.0:
 
 ```bash
 cargo install cargo-mutants --version 27.1.0 --locked --root .mutation-tools
+.mutation-tools/bin/cargo-mutants mutants --version
 ```
 
-Keep the tool install and generated output outside candidate test commits.
+The direct binary still requires the `mutants` cargo subcommand token.
 
 ## Diff scope and run
 
-Create a stable diff file from the intended merge base and frozen commit, then
-pass it explicitly:
-
 ```bash
+mkdir -p .mutation-tmp
 git diff --unified=0 <merge-base> <frozen-head> -- '*.rs' > .mutation-tmp/change.diff
-.mutation-tools/bin/cargo-mutants \
+.mutation-tools/bin/cargo-mutants mutants \
   --in-diff .mutation-tmp/change.diff \
-  --output .mutation-tmp/mutants.out
+  --output .mutation-tmp/discovery
 ```
 
-The diff filter chooses mutants in changed regions. Record any dependency or
-macro expansion that makes the effective scope wider. Use cargo-mutants' own
-parallelism before agent sharding.
+`--output` creates `mutants.out` inside the named directory, so retain
+`.mutation-tmp/discovery/mutants.out/outcomes.json`. For targeted proof use the
+narrowest audited selector, for example:
 
-## Evidence and limits
+```bash
+.mutation-tools/bin/cargo-mutants mutants --re '<mutant name>' \
+  --output .mutation-tmp/targeted
+# or scope a file with --file '<path>'
+```
 
-Retain `outcomes.json` and the native missed, caught, timeout, and unviable
-artifacts. Map missed to survivor and caught to killed without changing the raw
-label. Timeout is incomplete. Unviable needs evidence before it can be treated
-as an invalid mutant. For remediation, restore clean sources, add a behavioral
-test, and use cargo-mutants' narrowest selector available for the recorded
-mutant. If it cannot address one mutant, rerun the smallest file/name scope and
-match the same location/type outcome.
+`CaughtMutant` is detected, `MissedMutant` undetected/actionable, `Unviable`
+excluded, and timeout detected but spot-checked. In-file `#[cfg(test)]` edits
+cannot return through the path-based import guard; add them before the freeze in
+the normal reviewed workflow.
+

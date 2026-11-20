@@ -1,47 +1,39 @@
 # Python adapter — Mutmut
 
-Official documentation: <https://mutmut.readthedocs.io/en/latest/>
+Official docs: <https://mutmut.readthedocs.io/en/latest/>.
 
 ## Compatibility and setup
 
-Use Mutmut 3.8.1 as the audited baseline. Re-check PyPI and the official docs
-before pinning in a project. Mutmut requires fork semantics; on Windows, run it
-under WSL. Install in the project's isolated development environment:
+Use Mutmut 3.8.1 under a project environment. It requires fork semantics; use
+WSL on Windows.
 
 ```bash
 python -m pip install 'mutmut==3.8.1'
+mutmut --version
 ```
 
-Do not add the dependency or its metadata during test-only remediation unless
-the owning project explicitly approves that separate configuration change.
+Mutmut 3 reads configuration only from `pyproject.toml` or `setup.cfg`. Any
+temporary `source_paths`, `only_mutate`, or `do_not_mutate` edit stays in the
+disposable worktree and never enters the test-only candidate.
 
-## Scope and run
+## Scope, run, and headless proof
 
-Configure production roots with `source_paths`, then narrow through `only_mutate`
-or `do_not_mutate` in project configuration. For a targeted function family:
+Exact changed-line selection is not portable; disclose function/file expansion.
+Run discovery, then use noninteractive commands:
 
 ```bash
 mutmut run 'package.module.function*'
-mutmut browse
+mutmut results
+mutmut show '<mutant-name>'
+mutmut run '<mutant-name>'
+mutmut export-cicd-stats
 ```
 
-Mutmut remembers prior outcomes, selects tests related to mutated code, and can
-run mutants in parallel. Clear or segregate its cache when the frozen commit,
-test command, or scope changes so old evidence is not mistaken for a new run.
-Inside `mutmut browse`, select a mutant and press `r` to rerun it. Use
-`mutmut apply <mutant-id>` only when you need to inspect the mutation in the
-disposable worktree; restore clean production before editing tests.
+Do not depend on `mutmut browse`; it is an interactive Textual UI. Retain the
+per-file/result metadata under `mutants/` (including exported CI stats), and
+delete or segregate that directory when commit, tests, or scope changes.
 
-## Evidence and limits
+`killed`, `caught by type check`, and timeout are detected (spot-check timeout);
+`survived` and `no tests` are undetected/actionable; `suspicious`/segfault are
+excluded; `skipped` is out of scope; `not checked` or interrupted is incomplete.
 
-Retain its result database/output and record the selected mutant from
-`mutmut browse` for targeted proof. Path and function selection are supported;
-exact changed-line selection is not a portable Mutmut contract. If the selected
-function is broader than the diff, report that expansion. Use the TUI's selected
-mutant rerun when available; otherwise rerun the narrowest function pattern and
-match the same location/type outcome.
-
-Preserve Mutmut's native labels. `killed` and `caught by type check` are caught;
-`survived` is actionable; `no tests` is no coverage; and `skipped`, `not
-checked`, interruption, `suspicious`, timeout, and segfault remain incomplete.
-Do not count an abnormal test-run result as a surviving or killed mutant.

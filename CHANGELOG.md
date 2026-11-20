@@ -53,6 +53,10 @@
   symlink, which is how a symlink-installed `council` skill is reached. They
   compared the path as typed with the resolved module path; they now compare
   real paths, with a regression test per entry point.
+- Fixed `npm test` exiting 9 before running anything on older Node 18 releases
+  such as 18.18.0, which reject `--test-concurrency=1` as a bad option. The
+  runner now asks the running Node whether it supports the flag and otherwise
+  starts one test file at a time itself, so the suite stays serial.
 
 ## 1.21.1 — 2026-11-20
 

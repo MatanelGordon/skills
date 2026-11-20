@@ -26,8 +26,6 @@ import {
   validateLiveSmokeLedger,
 } from '../scripts/council-protocol.mjs';
 
-const normalizeNewlines = (text) => text.replace(/\r\n?/g, '\n');
-
 const BRIEF = `DECISION: Choose the boundary for the billing capability.
 OPTIONS: A) Keep it in the monolith B) Extract a service
 CONSTRAINTS: Preserve the public API and avoid downtime.
@@ -40,6 +38,8 @@ const PERSONA_BLOCKS = {
   Maintainer: 'PERSONA Maintainer',
   Visionary: 'PERSONA Visionary',
 };
+
+const normalizeNewlines = (text) => text.replace(/\r\n?/gu, '\n');
 
 const response = (vote = 'A', confidence = '4/5', argument = 'The current boundary has 2 (code-read: src/billing.ts exports) public seams.') => `VOTE: ${vote}
 POSITION: Choose ${vote} for the stated constraints.

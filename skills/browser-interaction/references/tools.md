@@ -1,105 +1,172 @@
-# Browser driving tool landscape
+# Browser tool routing
 
-What to look for before writing automation, and what to recommend when nothing
-suitable is installed.
+Read this when the harness does not already make the route obvious, or before
+using the optional shell-only Chrome client. The goal is one browser capability
+per job, not the largest possible tool stack.
 
-> **Verification status.** The Playwright loop and `aria_snapshot()` in `SKILL.md`
-> were **executed on this machine** (Playwright Python 1.58.0, Chromium; macOS).
-> `safaridriver` was confirmed present. Everything else below was **found by
-> search on 2026-08-22 and not installed or run here** — capabilities and names
-> change quickly in this space, so re-check before depending on one.
+> **Checked 2026-11-20.** The optional terminal client below is the official
+> `chrome-devtools` CLI shipped by
+> [ChromeDevTools/chrome-devtools-mcp](https://github.com/ChromeDevTools/chrome-devtools-mcp).
+> The upstream project is Apache-2.0. Its package, flags, and defaults can
+> change; verify the pinned release before updating this reference.
 
----
+## Decision table
 
-## How to search
+| Need | First route | Why |
+|---|---|---|
+| Current fact, docs, public source | Harness-native web search | Source retrieval without browser lifecycle or session state |
+| Click through a real or signed-in page | Harness-native browser/computer control | Real profile, cookies, extensions, and visible user session |
+| Chrome console/network/CSS/performance from a shell-only agent | Hardened `chrome-devtools` CLI | Deep DevTools evidence without adding MCP schemas to every prompt |
+| Cross-engine exploratory run | Existing Playwright installation | Chromium, Firefox, and WebKit behind one API |
+| Genuine Safari behavior | `safaridriver` on macOS | Playwright WebKit is not branded Safari |
+| Deterministic screenshots of offline local HTML | Repository `browser-capture` CLI | Narrow exact-viewport evidence; not a general browsing tool |
+
+Native search and browser control do not overlap. Search answers from sources;
+browser control observes a rendered, interactive session. Use both only when
+the task needs both kinds of evidence.
+
+## Optional CLI-only Chrome diagnosis
+
+Use this only when a terminal agent has shell access but no native browser
+control. The supported setup is:
+
+- `chrome-devtools-mcp@1.13.0`, pinned exactly rather than `@latest`;
+- Node `^20.19.0 || ^22.12.0 || >=23`;
+- the package's official `chrome-devtools` terminal client;
+- telemetry, update checks, and CrUX disabled;
+- isolated profile, headless mode, and an explicit workspace.
+
+One-time operator installation (never perform this implicitly during a browser
+task):
 
 ```bash
-# published Agent Skills
-gh search code --filename SKILL.md "playwright" --limit 20
-gh search code --filename SKILL.md "browser automation" --limit 20
-
-# MCP servers
-gh search repos "mcp browser automation" --limit 20
-gh search repos "mcp playwright" --limit 20
+npm install --global chrome-devtools-mcp@1.13.0
 ```
 
-Also check the host's own configured MCP servers and any built-in browser
-integration — those are already authorised and cost nothing to use.
-
-## MCP servers — the two main options solve different problems
-
-| | **Playwright MCP** | **Chrome DevTools MCP** |
-|---|---|---|
-| Engines | Chromium, Firefox, WebKit | Chromium only |
-| How the agent sees the page | Accessibility-tree snapshots | Screenshots plus CDP calls |
-| Built for | Cross-browser interaction and journeys | Performance, network, console, DevTools-style debugging |
-| Best when | You need to click through a flow, especially across engines | You need to know *why* — what failed, what was slow, what the console said |
-
-**Rule of thumb:** if the task is "click through this and tell me what happens",
-start with Playwright MCP. If the task is "why is this slow / which request
-failed / what's in the console", reach for Chrome DevTools MCP. They compose —
-using both is normal, not redundant.
-
-Accessibility-tree snapshots are usually the better default for an agent: fewer
-tokens than an image, quotable in a report, and they expose accessible names, so
-a control that is invisible to assistive tech is visible *to you* as a problem.
-
-## Host browser control
-
-Some agent environments can drive the **user's own browser** — real profile, real
-cookies, real logins, real extensions. When available this is the strongest
-option for anything behind authentication or dependent on real session state, and
-no headless tool substitutes for it.
-
-Trade-offs worth stating before using one: it acts on a real browser the user may
-be using, it can touch real accounts, and it is not reproducible in CI. Confirm
-before driving anything that mutates real data.
-
-## Libraries and CLIs
-
-| Tool | Strength | Weakness |
-|---|---|---|
-| **Playwright** | Three engines, one API. Auto-waiting removes most flakiness. Trace viewer, video, network interception, ARIA snapshots | Browser bundles download separately; WebKit is not Safari |
-| **Puppeteer** | Mature, direct CDP access, small API | Chromium-centric |
-| **Selenium / WebDriver** | The W3C standard; the only route to *real* branded Safari | More ceremony, manual waiting, separate drivers per browser |
-| **`safaridriver`** | Ships with macOS. The only way to drive genuine Safari | macOS only; needs `--enable` and Allow Remote Automation |
-| **Stagehand** | Natural-language actions layered on Playwright | Extra dependency and indirection; less predictable than explicit selectors |
-| **browser-use** | Agent-oriented browsing loop | Aimed at autonomous browsing rather than targeted verification |
-
-## Engine-to-browser mapping
-
-| Engine | Ships in | Playwright name |
-|---|---|---|
-| Chromium (Blink) | Chrome, Edge, Brave, Opera | `chromium`, or `channel="chrome"` / `channel="msedge"` for branded builds |
-| Gecko | Firefox | `firefox` |
-| WebKit | Safari | `webkit` — **approximation only** |
-
-Playwright's WebKit tracks WebKit main, frequently ahead of shipped Safari, and
-Playwright cannot drive branded Safari because it depends on patched builds. For
-the closest approximation run WebKit **on macOS**, where platform-dependent
-behaviour like media codecs is nearer to Safari's. For an actual answer about
-Safari, use `safaridriver`.
-
-## When nothing is installed — what to recommend
-
-Say plainly that nothing suitable is configured, then recommend by need:
-
-- **General interaction, cross-browser** → Playwright MCP if the host supports
-  MCP; otherwise the Playwright library.
-- **Debugging why something failed or is slow** → Chrome DevTools MCP.
-- **Anything behind a real login** → host browser control, else Playwright with
-  saved storage state.
-- **A genuine Safari question** → `safaridriver`; nothing else answers it.
-
-Give the install command with the recommendation, so the user can act on it in
-one step:
+Every client call must carry both privacy environment variables; shell state
+does not reliably persist between agent calls. First inspect the daemon:
 
 ```bash
-pip install playwright && playwright install chromium firefox webkit
-# or
-npm i -D playwright && npx playwright install
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 \
+  chrome-devtools status
 ```
 
-Do not hand-roll a CDP client. It is a large, sharp, undocumented-in-practice
-surface, and Playwright exists precisely because doing it directly is a bad
-trade — a point the CDP maintainers themselves make.
+If no daemon is running, start one with a URL boundary for the authorized
+origin. `start` means start **or restart**, so do not run it over an existing
+service. Replace the example origin and workspace with the task's actual scope:
+
+```bash
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 \
+chrome-devtools start \
+  --performanceCrux=false \
+  --usageStatistics=false \
+  --isolated \
+  --headless \
+  --allowedUrlPattern='http://localhost:3000/*' \
+  --workspace=/absolute/path/to/project
+```
+
+Run `status` again with the same environment prefix and compare its version and
+arguments with this policy. If an existing daemon differs, do not use it:
+either ask before stopping/restarting it or report that a hardened restart is
+needed. A status failure followed by another tool command is unsafe because
+ordinary commands auto-start an unhardened daemon.
+
+Core shell-only interaction, with the environment repeated on every call:
+
+```bash
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools new_page --url='http://localhost:3000/' --output-format=json
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools take_snapshot 1 --output-format=json
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools list_console_messages 1 --output-format=json
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools list_network_requests 1 --output-format=json
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools status
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools stop
+```
+
+Stop the task-owned daemon when finished. The client may use a local background
+service internally; its benefit is shell invocation without registering an MCP
+tool surface in every model context.
+
+The CLI is general browser interaction, so ordinary task authorization still
+applies. A request to inspect a local page does not authorize unrelated public
+browsing, account mutations, purchases, form submission, or use of stored
+credentials.
+
+### Testing UA-dependent behavior on an owned or authorized target
+
+First use native browser control or restart the task-owned daemon without
+`--headless`; that preserves coherent Chrome client hints without spoofing. If
+the application specifically needs a UA-string compatibility test, version
+1.13.0 supports `emulate <pageId> --userAgent=<value>`. Capture the blocked
+baseline, start from `about:blank`, and use one value consistent with the actual
+Chrome engine, major version, operating system, and viewport.
+
+```bash
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools list_pages --output-format=json
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools emulate 1 \
+  --userAgent='Mozilla/5.0 (<matching OS>) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/<installed-major>.0.0.0 Safari/537.36' \
+  --output-format=json
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools navigate_page 1 --type=url --url='https://authorized.example/' --output-format=json
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools evaluate_script \
+  '() => ({userAgent: navigator.userAgent, userAgentData: navigator.userAgentData?.toJSON?.() ?? null})' \
+  --pageId 1 --output-format=json
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools list_network_requests 1 --output-format=json
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools get_network_request 1 --reqid=<document-request-id> --output-format=json
+```
+
+The final request inspection proves the sent `user-agent` header. Clear the
+override with the same environment prefix and
+`chrome-devtools emulate 1 --userAgent=''`. Both setting and clearing the UA
+replace all emulation settings, so reapply any viewport, color-scheme, or
+throttling configuration that the test still needs.
+
+A local probe confirmed that the header and `navigator.userAgent` changed, but
+`navigator.userAgentData` returned empty brands and platform values because
+this CLI option supplies only the UA string, not coherent client-hint metadata.
+Sites can also inspect browser behavior, cookies, IP reputation, TLS, and other
+automation signals. Therefore this can fix a simplistic `HeadlessChrome`
+compatibility block, but it cannot guarantee admission and may make a
+fingerprint less coherent. This is compatibility testing, not stealth. Do not
+impersonate Safari/Firefox with a Chrome engine, rotate identities, bypass a
+site's access policy, or hide the override from the verification report. If one
+matching-UA retry fails, prefer native browser control or report the block.
+
+## MCP when it is already part of the host
+
+Do not broadly register a browser MCP just for this skill. If the user selected
+one or the host already exposes one, it is a native capability for this task:
+
+| Existing server | Best fit | Limit |
+|---|---|---|
+| Playwright MCP | Accessible interaction and cross-engine journeys | Clean automation session unless configured otherwise |
+| Chrome DevTools MCP | Chrome performance, network, console, and CSS debugging | Chromium-only and a larger always-visible tool schema |
+
+Prefer Playwright-style accessibility snapshots for actions and Chrome
+DevTools evidence for diagnosis. Do not start both unless the evidence actually
+requires both.
+
+## Libraries and drivers
+
+| Tool | Strength | Limit |
+|---|---|---|
+| Playwright | Auto-waiting, traces, ARIA snapshots, three engines | Browser bundles install separately; WebKit is not Safari |
+| Puppeteer | Mature Chrome automation and DevTools access | Primarily Chromium; use an existing project dependency |
+| Selenium / WebDriver | W3C route to shipped browsers | More driver and wait management |
+| `safaridriver` | Real Safari on macOS | Requires Allow Remote Automation and macOS |
+
+When the user explicitly asks for a script, the script is the deliverable: use
+the project's installed library and write it. Tool discovery is for choosing a
+runtime, not for evading an explicit coding request. Never put real credentials
+in the script or transcript.
+
+## When nothing fits
+
+State the missing capability and recommend one setup:
+
+- cross-browser interaction: Playwright;
+- shell-only Chrome diagnosis: the pinned, hardened CLI above;
+- signed-in real session: host browser control or a user-provided saved storage
+  state;
+- genuine Safari: `safaridriver`.
+
+Do not hand-roll CDP transport, browser-process discovery, or daemon lifecycle.

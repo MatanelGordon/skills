@@ -39,6 +39,19 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: npm run test:mutation-smoke
+  browser-capture:
+    if: github.event_name != 'schedule'
+    name: Browser capture / Node 22
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run setup:browser-capture
+      - run: npm run test:browser-capture
+      - run: npm run test:impeccable-lite
   provenance:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     name: PSTACK provenance drift

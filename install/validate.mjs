@@ -2,7 +2,7 @@
 /** Repository validator: structure, executable syntax, eval schemas, and release docs. */
 import { readdir, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { extname, join, resolve } from 'node:path';
+import { extname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
@@ -28,6 +28,7 @@ function fencesBalanced(text) {
 
 const idKeyCount = (text) => [...text.matchAll(/"id"\s*:/g)].length;
 const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const repositoryPath = (root, path) => relative(root, path).replaceAll('\\', '/');
 const extractFrontmatter = (text) => (
   /^---\r?\n([\s\S]*?)\r?\n---\r?\n/.exec(text)?.[1]?.replace(/\r\n?/g, '\n')
 );
@@ -50,6 +51,7 @@ export async function validateRepository(root = DEFAULT_ROOT) {
 
   const walk = async (skill, dir) => {
     for (const entry of await readdir(dir, { withFileTypes: true })) {
+      if (entry.name === 'node_modules') continue;
       const full = join(dir, entry.name);
       if (entry.isDirectory()) {
         await walk(skill, full);
@@ -68,7 +70,7 @@ export async function validateRepository(root = DEFAULT_ROOT) {
         if (result.status !== 0) fail(skill, `${entry.name}: bash -n → ${result.stderr.trim().split('\n')[0]}`);
       } else if (ext === '.mjs' || ext === '.js') {
         const result = spawnSync(process.execPath, ['--check', full], { encoding: 'utf8' });
-        if (result.status !== 0) fail(skill, `${entry.name}: node --check → ${result.stderr.trim().split('\n')[0]}`);
+        if (result.status !== 0) fail(repositoryPath(root, full), `node --check → ${result.stderr.trim().split('\n')[0]}`);
       } else if (ext === '.py' && HAVE.python3) {
         const result = spawnSync('python3', ['-m', 'py_compile', full], {
           encoding: 'utf8',
@@ -238,6 +240,13 @@ export async function validateRepository(root = DEFAULT_ROOT) {
       const result = spawnSync(process.execPath, ['--check', path], { encoding: 'utf8' });
       if (result.status !== 0) fail(file, `node --check → ${result.stderr.trim().split('\n')[0]}`);
     }
+  }
+
+  const toolsRoot = join(root, 'tools');
+  if (existsSync(toolsRoot)) {
+    // Tools are executable repository code too; reuse the skill walker for
+    // consistent JS/shell/Python syntax checks while excluding dependencies.
+    await walk('tools', toolsRoot);
   }
 
   return { failures, skills: dirs, agentCount };

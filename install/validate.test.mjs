@@ -45,18 +45,35 @@ test('validator ignores sanctioned *-workspace directories without inspecting th
   assert.deepEqual(result.skills, ['valid-skill']);
 });
 
-test('validator accepts CRLF frontmatter from Windows checkouts', async () => {
+test('validator accepts CRLF frontmatter for skills and agents', async () => {
   const root = await writeValidRepo();
   await writeFile(join(root, 'skills', 'valid-skill', 'SKILL.md'), [
     '---',
     'name: valid-skill',
-    'description: A valid fixture skill.',
+    'description: >',
+    '  A valid fixture skill with a folded description.',
+    'license: MIT',
+    'metadata:',
+    '  requires: Node >= 18',
     '---',
     '# Valid',
     '',
   ].join('\r\n'));
+  await mkdir(join(root, 'agents'), { recursive: true });
+  await writeFile(join(root, 'agents', 'valid-agent.md'), [
+    '---',
+    'name: valid-agent',
+    'description: A valid agent fixture.',
+    '---',
+    '# Valid Agent',
+    '',
+  ].join('\r\n'));
+  await writeFile(join(root, 'agents', 'valid-agent.evals.json'), JSON.stringify({
+    evals: [{ id: 1, prompt: 'Do it', expected_output: 'Done', expectations: ['It is done'] }],
+  }));
   const result = await validateRepository(root);
   assert.equal(result.failures.length, 0, result.failures.join('\n'));
+  assert.equal(result.agentCount, 1);
 });
 
 test('validator requires a newline after the closing frontmatter delimiter', async () => {
@@ -93,4 +110,23 @@ test('validator detects duplicate id keys hidden by JSON.parse', async () => {
   }`);
   const result = await validateRepository(root);
   assert(result.failures.some((line) => line.includes('duplicate id key')));
+});
+
+test('validator syntax-checks repository tools without entering node_modules', async () => {
+  const root = await writeValidRepo();
+  await mkdir(join(root, 'tools', 'browser-capture', 'node_modules', 'ignored-package'), { recursive: true });
+  await writeFile(join(root, 'tools', 'browser-capture', 'broken.mjs'), 'export const broken = ;\n');
+  await writeFile(join(root, 'tools', 'browser-capture', 'node_modules', 'ignored-package', 'broken.mjs'), 'export const ignored = ;\n');
+
+  const result = await validateRepository(root);
+  const toolFailures = result.failures.filter((line) => line.startsWith('tools/'));
+  assert.equal(toolFailures.length, 1, toolFailures.join('\n'));
+  const marker = ': node --check → ';
+  const markerIndex = toolFailures[0].indexOf(marker);
+  assert.notEqual(markerIndex, -1, toolFailures[0]);
+  const label = toolFailures[0].slice(0, markerIndex);
+  const nativeStderr = toolFailures[0].slice(markerIndex + marker.length);
+  assert.equal(label, 'tools/browser-capture/broken.mjs');
+  assert.doesNotMatch(label, /\\/);
+  assert.ok(nativeStderr.length > 0, 'node --check stderr must remain in the diagnostic');
 });

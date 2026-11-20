@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { realpathSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -592,7 +593,20 @@ async function runCli(args) {
   process.stdout.write(`${JSON.stringify(output, null, 2)}\n`);
 }
 
-const invokedDirectly = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+// Kept local: an installed skill cannot import from the registry's install/ directory.
+function isEntryPoint(moduleUrl, argvPath = process.argv[1]) {
+  if (!argvPath) return false;
+  const modulePath = fileURLToPath(moduleUrl);
+  try {
+    // A symlinked skill install leaves the link in argv[1], while import.meta.url names the real file.
+    return realpathSync(argvPath) === realpathSync(modulePath);
+  } catch {
+    // argv[1] names nothing on disk ("-" when the program arrives on stdin): compare the paths as written.
+    return resolve(argvPath) === modulePath;
+  }
+}
+
+const invokedDirectly = isEntryPoint(import.meta.url);
 if (invokedDirectly) {
   runCli(process.argv.slice(2)).catch((error) => {
     const code = error instanceof CouncilProtocolError ? error.code : 'UNEXPECTED';

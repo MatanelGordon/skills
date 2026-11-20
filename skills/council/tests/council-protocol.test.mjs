@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
@@ -450,4 +450,15 @@ test('JSON CLI exposes deterministic routing and rejects unknown commands', asyn
   const invalidRound = spawnSync(process.execPath, [script, 'round-one', roundPath], { encoding: 'utf8' });
   assert.equal(invalidRound.status, 1);
   assert.match(invalidRound.stderr, /^INVALID_OPTIONS:/u);
+});
+
+test('CLI runs when the skill directory is reached through a symlink', async (context) => {
+  const directory = await mkdtemp(join(tmpdir(), 'council-symlink-'));
+  context.after(() => rm(directory, { recursive: true, force: true }));
+  const linkedSkill = join(directory, 'council');
+  await symlink(dirname(dirname(fileURLToPath(import.meta.url))), linkedSkill, process.platform === 'win32' ? 'junction' : 'dir');
+
+  const usage = spawnSync(process.execPath, [join(linkedSkill, 'scripts', 'council-protocol.mjs')], { encoding: 'utf8' });
+  assert.equal(usage.status, 1, usage.stdout + usage.stderr);
+  assert.match(usage.stderr, /^USAGE: Usage: council-protocol\.mjs/u);
 });

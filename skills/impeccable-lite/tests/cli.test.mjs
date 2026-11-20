@@ -525,3 +525,13 @@ test('audit follows one-level local script and stylesheet references', async () 
   assert.equal(report.ok, false);
   assert.ok(report.findings.some((item) => item.evidence === 'theme.css'));
 });
+
+test('CLI runs when the skill is installed as a symlink', async () => {
+  const scratch = await mkdtemp(join(tmpdir(), 'impeccable-lite-cli-symlink-'));
+  const linkedSkill = join(scratch, 'impeccable-lite');
+  await symlink(dirname(dirname(cli)), linkedSkill, process.platform === 'win32' ? 'junction' : 'dir');
+
+  const helped = spawnSync(process.execPath, [join(linkedSkill, 'scripts', 'impeccable-lite.mjs'), 'help'], { encoding: 'utf8' });
+  assert.equal(helped.status, 0, helped.stderr);
+  assert.match(helped.stdout, /^Impeccable Lite/);
+});

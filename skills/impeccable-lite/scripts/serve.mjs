@@ -5,9 +5,9 @@ import { createReadStream } from 'node:fs';
 import { realpath, stat } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { extname, relative, resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
 
 import { isPathContained, resolveWithin } from './lib/core.mjs';
+import { isEntryPoint } from './lib/filesystem.mjs';
 
 const MIME = Object.freeze({
   '.css': 'text/css; charset=utf-8',
@@ -152,7 +152,7 @@ const runCli = async () => {
   process.once('SIGTERM', stop);
 };
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (isEntryPoint(import.meta.url)) {
   runCli().catch((error) => {
     process.stderr.write(`impeccable-lite serve: ${error.message}\n`);
     process.exitCode = 1;

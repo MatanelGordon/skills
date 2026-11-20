@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdtemp, writeFile } from 'node:fs/promises';
+import { mkdtemp, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 import { runEvalCases } from './run-evals.mjs';
 
@@ -149,4 +150,13 @@ test('runEvalCases terminates the candidate tree when its runner receives SIGTER
   await new Promise((resolvePromise) => processUnderTest.once('close', resolvePromise));
   await new Promise((resolvePromise) => setTimeout(resolvePromise, 1_000));
   assert.equal(existsSync(marker), false, 'candidate descendant survived runner interruption');
+});
+
+test('eval runner CLI runs when its directory is reached through a symlink', async () => {
+  const linkedInstall = join(await makeTemp(), 'install');
+  await symlink(dirname(fileURLToPath(import.meta.url)), linkedInstall, process.platform === 'win32' ? 'junction' : 'dir');
+
+  const result = spawnSync(process.execPath, [join(linkedInstall, 'run-evals.mjs')], { encoding: 'utf8' });
+  assert.equal(result.status, 2, result.stdout + result.stderr);
+  assert.match(result.stderr, /Usage: node install\/run-evals\.mjs/);
 });

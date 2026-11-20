@@ -43,6 +43,12 @@
   function-only frontend trigger. Regression coverage now exercises the smaller
   state machine, structured ownership, diagnostic publication, and added remote
   script patterns.
+- Fixed every bundled CLI printing nothing and exiting 0 when started through a
+  symlink. The installer, validator, eval runner, `council` helper, and both
+  `impeccable-lite` scripts compared the path as typed with the resolved module
+  path, so `npx github:MatanelGordon/skills` and any symlink-installed skill
+  silently did nothing. They now compare real paths, with a regression test per
+  entry point.
 
 ## 1.21.0 — 2026-11-19
 

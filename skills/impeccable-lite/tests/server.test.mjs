@@ -1,9 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
 import { mkdir, mkdtemp, symlink, writeFile } from 'node:fs/promises';
 import { request } from 'node:http';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { createStaticServer } from '../scripts/serve.mjs';
 
@@ -56,4 +58,33 @@ test('static server binds to loopback and serves only files within its root', as
     req.end();
   });
   assert.equal(badHostStatus, 403);
+});
+
+test('serve CLI starts when the skill is installed as a symlink', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'impeccable-lite-serve-cli-'));
+  await writeFile(join(root, 'index.html'), '<h1>Local only</h1>', 'utf8');
+  const linkedSkill = join(await mkdtemp(join(tmpdir(), 'impeccable-lite-serve-symlink-')), 'impeccable-lite');
+  await symlink(dirname(dirname(fileURLToPath(import.meta.url))), linkedSkill, process.platform === 'win32' ? 'junction' : 'dir');
+
+  const child = spawn(process.execPath, [join(linkedSkill, 'scripts', 'serve.mjs'), root], {
+    env: { ...process.env, IMPECCABLE_LITE_PORT: '0' },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  const closed = new Promise((resolveClose) => child.once('close', resolveClose));
+  t.after(async () => {
+    child.kill();
+    await closed;
+  });
+
+  const origin = await new Promise((resolveOrigin, reject) => {
+    let output = '';
+    child.stdout.setEncoding('utf8');
+    child.stdout.on('data', (chunk) => {
+      output += chunk;
+      if (output.includes('\n')) resolveOrigin(output.trim());
+    });
+    child.once('error', reject);
+    closed.then((status) => reject(new Error(`serve exited with status ${status} before printing its origin`)));
+  });
+  assert.match(origin, /^http:\/\/127\.0\.0\.1:\d+$/);
 });

@@ -3,7 +3,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { link, lstat, open, readFile, realpath, rename, stat, unlink } from 'node:fs/promises';
 import { basename, dirname, extname, join, relative, resolve, sep } from 'node:path';
-import { pathToFileURL } from 'node:url';
 
 import {
   PHASES,
@@ -18,7 +17,7 @@ import {
   transitionWorkflow,
 } from './lib/core.mjs';
 import { captureScreenshots, findBrowser } from './capture.mjs';
-import { ensureSafeDirectory } from './lib/filesystem.mjs';
+import { ensureSafeDirectory, isEntryPoint } from './lib/filesystem.mjs';
 
 const DEFAULT_STATE = '.impeccable-lite/session.json';
 
@@ -692,7 +691,7 @@ export const main = async (argv) => {
   await commands[command](options);
 };
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (isEntryPoint(import.meta.url)) {
   main(process.argv.slice(2)).catch((error) => {
     process.stderr.write(`impeccable-lite: ${error.message}\n`);
     process.exitCode = 64;

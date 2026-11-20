@@ -26,6 +26,7 @@ test('npm package manifest is an allowlist and excludes sanctioned scratch trees
     assert(!paths.some((path) => path.startsWith('.github/')), paths.join('\n'));
     for (const required of [
       'install/index.mjs',
+      'install/entry-point.mjs',
       'install/validate.mjs',
       'install/run-evals.mjs',
       'agents/code-archaeologist.md',

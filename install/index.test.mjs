@@ -4,7 +4,9 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
+import { isEntryPoint } from './entry-point.mjs';
 import {
   classifyDestination,
   installPath,
@@ -222,4 +224,44 @@ test('uninstall --yes preserves unmarked identical skill and agent copies', asyn
   assert.match(result.stdout, /kept \(identical-copy\)/);
   assert.match(await readFile(join(skill, 'SKILL.md'), 'utf8'), /name: adr/);
   assert.match(await readFile(agent, 'utf8'), /name: code-archaeologist/);
+});
+
+test('isEntryPoint recognises only the script Node was started with', () => {
+  assert.equal(isEntryPoint(import.meta.url, fileURLToPath(import.meta.url)), true);
+  assert.equal(isEntryPoint(import.meta.url, resolve('install/index.mjs')), false);
+  // An empty path stands in for a missing argv[1] (REPL, --eval); passing undefined would select the default.
+  assert.equal(isEntryPoint(import.meta.url, ''), false);
+});
+
+test('isEntryPoint compares paths as written when argv[1] cannot be resolved', async () => {
+  // "-" is what argv[1] holds when the program is piped in on stdin; it must not throw at import time.
+  assert.equal(isEntryPoint(import.meta.url, '-'), false);
+  const missing = join(await makeTemp(), 'gone.mjs');
+  assert.equal(isEntryPoint(pathToFileURL(missing).href, missing), true);
+});
+
+test('installer runs when its directory is reached through a symlink', async () => {
+  const linkedInstall = join(await makeTemp(), 'install');
+  await symlink(resolve('install'), linkedInstall, process.platform === 'win32' ? 'junction' : 'dir');
+
+  const result = spawnSync(process.execPath, [join(linkedInstall, 'index.mjs'), '--help'], {
+    env: { ...process.env, NO_COLOR: '1' },
+    encoding: 'utf8',
+  });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /install-skills --yes/);
+});
+
+test('installer runs through an extensionless file symlink, the shape of an npm bin shim', {
+  skip: process.platform === 'win32' ? 'npm installs .cmd shims on Windows, not symlinks' : false,
+}, async () => {
+  const bin = join(await makeTemp(), 'install-skills');
+  await symlink(resolve('install/index.mjs'), bin);
+
+  const result = spawnSync(process.execPath, [bin, '--help'], {
+    env: { ...process.env, NO_COLOR: '1' },
+    encoding: 'utf8',
+  });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /install-skills --yes/);
 });

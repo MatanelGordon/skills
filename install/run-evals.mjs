@@ -2,8 +2,9 @@
 /** Execute skill eval cases against a candidate command and an independent judge. */
 import { spawn } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isEntryPoint } from './entry-point.mjs';
 
 const DEFAULT_ROOT = fileURLToPath(new URL('..', import.meta.url));
 
@@ -240,5 +241,5 @@ async function main() {
   }
 }
 
-const invokedDirectly = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const invokedDirectly = isEntryPoint(import.meta.url);
 if (invokedDirectly) await main();

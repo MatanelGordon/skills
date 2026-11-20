@@ -1,7 +1,22 @@
+import { realpathSync } from 'node:fs';
 import { lstat, mkdir, realpath } from 'node:fs/promises';
-import { join, relative, sep } from 'node:path';
+import { join, relative, resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { isPathContained, resolveWithin } from './core.mjs';
+
+// Kept local: an installed skill cannot import from the registry's install/ directory.
+export const isEntryPoint = (moduleUrl, argvPath = process.argv[1]) => {
+  if (!argvPath) return false;
+  const modulePath = fileURLToPath(moduleUrl);
+  try {
+    // A symlinked skill install leaves the link in argv[1], while import.meta.url names the real file.
+    return realpathSync(argvPath) === realpathSync(modulePath);
+  } catch {
+    // argv[1] names nothing on disk ("-" when the program arrives on stdin): compare the paths as written.
+    return resolve(argvPath) === modulePath;
+  }
+};
 
 export const ensureSafeDirectory = async (root, requested) => {
   const lexical = resolveWithin(root, requested);

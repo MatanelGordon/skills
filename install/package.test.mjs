@@ -7,14 +7,13 @@ import test from 'node:test';
 
 import { discoverRootTests } from './run-tests.mjs';
 
-test('root test discovery is portable and excludes separately provisioned or scratch suites', async () => {
+test('root test discovery is portable and excludes separately provisioned suites', async () => {
   const root = await mkdtemp(join(tmpdir(), 'skills-root-tests-'));
   try {
     for (const directory of [
       join(root, 'install'),
       join(root, 'skills', 'example', 'tests'),
       join(root, 'skills', 'impeccable-lite', 'tests'),
-      join(root, 'skills', 'rank-workspace'),
       join(root, 'tools', 'browser-capture', 'tests'),
     ]) await mkdir(directory, { recursive: true });
     await Promise.all([
@@ -22,7 +21,6 @@ test('root test discovery is portable and excludes separately provisioned or scr
       writeFile(join(root, 'skills', 'example', 'tests', 'example.test.mjs'), ''),
       writeFile(join(root, 'skills', 'impeccable-lite', 'tests', 'cli.test.mjs'), ''),
       writeFile(join(root, 'skills', 'impeccable-lite', 'tests', 'browser-integration.test.mjs'), ''),
-      writeFile(join(root, 'skills', 'rank-workspace', 'scratch.test.mjs'), ''),
       writeFile(join(root, 'tools', 'browser-capture', 'tests', 'browser.test.mjs'), ''),
     ]);
 
@@ -62,7 +60,6 @@ test('npm package manifest is an allowlist and excludes sanctioned scratch trees
     const [manifest] = JSON.parse(packed.stdout);
     const paths = manifest.files.map((entry) => entry.path);
     assert(!paths.some((path) => path.startsWith('skills/package-test-workspace/')), paths.join('\n'));
-    assert(!paths.some((path) => path.startsWith('skills/rank-workspace/')), paths.join('\n'));
     assert(!paths.some((path) => path.startsWith('.github/')), paths.join('\n'));
     assert(!paths.some((path) => path.startsWith('tools/browser-capture/node_modules/')), paths.join('\n'));
     for (const required of [

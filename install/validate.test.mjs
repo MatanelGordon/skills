@@ -13,7 +13,6 @@ const makeTemp = () => mkdtemp(join(tmpdir(), 'skills-validator-test-'));
 async function writeValidRepo({ malformed = false, changelogVersion = '1.0.0', readmeSkill = true } = {}) {
   const root = await makeTemp();
   await mkdir(join(root, 'skills', 'valid-skill', 'evals'), { recursive: true });
-  await mkdir(join(root, 'skills', 'rank-workspace', 'skill-snapshot'), { recursive: true });
   await writeFile(join(root, 'package.json'), JSON.stringify({ name: 'fixture', version: '1.0.0' }));
   await writeFile(join(root, 'README.md'), readmeSkill
     ? '# fixture\n[valid-skill](skills/valid-skill/SKILL.md)\n'
@@ -35,12 +34,11 @@ async function writeValidRepo({ malformed = false, changelogVersion = '1.0.0', r
     skill_name: 'valid-skill',
     evals: [{ id: 1, prompt: 'Do it', expected_output: 'Done', files: [], expectations: ['It is done'] }],
   }));
-  await writeFile(join(root, 'skills', 'rank-workspace', 'skill-snapshot', 'SKILL.md'), 'ignored');
   if (malformed) await mkdir(join(root, 'skills', 'broken-skill'));
   return root;
 }
 
-test('validator ignores sanctioned *-workspace directories without inspecting their contents', async () => {
+test('validator accepts a valid skill repository', async () => {
   const root = await writeValidRepo();
   const result = await validateRepository(root);
   assert.equal(result.failures.length, 0, result.failures.join('\n'));

@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 460" width="1200" height="460" role="img" aria-labelledby="title desc">
+  <title id="title">Skills — write the lesson once, every coding agent learns it</title>
+  <desc id="desc">A shared skills repository feeds Claude Code, OpenAI Codex, GitHub Copilot and Tabnine. The registry contains 27 skills and 2 agents in one source of truth.</desc>
+  <defs>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="#d8dee4"/>
+    </pattern>
+    <linearGradient id="wash" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f6f8fa"/>
+      <stop offset="1" stop-color="#fbefff"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop offset="0" stop-color="#8250df" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#8250df" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+      text { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Helvetica,Arial,sans-serif; fill:#1f2328; }
+      .mono { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace; }
+      .eyebrow { font-size:12px; font-weight:700; letter-spacing:.16em; fill:#8250df; }
+      .headline { font-size:48px; font-weight:750; letter-spacing:-.035em; }
+      .subhead { font-size:22px; font-weight:500; fill:#59636e; }
+      .body { font-size:15px; fill:#59636e; }
+      .card { fill:#fff; stroke:#d0d7de; stroke-width:1.2; }
+      .card-title { font-size:15px; font-weight:700; }
+      .card-path { font-size:11.5px; fill:#59636e; }
+      .wire { fill:none; stroke:#c8d1da; stroke-width:1.5; }
+      .flow { fill:none; stroke:#8250df; stroke-width:2; stroke-dasharray:3 12; stroke-linecap:round; animation:flow 1.5s linear infinite; }
+      .metric { font-size:22px; font-weight:750; }
+      .metric-label { font-size:10px; font-weight:700; letter-spacing:.12em; fill:#59636e; }
+      @keyframes flow { to { stroke-dashoffset:-15; } }
+      @media (prefers-reduced-motion:reduce) { .flow { animation:none; stroke-dasharray:none; opacity:.6; } }
+    </style>
+  </defs>
+
+  <rect x=".5" y=".5" width="1199" height="459" rx="24" fill="url(#wash)" stroke="#d0d7de"/>
+  <rect x=".5" y=".5" width="1199" height="459" rx="24" fill="url(#grid)" opacity=".68"/>
+  <circle cx="890" cy="225" r="300" fill="url(#glow)"/>
+
+  <g transform="translate(64 68)">
+    <text class="eyebrow" y="0">AGENT SKILL REGISTRY</text>
+    <text class="headline" y="72">Write the lesson once.</text>
+    <text class="headline" y="126" fill="#8250df">Every agent learns it.</text>
+    <text class="subhead" y="178">One tested source. Four native destinations.</text>
+    <text class="body" y="217">Portable skills, ownership-aware installs, and a workflow</text>
+    <text class="body" y="241">that keeps the agents you use working the same way.</text>
+
+    <g transform="translate(0 292)">
+      <text class="metric" y="0">27</text><text class="metric-label" y="22">SKILLS</text>
+      <line x1="86" y1="-18" x2="86" y2="24" stroke="#d0d7de"/>
+      <text class="metric" x="112" y="0">2</text><text class="metric-label" x="112" y="22">AGENTS</text>
+      <line x1="190" y1="-18" x2="190" y2="24" stroke="#d0d7de"/>
+      <text class="metric" x="216" y="0">1</text><text class="metric-label" x="216" y="22">SOURCE OF TRUTH</text>
+    </g>
+  </g>
+
+  <g transform="translate(650 54)">
+    <path class="wire" d="M188 176 C235 176 230 48 282 48 M188 176 C235 176 230 132 282 132 M188 176 C235 176 230 216 282 216 M188 176 C235 176 230 300 282 300"/>
+    <path class="flow" d="M188 176 C235 176 230 48 282 48 M188 176 C235 176 230 132 282 132 M188 176 C235 176 230 216 282 216 M188 176 C235 176 230 300 282 300"/>
+
+    <rect class="card" x="0" y="112" width="188" height="128" rx="16"/>
+    <rect x="18" y="132" width="38" height="38" rx="10" fill="#fbefff" stroke="#8250df"/>
+    <path d="M29 151h16M37 143v16" stroke="#8250df" stroke-width="2" stroke-linecap="round"/>
+    <text class="eyebrow" x="70" y="147">ONE CLONE</text>
+    <text class="mono" x="18" y="199" font-size="24" font-weight="700">skills/</text>
+    <text class="body" x="18" y="222">symlink · validate · update</text>
+
+    <g transform="translate(282 16)">
+      <rect class="card" width="218" height="64" rx="13"/>
+      <circle cx="24" cy="32" r="8" fill="#dafbe1" stroke="#1a7f37"/>
+      <path d="M20 32l3 3 6-7" fill="none" stroke="#1a7f37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <text class="card-title" x="44" y="28">Claude Code</text>
+      <text class="mono card-path" x="44" y="47">~/.claude/skills/</text>
+    </g>
+    <g transform="translate(282 100)">
+      <rect class="card" width="218" height="64" rx="13"/>
+      <circle cx="24" cy="32" r="8" fill="#dafbe1" stroke="#1a7f37"/>
+      <path d="M20 32l3 3 6-7" fill="none" stroke="#1a7f37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <text class="card-title" x="44" y="28">OpenAI Codex</text>
+      <text class="mono card-path" x="44" y="47">~/.codex/skills/</text>
+    </g>
+    <g transform="translate(282 184)">
+      <rect class="card" width="218" height="64" rx="13"/>
+      <circle cx="24" cy="32" r="8" fill="#dafbe1" stroke="#1a7f37"/>
+      <path d="M20 32l3 3 6-7" fill="none" stroke="#1a7f37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <text class="card-title" x="44" y="28">GitHub Copilot</text>
+      <text class="mono card-path" x="44" y="47">~/.copilot/skills/</text>
+    </g>
+    <g transform="translate(282 268)">
+      <rect class="card" width="218" height="64" rx="13"/>
+      <circle cx="24" cy="32" r="8" fill="#dafbe1" stroke="#1a7f37"/>
+      <path d="M20 32l3 3 6-7" fill="none" stroke="#1a7f37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <text class="card-title" x="44" y="28">Tabnine</text>
+      <text class="mono card-path" x="44" y="47">~/.tabnine/agent/skills/</text>
+    </g>
+  </g>
+</svg>

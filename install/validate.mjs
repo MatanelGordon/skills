@@ -9,7 +9,6 @@ import { isEntryPoint } from './entry-point.mjs';
 
 const DEFAULT_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const ALLOWED_KEYS = new Set(['name', 'description', 'license', 'allowed-tools', 'metadata', 'compatibility']);
-const SANCTIONED_WORKSPACES = new Set(['rank-workspace']);
 
 const has = (cmd) => spawnSync(cmd, ['--version'], { stdio: 'ignore' }).status === 0;
 const HAVE = { bash: has('bash'), python3: has('python3') };
@@ -45,7 +44,7 @@ export async function validateRepository(root = DEFAULT_ROOT) {
   }
 
   const dirs = (await readdir(skillsRoot, { withFileTypes: true }))
-    .filter((entry) => entry.isDirectory() && !SANCTIONED_WORKSPACES.has(entry.name))
+    .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .sort();
   const names = new Set(dirs);

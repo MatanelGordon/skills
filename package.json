@@ -4,8 +4,7 @@
   "description": "Agent Skills for Claude Code, OpenAI Codex, GitHub Copilot and Tabnine",
   "type": "module",
   "bin": {
-    "install-skills": "install/index.mjs",
-    "browser-capture": "tools/browser-capture/launcher.mjs"
+    "install-skills": "tools/browser-capture/install-skills.mjs"
   },
   "scripts": {
     "install-skills": "node install/index.mjs",
@@ -25,6 +24,7 @@
     "tools/browser-capture/README.md",
     "tools/browser-capture/cli.mjs",
     "tools/browser-capture/launcher.mjs",
+    "tools/browser-capture/install-skills.mjs",
     "tools/browser-capture/test.mjs",
     "tools/browser-capture/package.json",
     "tools/browser-capture/npm-shrinkwrap.json",

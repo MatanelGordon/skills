@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { copyFile, mkdir, mkdtemp, realpath, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -56,7 +57,7 @@ test('running commands keeps going after a failure and reports it', () => {
   assert.deepEqual(outcome, { status: 3, signal: null });
 });
 
-test('running commands stops at a signal and reports it', () => {
+test('running commands stops when a child is reported killed by a signal', () => {
   const ran = [];
   const outcome = runCommands([['a'], ['b']], ([name]) => {
     ran.push(name);
@@ -64,6 +65,31 @@ test('running commands stops at a signal and reports it', () => {
   });
   assert.deepEqual(ran, ['a']);
   assert.equal(outcome.signal, 'SIGTERM');
+});
+
+const SIGNAL_TESTS = { skip: process.platform === 'win32' ? 'Windows reports no terminating signal' : false };
+const writeMarker = (marker) => ['-e', `require('node:fs').writeFileSync(${JSON.stringify(marker)}, 'ran')`];
+
+test('running commands stops after a real child dies from a signal', SIGNAL_TESTS, async () => {
+  const marker = join(await makeTemp(), 'later-command-ran');
+  const outcome = runCommands(
+    [['-e', "process.kill(process.pid, 'SIGKILL')"], writeMarker(marker)],
+    (args) => spawnSync(process.execPath, args),
+  );
+  assert.equal(outcome.signal, 'SIGKILL');
+  assert.equal(existsSync(marker), false, 'a command ran after the signal');
+});
+
+test('running commands cannot tell a real child that caught a signal from a failing one', SIGNAL_TESTS, async () => {
+  const marker = join(await makeTemp(), 'later-command-ran');
+  const catchesSigterm = "process.on('SIGTERM', () => process.exit(1)); process.kill(process.pid, 'SIGTERM'); setTimeout(() => {}, 5_000);";
+  const outcome = runCommands(
+    [['-e', catchesSigterm], writeMarker(marker)],
+    (args) => spawnSync(process.execPath, args),
+  );
+  // What `node --test` does on SIGTERM: the caller sees an exit status and no signal, so the run carries on.
+  assert.deepEqual(outcome, { status: 1, signal: null });
+  assert.equal(existsSync(marker), true, 'the later command did not run');
 });
 
 test('running commands rethrows a process that could not start', () => {

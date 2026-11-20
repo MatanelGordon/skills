@@ -40,7 +40,8 @@ export const serialTestCommands = (tests, hasSerialFlag) => (hasSerialFlag
   ? [['--test', SERIAL_FLAG, ...tests]]
   : tests.map((test) => ['--test', test]));
 
-// Like `node --test`, a failing file does not stop the rest; a signal does.
+// Like `node --test`, a failing file does not stop the rest. A child the OS reports as killed by a signal does.
+// One that catches the signal and exits non-zero, as `node --test` does on SIGTERM, looks like a failing file.
 export const runCommands = (commands, run) => commands.reduce((outcome, args) => {
   if (outcome.signal) return outcome;
   const result = run(args);

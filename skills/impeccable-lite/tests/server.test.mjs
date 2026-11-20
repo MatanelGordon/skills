@@ -28,7 +28,7 @@ test('static server binds to loopback and serves only files within its root', as
   assert.equal(page.status, 200);
   assert.match(page.headers.get('content-security-policy') || '', /connect-src 'self'/);
   assert.match(page.headers.get('content-security-policy') || '', /worker-src 'self' blob:/);
-  assert.match(page.headers.get('content-security-policy') || '', /object-src 'self' data: blob:/);
+  assert.match(page.headers.get('content-security-policy') || '', /object-src 'none'/);
   assert.match(page.headers.get('content-security-policy') || '', /frame-src 'self' blob:/);
   assert.match(page.headers.get('content-security-policy') || '', /base-uri 'self'/);
   assert.match(await page.text(), /Local only/);

@@ -1,7 +1,7 @@
 ---
 name: browser-interaction
 description: >
-  Human-like browser drive: open, click, type, inspect, report evidence. Use when asked to test/try/click through/"see if it works"; check Chrome/Safari/Firefox/Edge; reproduce UI bugs; verify forms/flows/logins/layouts; investigate local-pass but reported-fail behavior. Seek an MCP browser server, published skill, or CLI and recommend it rather than hand-rolling; say plainly if none fits. Covers page structure, console/network evidence, WebKit ≠ Safari, signed-in state. Not test suites or CI.
+  Human-like browser drive: open, click, type, inspect, report evidence. Use when asked to test/try/click through/"see if it works"; check Chrome/Safari/Firefox/Edge; reproduce UI bugs; verify forms/flows/logins/layouts; investigate local-pass but reported-fail behavior; or choose a tool to drive a browser. Seek an existing host capability, installed CLI/library, or published skill and say plainly if none fits. Covers page structure, console/network evidence, WebKit ≠ Safari, and signed-in state. Not factual lookups, test suites, or CI.
 license: MIT
 metadata:
   author: Matanel Gordon
@@ -18,27 +18,51 @@ suites, not assertions, not CI wiring.
 
 ---
 
-## Search for a tool before automating anything
+## Route by capability; do not stack browser systems
 
-This landscape is well populated and changes fast. **Look for an existing tool
-before writing a line of automation**, in this order:
+Use the smallest capability that answers the question:
 
-1. **An MCP browser server** — the best option when available. The agent gets
-   structured page state and a real input channel instead of a script it has to
-   maintain. Playwright MCP and Chrome DevTools MCP solve different halves of
-   this; see [references/tools.md](references/tools.md).
-2. **The host's own browser control** — some agent environments can drive the
-   user's actual browser, with their real profile and real logins. Nothing
-   headless can reproduce a signed-in session as faithfully. Check for this
-   before spinning up a clean browser.
-3. **A published Agent Skill** — `gh search code --filename SKILL.md "playwright"`.
-4. **A CLI or library** — Playwright, Puppeteer, Selenium, `safaridriver`.
-5. **Nothing fits** — say so plainly, name the closest option and what it can't
-   do, and **recommend installing the right tool** rather than quietly building
-   a worse one. Hand-rolling is the outcome of a failed search, not the default.
+1. **Facts, documentation, or current public information:** use the harness's
+   native web search. Search retrieves sources; it is not a reason to start a
+   controllable browser or a background daemon.
+2. **A real page or signed-in flow:** use the harness's native browser/computer
+   control when available. It preserves the user's actual profile, cookies, and
+   extensions better than a clean automated browser. This may act on real
+   accounts: confirm before any action that mutates real data, submits a form,
+   purchases, publishes, or changes account state.
+3. **Shell-only CLI with no native browser control:** for Chrome console,
+   network, CSS, performance, or interaction evidence, use the official
+   `chrome-devtools` terminal client only when its pinned, hardened setup is
+   already verified. Read the CLI section of
+   [references/tools.md](references/tools.md) before using it.
+4. **Installed library or driver:** when routes 2–3 are unavailable or do not
+   fit, use an installed Playwright, Puppeteer, Selenium, or `safaridriver` for
+   exploratory work, cross-engine checks, real Safari, or a requested script.
+   Reuse the project's dependency when it has one.
+5. **Nothing fits:** say what is unavailable, name the closest option and its
+   limitation, and recommend one concrete setup. Do not improvise a raw CDP
+   client.
 
-Always state which route you took. "I used the Playwright MCP", "I checked and
-nothing was configured, recommend installing X" — both are good answers.
+"CLI-only" means a terminal agent such as Claude Code, Codex CLI, or Copilot
+CLI that exposes shell commands but no browser tool. It does not mean every
+request originating in a CLI. If the harness already exposes web search or
+browser control, use it; do not start `chrome-devtools` for the same job. MCP is
+an explicit host/user choice or an already-configured capability, not a default
+installation this skill adds.
+
+Always state the route used and its boundary: for example, "native search for
+the release facts", "host browser for the signed-in flow", or "pinned
+chrome-devtools CLI for console/network evidence".
+
+When the route is not obvious, use the decision table in
+[references/tools.md](references/tools.md). Do not read it when the host already
+provides the only fitting browser capability.
+
+## UA-dependent testing
+
+Only test UA-dependent behavior on an owned or explicitly authorized target.
+Prefer native browser control or headed mode; if a page-scoped diagnostic
+override is still required, follow [references/tools.md](references/tools.md).
 
 ## Read the page as structure, not pixels
 
@@ -163,6 +187,8 @@ session. Options, best first:
 
 Never paste real credentials into a script or a transcript. If a login is
 genuinely required and no session exists, ask — don't improvise with secrets.
+Confirm before driving the real profile through any mutation of account or
+business data.
 
 ## Report what happened
 
@@ -185,7 +211,10 @@ false.
 
 | Anti-pattern | Why it fails |
 |---|---|
-| Writing automation without searching for a tool | An MCP server probably does this better, with no script to maintain. |
+| Starting a CLI daemon when native search/control already answers the task | Duplicates capability, loses real-session fidelity, and adds lifecycle and policy state. |
+| Using browser automation for a factual lookup | Search is smaller, source-oriented, and does not need a page-control session. |
+| Hand-writing a raw CDP client | Recreates a large transport and lifecycle surface already owned by maintained tools. |
+| Cycling user agents until a site admits the session | Turns a diagnostic compatibility control into brittle access-control evasion; use one matching-UA retry and report the result. |
 | Screenshot as the only evidence | Can't show console errors, failed requests, or a button with no accessible name. |
 | `page.accessibility.snapshot()` | Removed from current Playwright. Use `locator.aria_snapshot()`. |
 | Attaching the console listener after `goto` | Load-time errors are the interesting ones and you just missed them. |

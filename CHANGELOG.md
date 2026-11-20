@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.22.0 — 2026-11-20
+
+- Added the repository `browser-capture` companion with an exact-pinned
+  Puppeteer runtime while preserving a Node-built-ins fallback inside copied
+  and npx-installed Impeccable Lite skills. Chrome, Chromium, and Edge are
+  discovered locally; no browser or dependency is downloaded during capture.
+- Enforced the offline boundary with a process-owned deny proxy, exact preview
+  bypass, page interception, new-target denial, worker/frame observation, and a
+  pre-seeded WebRTC UDP preference. Real-Chrome regressions cover popup,
+  prerender/speculation, frames, dedicated/shared/service workers, WebSocket,
+  WebRTC, immutable evidence, and negative controls for flags/interception.
+- Made diagnostics durable and actionable: mobile viewport mismatch, slight
+  overflow, missing same-origin assets, unexpected navigation, nested cleanup
+  failures, browser validation, symlink invocation, process-tree signals, stale
+  staging, and relocatable evidence paths are covered.
+- Kept the npm package single-bin so `npx github:MatanelGordon/skills` invokes
+  the installer. Capture remains an explicit repository command.
+- Clarified browser-interaction routing: installed libraries cover shell-only
+  work, real-account mutations require confirmation, DevTools daemon policy is
+  verified and URL-bounded on every call, and UA testing is limited to owned or
+  authorized targets with native/headed mode first and no stealth claims.
+- Added the browser and Impeccable suites to CI and consolidated repository
+  executable syntax validation without entering nested dependencies.
+- Fixed the `council` helper, the validator, the eval runner, and
+  `install/index.mjs` printing nothing and exiting 0 when started through a
+  symlink, which is how a symlink-installed `council` skill is reached. They
+  compared the path as typed with the resolved module path; they now compare
+  real paths, with a regression test per entry point.
+
 ## 1.21.1 — 2026-11-20
 
 - Simplified `impeccable-lite` from a fresh contradiction audit: visual
@@ -43,12 +72,6 @@
   function-only frontend trigger. Regression coverage now exercises the smaller
   state machine, structured ownership, diagnostic publication, and added remote
   script patterns.
-- Fixed every bundled CLI printing nothing and exiting 0 when started through a
-  symlink. The installer, validator, eval runner, `council` helper, and both
-  `impeccable-lite` scripts compared the path as typed with the resolved module
-  path, so `npx github:MatanelGordon/skills` and any symlink-installed skill
-  silently did nothing. They now compare real paths, with a regression test per
-  entry point.
 
 ## 1.21.0 — 2026-11-19
 

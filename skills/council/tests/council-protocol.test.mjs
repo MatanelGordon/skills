@@ -39,6 +39,8 @@ const PERSONA_BLOCKS = {
   Visionary: 'PERSONA Visionary',
 };
 
+const normalizeNewlines = (text) => text.replace(/\r\n?/gu, '\n');
+
 const response = (vote = 'A', confidence = '4/5', argument = 'The current boundary has 2 (code-read: src/billing.ts exports) public seams.') => `VOTE: ${vote}
 POSITION: Choose ${vote} for the stated constraints.
 ARGUMENT: ${argument}
@@ -402,8 +404,8 @@ test('live smoke ledger proves distinct spawns and exact round-two packet propag
 });
 
 test('protocol references contain the helper-owned literal prompt blocks', async () => {
-  const protocol = await readFile(new URL('../references/protocol.md', import.meta.url), 'utf8');
-  const personas = await readFile(new URL('../references/personas.md', import.meta.url), 'utf8');
+  const protocol = normalizeNewlines(await readFile(new URL('../references/protocol.md', import.meta.url), 'utf8'));
+  const personas = normalizeNewlines(await readFile(new URL('../references/personas.md', import.meta.url), 'utf8'));
   assert.ok(protocol.includes(ROUND_ONE_INSTRUCTIONS));
   assert.ok(protocol.includes(ANTI_CONFORMITY));
   assert.ok(protocol.includes(ROUND_TWO_INSTRUCTIONS));

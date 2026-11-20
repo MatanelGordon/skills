@@ -2,13 +2,14 @@
 
 import { createHash, randomUUID } from 'node:crypto';
 import { constants } from 'node:fs';
-import { access, mkdir, mkdtemp, open, readFile, realpath, rename, rm, stat } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, open, readFile, realpath, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, join, relative, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
 
 import { inspectPng, isPathContained, resolveWithin } from './lib/core.mjs';
 import { ensureSafeDirectory } from './lib/filesystem.mjs';
+import { createDenyProxy } from './lib/deny-proxy.mjs';
 import { createStaticServer } from './serve.mjs';
 
 const DEFAULT_BROWSERS = Object.freeze([
@@ -28,7 +29,7 @@ const validateViewport = (width, height) => {
   }
 };
 
-export const buildChromeArgs = ({ url, profile, width, height }) => {
+export const buildChromeArgs = ({ url, profile, proxyOrigin, width, height }) => {
   const target = new URL(url);
   if (target.protocol !== 'http:' || target.hostname !== '127.0.0.1') {
     throw new TypeError('Capture URL must use the 127.0.0.1 loopback origin.');
@@ -50,8 +51,8 @@ export const buildChromeArgs = ({ url, profile, width, height }) => {
     '--no-first-run',
     '--safebrowsing-disable-auto-update',
     `--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE ${target.hostname}`,
-    '--proxy-server=http://127.0.0.1:9',
-    `--proxy-bypass-list=${target.host}`,
+    `--proxy-server=${new URL(proxyOrigin).origin}`,
+    `--proxy-bypass-list=<-loopback>;${target.host}`,
     `--user-data-dir=${resolve(profile)}`,
     '--remote-debugging-pipe',
     'about:blank',
@@ -222,7 +223,7 @@ export const combineCaptureErrors = (primaryError, cleanupError) => {
   return primaryError || cleanupError || null;
 };
 
-const runChromeCapture = async ({ browser, args, url, width, height, timeoutMs }) => {
+const runChromeCapture = async ({ browser, args, url, width, height, timeoutMs, blockedRequests }) => {
   const child = spawn(browser, args, {
     shell: false,
     stdio: ['ignore', 'ignore', 'pipe', 'pipe', 'pipe'],
@@ -248,7 +249,6 @@ const runChromeCapture = async ({ browser, args, url, width, height, timeoutMs }
     await client.send('Page.enable', {}, sessionId);
     await client.send('Runtime.enable', {}, sessionId);
     const allowedOrigin = new URL(url).origin;
-    const blockedRequests = new Set();
     const stopObserving = client.on('Network.requestWillBeSent', sessionId, ({ request }) => {
       try {
         const requested = new URL(request.url);
@@ -424,20 +424,39 @@ export const captureScreenshots = async ({
       const finalPath = join(published, `${viewport.name}.png`);
       const profile = join(temporaryProfileRoot, viewport.name);
       const url = `${preview.origin}/${encodeEntry(relative(physicalRoot, physicalTarget))}`;
-      const args = buildChromeArgs({
-        url,
-        profile,
-        width: viewport.width,
-        height: viewport.height,
-      });
-      const rendered = await runChromeCapture({
-        browser,
-        args,
-        url,
-        width: viewport.width,
-        height: viewport.height,
-        timeoutMs,
-      });
+      const blockedRequests = new Set();
+      const proxy = await createDenyProxy({ onBlocked: ({ transport, url: blocked }) => {
+        try {
+          if (transport !== 'tunnel' && new URL(blocked).hostname === '127.0.0.1') blockedRequests.add(blocked);
+        } catch {
+          // A CONNECT authority is containment evidence but not a request URL.
+        }
+      } });
+      let rendered;
+      try {
+        await mkdir(join(profile, 'Default'), { recursive: true, mode: 0o700 });
+        await writeFile(join(profile, 'Default', 'Preferences'), `${JSON.stringify({
+          webrtc: { ip_handling_policy: 'disable_non_proxied_udp' },
+        })}\n`, { encoding: 'utf8', flag: 'wx', mode: 0o600 });
+        const args = buildChromeArgs({
+          url,
+          profile,
+          proxyOrigin: proxy.origin,
+          width: viewport.width,
+          height: viewport.height,
+        });
+        rendered = await runChromeCapture({
+          browser,
+          args,
+          url,
+          width: viewport.width,
+          height: viewport.height,
+          timeoutMs,
+          blockedRequests,
+        });
+      } finally {
+        await proxy.close();
+      }
       await writeExclusive(stagePath, rendered.png);
       const png = await assertPng(stagePath);
       if (png.width !== viewport.width || png.height !== viewport.height) {
@@ -465,13 +484,15 @@ export const captureScreenshots = async ({
       throw new Error('The captured artifact was not bound to the served resource set.');
     }
     report = Object.freeze({
+      schemaVersion: 1,
+      producer: 'browser-capture',
       ok: captures.every((capture) => !capture.overflow && capture.blockedRequests.length === 0),
       browser: basename(browser),
       entry: relative(physicalRoot, physicalTarget),
       artifactHash,
       generation,
       reportPath: join(published, 'capture.json'),
-      network: 'only the exact preview origin was allowed; all other HTTP(S) requests were blocked',
+      enforcement: Object.freeze(['process-owned deny proxy', 'CDP Fetch interception', 'WebRTC UDP preference']),
       resources: Object.freeze(resources),
       captures: Object.freeze(captures),
     });

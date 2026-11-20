@@ -76,6 +76,12 @@ test('validator syntax-checks repository tools without entering node_modules', a
   const result = await validateRepository(root);
   const toolFailures = result.failures.filter((line) => line.startsWith('tools/'));
   assert.equal(toolFailures.length, 1, toolFailures.join('\n'));
-  assert.match(toolFailures[0], /tools\/browser-capture\/broken\.mjs: node --check/);
-  assert.doesNotMatch(toolFailures[0], /\\/);
+  const marker = ': node --check → ';
+  const markerIndex = toolFailures[0].indexOf(marker);
+  assert.notEqual(markerIndex, -1, toolFailures[0]);
+  const label = toolFailures[0].slice(0, markerIndex);
+  const nativeStderr = toolFailures[0].slice(markerIndex + marker.length);
+  assert.equal(label, 'tools/browser-capture/broken.mjs');
+  assert.doesNotMatch(label, /\\/);
+  assert.ok(nativeStderr.length > 0, 'node --check stderr must remain in the diagnostic');
 });

@@ -1,148 +1,139 @@
 #!/usr/bin/env node
+
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
-import { execFileSync } from 'node:child_process';
-import {
-  cp,
-  mkdir,
-  mkdtemp,
-  readFile,
-  readdir,
-  rm,
-  writeFile,
-} from 'node:fs/promises';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { basename, dirname, join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const here = dirname(fileURLToPath(import.meta.url));
-const fixture = join(here, 'fixtures', 'calculator-cli');
-const npmExecPath = process.env.npm_execpath;
-const npmCli = npmExecPath && basename(npmExecPath) === 'npx-cli.js'
-  ? join(dirname(npmExecPath), 'npm-cli.js')
-  : npmExecPath;
+const protocol = join(dirname(dirname(fileURLToPath(import.meta.url))), 'scripts', 'mutation-protocol.mjs');
+const scratch = await mkdtemp(join(tmpdir(), 'mutation-roundtrip-'));
+const repository = join(scratch, 'calculator');
+const candidateWorktree = join(scratch, 'candidate-worktree');
+const unsafeWorktree = join(scratch, 'unsafe-worktree');
+const emptyGitConfig = join(scratch, 'empty-gitconfig');
+const gitEnv = { ...process.env, GIT_CONFIG_GLOBAL: emptyGitConfig };
 
-const [nodeMajor, nodeMinor, nodePatch] = process.versions.node.split('.').map(Number);
-const supportedNode = nodeMajor > 22
-  || (nodeMajor === 22 && (nodeMinor > 22 || (nodeMinor === 22 && nodePatch >= 2)));
-if (!supportedNode) {
-  throw new Error(`Calculator mutation smoke requires Node 22.22.2+, got ${process.version}.`);
-}
-if (!npmCli) {
-  throw new Error('Run through npm so npm_execpath is available for the isolated fixture install.');
-}
-
-const run = (command, args, cwd, extraEnv = {}) => execFileSync(command, args, {
-  cwd,
-  encoding: 'utf8',
-  stdio: ['ignore', 'pipe', 'pipe'],
-  env: { ...process.env, ...extraEnv },
-});
-
-const hashBytes = (bytes) => createHash('sha256').update(bytes).digest('hex');
-
-async function hashTree(root) {
-  const hash = createHash('sha256');
-  async function walk(dir) {
-    for (const entry of (await readdir(dir, { withFileTypes: true }))
-      .sort((left, right) => left.name.localeCompare(right.name))) {
-      const path = join(dir, entry.name);
-      if (entry.isDirectory()) await walk(path);
-      else {
-        hash.update(path.slice(root.length));
-        hash.update(await readFile(path));
-      }
-    }
-  }
-  await walk(root);
-  return hash.digest('hex');
+function git(cwd, args, options = {}) {
+  return execFileSync('git', args, {
+    cwd,
+    encoding: 'utf8',
+    env: gitEnv,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    ...options,
+  }).trim();
 }
 
-function reportMutants(report) {
-  return Object.values(report.files ?? {}).flatMap((file) => file.mutants ?? []);
+function tests(cwd, expectedStatus = 0) {
+  const result = spawnSync(process.execPath, ['--test'], { cwd, encoding: 'utf8' });
+  assert.equal(result.status, expectedStatus, result.stdout + result.stderr);
+  return result;
 }
 
-async function stageTest(project, sourceName, targetName) {
-  const text = await readFile(join(project, 'stages', sourceName), 'utf8');
-  await writeFile(join(project, 'test', targetName), text);
+function guard(args, expectedStatus) {
+  const result = spawnSync(process.execPath, [protocol, 'git-import', ...args], {
+    encoding: 'utf8',
+    env: gitEnv,
+  });
+  assert.equal(result.status, expectedStatus, result.stdout + result.stderr);
+  return result;
 }
-
-const scratch = await mkdtemp(join(tmpdir(), 'skills-calculator-mutation-'));
-const project = join(scratch, 'calculator-cli');
 
 try {
-  await cp(fixture, project, { recursive: true });
-  await mkdir(join(project, '.mutation-tmp'), { recursive: true });
-
-  run(process.execPath, [npmCli, 'ci', '--ignore-scripts', '--no-audit', '--no-fund'], project);
-  const vitest = join(project, 'node_modules', 'vitest', 'vitest.mjs');
-  const stryker = join(project, 'node_modules', '@stryker-mutator', 'core', 'bin', 'stryker.js');
-
-  const originalProductionHash = await hashTree(join(project, 'src'));
-  run(process.execPath, [vitest, 'run'], project);
-  assert.equal(run(process.execPath, ['src/cli.js', 'divide', '8', '2'], project).trim(), '4');
-
-  // Stage 1: post-implementation hardening adds a distinct public edge case.
-  await stageTest(project, 'test-hardening.fixture.js', 'test-hardening.test.js');
-  run(process.execPath, [vitest, 'run'], project);
-  assert.equal(await hashTree(join(project, 'src')), originalProductionHash, 'test hardening changed production code');
-
-  // Freeze green, then discover a different exact-boundary survivor.
-  const discoveryReportPath = join(project, '.mutation-tmp', 'discovery.json');
-  run(process.execPath, [stryker, 'run', 'stryker.config.mjs'], project, {
-    MUTATION_REPORT: '.mutation-tmp/discovery.json',
-  });
-  const discoveryReportBytes = await readFile(discoveryReportPath);
-  const discoveryReportHash = hashBytes(discoveryReportBytes);
-  const firstReport = JSON.parse(discoveryReportBytes.toString('utf8'));
-  const firstMutants = reportMutants(firstReport);
-  const boundarySurvivor = firstMutants.find((mutant) => (
-    mutant.status === 'Survived' && mutant.replacement.includes('<') && !mutant.replacement.includes('<=')
-  ));
-  assert.ok(
-    boundarySurvivor,
-    `expected the <= to < display-boundary mutant to survive before remediation: ${JSON.stringify(firstMutants)}`,
+  await writeFile(emptyGitConfig, '');
+  await mkdir(join(repository, 'src'), { recursive: true });
+  await mkdir(join(repository, 'tests'), { recursive: true });
+  await writeFile(join(repository, 'package.json'), '{"type":"module"}\n');
+  await writeFile(
+    join(repository, 'src', 'calculator.js'),
+    'export const withinDisplayLimit = (value) => value <= 50;\n',
   );
-  assert.equal(await hashTree(join(project, 'src')), originalProductionHash, 'first mutation run changed production code');
+  await writeFile(join(repository, 'tests', 'calculator.test.js'), [
+    "import assert from 'node:assert/strict';",
+    "import test from 'node:test';",
+    "import { withinDisplayLimit } from '../src/calculator.js';",
+    "test('values around the display limit', () => {",
+    '  assert.equal(withinDisplayLimit(49), true);',
+    '  assert.equal(withinDisplayLimit(51), false);',
+    '});',
+    '',
+  ].join('\n'));
+  git(repository, ['init', '-q', '-b', 'feature']);
+  git(repository, ['config', 'user.name', 'Mutation Smoke']);
+  git(repository, ['config', 'user.email', 'mutation-smoke@example.invalid']);
+  git(repository, ['config', 'commit.gpgsign', 'false']);
+  git(repository, ['add', '-A']);
+  git(repository, ['commit', '-qm', 'frozen green']);
+  const frozen = git(repository, ['rev-parse', 'HEAD']);
+  tests(repository);
 
-  // Stage 2: test-only remediation must kill that same boundary mutation.
-  await stageTest(project, 'mutation-remediation.fixture.js', 'mutation-remediation.test.js');
-  run(process.execPath, [vitest, 'run'], project);
-  const verificationReportPath = join(project, '.mutation-tmp', 'verification.json');
-  run(process.execPath, [stryker, 'run', 'stryker.config.mjs'], project, {
-    MUTATION_REPORT: '.mutation-tmp/verification.json',
-  });
-  const verificationReportBytes = await readFile(verificationReportPath);
-  const verificationReportHash = hashBytes(verificationReportBytes);
-  const secondReport = JSON.parse(verificationReportBytes.toString('utf8'));
-  const remediated = reportMutants(secondReport).find((mutant) => (
-    mutant.mutatorName === boundarySurvivor.mutatorName
-    && mutant.replacement === boundarySurvivor.replacement
-    && JSON.stringify(mutant.location) === JSON.stringify(boundarySurvivor.location)
-  ));
-  assert.ok(remediated, 'the exact display-boundary mutant was not present in the verification run');
-  assert.equal(remediated.status, 'Killed', 'the exact display-boundary mutant was not killed');
-  assert.equal(hashBytes(await readFile(discoveryReportPath)), discoveryReportHash, 'discovery evidence was overwritten');
-  assert.equal(await hashTree(join(project, 'src')), originalProductionHash, 'mutation remediation changed production code');
+  git(repository, ['worktree', 'add', '-q', '-b', 'mutation-candidate', candidateWorktree, frozen]);
+  await writeFile(join(candidateWorktree, 'tests', 'limit-boundary.test.js'), [
+    "import assert from 'node:assert/strict';",
+    "import test from 'node:test';",
+    "import { withinDisplayLimit } from '../src/calculator.js';",
+    "test('the exact display limit is accepted', () => {",
+    '  assert.equal(withinDisplayLimit(50), true);',
+    '});',
+    '',
+  ].join('\n'));
+  tests(candidateWorktree);
+  git(candidateWorktree, ['add', 'tests/limit-boundary.test.js']);
+  git(candidateWorktree, ['commit', '-qm', 'test: cover exact display limit']);
+  const candidate = git(candidateWorktree, ['rev-parse', 'HEAD']);
 
-  process.stdout.write(JSON.stringify({
-    fixture: 'calculator-cli',
-    node: process.version,
-    hardeningCase: 'division-by-zero',
-    remediatedMutant: {
-      id: remediated.id,
-      mutatorName: remediated.mutatorName,
-      replacement: remediated.replacement,
-      status: remediated.status,
-    },
-    reports: {
-      discoverySha256: discoveryReportHash,
-      verificationSha256: verificationReportHash,
-    },
-    productionHash: originalProductionHash,
+  git(repository, ['worktree', 'add', '-q', '-b', 'unsafe-candidate', unsafeWorktree, frozen]);
+  await writeFile(join(unsafeWorktree, 'src', 'calculator.js'), 'export const withinDisplayLimit = () => true;\n');
+  await writeFile(join(unsafeWorktree, 'tests', 'unsafe.test.js'), 'unsafe candidate\n');
+  git(unsafeWorktree, ['add', '-A']);
+  git(unsafeWorktree, ['commit', '-qm', 'unsafe production and test']);
+  const unsafe = git(unsafeWorktree, ['rev-parse', 'HEAD']);
+  const rejection = guard([
+    '--repo', repository, '--approved', frozen, '--integration', frozen,
+    '--candidate', unsafe, '--allow', 'tests/**',
+  ], 1);
+  assert.equal(JSON.parse(rejection.stderr).code, 'IMPORT_REJECTED');
+
+  const accepted = guard([
+    '--repo', repository, '--approved', frozen, '--integration', frozen,
+    '--candidate', candidate, '--allow', 'tests/**',
+  ], 0);
+  const verdict = JSON.parse(accepted.stdout);
+  assert.deepEqual(verdict.changed, ['tests/limit-boundary.test.js']);
+
+  git(repository, ['restore', `--source=${verdict.candidate}`, '--staged', '--worktree', '--', ...verdict.changed]);
+  const productionDiff = spawnSync('git', [
+    '-C', repository, 'diff', '--quiet', '--no-ext-diff', '--no-relative',
+    '--ignore-submodules=none', '--no-renames', frozen, '--', '.', ':(exclude,glob)tests/**',
+  ], { env: gitEnv });
+  assert.equal(productionDiff.status, 0, 'test-only restore changed production');
+  git(repository, ['commit', '-qm', 'test: import reviewed mutation remediation']);
+  const integrated = git(repository, ['rev-parse', 'HEAD']);
+  guard([
+    '--repo', repository, '--approved', frozen, '--integration', frozen,
+    '--candidate', integrated, '--allow', 'tests/**',
+  ], 0);
+  tests(repository);
+
+  const productionPath = join(repository, 'src', 'calculator.js');
+  const cleanProduction = await readFile(productionPath, 'utf8');
+  await writeFile(productionPath, cleanProduction.replace('<=', '<'));
+  tests(repository, 1);
+  await writeFile(productionPath, cleanProduction);
+  tests(repository);
+  assert.equal(git(repository, ['status', '--short']), '');
+
+  process.stdout.write(`${JSON.stringify({
+    fixture: 'calculator',
+    frozen,
+    candidate,
+    integrated,
+    rejectedUnsafeCandidate: unsafe,
+    imported: verdict.changed,
+    targetedFault: '<= to < at the public display limit',
     result: 'passed',
-  }, null, 2));
-  process.stdout.write('\n');
+  }, null, 2)}\n`);
 } finally {
   await rm(scratch, { recursive: true, force: true });
 }

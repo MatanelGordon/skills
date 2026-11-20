@@ -28,6 +28,7 @@ function fencesBalanced(text) {
 
 const idKeyCount = (text) => [...text.matchAll(/"id"\s*:/g)].length;
 const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const repositoryPath = (root, path) => relative(root, path).replaceAll('\\', '/');
 
 export async function validateRepository(root = DEFAULT_ROOT) {
   root = resolve(root);
@@ -66,7 +67,7 @@ export async function validateRepository(root = DEFAULT_ROOT) {
         if (result.status !== 0) fail(skill, `${entry.name}: bash -n → ${result.stderr.trim().split('\n')[0]}`);
       } else if (ext === '.mjs' || ext === '.js') {
         const result = spawnSync(process.execPath, ['--check', full], { encoding: 'utf8' });
-        if (result.status !== 0) fail(relative(root, full), `node --check → ${result.stderr.trim().split('\n')[0]}`);
+        if (result.status !== 0) fail(repositoryPath(root, full), `node --check → ${result.stderr.trim().split('\n')[0]}`);
       } else if (ext === '.py' && HAVE.python3) {
         const result = spawnSync('python3', ['-m', 'py_compile', full], {
           encoding: 'utf8',

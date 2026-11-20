@@ -77,4 +77,5 @@ test('validator syntax-checks repository tools without entering node_modules', a
   const toolFailures = result.failures.filter((line) => line.startsWith('tools/'));
   assert.equal(toolFailures.length, 1, toolFailures.join('\n'));
   assert.match(toolFailures[0], /tools\/browser-capture\/broken\.mjs: node --check/);
+  assert.doesNotMatch(toolFailures[0], /\\/);
 });

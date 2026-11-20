@@ -29,6 +29,9 @@ function fencesBalanced(text) {
 const idKeyCount = (text) => [...text.matchAll(/"id"\s*:/g)].length;
 const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const repositoryPath = (root, path) => relative(root, path).replaceAll('\\', '/');
+const extractFrontmatter = (text) => (
+  /^---\r?\n([\s\S]*?)\r?\n---\r?\n/.exec(text)?.[1]?.replace(/\r\n?/g, '\n')
+);
 
 export async function validateRepository(root = DEFAULT_ROOT) {
   root = resolve(root);
@@ -85,12 +88,11 @@ export async function validateRepository(root = DEFAULT_ROOT) {
       continue;
     }
     const text = await readFile(mdPath, 'utf8');
-    const fmMatch = /^---\n([\s\S]*?)\n---\n/.exec(text);
-    if (!fmMatch) {
+    const fm = extractFrontmatter(text);
+    if (!fm) {
       fail(dir, 'no YAML frontmatter');
       continue;
     }
-    const fm = fmMatch[1];
     const topKeys = [...fm.matchAll(/^([A-Za-z][\w-]*):/gm)].map((match) => match[1]);
     for (const key of topKeys) {
       if (!ALLOWED_KEYS.has(key)) fail(dir, `frontmatter key '${key}' — Claude Code rejects unknown keys`);
@@ -165,7 +167,7 @@ export async function validateRepository(root = DEFAULT_ROOT) {
       agentCount++;
       const label = `agents/${file}`;
       const text = await readFile(join(agentsRoot, file), 'utf8');
-      const fm = /^---\n([\s\S]*?)\n---\n/.exec(text)?.[1];
+      const fm = extractFrontmatter(text);
       if (!fm) {
         fail(label, 'no YAML frontmatter');
         continue;

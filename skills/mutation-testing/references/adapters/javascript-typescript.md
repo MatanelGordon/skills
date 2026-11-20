@@ -43,4 +43,3 @@ remediation, run clean Vitest, rerun the narrowest location/type selection, and
 match the same mutant. Native `NoCoverage` is undetected/actionable; `Timeout`
 is detected but visible and spot-checked; compile/runtime errors are excluded;
 `Ignored` is out of scope; `Pending` is incomplete.
-

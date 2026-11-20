@@ -173,4 +173,3 @@ FINAL: complete | incomplete | returned-to-implementation
 - [result-model.md](references/result-model.md) — raw truth and workflow decisions
 - [import-guard.md](references/import-guard.md) — direct-parent test-only import
 - `scripts/mutation-protocol.mjs` — reachable classify/import/provenance commands
-

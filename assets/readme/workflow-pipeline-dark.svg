@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-labelledby="title desc">
   <title id="title">The development workflow</title>
-  <desc id="desc">Research, plan, test-first, implementation and test hardening run in order. A frozen green commit fans out to independent review and isolated mutation discovery. Review-cleared test-only remediation joins the paths before final verification and commit.</desc>
+  <desc id="desc">Research, plan, test-first, implementation and test hardening run in order. A frozen green commit proceeds to independent review, with mutation testing as an optional risk-based branch. Verification and a why-focused commit finish the workflow.</desc>
   <defs>
     <pattern id="grid" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#21262d"/></pattern>
     <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#bc8cff"/></marker>
@@ -15,23 +15,29 @@
     .accent { fill: #271a3d; stroke: #bc8cff; stroke-width: 1.4; }
     .success { fill: #12261e; stroke: #3fb950; stroke-width: 1.2; }
     .wire { fill: none; stroke: #bc8cff; stroke-width: 2; marker-end: url(#arrow); }
+    .optional { stroke-dasharray: 5 4; }
+    .stage { animation: stage-pulse 10s ease-in-out infinite; transform-origin: center; }
+    .wire { stroke-dasharray: 8 4; animation: wire-flow 2s linear infinite; }
+    @keyframes stage-pulse { 0%, 100% { opacity:.72; } 12%, 70% { opacity:1; } }
+    @keyframes wire-flow { to { stroke-dashoffset:-24; } }
+    @media (prefers-reduced-motion: reduce) { .stage, .wire { animation:none; opacity:1; } }
   </style>
   <rect x=".5" y=".5" width="959" height="439" rx="16" fill="#161b22" stroke="#30363d"/>
   <rect x=".5" y=".5" width="959" height="439" rx="16" fill="url(#grid)" opacity=".65"/>
   <text class="label" x="28" y="34">ONE FEATURE · START TO FINISH</text>
 
   <path class="wire" d="M182 123 H199"/><path class="wire" d="M358 123 H375"/><path class="wire" d="M534 123 H551"/><path class="wire" d="M710 123 H727"/>
-  <g transform="translate(28 58)"><rect class="card" width="154" height="130" rx="12"/><text class="label" x="16" y="25">0 · RESEARCH</text><text class="title" x="16" y="52">Reuse first</text><text class="body" x="16" y="75">registry · GitHub</text><text class="body" x="16" y="92">existing code</text><text class="skill" x="16" y="114">research-first</text></g>
-  <g transform="translate(204 58)"><rect class="card" width="154" height="130" rx="12"/><text class="label" x="16" y="25">1 · PLAN</text><text class="title" x="16" y="52">Define proof</text><text class="body" x="16" y="75">file map · edges</text><text class="body" x="16" y="92">past decisions</text><text class="skill" x="16" y="114">deep-plan · adr</text></g>
-  <g transform="translate(380 58)"><rect class="card" width="154" height="130" rx="12"/><text class="label" x="16" y="25">2 · TEST FIRST</text><text class="title" x="16" y="52">RED → GREEN</text><text class="body" x="16" y="75">watch the test fail</text><text class="body" x="16" y="92">then refactor</text><text class="skill" x="16" y="114">public behavior</text></g>
-  <g transform="translate(556 58)"><rect class="card" width="154" height="130" rx="12"/><text class="label" x="16" y="25">3 · IMPLEMENT</text><text class="title" x="16" y="52">Smallest change</text><text class="body" x="16" y="75">follow the plan</text><text class="body" x="16" y="92">stay green</text><text class="skill" x="16" y="114">parallel-build</text></g>
-  <g transform="translate(732 58)"><rect class="accent" width="200" height="130" rx="12"/><text class="label" x="16" y="25">4 · TEST HARDEN</text><text class="title" x="16" y="52">Fresh edge cases</text><text class="body" x="16" y="75">tests + fixtures only</text><text class="body" x="16" y="92">final diff as evidence</text><text class="skill" x="16" y="114">test-hardening</text></g>
+  <g class="stage" style="animation-delay:0s" transform="translate(28 58)"><rect class="card" width="154" height="130" rx="12"/><text class="label" x="16" y="25">0 · RESEARCH</text><text class="title" x="16" y="52">Reuse first</text><text class="body" x="16" y="75">registry · GitHub</text><text class="body" x="16" y="92">existing code</text><text class="skill" x="16" y="108">research-first</text><text class="skill" x="16" y="123">confidence-ranker</text></g>
+  <g class="stage" style="animation-delay:1s" transform="translate(204 58)"><rect class="card" width="154" height="130" rx="12"/><text class="label" x="16" y="25">1 · PLAN</text><text class="title" x="16" y="52">Define proof</text><text class="body" x="16" y="75">file map · edges</text><text class="body" x="16" y="92">past decisions</text><text class="skill" x="16" y="108">deep-plan</text><text class="skill" x="16" y="123">plan-reviewer</text></g>
+  <g class="stage" style="animation-delay:2s" transform="translate(380 58)"><rect class="card" width="154" height="130" rx="12"/><text class="label" x="16" y="25">2 · TEST FIRST</text><text class="title" x="16" y="52">RED → GREEN</text><text class="body" x="16" y="75">watch the test fail</text><text class="body" x="16" y="92">then refactor</text><text class="body" x="16" y="114">public behavior</text></g>
+  <g class="stage" style="animation-delay:3s" transform="translate(556 58)"><rect class="card" width="154" height="130" rx="12"/><text class="label" x="16" y="25">3 · IMPLEMENT</text><text class="title" x="16" y="52">Smallest change</text><text class="body" x="16" y="75">follow the plan</text><text class="body" x="16" y="92">stay green</text><text class="skill" x="16" y="114">parallel-build</text></g>
+  <g class="stage" style="animation-delay:4s" transform="translate(732 58)"><rect class="accent" width="200" height="130" rx="12"/><text class="label" x="16" y="25">4 · TEST HARDEN</text><text class="title" x="16" y="52">Fresh edge cases</text><text class="body" x="16" y="75">tests + fixtures only</text><text class="body" x="16" y="92">bounded by behavior</text><text class="skill" x="16" y="114">test-hardening</text></g>
 
   <path class="wire" d="M832 188 V211"/>
   <g transform="translate(727 218)"><rect class="success" width="210" height="38" rx="19"/><circle cx="20" cy="19" r="7" fill="#3fb950"/><text x="38" y="24" font-size="12" font-weight="700">FROZEN GREEN COMMIT</text></g>
   <path class="wire" d="M832 256 V272 H588 V284"/><path class="wire" d="M832 256 V284"/>
-  <g transform="translate(488 292)"><rect class="card" width="200" height="70" rx="12"/><text class="label" x="16" y="23">5A · INDEPENDENT REVIEW</text><text class="body" x="16" y="45">fix CRITICAL + HIGH</text><text class="skill" x="16" y="61">ordinary feature worktree</text></g>
-  <g transform="translate(732 292)"><rect class="accent" width="200" height="70" rx="12"/><text class="label" x="16" y="23">5B · MUTATION DISCOVERY</text><text class="body" x="16" y="45">challenge test sensitivity</text><text class="skill" x="16" y="61">disposable worktree</text></g>
+  <g class="stage" style="animation-delay:5s" transform="translate(488 292)"><rect class="card" width="200" height="70" rx="12"/><text class="label" x="16" y="23">5 · INDEPENDENT REVIEW</text><text class="body" x="16" y="45">fix CRITICAL + HIGH</text><text class="body" x="16" y="61">fresh eyes or platform</text></g>
+  <g class="stage" style="animation-delay:6s" transform="translate(732 292)"><rect class="accent optional" width="200" height="70" rx="12"/><text class="label" x="16" y="23">OPTIONAL · MUTATION</text><text class="body" x="16" y="45">critical logic + budget</text><text class="skill" x="16" y="61">mutation-testing</text></g>
   <path class="wire" d="M588 362 V379 H480 V391"/><path class="wire" d="M832 362 V379 H480 V391"/>
-  <g transform="translate(238 398)"><rect class="success" width="484" height="30" rx="15"/><text x="242" y="20" text-anchor="middle" font-size="12" font-weight="700">REVIEW-CLEARED TESTS → VERIFY → COMMIT WITH WHY</text></g>
+  <g class="stage" style="animation-delay:7s" transform="translate(238 398)"><rect class="success" width="484" height="30" rx="15"/><text x="242" y="20" text-anchor="middle" font-size="12" font-weight="700">6 · VERIFY → 7 · COMMIT WITH WHY</text></g>
 </svg>

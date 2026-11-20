@@ -57,4 +57,3 @@ candidate from the current reviewed head.
 
 Run the guard again on the resulting one-commit import, then the clean suite and
 targeted proof. Rust tests embedded in production files are outside this guard.
-

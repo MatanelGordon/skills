@@ -137,4 +137,3 @@ stage, reason, and residual risk in one sentence.
 | Call incomplete mutation evidence complete | A score cannot cover unrun work or a failed harness |
 | Merge a mutation worktree | Candidate history can contain deliberately faulty production |
 | Hide a skipped stage | Downstream reviewers cannot judge residual risk |
-

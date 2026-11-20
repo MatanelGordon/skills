@@ -42,4 +42,3 @@ pattern such as:
 scope. Native `NoCoverage` is undetected/actionable, timeout detected with a
 spot check, compile/runtime errors excluded, `Ignored` out of scope, and
 `Pending` incomplete.
-

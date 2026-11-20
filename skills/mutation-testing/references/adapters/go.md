@@ -31,4 +31,3 @@ incomplete. `KILLED` and timeout are detected, `LIVED` and `NOT COVERED` are
 undetected/actionable, `NOT VIABLE` is excluded. Gremlins has no documented
 portable single-mutant selector; targeted proof uses the narrowest package,
 diff, and mutation-type scope, then matches the same location/type in JSON.
-

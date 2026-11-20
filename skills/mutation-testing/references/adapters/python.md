@@ -36,4 +36,3 @@ delete or segregate that directory when commit, tests, or scope changes.
 `killed`, `caught by type check`, and timeout are detected (spot-check timeout);
 `survived` and `no tests` are undetected/actionable; `suspicious`/segfault are
 excluded; `skipped` is out of scope; `not checked` or interrupted is incomplete.
-

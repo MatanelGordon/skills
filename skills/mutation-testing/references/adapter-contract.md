@@ -51,4 +51,3 @@ One coordinator owns scope and the final report. Native workers are the default.
 Additional lanes are optional and require disjoint source scopes, test/fixture
 ownership, isolated resources, and a predicted saving larger than duplicated
 setup. Merge raw reports before assigning remediation.
-

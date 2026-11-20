@@ -5,4 +5,3 @@ index 1111111..2222222 100644
 @@ -1 +1 @@
 -export const validDiscount = (value) => value > 0 && value < 50;
 +export const validDiscount = (value) => value >= 0 && value <= 50;
-

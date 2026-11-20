@@ -38,4 +38,3 @@ narrowest audited selector, for example:
 excluded, and timeout detected but spot-checked. In-file `#[cfg(test)]` edits
 cannot return through the path-based import guard; add them before the freeze in
 the normal reviewed workflow.
-

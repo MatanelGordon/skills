@@ -2,25 +2,31 @@
 
 ## 1.22.0 — 2026-11-20
 
-- **Added `test-hardening`.** A fresh post-implementation subagent inspects the
-  final diff for public edge cases created by the code, changes tests and
-  fixtures only, and returns production defects as failing regression tests.
-- **Added `mutation-testing`.** Five native-engine adapters cover Python
-  (Mutmut), C# (Stryker.NET), Rust (cargo-mutants), Go (Gremlins), and
-  JavaScript/TypeScript (StrykerJS), with changed-scope selection, native-first
-  concurrency, adapter-specific raw status mapping, immutable per-run reports,
-  independently reviewed remediation, and a Git-backed fail-closed test-only
-  import path from disposable worktrees.
-- Extended `development-workflow` so hardening precedes a frozen green commit,
-  review and mutation discovery fan out in parallel, affected results become
-  stale after review changes, and joined verification blocks incomplete runs.
-- Added deterministic protocol tests and a real Node 22 calculator CLI smoke:
-  Vitest proves division-by-zero hardening first, StrykerJS then exposes a
-  separate display-boundary survivor, and a test-only remediation kills that
-  exact mutant while production file hashes stay unchanged.
-- Recorded the native, agent-neutral architecture in ADR 0001. Selected PSTACK
-  principles are pinned as versioned design evidence with exact blob hashes and
-  an upstream re-review trigger; no external skill or runtime is vendored.
+- **Added `test-hardening`.** The default post-implementation pass adds bounded
+  tests for observable edge cases, produces any hand-fault red proof in a
+  scratch copy/worktree, and returns production defects as failing regressions.
+- **Added opt-in `mutation-testing`.** Five pinned adapters cover Mutmut,
+  Stryker.NET, cargo-mutants, Gremlins, and StrykerJS with honest engine-specific
+  scope. Raw labels stay separate from native meaning and workflow decisions:
+  no coverage is actionable, native exclusions/out-of-scope work are counted,
+  and pending, unrun, red-baseline, harness, or exhausted-budget work is
+  incomplete.
+- Updated `development-workflow` to keep hardening and independent review in the
+  default feature path while selecting mutation testing only by explicit request
+  or for configured, scoped, budgeted critical logic. Hosts without subagents or
+  worktrees get fresh-context and disposable-clone fallbacks.
+- Replaced candidate-history replay with a fail-closed, direct-parent Git gate.
+  It uses plumbing immune to diff/submodule UI configuration, rejects hidden
+  production history and unsafe file types, and imports only reported test paths
+  with `git restore`. `FINAL: incomplete` stops the optional mutation stage for
+  the user's risk decision and is never presented or committed as complete.
+- Added 18 focused protocol regressions plus a dependency-free real worktree
+  smoke that rejects a production-changing candidate, restores a reviewed test,
+  and observes that test fail against its named boundary fault. `npm test` now
+  discovers all repository tests portably instead of maintaining file lists.
+- Corrected PSTACK provenance to `cursor/plugins`, added Lauren Tan's MIT
+  attribution, and added a scheduled/opt-in upstream blob drift check. No
+  external skill or runtime is vendored.
 
 ## 1.21.1 — 2026-11-20
 

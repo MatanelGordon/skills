@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.22.0 — 2026-11-20
+
+- Added the repository `browser-capture` companion with an exact-pinned
+  Puppeteer runtime while preserving a Node-built-ins fallback inside copied
+  and npx-installed Impeccable Lite skills. Chrome, Chromium, and Edge are
+  discovered locally; no browser or dependency is downloaded during capture.
+- Enforced the offline boundary with a process-owned deny proxy, exact preview
+  bypass, page interception, new-target denial, worker/frame observation, and a
+  pre-seeded WebRTC UDP preference. Real-Chrome regressions cover popup,
+  prerender/speculation, frames, dedicated/shared/service workers, WebSocket,
+  WebRTC, immutable evidence, and negative controls for flags/interception.
+- Made diagnostics durable and actionable: mobile viewport mismatch, slight
+  overflow, missing same-origin assets, unexpected navigation, nested cleanup
+  failures, browser validation, symlink invocation, process-tree signals, stale
+  staging, and relocatable evidence paths are covered.
+- Kept the npm package single-bin so `npx github:MatanelGordon/skills` invokes
+  the installer. Capture remains an explicit repository command.
+- Clarified browser-interaction routing: installed libraries cover shell-only
+  work, real-account mutations require confirmation, DevTools daemon policy is
+  verified and URL-bounded on every call, and UA testing is limited to owned or
+  authorized targets with native/headed mode first and no stealth claims.
+- Added the browser and Impeccable suites to CI and consolidated repository
+  executable syntax validation without entering nested dependencies.
+
 ## 1.21.1 — 2026-11-20
 
 - Simplified `impeccable-lite` from a fresh contradiction audit: visual

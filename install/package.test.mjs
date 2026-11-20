@@ -5,6 +5,39 @@ import { dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 
+import { discoverRootTests } from './run-tests.mjs';
+
+test('root test discovery is portable and excludes separately provisioned or scratch suites', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'skills-root-tests-'));
+  try {
+    for (const directory of [
+      join(root, 'install'),
+      join(root, 'skills', 'example', 'tests'),
+      join(root, 'skills', 'impeccable-lite', 'tests'),
+      join(root, 'skills', 'rank-workspace'),
+      join(root, 'tools', 'browser-capture', 'tests'),
+    ]) await mkdir(directory, { recursive: true });
+    await Promise.all([
+      writeFile(join(root, 'install', 'install.test.mjs'), ''),
+      writeFile(join(root, 'skills', 'example', 'tests', 'example.test.mjs'), ''),
+      writeFile(join(root, 'skills', 'impeccable-lite', 'tests', 'cli.test.mjs'), ''),
+      writeFile(join(root, 'skills', 'impeccable-lite', 'tests', 'browser-integration.test.mjs'), ''),
+      writeFile(join(root, 'skills', 'rank-workspace', 'scratch.test.mjs'), ''),
+      writeFile(join(root, 'tools', 'browser-capture', 'tests', 'browser.test.mjs'), ''),
+    ]);
+
+    const discovered = (await discoverRootTests(root))
+      .map((path) => path.slice(root.length + 1).replaceAll('\\', '/'));
+    assert.deepEqual(discovered, [
+      'install/install.test.mjs',
+      'skills/example/tests/example.test.mjs',
+      'skills/impeccable-lite/tests/cli.test.mjs',
+    ]);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('npm package manifest is an allowlist and excludes sanctioned scratch trees', async () => {
   const root = resolve('.');
   const scratch = join(root, 'skills', 'package-test-workspace');
@@ -16,7 +49,8 @@ test('npm package manifest is an allowlist and excludes sanctioned scratch trees
     assert.deepEqual(Object.keys(packageJson.bin), ['install-skills']);
     const councilTest = 'skills/council/tests/council-protocol.test.mjs';
     assert.equal(packageJson.scripts['test:council'], `node --test ${councilTest}`);
-    assert.match(packageJson.scripts.test, new RegExp(`(?:^| )${councilTest.replaceAll('.', '\\.')}(?: |$)`));
+    assert.equal(packageJson.scripts['test:impeccable-lite'], 'node --test skills/impeccable-lite/tests/*.test.mjs');
+    assert.equal(packageJson.scripts.test, 'node install/run-tests.mjs');
     assert.doesNotMatch(packageJson.scripts.test, /skills\/council\/tests\/\*/);
     assert(process.env.npm_execpath, 'package test must run through npm so npm_execpath is available');
     const packed = spawnSync(process.execPath, [process.env.npm_execpath, 'pack', '--dry-run', '--json', '--ignore-scripts'], {
@@ -33,6 +67,7 @@ test('npm package manifest is an allowlist and excludes sanctioned scratch trees
     assert(!paths.some((path) => path.startsWith('tools/browser-capture/node_modules/')), paths.join('\n'));
     for (const required of [
       'install/index.mjs',
+      'install/run-tests.mjs',
       'install/validate.mjs',
       'install/run-evals.mjs',
       'agents/code-archaeologist.md',

@@ -46,7 +46,9 @@ test('real Puppeteer capture uses the requested CSS viewport and versioned manif
   assert.match(report.generation, /^capture-[a-f0-9-]+$/);
   assert.equal(report.captures[0].path, 'mobile.png');
   assert.equal(report.reportPath, 'capture.json');
-  await access(join(root, '.browser-capture', 'evidence', report.generation, report.reportPath));
+  const evidenceRoot = join(root, '.browser-capture', 'evidence', report.generation);
+  await access(join(evidenceRoot, report.captures[0].path));
+  await access(join(evidenceRoot, report.reportPath));
 });
 
 test('capture rejects an output ancestor symlink before creating outside directories', async () => {

@@ -1,0 +1,61 @@
+{
+  "skill_name": "test-hardening",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "The invoice proration feature is green. Harden its tests. I have not supplied the repository, final diff, acceptance criteria, plan edge cases, or test command.",
+      "expected_output": "The reply names the missing inputs and does not fabricate inspection, edits, or passing commands. It states the bounded hardening entry contract.",
+      "files": [],
+      "expectations": [
+        "The reply asks for or identifies acceptance criteria, final diff, plan edge cases, existing tests, and test commands",
+        "The reply does not claim it ran tests, added cases, or preserved hashes without evidence",
+        "The reply does not infer intended contracts from production code alone"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Use the supplied final diff and acceptance note. The public function now accepts discount values from 0 through 50 inclusive; existing tests cover 1 and 49 only. Propose the focused hardening work, but do not claim commands ran.",
+      "expected_output": "The reply maps the lower and exact upper boundaries to observable behavior, proposes focused tests, and describes a scratch/pre-fix red proof plus clean green command without claiming execution.",
+      "files": ["evals/fixtures/discount-final.diff", "evals/fixtures/discount-acceptance.md"],
+      "expectations": [
+        "The reply proposes observable boundary assertions for 0 and 50 rather than private helper checks",
+        "The reply limits additions to focused cases and names the faults they detect",
+        "The reply puts any hand fault in a scratch copy/worktree or pre-fix commit, not the feature checkout",
+        "The reply describes production hash/diff verification",
+        "The reply does not say tests passed or files were edited"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "While hardening the completed parser, you discover that a valid empty document crashes production.",
+      "expected_output": "The reply writes or proposes the smallest failing public regression and returns it to the implementer without repairing production in the hardening role.",
+      "files": [],
+      "expectations": [
+        "The reply keeps the regression focused on public behavior",
+        "The reply does not fix production code",
+        "The reply requires affected hardening to be reconsidered after the implementation changes"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Start a new URL shortener with TDD. Write the first failing test and implementation.",
+      "expected_output": "The reply uses ordinary red-green-refactor and does not invoke post-implementation hardening before a final green implementation exists.",
+      "files": [],
+      "expectations": [
+        "The reply correctly skips test-hardening at this stage",
+        "The reply does not fabricate a final-diff hardening pass"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Coverage is 82%. Keep adding passing tests until it reaches 90%, even if they repeat behavior already covered.",
+      "expected_output": "The reply refuses decorative duplication, applies the one-test-per-behavior/lens value limit, and stops when risks are covered or explicitly omitted.",
+      "files": [],
+      "expectations": [
+        "The reply does not optimize blindly for the coverage number",
+        "The reply requires a distinct observable failure for each addition",
+        "The reply states a concrete stop condition"
+      ]
+    }
+  ]
+}

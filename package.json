@@ -9,12 +9,13 @@
   "scripts": {
     "install-skills": "node install/index.mjs",
     "start": "node install/index.mjs",
+    "test:mutation-smoke": "node skills/mutation-testing/tests/run-calculator-smoke.mjs",
     "test:council": "node --test skills/council/tests/council-protocol.test.mjs",
     "test:impeccable-lite": "node --test skills/impeccable-lite/tests/*.test.mjs",
     "setup:browser-capture": "npm install --prefix tools/browser-capture --ignore-scripts --no-audit --no-fund",
     "test:browser-capture": "node tools/browser-capture/test.mjs",
     "validate": "node install/validate.mjs",
-    "test": "node --test install/index.test.mjs install/package.test.mjs install/run-evals.test.mjs install/validate.test.mjs skills/council/tests/council-protocol.test.mjs",
+    "test": "node install/run-tests.mjs",
     "eval": "node install/run-evals.mjs"
   },
   "files": [

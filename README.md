@@ -4,7 +4,7 @@
 
 **Write the lesson once. Every coding agent learns it.**
 
-25 original Agent Skills and 2 subagents, kept in one repository and linked into<br>
+27 original Agent Skills and 2 subagents, kept in one repository and linked into<br>
 Claude Code · OpenAI Codex · GitHub Copilot · Tabnine
 
 [Why](#why-this-exists) · [Quick start](#quick-start) · [How it works](#how-it-works) · [Workflow](#the-workflow) · [Skills](#the-skills) · [Agents](#original-agents) · [Authoring](#writing-your-own-portable-skill) · [Elsewhere](#good-skills-that-live-elsewhere)
@@ -82,7 +82,7 @@ Claude Code and Codex pick skills up on the next session.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/readme/install-flow-dark.svg">
-  <img src="assets/readme/install-flow-light.svg" width="880" alt="Diagram: one clone of this repository, with 25 skills and 2 agents, feeds install/index.mjs, which symlinks or copies them into five skill directories: Claude Code (~/.claude/skills/), OpenAI Codex (~/.codex/skills/), GitHub Copilot (~/.copilot/skills/), Tabnine (~/.tabnine/agent/skills/) and the shared ~/.agents/skills/.">
+  <img src="assets/readme/install-flow-light.svg" width="880" alt="Diagram: one clone of this repository, with 27 skills and 2 agents, feeds install/index.mjs, which symlinks or copies them into five skill directories: Claude Code (~/.claude/skills/), OpenAI Codex (~/.codex/skills/), GitHub Copilot (~/.copilot/skills/), Tabnine (~/.tabnine/agent/skills/) and the shared ~/.agents/skills/.">
 </picture>
 
 | Agent | Where the installer puts skills |
@@ -122,28 +122,37 @@ that keeps them in order:
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/readme/workflow-pipeline-dark.svg">
-  <img src="assets/readme/workflow-pipeline-light.svg" width="880" alt="Six steps in order. Step 0, Research: does it already exist? (research-first, confidence-ranker). Step 1, Plan: what changes, and what proves it? (deep-plan, adr, plan-reviewer). Step 2, Test first: the test fails red, then passes green, then refactor. Step 3, Implement: the smallest change, with parallel-build for big work. Step 4, Review by a fresh subagent, with CRITICAL and HIGH findings fixed before merge. Step 5, Commit: say why, and record one-way calls with adr.">
+  <img src="assets/readme/workflow-pipeline-light.svg" width="880" alt="The default feature workflow runs research, planning, test-first implementation, bounded test hardening, independent review, verification and a why-focused commit. Mutation testing is an optional branch for explicit requests or configured, budgeted critical logic.">
 </picture>
 
 0. **Research.** Before writing code, check whether it already exists in a
    registry, on GitHub, or in your codebase. If something proven covers about 80%
    of the need, use it. Any shaky claim the work depends on gets checked first.
-1. **Plan.** Read past decisions in `.adr/`, then write down what will change and
-   what will prove it worked. For anything wider than a couple of files, that
-   becomes a `deep-plan` in `.plan/`, which `plan-reviewer` reads with fresh eyes.
+1. **Plan.** Read the repository's past decisions, then write down what will
+   change and what will prove it worked. For anything wider than a couple of
+   files, that becomes a `deep-plan`, which `plan-reviewer` reads with fresh eyes.
 2. **Test first.** Write the test and watch it fail for the right reason. Then
    make it pass, then clean up. A test you never saw fail proves nothing.
 3. **Implement.** The smallest change that does the job, following the plan.
    Work big enough to split goes to `parallel-build`.
-4. **Review.** Someone who didn't write it reviews it. CRITICAL and HIGH
-   findings are fixed before merging.
-5. **Commit.** The message says *why*. Hard-to-reverse calls become ADRs.
+4. **Test harden.** A fresh subagent reads the completed diff and adds tests for
+   edge cases created by the implementation—not more production code. Then the
+   green state is frozen.
+5. **Review.** Someone who didn't write the code reviews it. Mutation testing is
+   separate and opt-in: run it when explicitly requested, or when a configured
+   engine can cheaply probe plan-marked critical decision logic inside an
+   approved budget. The mutation branch is never merged.
+6. **Verify.** Rerun clean relevant and repository tests and inspect the diff.
+   If mutation testing was selected, import paths rather than candidate history
+   and rerun its agreed proofs. Incomplete evidence stops that optional stage
+   for a user risk decision; it is never reported as complete.
+7. **Commit.** The message says *why*. Hard-to-reverse calls become ADRs.
 
-Not every change needs all six steps. Scale it honestly:
+Not every change needs the full feature pipeline. Scale it honestly:
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/readme/workflow-scale-dark.svg">
-  <img src="assets/readme/workflow-scale-light.svg" width="880" alt="How many steps each change gets. Typo, rename or comment: just do it. Small bug fix: a red test, the fix, and a commit that says why; research, plan and review are skipped. Feature or refactor: all six steps. Multi-seam, multi-day work: all six, planned with deep-plan and built with parallel-build. Every change, however small: inspect first, define done, verify, and say what you skipped.">
+  <img src="assets/readme/workflow-scale-light.svg" width="880" alt="Stage matrix: a typo uses the mandatory core; a small bug uses a reproducing test and fix; features default to research, planning, TDD, implementation, hardening, review, verification and commit. Mutation testing is a dashed optional cell selected by explicit request or a configured, critical, scoped and budgeted risk rule.">
 </picture>
 
 Skipping a step is fine. Skipping it *silently* isn't: one sentence saying why
@@ -158,7 +167,9 @@ others when you install it.
 
 | Skill | What it does |
 |---|---|
-| [development-workflow](skills/development-workflow/SKILL.md) | The spine: research → plan → test-first → implement → review → commit-with-why. Each stage defers to its dedicated skill, and a proportionality table keeps a typo from getting a feature's ceremony. → `research-first`, `confidence-ranker`, `deep-plan`, `adr` |
+| [development-workflow](skills/development-workflow/SKILL.md) | The spine: research → plan → test-first → implement → test-harden → review → verify → commit. Mutation testing is an explicit risk/value option, not a default feature gate. → `research-first`, `confidence-ranker`, `deep-plan`, `test-hardening`, `mutation-testing`, `adr` |
+| [test-hardening](skills/test-hardening/SKILL.md) | Fresh post-implementation eyes add bounded tests for observable edge cases. Red proof happens in a scratch copy/worktree, production defects return as regressions, and hosts without subagents use a declared fresh-context fallback. |
+| [mutation-testing](skills/mutation-testing/SKILL.md) | Opt-in native mutation testing for an explicit scope or budgeted critical logic. Five adapters preserve engine meanings; a direct-parent Git guard rejects production history and imports only reviewed test paths. → `test-hardening` |
 | [deep-plan](skills/deep-plan/SKILL.md) | Turns "build X" into a plan someone with zero context could execute: a clarity gate before any writing, one owner per file path, every edge case enumerated with a status, and test commands quoted verbatim. Owns `.plan/`. |
 | [council](skills/council/SKILL.md) | Pressure-tests consequential architecture choices with isolated, contrast-written personas, anonymized cross-review, and a chairman verdict that preserves dissent. Weights falsifiers over confidence theatre. Built for weak single-model harnesses on closed networks. |
 | [prototype](skills/prototype/SKILL.md) | Throwaway code that answers a design question before real work burns tokens on the wrong thing. Greenfield: hardcode everything, delete it after. Brownfield: deliberately bad code behind exactly one seam, so the real thing lands as a one-line swap. |
@@ -239,7 +250,8 @@ and skips platform-locked skills on the wrong OS.
 
 | Skill | Needs |
 |---|---|
-| `impeccable-lite` | Node ≥ 18 and an installed Chrome, Chromium, or Edge browser for optional screenshots; registry checkouts may use the pre-provisioned Puppeteer companion |
+| `impeccable-lite` | Node ≥ 18 for its optional local workflow/audit and an installed Chrome, Chromium, or Edge browser for screenshots; registry checkouts may use the pre-provisioned Puppeteer companion, while copied and npx installs retain a built-ins-only fallback. |
+| `mutation-testing` | Node ≥ 18 + git for protocol gates; a compatible native engine for execution. Worktree-free hosts need a disposable clone/copy. |
 | `cli-coding-subagents` | codex + copilot CLIs, installed and authenticated |
 | `parallel-build` | the above, plus git worktrees |
 | `openrouter-cli-subagent` | the `ori` CLI on PATH and an OpenRouter credential |
@@ -368,6 +380,7 @@ fine from upstream.
 | Upstream | Why it's on this list |
 |---|---|
 | [openai/skills](https://github.com/openai/skills) (Apache-2.0, OpenAI) | Four independent Codex copies are installed with bundled licenses and per-copy attribution: `aspnet-core`, `chatgpt-apps`, `cli-creator`, and `frontend-skill`. Their installed revisions were not recorded; update through the curated installer rather than assuming they track `main`. |
+| [cursor/plugins — PSTACK](https://github.com/cursor/plugins/tree/main/pstack) (MIT, Lauren Tan) | A broad Cursor-first engineering catalog. Its audited `0.15.44` release had 58 skill descriptions and a router whose TDD/dispatch policy conflicts with this repository's canonical workflow, so it is not installed. `mutation-testing` pins seven narrow principles, carries attribution, and has an opt-in/scheduled check that compares those blobs with upstream `main`; no PSTACK skill or runtime is vendored. |
 | [github/awesome-copilot](https://github.com/github/awesome-copilot) (MIT, GitHub) | 29 independent Copilot copies: `acquire-codebase-knowledge`, `batch-files`, `context-map`, `conventional-branch`, `conventional-commit`, `csharp-async`, `csharp-docs`, `csharp-xunit`, `dotnet-best-practices`, `dotnet-design-pattern-review`, `doublecheck`, `draw-io-diagram-generator`, `drawio`, `first-ask`, `mini-context-graph`, `nuget-manager`, `postgresql-code-review`, `postgresql-optimization`, `prd`, `premium-frontend-ui`, `prompt-optimizer`, `react-audit-grep-patterns`, `react-container-presentation-component`, `react18-batching-patterns`, `react18-dep-compatibility`, `react18-lifecycle-patterns`, `refactor`, `sql-code-review`, and `sql-optimization`. Each attribution pins the tree SHA retained by `gh skills install`; these copies do not auto-update. |
 | [skovalik/perception-first-design](https://github.com/skovalik/perception-first-design) (CC BY-SA 4.0, Stefan Kovalik / Aurochs) | Psychology-backed five-layer design methodology. `impeccable-lite` contains a bounded attributed adaptation pinned to `1704ff6`; the upstream skill itself is not vendored or installed. Install upstream separately only if you want its broad communication-task trigger, corpus, mandatory learning logs, and repeat-loop workflow. Its share-alike license and trademark notice apply to adaptations. |
 | [obra/superpowers](https://github.com/obra/superpowers) | The most-adopted skills framework. Its `writing-plans` shaped `deep-plan`. |

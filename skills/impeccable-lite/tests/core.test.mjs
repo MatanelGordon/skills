@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { win32 } from 'node:path';
+import { resolve, win32 } from 'node:path';
 
 import {
   auditHtml,
@@ -150,12 +150,13 @@ test('agent packet serializes brief text as inert single-line JSON data', () => 
 });
 
 test('resolveWithin accepts local paths and rejects absolute or traversal paths', () => {
-  const accepted = resolveWithin('/tmp/project', 'public/index.html');
+  const projectRoot = resolve('/tmp/project');
+  const accepted = resolveWithin(projectRoot, 'public/index.html');
   assert.equal(accepted.ok, true);
-  assert.equal(accepted.value, '/tmp/project/public/index.html');
+  assert.equal(accepted.value, resolve(projectRoot, 'public/index.html'));
 
-  for (const unsafe of ['../secret', '/tmp/secret', 'public/../../secret']) {
-    const result = resolveWithin('/tmp/project', unsafe);
+  for (const unsafe of ['../secret', resolve(projectRoot, '..', 'secret'), 'public/../../secret']) {
+    const result = resolveWithin(projectRoot, unsafe);
     assert.equal(result.ok, false, unsafe);
   }
 });

@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "upstream": {
+    "name": "PSTACK",
+    "repository": "https://github.com/cursor/plugins",
+    "revision": "e58dd043600587dbaf58ba315e7f2b38373eeb43",
+    "trackingRef": "main",
+    "pluginVersion": "0.15.44",
+    "license": "MIT; Copyright (c) 2026 Lauren Tan",
+    "relationship": "versioned design evidence only; no code or skill is vendored or required at runtime"
+  },
+  "principles": [
+    {
+      "path": "pstack/skills/principle-test-behavior-not-implementation/SKILL.md",
+      "blob": "094b9427aa64294afd64d83e9495a5ee303631e0",
+      "localInvariant": "Hardening and remediation assert observable behavior rather than private implementation."
+    },
+    {
+      "path": "pstack/skills/principle-prove-it-works/SKILL.md",
+      "blob": "1c293b3c3ad0f7cb021858b17e7588d30a0a1acb",
+      "localInvariant": "Every claim needs executable clean-code and targeted-mutant proof."
+    },
+    {
+      "path": "pstack/skills/principle-build-the-lever/SKILL.md",
+      "blob": "8f9b5a931b10839ad5ef71ce43d5411c2c7a1f6b",
+      "localInvariant": "Native mutation engines perform deterministic fault injection; agents interpret evidence."
+    },
+    {
+      "path": "pstack/skills/principle-sequence-verifiable-units/SKILL.md",
+      "blob": "3998185a29f287f6f30f0909c98ac4e2af5ddb97",
+      "localInvariant": "Baseline, discovery, remediation, import, and joined verification are separate gates."
+    },
+    {
+      "path": "pstack/skills/principle-boundary-discipline/SKILL.md",
+      "blob": "95b2209ce7d15ddbca7c2bf6ef3626ffdc8d595e",
+      "localInvariant": "Mutation worktrees never merge; only guarded test and fixture changes cross the boundary."
+    },
+    {
+      "path": "pstack/skills/principle-model-the-domain/SKILL.md",
+      "blob": "88ba012f47bd51b2db0758c657610d56f871e1ba",
+      "localInvariant": "Results distinguish immutable engine status, human triage, and workflow completion."
+    },
+    {
+      "path": "pstack/skills/principle-separate-before-serializing-shared-state/SKILL.md",
+      "blob": "6a4c3b876b694097a12003996588f557d2b55d0e",
+      "localInvariant": "Parallel lanes require disjoint behavior and test ownership before shared report integration."
+    }
+  ],
+  "reviewTrigger": "The scheduled provenance-check command compares these blobs with upstream main. Any change requires re-reading and re-approving the mapped local invariants; runtime behavior remains local until that review is accepted."
+}

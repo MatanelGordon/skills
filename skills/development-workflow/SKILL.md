@@ -1,151 +1,139 @@
 ---
 name: development-workflow
 description: >
-  The full pipeline for building anything non-trivial: research and reuse before
-  writing code, plan before implementing, tests before implementation
-  (red-green-refactor), review before merging, and commits that explain why.
-  Use when starting a feature, fix, refactor, or migration; when asked "how
-  should we approach building X"; when tempted to jump straight to code; or when
-  work shipped without tests or review and needs the process retrofitted. Each
-  stage defers to a dedicated skill where one exists (research-first, deep-plan,
-  parallel-build, adr). Skip stages only deliberately and say so - a typo
-  fix does not need the pipeline, a new feature does.
+  The full pipeline for non-trivial software work: research and reuse, planning,
+  test-first implementation, post-implementation test hardening, review,
+  verification, and why-focused commits. Mutation testing is an explicit,
+  risk-based option for critical logic, not a mandatory feature gate.
 license: MIT
 metadata:
   author: Matanel Gordon
   source: https://github.com/MatanelGordon/skills
-  depends: research-first, confidence-ranker, deep-plan, adr
+  depends: research-first, confidence-ranker, deep-plan, test-hardening, mutation-testing, adr
 ---
 
 # Development workflow
 
-Code is the *fourth* step of building software, not the first. The pipeline
-exists because each stage is cheaper than discovering its absence later: a
-library found in research saves the feature, a plan catches the collision before
-four agents hit it, a failing test proves the test can fail, a review catches
-what the author cannot see, and a commit that says *why* saves the archaeology.
+Code is the fourth step, not the first. Earlier stages are cheaper places to
+find a reused solution, a missing seam, or a test that cannot fail.
 
+```text
+0 research → 1 plan → 2 test-first → 3 implement → 4 test-harden → 5 review
+                                                         └─ optional mutate
+                                  6 verify → 7 commit
 ```
-0 research  →  1 plan  →  2 test-first  →  3 implement  →  4 review  →  5 commit
-```
-
-Stages defer to dedicated skills where they exist. This skill is the spine that
-keeps them in order.
 
 ## Mandatory core
 
-Optional stages scale with the work; this core does not disappear. For every
-change:
+For every change:
 
-1. **Inspect** — read the relevant code, tests, and current behavior before
-   editing. Do not implement from the request alone.
-2. **Define done** — state the observable outcome and the check that will prove
-   it, keeping the original scope intact.
-3. **Implement** — make the smallest coherent change that reaches that outcome
-   and follows the codebase's conventions.
-4. **Verify** — run the named checks and inspect the final diff. A subagent's or
-   tool's success claim is not verification.
-5. **Report omissions** — compare the result with the original request and name
-   anything deliberately skipped, still unverified, or left incomplete.
+1. **Inspect** relevant code, tests, and current behavior.
+2. **Define done** as an observable outcome and named check.
+3. **Implement** the smallest coherent change in scope.
+4. **Verify** with the named checks and final diff.
+5. **Report omissions** and anything unverified.
 
-A trivial change compresses this loop to seconds; it does not acquire research,
-a plan, TDD, or independent review merely because the core is mandatory. The
-stages below are escalation layers for work whose risk and scope justify them.
+Optional stages scale with risk. A trivial edit compresses this core to seconds.
 
-## 0. Research and reuse — before any new implementation
+## 0. Research and reuse
 
-Run the `research-first` sweep: registries for the ecosystem, GitHub for prior
-art, the codebase for something that already does it. **Prefer adopting or
-porting a proven implementation when it covers ~80% or more of the need** — name
-the gap, present the choice. Building is the fallback, not the default.
+Run `research-first`: inspect the ecosystem registry, GitHub prior art, and the
+codebase. Prefer a proven solution that covers about 80% or more of the need.
+Use `confidence-ranker` for uncertain claims that control consequential work.
 
-Two-source discipline applies to everything the design rests on: versions,
-behaviors, "we can't use X because…" claims. When an uncertain finding controls
-whether work is safe to start, `confidence-ranker` isolates that claim, raises
-it with the cheapest decisive check, and reports whether the action is ready.
-A plan resting on a claim below its required evidence threshold gets a
-verify-first task; the claim's concrete next check is that task.
+## 1. Plan
 
-## 1. Plan — before implementing
+For work wider than a couple of files, run `deep-plan`: clarify the goal and
+success signal, inspect real code, assign disjoint file ownership, enumerate
+edge cases, and quote test commands. Consult targeted history and repository
+decision records. Big enough to split? `parallel-build` may execute the plan.
 
-For anything spanning more than a couple of files, run `deep-plan`: the clarity
-gate (goal, success signal, out of scope), investigation of the real code, a
-file map, edge cases enumerated with a status each, and test commands verbatim.
-Big enough to split? `parallel-build` executes the plan across subagents.
+Small changes still get a short plan in the conversation.
 
-Check prior decisions before planning — `.adr/`, the project's memory
-conventions, and targeted git history. A plan that contradicts a recorded
-decision is dead on arrival.
+## 2. Tests first
 
-Small-but-real changes still get a paragraph of plan in the conversation:
-what will change, what proves it worked.
+1. **RED:** write the smallest behavior test and watch it fail for the reason
+   being fixed.
+2. **GREEN:** implement the minimum that passes.
+3. **REFACTOR:** clean up and rerun.
 
-## 2. Tests first — red, green, refactor
-
-Write the test before the implementation, and **run it to watch it fail**. A
-test that has never failed proves nothing — it might be green because the
-assertion is vacuous, the wrong thing is mocked, or it never ran.
-
-1. **RED** — write the smallest test for the behavior; run it; see the failure
-   and check it fails *for the right reason*.
-2. **GREEN** — write the minimal implementation that passes; run it.
-3. **REFACTOR** — clean up with the test as a safety net; run it again.
-4. Repeat per behavior. Commit at green points.
-
-Coverage: aim for **~80%+ on the code you're touching**, with the shape stated
-- unit tests for logic, integration where components meet, end-to-end for the
-critical user flows. A number without shape is vanity; error paths count.
-
-When a test fails later: suspect the implementation first, not the test. Fix
-tests only when the test itself is wrong, and say so explicitly.
+Aim for meaningful coverage of changed code: logic unit tests, integration at
+seams, and end-to-end tests for critical flows. Suspect implementation before a
+later-failing test; change a test only when its contract was wrong.
 
 ## 3. Implement
 
-Follow the plan; amend it visibly when reality disagrees (the plan's
-`Amendments` section, not silent drift). Match the codebase's conventions.
-Commit incrementally at green states — long runs die, committed work survives.
+Follow the plan and record amendments when reality changes it. Match repository
+conventions. Commit at coherent green points when commits are in scope.
 
-## 4. Review — before merging
+## 4. Test hardening — default for executable features
 
-Every non-trivial change gets reviewed by eyes that didn't write it: a fresh
-subagent, a platform reviewer, or the `parallel-build` phase-3 pattern
-(CR.md, plus a security pass for code that will ship). Triage findings by
-severity: **CRITICAL and HIGH get fixed before merging**, MEDIUM when feasible,
-LOW is backlog. Re-run the critical-path tests after fixes — a reviewer's DONE
-is a claim, not evidence.
+After planned behavior is green, use `test-hardening` with the acceptance
+criteria, final diff, plan edge cases, and existing tests. It adds bounded,
+observable test/fixture coverage only. A production defect returns as a failing
+regression. A host without subagents runs the same protocol after a context
+reset and reports that independent eyes were unavailable.
 
-## 5. Commit and record
+Integrate green additions, verify production was not changed, and record the
+frozen green commit.
 
-When committing is in scope, the commit body carries *why* — the trigger,
-constraint, or evidence that forced the change. Put durable metadata in a final
-trailer block (`Constraint:`, `Rejected:`, `Refs:`), use a conventional subject
-(`feat:`/`fix:`/`refactor:`/…), and reference governing decisions as
-`Refs: ADR-NNNN`. Hard-to-reverse calls made along the way become ADRs; merges
-from worktrees carry the request and plan.
+## 5. Review, with mutation testing only when justified
+
+Every non-trivial change gets review by eyes that did not write it: a fresh
+subagent, platform reviewer, or `parallel-build` review pass. If none exists,
+perform a fresh-context self-review and state the limitation. Fix CRITICAL/HIGH
+findings, handle MEDIUM where feasible, and rerun critical paths.
+
+Mutation testing is separate and opt-in. Run `mutation-testing` only when:
+
+- the user explicitly requests it; or
+- a compatible engine is already configured **and** the scoped run fits an
+  approved budget **and** the change affects plan-marked critical decision
+  logic where stronger sensitivity evidence is worth the cost.
+
+Skip it for ordinary low-risk features, unsupported ecosystems/runners, slow
+unscopable suites, prototypes, generated code, or when isolation/setup cost
+outweighs the decision value. Record the reason; skipping is a valid outcome.
+When selected, discovery may overlap review, but test remediation waits for
+review clearance. Follow `mutation-testing` for worktree/clone fallbacks and
+its single definition of actionable, equivalent, excluded, and incomplete.
+
+## 6. Verify
+
+Always rerun the clean relevant/repository suites and inspect the final diff.
+If mutation testing was selected, rerun affected targeted proofs and the agreed
+scoped engine command after test import.
+
+An optional mutation result marked `FINAL: incomplete` is reported to the user
+for a decision and is not presented or committed as a completed mutation stage.
+It does not retroactively turn clean tests or review into failures; the user may
+accept the residual risk, rerun/narrow the scope, or stop the optional stage.
+
+## 7. Commit and record
+
+Commit messages explain why: use a conventional subject and a body naming the
+trigger, constraint, or rejected alternative. Durable one-way architecture
+calls belong in the repository's decision-record convention when it has one.
 
 ## Proportionality
 
-The pipeline is for building things. Scale it honestly:
+| Change | Default pipeline | Mutation testing |
+|---|---|---|
+| Typo, rename, comment | Mandatory core only | Skip |
+| Small bug fix | Reproducing red test → fix → verify → why-commit | Only if explicitly requested/critical |
+| Feature or refactor | Research → plan → TDD → implement → harden → review → verify → commit | Consider by the risk/value rule |
+| Multi-seam/multi-day | Full default pipeline, usually deep-plan + parallel-build | Consider per critical slice |
 
-| Change | Pipeline |
-|---|---|
-| Typo, rename, comment | Just do it. |
-| Small bug fix | Test that reproduces it (red) → fix (green) → commit with why. |
-| Real feature or refactor | The full pipeline. |
-| Multi-seam / multi-day work | Full pipeline with `parallel-build` executing. |
-
-Skipping a stage is sometimes right — skipping it *silently* never is. "No
-plan needed because X" and "not adding tests here because Y" are one-sentence
-statements that keep the skip a decision instead of a drift.
+Skipping a stage can be right; skipping silently is drift. State the skipped
+stage, reason, and residual risk in one sentence.
 
 ## Anti-patterns
 
 | Don't | Why |
 |---|---|
-| Code first, tests after | Tests written post-hoc assert what the code does, not what it should do |
-| A test you never saw fail | Might be green for the wrong reason |
-| Build what a library does | The most expensive way to get a worse library |
-| Plan in your head for multi-file work | The collision shows up in the merge, not the plan |
-| Merge with CRITICAL/HIGH findings open | Review theater |
-| `wip` / `fixes` commit messages | The why evaporates exactly when it matters |
-| Silently skipping a stage | A skip is a decision; drift is a bug |
+| Code before inspecting/researching | Reimplements existing work and misses local constraints |
+| Write tests only after code | They may merely describe what the implementation happens to do |
+| Run mutation testing on every feature | Cost and setup can exceed the evidence value |
+| Call incomplete mutation evidence complete | A score cannot cover unrun work or a failed harness |
+| Merge a mutation worktree | Candidate history can contain deliberately faulty production |
+| Hide a skipped stage | Downstream reviewers cannot judge residual risk |

@@ -2,8 +2,9 @@
 /** Portable discovery for the root suite; provisioned browser tests run separately. */
 import { spawnSync } from 'node:child_process';
 import { readdir } from 'node:fs/promises';
-import { join, relative, resolve } from 'node:path';
+import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isEntryPoint } from './entry-point.mjs';
 
 const DEFAULT_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const TEST_ROOTS = Object.freeze(['install', 'skills']);
@@ -61,7 +62,7 @@ export const main = async () => {
   else process.exitCode = outcome.status;
 };
 
-const invokedDirectly = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const invokedDirectly = isEntryPoint(import.meta.url);
 if (invokedDirectly) {
   main().catch((error) => {
     process.stderr.write(`root tests: ${error.message}\n`);

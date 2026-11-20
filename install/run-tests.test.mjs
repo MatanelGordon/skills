@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { copyFile, mkdir, mkdtemp, realpath, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, mkdtemp, realpath, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import test from 'node:test';
@@ -20,8 +20,10 @@ async function writeFixtureRepo(tests) {
   const root = await makeTemp();
   await mkdir(join(root, 'install'));
   await mkdir(join(root, 'skills', 'fixture', 'tests'), { recursive: true });
-  await copyFile(join(HERE, 'run-tests.mjs'), join(root, 'install', 'run-tests.mjs'));
-  await Promise.all(Object.entries(tests).map(([file, body]) => writeFile(join(root, file), body)));
+  await Promise.all([
+    ...['run-tests.mjs', 'entry-point.mjs'].map((file) => copyFile(join(HERE, file), join(root, 'install', file))),
+    ...Object.entries(tests).map(([file, body]) => writeFile(join(root, file), body)),
+  ]);
   return root;
 }
 
@@ -89,4 +91,17 @@ test('root test runner exits non-zero when a discovered file fails, after runnin
   const result = runFixtureRunner(join(root, 'install', 'run-tests.mjs'));
   assert.equal(result.status, 1, result.stdout + result.stderr);
   assert.match(result.stdout, /second fixture test ran/);
+});
+
+test('root test runner CLI runs when its directory is reached through a symlink', async () => {
+  const root = await writeFixtureRepo({
+    'skills/fixture/tests/linked.test.mjs': passingTest('linked fixture test ran'),
+  });
+  const linkedInstall = join(await makeTemp(), 'install');
+  await symlink(join(root, 'install'), linkedInstall, process.platform === 'win32' ? 'junction' : 'dir');
+
+  const result = runFixtureRunner(join(linkedInstall, 'run-tests.mjs'));
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  // Exiting 0 without running anything is the regression: it reads as a passing suite.
+  assert.match(result.stdout, /linked fixture test ran/);
 });

@@ -48,11 +48,12 @@
   authorized targets with native/headed mode first and no stealth claims.
 - Added the browser and Impeccable suites to CI and consolidated repository
   executable syntax validation without entering nested dependencies.
-- Fixed the `council` helper, the validator, the eval runner, and
-  `install/index.mjs` printing nothing and exiting 0 when started through a
-  symlink, which is how a symlink-installed `council` skill is reached. They
-  compared the path as typed with the resolved module path; they now compare
-  real paths, with a regression test per entry point.
+- Fixed the `council` helper, the validator, the eval runner, the root test
+  runner, and `install/index.mjs` printing nothing and exiting 0 when started
+  through a symlink, which is how a symlink-installed `council` skill is
+  reached and which made the test runner report success without running a
+  test. They compared the path as typed with the resolved module path; they now
+  compare real paths, with a regression test per entry point.
 - Fixed `npm test` exiting 9 before running anything on older Node 18 releases
   such as 18.18.0, which reject `--test-concurrency=1` as a bad option. The
   runner now asks the running Node whether it supports the flag and otherwise

@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 const DEFAULT_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const TEST_ROOTS = Object.freeze(['install', 'skills']);
 const EXCLUDED_DIRECTORIES = new Set(['skills/rank-workspace']);
+const PROVISIONED_TESTS = new Set(['skills/impeccable-lite/tests/browser-integration.test.mjs']);
 const repositoryPath = (root, path) => relative(root, path).replaceAll('\\', '/');
 
 const discoverTestsUnder = async (root, directory) => {
@@ -17,7 +18,10 @@ const discoverTestsUnder = async (root, directory) => {
   const discovered = await Promise.all(entries.map((entry) => {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) return discoverTestsUnder(root, path);
-    return entry.isFile() && entry.name.endsWith('.test.mjs') ? [path] : [];
+    const isRootTest = entry.isFile()
+      && entry.name.endsWith('.test.mjs')
+      && !PROVISIONED_TESTS.has(repositoryPath(root, path));
+    return isRootTest ? [path] : [];
   }));
   return discovered.flat();
 };

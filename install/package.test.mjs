@@ -13,12 +13,15 @@ test('root test discovery is portable and excludes separately provisioned or scr
     for (const directory of [
       join(root, 'install'),
       join(root, 'skills', 'example', 'tests'),
+      join(root, 'skills', 'impeccable-lite', 'tests'),
       join(root, 'skills', 'rank-workspace'),
       join(root, 'tools', 'browser-capture', 'tests'),
     ]) await mkdir(directory, { recursive: true });
     await Promise.all([
       writeFile(join(root, 'install', 'install.test.mjs'), ''),
       writeFile(join(root, 'skills', 'example', 'tests', 'example.test.mjs'), ''),
+      writeFile(join(root, 'skills', 'impeccable-lite', 'tests', 'cli.test.mjs'), ''),
+      writeFile(join(root, 'skills', 'impeccable-lite', 'tests', 'browser-integration.test.mjs'), ''),
       writeFile(join(root, 'skills', 'rank-workspace', 'scratch.test.mjs'), ''),
       writeFile(join(root, 'tools', 'browser-capture', 'tests', 'browser.test.mjs'), ''),
     ]);
@@ -28,6 +31,7 @@ test('root test discovery is portable and excludes separately provisioned or scr
     assert.deepEqual(discovered, [
       'install/install.test.mjs',
       'skills/example/tests/example.test.mjs',
+      'skills/impeccable-lite/tests/cli.test.mjs',
     ]);
   } finally {
     await rm(root, { recursive: true, force: true });
@@ -45,6 +49,7 @@ test('npm package manifest is an allowlist and excludes sanctioned scratch trees
     assert.deepEqual(Object.keys(packageJson.bin), ['install-skills']);
     const councilTest = 'skills/council/tests/council-protocol.test.mjs';
     assert.equal(packageJson.scripts['test:council'], `node --test ${councilTest}`);
+    assert.equal(packageJson.scripts['test:impeccable-lite'], 'node --test skills/impeccable-lite/tests/*.test.mjs');
     assert.equal(packageJson.scripts.test, 'node install/run-tests.mjs');
     assert.doesNotMatch(packageJson.scripts.test, /skills\/council\/tests\/\*/);
     assert(process.env.npm_execpath, 'package test must run through npm so npm_execpath is available');

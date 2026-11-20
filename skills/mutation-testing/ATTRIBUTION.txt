@@ -1,0 +1,26 @@
+Mutation testing attribution
+============================
+
+Design-principle inspiration
+----------------------------
+
+Upstream project: PSTACK
+Upstream repository: https://github.com/cursor/plugins/tree/main/pstack
+Author and copyright holder: Lauren Tan
+Reviewed revision: e58dd043600587dbaf58ba315e7f2b38373eeb43
+Reviewed plugin version: 0.15.44
+License: MIT
+License URL: https://github.com/cursor/plugins/blob/main/pstack/LICENSE
+
+Integration notes
+-----------------
+
+This skill is independently written. It uses seven source-hashed PSTACK
+principles as design evidence for behavioral tests, executable proof, native
+tools, staged verification, boundary discipline, result modeling, and isolated
+parallel work. No PSTACK skill, agent, script, runtime, or prompt is vendored.
+The local protocol, adapters, commands, and prose are original and remain MIT.
+
+The opt-in provenance check compares the recorded blob IDs with PSTACK's
+current `main` branch so upstream drift causes a fresh human review rather than
+silently changing this skill.

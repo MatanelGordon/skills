@@ -2,10 +2,11 @@
   "schemaVersion": 1,
   "upstream": {
     "name": "PSTACK",
-    "repository": "https://github.com/getcursor/plugins",
+    "repository": "https://github.com/cursor/plugins",
     "revision": "e58dd043600587dbaf58ba315e7f2b38373eeb43",
+    "trackingRef": "main",
     "pluginVersion": "0.15.44",
-    "license": "MIT",
+    "license": "MIT; Copyright (c) 2026 Lauren Tan",
     "relationship": "versioned design evidence only; no code or skill is vendored or required at runtime"
   },
   "principles": [
@@ -45,5 +46,5 @@
       "localInvariant": "Parallel lanes require disjoint behavior and test ownership before shared report integration."
     }
   ],
-  "reviewTrigger": "Re-read and re-approve the mapped local invariants whenever the audited upstream revision or any recorded blob changes. Runtime behavior remains local until that review is accepted."
+  "reviewTrigger": "The scheduled provenance-check command compares these blobs with upstream main. Any change requires re-reading and re-approving the mapped local invariants; runtime behavior remains local until that review is accepted."
 }

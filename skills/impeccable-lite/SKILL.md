@@ -7,7 +7,7 @@ metadata:
   author: Matanel Gordon
   source: https://github.com/MatanelGordon/skills
   inspired_by: https://github.com/pbakaus/impeccable
-  requires: Node.js 18+ for workflow and audit; pre-provisioned browser-capture, Node.js 22.12+, and local Chrome are optional for screenshots
+  requires: Node.js 18+; an installed Chrome, Chromium, or Edge browser is optional for screenshots
 ---
 
 # Impeccable Lite
@@ -30,9 +30,10 @@ weaken its offline runtime.
   `127.0.0.1`.
 - Existing local files, local development servers, installed tools, and local
   browser automation are allowed when already within the task's scope. Capture
-  uses the pre-provisioned repository `browser-capture` companion with an
-  already-installed Chrome channel and blocks external traffic; it never
-  downloads a browser. If the companion is absent, audit still works.
+  uses the verified repository companion when available and a built-ins-only
+  local fallback in copied installs. Both use an already-installed Chrome,
+  Chromium, or Edge browser and block external traffic; neither downloads a
+  browser.
 - If required material exists only remotely, ask the user to provide a local
   copy or explicitly authorize that separate access.
 

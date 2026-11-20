@@ -239,7 +239,7 @@ and skips platform-locked skills on the wrong OS.
 
 | Skill | Needs |
 |---|---|
-| `impeccable-lite` | Node ≥ 18 for workflow/audit; optional screenshots need pre-provisioned `browser-capture`, Node ≥ 22.12, and an installed Chrome channel |
+| `impeccable-lite` | Node ≥ 18 and an installed Chrome, Chromium, or Edge browser for optional screenshots; registry checkouts may use the pre-provisioned Puppeteer companion |
 | `cli-coding-subagents` | codex + copilot CLIs, installed and authenticated |
 | `parallel-build` | the above, plus git worktrees |
 | `openrouter-cli-subagent` | the `ori` CLI on PATH and an OpenRouter credential |
@@ -249,8 +249,9 @@ and skips platform-locked skills on the wrong OS.
 
 `browser-capture` is a repository tool, not a general browsing skill and not an
 MCP server. It uses exact-pinned `puppeteer-core` with an already-installed
-Chrome channel to render local HTML at explicit viewports. The preview binds to
-loopback, external requests are blocked, evidence is hash-bound and atomically
+Chrome-family browser to render local HTML at explicit viewports. The preview
+binds to loopback, a process-owned deny proxy contains and records external
+attempts, WebRTC UDP is disabled, evidence is hash-bound and atomically
 published, and no browser is downloaded.
 
 Provision it once from this checkout, then verify the launcher:
@@ -260,11 +261,14 @@ npm run setup:browser-capture
 node tools/browser-capture/launcher.mjs doctor
 ```
 
-The core registry remains Node 18 compatible. The launcher selects a local Node
-22.12+ runtime without changing the machine default. A copied Impeccable Lite
-skill can set `BROWSER_CAPTURE_CLI` to the launcher's absolute path; symlinked
-installs resolve the repository tool automatically. `npm run
-test:browser-capture` runs the isolated unit and real-Chrome security suite.
+The core registry remains Node 18 compatible. The launcher selects the lowest
+compatible installed LTS from common nvm, fnm, asdf, mise, n, Volta, Homebrew,
+and PATH locations without changing the machine default. Symlinked installs use
+the verified repository tool. Copied and npx installs retain a built-ins-only
+capture fallback, so they can still finish the evidence-gated workflow without
+installing anything. An explicit `BROWSER_CAPTURE_CLI` must pass the tool's JSON
+identity handshake. `npm run test:browser-capture` runs the real-Chrome
+containment, diagnostics, lifecycle, and negative-control suite.
 
 General browsing stays in `browser-interaction`: native harness search/control
 comes first. In a shell-only CLI, the optional official `chrome-devtools`

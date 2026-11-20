@@ -1,48 +1,28 @@
 # Changelog
 
-## 1.21.3 — 2026-11-20
+## 1.22.0 — 2026-11-20
 
-- Documented and verified the official Chrome DevTools CLI's page-scoped
-  user-agent override for shell-only browser inspection. The workflow captures
-  a baseline, uses one UA matching the installed Chrome engine/major, operating
-  system, and viewport, then verifies both `navigator.userAgent` and the
-  document request header.
-- Kept the override honest and bounded: it is not enabled by default, does not
-  enter Impeccable's offline capture tool, and stops after one diagnostic retry
-  rather than rotating identities. A local probe confirmed that the UA string
-  changes but Client Hints can remain empty/inconsistent, so the skill no longer
-  implies that a UA override guarantees admission or hides automation.
-- Added a behavioral eval for headless-UA rejection and recorded the local
-  request/header probe in the verification report.
-
-## 1.21.2 — 2026-11-20
-
-- Replaced Impeccable Lite's bespoke Chrome/CDP capture client with a reusable
-  repository `browser-capture` CLI powered by exact-pinned
-  `puppeteer-core@25.18.1`. It discovers installed standard Chrome channels,
-  renders exact desktop/mobile CSS viewports, and preserves the existing
-  hash-bound, isolated-generation evidence contract.
-- Kept capture local and fail-closed: loopback-only preview, private-path and
-  symlink rejection, self-only CSP, dead proxy and DNS defenses, service-worker
-  bypass, HTTP(S)/WebSocket origin blocking, temporary profiles, cleanup before
-  atomic publication, and no browser download, updater, telemetry, or public
-  browsing command.
-- Isolated the current audit-clean Puppeteer graph under Node 22.12+ while the
-  registry and Impeccable workflow/audit stay Node 18 compatible. A portable
-  launcher selects a compatible installed Node without changing the default;
-  copied skills can use `BROWSER_CAPTURE_CLI`, and missing capture tooling does
-  not disable static audit or preview.
-- Changed `browser-interaction` to capability-first routing: native search for
-  sourced facts, native browser control for real sessions, and the official
-  `chrome-devtools` terminal client only as a CLI-only deep-inspection fallback.
-  The optional client is pinned to 1.13.0 and documents telemetry, update-check,
-  CrUX, isolation, headless, and workspace hardening instead of adding a broad
-  MCP tool surface.
-- Added real-Chrome, network-blocking, rollback, path-containment, manifest,
-  launcher, server, Impeccable-adapter, Node-floor, package-content, and
-  repository-validator coverage. The shipped nested shrinkwrap contains no
-  known audit vulnerabilities and the root package excludes development
-  `node_modules`.
+- Added the repository `browser-capture` companion with an exact-pinned
+  Puppeteer runtime while preserving a Node-built-ins fallback inside copied
+  and npx-installed Impeccable Lite skills. Chrome, Chromium, and Edge are
+  discovered locally; no browser or dependency is downloaded during capture.
+- Enforced the offline boundary with a process-owned deny proxy, exact preview
+  bypass, page interception, new-target denial, worker/frame observation, and a
+  pre-seeded WebRTC UDP preference. Real-Chrome regressions cover popup,
+  prerender/speculation, frames, dedicated/shared/service workers, WebSocket,
+  WebRTC, immutable evidence, and negative controls for flags/interception.
+- Made diagnostics durable and actionable: mobile viewport mismatch, slight
+  overflow, missing same-origin assets, unexpected navigation, nested cleanup
+  failures, browser validation, symlink invocation, process-tree signals, stale
+  staging, and relocatable evidence paths are covered.
+- Kept the npm package single-bin so `npx github:MatanelGordon/skills` invokes
+  the installer. Capture remains an explicit repository command.
+- Clarified browser-interaction routing: installed libraries cover shell-only
+  work, real-account mutations require confirmation, DevTools daemon policy is
+  verified and URL-bounded on every call, and UA testing is limited to owned or
+  authorized targets with native/headed mode first and no stealth claims.
+- Added the browser and Impeccable suites to CI and consolidated repository
+  executable syntax validation without entering nested dependencies.
 
 ## 1.21.1 — 2026-11-20
 

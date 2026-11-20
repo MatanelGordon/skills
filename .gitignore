@@ -3,11 +3,6 @@ node_modules/
 *.log
 __pycache__/
 *.pyc
-.plan/*
-!.plan/puppeteer-browser-capture/
-!.plan/puppeteer-browser-capture/plan.md
-!.plan/puppeteer-browser-capture/verification.md
-!.plan/puppeteer-browser-capture/evidence/
-!.plan/puppeteer-browser-capture/evidence/*.png
+.plan
 # Local evaluation sandboxes are disposable and must never become skill packages.
 *-workspace/

@@ -1,7 +1,8 @@
 # Browser tool routing
 
-Read this only when the harness does not already make the route obvious. The
-goal is one browser capability per job, not the largest possible tool stack.
+Read this when the harness does not already make the route obvious, or before
+using the optional shell-only Chrome client. The goal is one browser capability
+per job, not the largest possible tool stack.
 
 > **Checked 2026-11-20.** The optional terminal client below is the official
 > `chrome-devtools` CLI shipped by
@@ -35,61 +36,89 @@ control. The supported setup is:
 - telemetry, update checks, and CrUX disabled;
 - isolated profile, headless mode, and an explicit workspace.
 
-One-time operator installation:
+One-time operator installation (never perform this implicitly during a browser
+task):
 
 ```bash
 npm install --global chrome-devtools-mcp@1.13.0
 ```
 
-Harden each service start:
+Every client call must carry both privacy environment variables; shell state
+does not reliably persist between agent calls. First inspect the daemon:
 
 ```bash
-export CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1
-export CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 \
+  chrome-devtools status
+```
+
+If no daemon is running, start one with a URL boundary for the authorized
+origin. `start` means start **or restart**, so do not run it over an existing
+service. Replace the example origin and workspace with the task's actual scope:
+
+```bash
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 \
 chrome-devtools start \
   --performanceCrux=false \
   --usageStatistics=false \
   --isolated \
   --headless \
+  --allowedUrlPattern='http://localhost:3000/*' \
   --workspace=/absolute/path/to/project
 ```
 
-Before relying on it, verify the Node and package versions and record the exact
-start policy in the report. Do not attach to or reconfigure an already-running
-service whose telemetry, profile, CrUX, or workspace policy cannot be verified;
-fall back to native harness capability or report that a hardened restart is
-needed. The terminal client may use a local background service internally. The
-benefit is that the agent invokes commands from the shell instead of registering
-an MCP tool surface in every model context.
+Run `status` again with the same environment prefix and compare its version and
+arguments with this policy. If an existing daemon differs, do not use it:
+either ask before stopping/restarting it or report that a hardened restart is
+needed. A status failure followed by another tool command is unsafe because
+ordinary commands auto-start an unhardened daemon.
+
+Core shell-only interaction, with the environment repeated on every call:
+
+```bash
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools new_page --url='http://localhost:3000/' --output-format=json
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools take_snapshot 1 --output-format=json
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools list_console_messages 1 --output-format=json
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools list_network_requests 1 --output-format=json
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools status
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools stop
+```
+
+Stop the task-owned daemon when finished. The client may use a local background
+service internally; its benefit is shell invocation without registering an MCP
+tool surface in every model context.
 
 The CLI is general browser interaction, so ordinary task authorization still
 applies. A request to inspect a local page does not authorize unrelated public
 browsing, account mutations, purchases, form submission, or use of stored
 credentials.
 
-### Page-scoped user-agent override
+### Testing UA-dependent behavior on an owned or authorized target
 
-Version 1.13.0 supports `emulate <pageId> --userAgent=<value>`. Use it for a
-confirmed headless-UA rejection or explicit compatibility test, not as a
-default stealth setting. Start from `about:blank`, set the override before the
-first target navigation, and keep the UA consistent with the actual Chrome
-engine, major version, operating system, and viewport.
+First use native browser control or restart the task-owned daemon without
+`--headless`; that preserves coherent Chrome client hints without spoofing. If
+the application specifically needs a UA-string compatibility test, version
+1.13.0 supports `emulate <pageId> --userAgent=<value>`. Capture the blocked
+baseline, start from `about:blank`, and use one value consistent with the actual
+Chrome engine, major version, operating system, and viewport.
 
 ```bash
-chrome-devtools list_pages --output-format=json
-chrome-devtools emulate 1 \
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools list_pages --output-format=json
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools emulate 1 \
   --userAgent='Mozilla/5.0 (<matching OS>) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/<installed-major>.0.0.0 Safari/537.36' \
   --output-format=json
-chrome-devtools navigate_page 1 --type=url --url='https://authorized.example/' --output-format=json
-chrome-devtools evaluate_script \
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools navigate_page 1 --type=url --url='https://authorized.example/' --output-format=json
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools evaluate_script \
   '() => ({userAgent: navigator.userAgent, userAgentData: navigator.userAgentData?.toJSON?.() ?? null})' \
   --pageId 1 --output-format=json
-chrome-devtools list_network_requests 1 --output-format=json
-chrome-devtools get_network_request 1 --reqid=<document-request-id> --output-format=json
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools list_network_requests 1 --output-format=json
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools get_network_request 1 --reqid=<document-request-id> --output-format=json
 ```
 
 The final request inspection proves the sent `user-agent` header. Clear the
-override with `chrome-devtools emulate 1 --userAgent=''`.
+override with the same environment prefix and
+`chrome-devtools emulate 1 --userAgent=''`. Both setting and clearing the UA
+replace all emulation settings, so reapply any viewport, color-scheme, or
+throttling configuration that the test still needs.
 
 A local probe confirmed that the header and `navigator.userAgent` changed, but
 `navigator.userAgentData` returned empty brands and platform values because
@@ -97,10 +126,10 @@ this CLI option supplies only the UA string, not coherent client-hint metadata.
 Sites can also inspect browser behavior, cookies, IP reputation, TLS, and other
 automation signals. Therefore this can fix a simplistic `HeadlessChrome`
 compatibility block, but it cannot guarantee admission and may make a
-fingerprint less coherent. Do not impersonate Safari/Firefox with a Chrome
-engine, rotate identities, bypass a site's access policy, or hide the override
-from the verification report. If one matching-UA retry fails, prefer native
-browser control or report the block.
+fingerprint less coherent. This is compatibility testing, not stealth. Do not
+impersonate Safari/Firefox with a Chrome engine, rotate identities, bypass a
+site's access policy, or hide the override from the verification report. If one
+matching-UA retry fails, prefer native browser control or report the block.
 
 ## MCP when it is already part of the host
 

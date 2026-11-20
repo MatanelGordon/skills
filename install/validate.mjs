@@ -47,6 +47,7 @@ export async function validateRepository(root = DEFAULT_ROOT) {
 
   const walk = async (skill, dir) => {
     for (const entry of await readdir(dir, { withFileTypes: true })) {
+      if (entry.name === 'node_modules') continue;
       const full = join(dir, entry.name);
       if (entry.isDirectory()) {
         await walk(skill, full);
@@ -65,7 +66,7 @@ export async function validateRepository(root = DEFAULT_ROOT) {
         if (result.status !== 0) fail(skill, `${entry.name}: bash -n → ${result.stderr.trim().split('\n')[0]}`);
       } else if (ext === '.mjs' || ext === '.js') {
         const result = spawnSync(process.execPath, ['--check', full], { encoding: 'utf8' });
-        if (result.status !== 0) fail(skill, `${entry.name}: node --check → ${result.stderr.trim().split('\n')[0]}`);
+        if (result.status !== 0) fail(relative(root, full), `node --check → ${result.stderr.trim().split('\n')[0]}`);
       } else if (ext === '.py' && HAVE.python3) {
         const result = spawnSync('python3', ['-m', 'py_compile', full], {
           encoding: 'utf8',
@@ -240,23 +241,9 @@ export async function validateRepository(root = DEFAULT_ROOT) {
 
   const toolsRoot = join(root, 'tools');
   if (existsSync(toolsRoot)) {
-    const walkTools = async (directory) => {
-      for (const entry of await readdir(directory, { withFileTypes: true })) {
-        if (entry.name === 'node_modules') continue;
-        const full = join(directory, entry.name);
-        if (entry.isDirectory()) {
-          await walkTools(full);
-          continue;
-        }
-        const ext = extname(entry.name);
-        if (ext !== '.mjs' && ext !== '.js') continue;
-        const result = spawnSync(process.execPath, ['--check', full], { encoding: 'utf8' });
-        if (result.status !== 0) {
-          fail(relative(root, full), `node --check → ${result.stderr.trim().split('\n')[0]}`);
-        }
-      }
-    };
-    await walkTools(toolsRoot);
+    // Tools are executable repository code too; reuse the skill walker for
+    // consistent JS/shell/Python syntax checks while excluding dependencies.
+    await walk('tools', toolsRoot);
   }
 
   return { failures, skills: dirs, agentCount };

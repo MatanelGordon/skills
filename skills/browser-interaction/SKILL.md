@@ -1,7 +1,7 @@
 ---
 name: browser-interaction
 description: >
-  Human-like browser drive: open, click, type, inspect, report evidence. Use when asked to test/try/click through/"see if it works"; check Chrome/Safari/Firefox/Edge; reproduce UI bugs; verify forms/flows/logins/layouts; investigate local-pass but reported-fail behavior. Route factual retrieval to native search, real-session work to native browser control, and shell-only deep inspection to a verified CLI; do not stack overlapping browser systems. Covers page structure, console/network evidence, WebKit ≠ Safari, signed-in state. Not test suites or CI.
+  Human-like browser drive: open, click, type, inspect, report evidence. Use when asked to test/try/click through/"see if it works"; check Chrome/Safari/Firefox/Edge; reproduce UI bugs; verify forms/flows/logins/layouts; investigate local-pass but reported-fail behavior; or choose a tool to drive a browser. Seek an existing host capability, installed CLI/library, or published skill and say plainly if none fits. Covers page structure, console/network evidence, WebKit ≠ Safari, and signed-in state. Not factual lookups, test suites, or CI.
 license: MIT
 metadata:
   author: Matanel Gordon
@@ -27,14 +27,18 @@ Use the smallest capability that answers the question:
    controllable browser or a background daemon.
 2. **A real page or signed-in flow:** use the harness's native browser/computer
    control when available. It preserves the user's actual profile, cookies, and
-   extensions better than a clean automated browser.
+   extensions better than a clean automated browser. This may act on real
+   accounts: confirm before any action that mutates real data, submits a form,
+   purchases, publishes, or changes account state.
 3. **Shell-only CLI with no native browser control:** for Chrome console,
    network, CSS, performance, or interaction evidence, use the official
    `chrome-devtools` terminal client only when its pinned, hardened setup is
-   already verified. Read [references/tools.md](references/tools.md) first.
-4. **Cross-engine work, real Safari, or an explicitly requested script:** use
-   the appropriate installed library or driver: Playwright, Puppeteer,
-   Selenium, or `safaridriver`. Reuse the project's dependency when it has one.
+   already verified. Read the CLI section of
+   [references/tools.md](references/tools.md) before using it.
+4. **Installed library or driver:** when routes 2–3 are unavailable or do not
+   fit, use an installed Playwright, Puppeteer, Selenium, or `safaridriver` for
+   exploratory work, cross-engine checks, real Safari, or a requested script.
+   Reuse the project's dependency when it has one.
 5. **Nothing fits:** say what is unavailable, name the closest option and its
    limitation, and recommend one concrete setup. Do not improvise a raw CDP
    client.
@@ -50,19 +54,15 @@ Always state the route used and its boundary: for example, "native search for
 the release facts", "host browser for the signed-in flow", or "pinned
 chrome-devtools CLI for console/network evidence".
 
-## Treat a user-agent override as one diagnostic retry
+When the route is not obvious, use the decision table in
+[references/tools.md](references/tools.md). Do not read it when the host already
+provides the only fitting browser capability.
 
-When a site explicitly rejects the headless user agent, or the user asks to
-test UA-dependent behavior, the CLI can set a page-scoped user-agent string.
-Read the user-agent section in [references/tools.md](references/tools.md).
+## UA-dependent testing
 
-Capture the original behavior first. Then use one UA that matches the installed
-Chrome engine, major version, operating system, and viewport; record it and
-verify both `navigator.userAgent` and the outgoing request header. Do not rotate
-through identities or claim the override makes automation indistinguishable
-from a normal browser. If the matching-UA retry is still blocked, stop and use
-native browser control or report the limitation. Never add spoofing to
-Impeccable's local-only `browser-capture` path.
+Only test UA-dependent behavior on an owned or explicitly authorized target.
+Prefer native browser control or headed mode; if a page-scoped diagnostic
+override is still required, follow [references/tools.md](references/tools.md).
 
 ## Read the page as structure, not pixels
 
@@ -187,6 +187,8 @@ session. Options, best first:
 
 Never paste real credentials into a script or a transcript. If a login is
 genuinely required and no session exists, ask — don't improvise with secrets.
+Confirm before driving the real profile through any mutation of account or
+business data.
 
 ## Report what happened
 

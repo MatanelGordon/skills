@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
 import { spawn } from 'node:child_process';
+import { realpathSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 
 import { findCompatibleNode } from './launcher.mjs';
 
@@ -19,7 +20,7 @@ export const main = async () => {
     .filter((name) => name.endsWith('.test.mjs'))
     .sort()
     .map((name) => join(testsRoot, name));
-  const child = spawn(node, ['--test', ...tests], {
+  const child = spawn(node, ['--test', '--test-concurrency=1', ...tests], {
     cwd: here,
     env: process.env,
     stdio: 'inherit',
@@ -35,7 +36,7 @@ export const main = async () => {
   });
 };
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main().catch((error) => {
     process.stderr.write(`browser-capture tests: ${error.message}\n`);
     process.exitCode = 1;

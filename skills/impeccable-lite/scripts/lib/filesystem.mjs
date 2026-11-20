@@ -3,18 +3,18 @@ import { join, relative, sep } from 'node:path';
 
 import { isPathContained, resolveWithin } from './core.mjs';
 
-export const ensureSafeDirectory = async (root, requested) => {
+const inspectDirectoryPath = async (root, requested, createMissing) => {
   const lexical = resolveWithin(root, requested);
-  if (!lexical.ok) throw new Error(lexical.error);
-  const fromRoot = relative(root, lexical.value);
+  if (!lexical.ok) throw new TypeError(lexical.error);
   let current = root;
-  for (const segment of fromRoot.split(sep).filter(Boolean)) {
+  for (const segment of relative(root, lexical.value).split(sep).filter(Boolean)) {
     const next = join(current, segment);
     let metadata;
     try {
       metadata = await lstat(next);
     } catch (error) {
       if (error.code !== 'ENOENT') throw error;
+      if (!createMissing) return lexical.value;
       try {
         await mkdir(next, { mode: 0o700 });
       } catch (mkdirError) {
@@ -28,5 +28,9 @@ export const ensureSafeDirectory = async (root, requested) => {
     if (!isPathContained(root, physical)) throw new Error(`Output directory escapes the project root: ${relative(root, next)}`);
     current = physical;
   }
-  return current;
+  return createMissing ? current : lexical.value;
 };
+
+export const assertSafeDirectoryPath = (root, requested) => inspectDirectoryPath(root, requested, false);
+
+export const ensureSafeDirectory = (root, requested) => inspectDirectoryPath(root, requested, true);

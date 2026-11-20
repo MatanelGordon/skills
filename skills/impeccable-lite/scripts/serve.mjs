@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
 import { createHash } from 'node:crypto';
-import { createReadStream } from 'node:fs';
+import { createReadStream, realpathSync } from 'node:fs';
 import { realpath, stat } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { extname, relative, resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 
 import { isPathContained, resolveWithin } from './lib/core.mjs';
 
@@ -13,6 +13,7 @@ const MIME = Object.freeze({
   '.css': 'text/css; charset=utf-8',
   '.gif': 'image/gif',
   '.html': 'text/html; charset=utf-8',
+  '.htm': 'text/html; charset=utf-8',
   '.ico': 'image/x-icon',
   '.jpeg': 'image/jpeg',
   '.jpg': 'image/jpeg',
@@ -26,10 +27,20 @@ const MIME = Object.freeze({
   '.woff2': 'font/woff2',
 });
 
+// Network directives permit attempts so the process-owned deny proxy can record
+// them outside page-controlled memory; the proxy and exact-origin interception
+// remain the enforcing boundary.
+const CONTENT_SECURITY_POLICY = "default-src 'self' data: blob: http: https:; connect-src 'self' data: blob: http: https: ws: wss:; img-src 'self' data: blob: http: https:; style-src 'self' 'unsafe-inline' http: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' http: https:; worker-src 'self' blob:; font-src 'self' data: http: https:; object-src 'none'; frame-src 'self' blob: http: https:; base-uri 'self'; form-action 'self'";
+const RESPONSE_HEADERS = Object.freeze({
+  'cache-control': 'no-store',
+  'content-security-policy': CONTENT_SECURITY_POLICY,
+  'x-content-type-options': 'nosniff',
+});
+
 const sendText = (response, status, message) => {
   response.writeHead(status, {
+    ...RESPONSE_HEADERS,
     'content-type': 'text/plain; charset=utf-8',
-    'cache-control': 'no-store',
   });
   response.end(`${message}\n`);
 };
@@ -57,7 +68,12 @@ const resolveRequest = async (root, requestUrl) => {
   let candidate = lexical.value;
   try {
     const metadata = await stat(candidate);
-    if (metadata.isDirectory()) candidate = resolve(candidate, 'index.html');
+    if (metadata.isDirectory()) {
+      if (!pathname.endsWith('/')) {
+        return { ok: false, status: 308, error: 'Directory URL requires a trailing slash.', location: `${pathname}/` };
+      }
+      candidate = resolve(candidate, 'index.html');
+    }
     const physical = await realpath(candidate);
     if (!isPathContained(root, physical)) {
       return { ok: false, status: 403, error: 'Path escapes the preview root.' };
@@ -73,32 +89,44 @@ const resolveRequest = async (root, requestUrl) => {
   }
 };
 
-export const createStaticServer = async ({ root = '.', port = 0, onServed = () => {} } = {}) => {
+export const createStaticServer = async ({ root = '.', port = 0, onServed = () => {}, onFailed = () => {} } = {}) => {
   if (typeof onServed !== 'function') throw new TypeError('onServed must be a function.');
+  if (typeof onFailed !== 'function') throw new TypeError('onFailed must be a function.');
   const physicalRoot = await realpath(resolve(root));
   let servedError;
   const server = createServer(async (request, response) => {
     const host = request.headers.host || '';
+    const failRequest = (status, message) => {
+      try {
+        onFailed(Object.freeze({ path: request.url || '/', status }));
+      } catch (error) {
+        servedError ||= error;
+      }
+      sendText(response, status, message);
+    };
     if (!/^(?:127\.0\.0\.1|localhost)(?::\d+)?$/i.test(host)) {
-      sendText(response, 403, 'Invalid preview host.');
+      failRequest(403, 'Invalid preview host.');
       return;
     }
     if (!['GET', 'HEAD'].includes(request.method || '')) {
-      sendText(response, 405, 'Method not allowed.');
+      failRequest(405, 'Method not allowed.');
       return;
     }
 
     const target = await resolveRequest(physicalRoot, request.url || '/');
     if (!target.ok) {
-      sendText(response, target.status, target.error);
+      if (target.location) {
+        response.writeHead(target.status, { ...RESPONSE_HEADERS, location: target.location });
+        response.end();
+      } else {
+        failRequest(target.status, target.error);
+      }
       return;
     }
 
     response.writeHead(200, {
       'content-type': MIME[extname(target.value).toLowerCase()] || 'application/octet-stream',
-      'cache-control': 'no-store',
-      'x-content-type-options': 'nosniff',
-      'content-security-policy': "default-src 'self'; connect-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; worker-src 'self' blob:; font-src 'self' data:; object-src 'self' data: blob:; frame-src 'self' blob:; base-uri 'self'; form-action 'self'",
+      ...RESPONSE_HEADERS,
     });
     if (request.method === 'HEAD') response.end();
     else {
@@ -115,7 +143,10 @@ export const createStaticServer = async ({ root = '.', port = 0, onServed = () =
           servedError ||= error;
         }
       });
-      stream.once('error', () => response.destroy());
+      stream.once('error', (error) => {
+        servedError ||= error;
+        response.destroy(error);
+      });
       stream.pipe(response);
     }
   });
@@ -133,7 +164,12 @@ export const createStaticServer = async ({ root = '.', port = 0, onServed = () =
   return Object.freeze({
     origin: `http://127.0.0.1:${address.port}`,
     close: () => new Promise((resolveClose, reject) => {
-      server.close((error) => (error || servedError ? reject(error || servedError) : resolveClose()));
+      const forceTimer = setTimeout(() => server.closeAllConnections?.(), 250);
+      server.close((error) => {
+        clearTimeout(forceTimer);
+        if (error || servedError) reject(error || servedError);
+        else resolveClose();
+      });
       server.closeIdleConnections?.();
     }),
   });
@@ -152,7 +188,7 @@ const runCli = async () => {
   process.once('SIGTERM', stop);
 };
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   runCli().catch((error) => {
     process.stderr.write(`impeccable-lite serve: ${error.message}\n`);
     process.exitCode = 1;

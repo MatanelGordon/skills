@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdir, mkdtemp, symlink, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
 import { request } from 'node:http';
+import { createConnection } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -35,7 +36,9 @@ test('general preview is loopback-only and refuses private or escaped files', as
   }]);
 
   assert.ok([400, 403, 404].includes((await fetch(`${preview.origin}/%2e%2e%2fsecret.txt`)).status));
-  assert.equal((await fetch(`${preview.origin}/.env`)).status, 403);
+  const privateResponse = await fetch(`${preview.origin}/.env`);
+  assert.equal(privateResponse.status, 403);
+  assert.match(privateResponse.headers.get('content-security-policy') || '', /connect-src 'self'/);
   assert.equal((await fetch(`${preview.origin}/escape.txt`)).status, 403);
   assert.equal((await fetch(`${preview.origin}/public-env.txt`)).status, 403);
   assert.equal((await fetch(`${preview.origin}/public-module.js`)).status, 403);
@@ -55,4 +58,41 @@ test('general preview is loopback-only and refuses private or escaped files', as
     req.end();
   });
   assert.equal(badHostStatus, 403);
+});
+
+test('preview redirects directory URLs and serves HTML extension variants', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'browser-capture-server-routing-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await mkdir(join(root, 'sub'));
+  await writeFile(join(root, 'sub', 'index.html'), '<!doctype html><title>Sub</title>', 'utf8');
+  await writeFile(join(root, 'page.htm'), '<!doctype html><title>HTM</title>', 'utf8');
+  const preview = await createStaticServer({ root });
+  t.after(() => preview.close());
+
+  const directory = await fetch(`${preview.origin}/sub`, { redirect: 'manual' });
+  assert.equal(directory.status, 308);
+  assert.equal(directory.headers.get('location'), '/sub/');
+  assert.match(directory.headers.get('content-security-policy') || '', /connect-src 'self'/);
+  const html = await fetch(`${preview.origin}/page.htm`);
+  assert.equal(html.headers.get('content-type'), 'text/html; charset=utf-8');
+  assert.equal((await fetch(`${preview.origin}/index.html/`)).status, 404);
+});
+
+test('preview shutdown is bounded when a client leaves a request unfinished', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'browser-capture-server-close-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await writeFile(join(root, 'index.html'), '<!doctype html><title>Close</title>', 'utf8');
+  const preview = await createStaticServer({ root });
+  const target = new URL(preview.origin);
+  const socket = createConnection({ host: target.hostname, port: Number(target.port) });
+  t.after(() => socket.destroy());
+  await new Promise((resolve, reject) => {
+    socket.once('connect', resolve);
+    socket.once('error', reject);
+  });
+  socket.write('GET / HTTP/1.1\r\nHost: 127.0.0.1\r\n');
+  await Promise.race([
+    preview.close(),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('preview close was unbounded')), 1_500)),
+  ]);
 });

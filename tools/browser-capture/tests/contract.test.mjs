@@ -44,13 +44,14 @@ test('viewport contract accepts one through eight unique named viewports', () =>
 test('browser path and Chrome security arguments fail closed', () => {
   assert.equal(validateBrowserPath(''), '');
   assert.throws(() => validateBrowserPath('relative/chrome'), /absolute/i);
-  const args = buildChromeSecurityArgs('http://127.0.0.1:8123');
+  const args = buildChromeSecurityArgs('http://127.0.0.1:8123', 'http://127.0.0.1:9123');
   assert.ok(args.includes('--disable-background-networking'));
-  assert.ok(args.includes('--proxy-server=http://127.0.0.1:9'));
-  assert.ok(args.includes('--proxy-bypass-list=127.0.0.1:8123'));
+  assert.ok(args.includes('--proxy-server=http://127.0.0.1:9123'));
+  assert.ok(args.includes('--proxy-bypass-list=<-loopback>;127.0.0.1:8123'));
   assert.ok(args.some((arg) => arg.startsWith('--host-resolver-rules=')));
   assert(!args.some((arg) => arg.startsWith('--remote-debugging')));
-  assert.throws(() => buildChromeSecurityArgs('https://example.test'), /127\.0\.0\.1/i);
+  assert.throws(() => buildChromeSecurityArgs('https://example.test', 'http://127.0.0.1:9123'), /127\.0\.0\.1/i);
+  assert.throws(() => buildChromeSecurityArgs('http://127.0.0.1:8123', 'https://example.test'), /deny proxy/i);
 });
 
 test('capture error combination preserves rendering and cleanup failures', () => {

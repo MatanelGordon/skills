@@ -2,10 +2,10 @@
 
 import { spawn } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
-import { existsSync } from 'node:fs';
+import { existsSync, realpathSync } from 'node:fs';
 import { link, lstat, open, readFile, realpath, rename, stat, unlink } from 'node:fs/promises';
 import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 
 import {
   PHASES,
@@ -22,7 +22,9 @@ import {
 import { ensureSafeDirectory } from './lib/filesystem.mjs';
 
 const DEFAULT_STATE = '.impeccable-lite/session.json';
+const REGISTRY_ROOT = fileURLToPath(new URL('../../..', import.meta.url));
 const REPOSITORY_CAPTURE_LAUNCHER = fileURLToPath(new URL('../../../tools/browser-capture/launcher.mjs', import.meta.url));
+const CAPTURE_PROCESS_TIMEOUT_MS = 125_000;
 
 const HELP = `Impeccable Lite — local design workflow with optional browser evidence
 
@@ -411,7 +413,8 @@ const requireCaptures = async (evidence, expectedEntry, context) => {
       || !/^[a-f0-9]{64}$/i.test(record.sha256 || '')) return false;
     let recordedPath;
     try {
-      recordedPath = await realpath(record.path);
+      const capturePath = isAbsolute(record.path) ? record.path : join(generationDirectory, record.path || '');
+      recordedPath = await realpath(capturePath);
     } catch {
       return false;
     }
@@ -433,7 +436,9 @@ const requireCaptures = async (evidence, expectedEntry, context) => {
       }
     }))).every(Boolean);
   const artifactResource = resources.find((resource) => resource.path === expectedEntry);
-  const validManifest = report.ok === true
+  const validManifest = report.schemaVersion === 1
+    && report.producer === 'browser-capture'
+    && report.ok === true
     && report.entry === expectedEntry
     && artifactResource?.sha256 === report.artifactHash
     && report.artifactHash === await hashFile(await existingPath(context.root, expectedEntry))
@@ -442,7 +447,10 @@ const requireCaptures = async (evidence, expectedEntry, context) => {
     && validCaptures.every(Boolean);
   let recordedReportPath;
   try {
-    recordedReportPath = await realpath(report.reportPath || '');
+    const manifestPath = isAbsolute(report.reportPath)
+      ? report.reportPath
+      : join(generationDirectory, report.reportPath || '');
+    recordedReportPath = await realpath(manifestPath);
   } catch {
     recordedReportPath = '';
   }
@@ -644,7 +652,19 @@ const runAudit = async (options) => {
   if (!report.ok) process.exitCode = 1;
 };
 
-const browserCaptureInvocation = () => {
+const trustedRegistryLauncher = async () => {
+  try {
+    const packageJson = JSON.parse(await readFile(join(REGISTRY_ROOT, 'package.json'), 'utf8'));
+    if (packageJson.name !== '@matanelgordon/skills') return null;
+    const physicalRoot = await realpath(REGISTRY_ROOT);
+    const physicalLauncher = await realpath(REPOSITORY_CAPTURE_LAUNCHER);
+    return isPathContained(physicalRoot, physicalLauncher) ? physicalLauncher : null;
+  } catch {
+    return null;
+  }
+};
+
+const browserCaptureInvocation = async () => {
   const explicit = process.env.BROWSER_CAPTURE_CLI;
   if (explicit) {
     if (!isAbsolute(explicit)) {
@@ -655,14 +675,13 @@ const browserCaptureInvocation = () => {
       ? Object.freeze({ command: process.execPath, prefix: Object.freeze([explicit]) })
       : Object.freeze({ command: explicit, prefix: Object.freeze([]) });
   }
-  if (existsSync(REPOSITORY_CAPTURE_LAUNCHER)) {
-    return Object.freeze({ command: process.execPath, prefix: Object.freeze([REPOSITORY_CAPTURE_LAUNCHER]) });
-  }
-  return Object.freeze({ command: 'browser-capture', prefix: Object.freeze([]) });
+  const launcher = await trustedRegistryLauncher();
+  return launcher
+    ? Object.freeze({ command: process.execPath, prefix: Object.freeze([launcher]) })
+    : null;
 };
 
-const invokeBrowserCapture = async (args) => {
-  const invocation = browserCaptureInvocation();
+const invokeCaptureProcess = async (invocation, args) => {
   return new Promise((resolveRun, rejectRun) => {
     const child = spawn(invocation.command, [...invocation.prefix, ...args], {
       env: process.env,
@@ -675,12 +694,58 @@ const invokeBrowserCapture = async (args) => {
     child.stderr.setEncoding('utf8');
     child.stdout.on('data', (chunk) => { stdout += chunk; });
     child.stderr.on('data', (chunk) => { stderr += chunk; });
+    const timer = setTimeout(() => child.kill('SIGTERM'), CAPTURE_PROCESS_TIMEOUT_MS);
+    const handlers = Object.fromEntries(['SIGINT', 'SIGTERM', 'SIGHUP'].map((signal) => [signal, () => child.kill(signal)]));
+    for (const [signal, handler] of Object.entries(handlers)) process.once(signal, handler);
+    const cleanup = () => {
+      clearTimeout(timer);
+      for (const [signal, handler] of Object.entries(handlers)) process.off(signal, handler);
+    };
     child.once('error', (error) => {
-      if (error.code === 'ENOENT') {
-        rejectRun(new Error('browser-capture is unavailable. Install the repository tool or set BROWSER_CAPTURE_CLI to its absolute launcher path.'));
-      } else rejectRun(error);
+      cleanup();
+      rejectRun(error);
     });
-    child.once('close', (status, signal) => resolveRun(Object.freeze({ status, signal, stdout, stderr })));
+    child.once('close', (status, signal) => {
+      cleanup();
+      resolveRun(Object.freeze({ status, signal, stdout, stderr }));
+    });
+  });
+};
+
+const parseCaptureJson = (stdout, label) => {
+  let report;
+  try {
+    report = JSON.parse(stdout);
+  } catch {
+    throw new Error(`${label} returned empty or invalid JSON.`);
+  }
+  if (report?.producer !== 'browser-capture' || report?.schemaVersion !== 1) {
+    throw new Error(`${label} returned an unsupported manifest identity.`);
+  }
+  return report;
+};
+
+const invokeBrowserCapture = async (args) => {
+  const invocation = await browserCaptureInvocation();
+  if (!invocation) return null;
+  if (args[0] !== 'doctor') {
+    const handshake = await invokeCaptureProcess(invocation, ['doctor', '--json']);
+    if (handshake.signal || handshake.status !== 0) {
+      throw new Error(handshake.stderr.trim() || 'browser-capture doctor reported that capture is unavailable.');
+    }
+    const doctor = parseCaptureJson(handshake.stdout, 'browser-capture doctor');
+    if (doctor.captureAvailable !== true) throw new Error(doctor.captureError || 'browser-capture is unavailable.');
+  }
+  return invokeCaptureProcess(invocation, args);
+};
+
+const fallbackCapture = async ({ context, entry, outDir, browserPath }) => {
+  const { captureScreenshots } = await import('./capture.mjs');
+  return captureScreenshots({
+    root: context.root,
+    entry,
+    outDir,
+    browserPath,
   });
 };
 
@@ -691,20 +756,28 @@ const runCapture = async (options) => {
     const { state } = await loadState(context);
     entry = state.brief.artifact;
   }
+  const outDir = options.one('out', '.impeccable-lite/evidence');
   const args = [
     'capture',
     '--root', context.root,
     '--entry', entry,
-    '--out', options.one('out', '.impeccable-lite/evidence'),
+    '--out', outDir,
   ];
   const browserPath = options.one('browser');
   if (browserPath) args.push('--browser', browserPath);
   const result = await invokeBrowserCapture(args);
+  if (!result) {
+    const report = await fallbackCapture({ context, entry, outDir, browserPath });
+    process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+    if (!report.ok) process.exitCode = 1;
+    return;
+  }
   if (result.signal) throw new Error(`browser-capture stopped after signal ${result.signal}.`);
-  if (result.status === 64 || (result.status !== 0 && result.status !== 1)) {
+  if (result.status !== 0 && result.status !== 1) {
     const detail = result.stderr.trim().replace(/^browser-capture:\s*/i, '');
     throw new Error(detail || `browser-capture exited with status ${result.status}.`);
   }
+  parseCaptureJson(result.stdout, 'browser-capture');
   process.stdout.write(result.stdout);
   if (result.stderr) process.stderr.write(result.stderr);
   if (result.status === 1) process.exitCode = 1;
@@ -713,29 +786,56 @@ const runCapture = async (options) => {
 const runDoctor = async (options) => {
   let report;
   try {
-    const delegated = await invokeBrowserCapture(['doctor', '--json', 'true']);
-    if (delegated.signal || ![0, 1].includes(delegated.status)) throw new Error(delegated.stderr.trim() || 'browser-capture doctor failed.');
-    const captureReport = JSON.parse(delegated.stdout);
-    report = Object.freeze({
-      ...captureReport,
-      captureAvailable: captureReport.captureAvailable ?? true,
-      auditNode: process.version,
-    });
+    const delegated = await invokeBrowserCapture(['doctor', '--json']);
+    if (delegated) {
+      if (delegated.signal) throw new Error(`browser-capture doctor stopped after ${delegated.signal}.`);
+      const captureReport = parseCaptureJson(delegated.stdout, 'browser-capture doctor');
+      report = Object.freeze({
+        ...captureReport,
+        captureAvailable: captureReport.captureAvailable === true,
+        auditNode: process.version,
+      });
+    } else {
+      const { findBrowser } = await import('./capture.mjs');
+      const browser = await findBrowser();
+      report = Object.freeze({
+        schemaVersion: 1,
+        producer: 'browser-capture',
+        auditNode: process.version,
+        captureNode: process.version,
+        nodeCompatible: Number(process.versions.node.split('.')[0]) >= 18,
+        browser,
+        browserVersion: null,
+        dependency: 'Node.js built-ins only',
+        captureAvailable: Boolean(browser),
+        captureError: browser ? null : 'No supported local Chrome, Chromium, or Edge browser was found; pass --browser to capture.',
+        enforcement: Object.freeze(['process-owned deny proxy', 'CDP Fetch interception', 'WebRTC UDP preference']),
+      });
+    }
   } catch (error) {
     report = Object.freeze({
-      node: process.version,
-      compatible: Number(process.versions.node.split('.')[0]) >= 18,
+      schemaVersion: 1,
+      producer: 'browser-capture',
+      auditNode: process.version,
+      captureNode: null,
+      nodeCompatible: false,
       browser: null,
       browserVersion: null,
-      dependencies: 'browser-capture unavailable',
-      network: 'static audit remains local and requires no network',
+      dependency: 'browser-capture unavailable',
       captureAvailable: false,
       captureError: error.message,
+      enforcement: Object.freeze([]),
     });
   }
   if (options.one('json') === 'true') process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
-  else process.stdout.write(`Capture Node ${report.node}: ${report.compatible ? 'ready' : 'unsupported'}\nBrowser: ${report.browser || 'not found (static audit still works)'}\nDependencies: ${report.dependencies}\nNetwork: ${report.network}\n`);
-  if (!report.compatible) process.exitCode = 1;
+  else {
+    process.stdout.write(`Audit Node ${report.auditNode}: ready\n`);
+    process.stdout.write(`Capture: ${report.captureAvailable ? 'available' : `unavailable (${report.captureError})`}\n`);
+    process.stdout.write(`Capture Node: ${report.captureNode || 'unavailable'}\n`);
+    process.stdout.write(`Browser: ${report.browserVersion || report.browser || 'not found'}\n`);
+    process.stdout.write(`Dependency: ${report.dependency || 'unknown'}\n`);
+  }
+  if (!report.captureAvailable) process.exitCode = 1;
 };
 
 export const main = async (argv) => {
@@ -758,7 +858,7 @@ export const main = async (argv) => {
   await commands[command](options);
 };
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main(process.argv.slice(2)).catch((error) => {
     process.stderr.write(`impeccable-lite: ${error.message}\n`);
     process.exitCode = 64;

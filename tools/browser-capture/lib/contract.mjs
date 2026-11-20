@@ -5,6 +5,7 @@ export const PRODUCER = 'browser-capture';
 export const MIN_TIMEOUT_MS = 1_000;
 export const MAX_TIMEOUT_MS = 120_000;
 export const MAX_VIEWPORTS = 8;
+export const MOBILE_MAX_WIDTH = 599;
 
 export const DEFAULT_VIEWPORTS = Object.freeze([
   Object.freeze({ name: 'desktop', width: 1440, height: 1000 }),
@@ -64,17 +65,21 @@ export const validateBrowserPath = (value) => {
   return value;
 };
 
-export const buildChromeSecurityArgs = (origin) => {
+export const buildChromeSecurityArgs = (origin, proxyOrigin) => {
   const target = new URL(origin);
+  const proxy = new URL(proxyOrigin);
   if (target.protocol !== 'http:' || target.hostname !== '127.0.0.1') {
     throw new TypeError('Capture origin must use 127.0.0.1 over HTTP.');
+  }
+  if (proxy.protocol !== 'http:' || proxy.hostname !== '127.0.0.1' || !proxy.port) {
+    throw new TypeError('Capture deny proxy must use a loopback HTTP origin with an explicit port.');
   }
   return Object.freeze([
     '--disable-background-networking',
     '--disable-component-update',
     '--disable-default-apps',
     '--disable-extensions',
-    '--disable-features=OptimizationHints,MediaRouter',
+    '--disable-features=OptimizationHints,MediaRouter,InterestFeedContentSuggestions,PrivacySandboxSettings4',
     '--disable-gpu',
     '--disable-sync',
     '--force-webrtc-ip-handling-policy=disable_non_proxied_udp',
@@ -82,8 +87,8 @@ export const buildChromeSecurityArgs = (origin) => {
     '--no-first-run',
     '--safebrowsing-disable-auto-update',
     `--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE ${target.hostname}`,
-    '--proxy-server=http://127.0.0.1:9',
-    `--proxy-bypass-list=${target.host}`,
+    `--proxy-server=${proxy.origin}`,
+    `--proxy-bypass-list=<-loopback>;${target.host}`,
   ]);
 };
 

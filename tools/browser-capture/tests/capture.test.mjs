@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { access, mkdir, mkdtemp, readFile, readdir, symlink, writeFile } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -12,12 +12,14 @@ import {
 } from '../lib/capture.mjs';
 
 const localBrowser = await findBrowser();
+if (!localBrowser && process.env.CI) throw new Error('CI requires a supported local Chrome-family browser.');
 
 test('real Puppeteer capture uses the requested CSS viewport and versioned manifest', {
   skip: !localBrowser,
   timeout: 30_000,
-}, async () => {
+}, async (t) => {
   const root = await mkdtemp(join(tmpdir(), 'browser-capture-viewport-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
   await writeFile(join(root, 'index.html'), `<!doctype html><html lang="en"><head>
     <meta name="viewport" content="width=device-width"><title>Viewport probe</title></head>
     <body><main><h1>Viewport probe</h1><img src="hero.svg" alt=""></main></body></html>`, 'utf8');
@@ -31,7 +33,7 @@ test('real Puppeteer capture uses the requested CSS viewport and versioned manif
 
   assert.equal(report.schemaVersion, 1);
   assert.equal(report.producer, 'browser-capture');
-  assert.equal(report.ok, true);
+  assert.equal(report.ok, true, JSON.stringify(report, null, 2));
   assert.equal(report.captures[0].cssWidth, 390);
   assert.equal(report.captures[0].cssHeight, 844);
   assert.equal(report.captures[0].blockedRequests.length, 0);
@@ -42,8 +44,9 @@ test('real Puppeteer capture uses the requested CSS viewport and versioned manif
   assert.deepEqual(report.resources.map((resource) => resource.path), ['hero.svg', 'index.html']);
   assert.ok(report.resources.every((resource) => /^[a-f0-9]{64}$/.test(resource.sha256)));
   assert.match(report.generation, /^capture-[a-f0-9-]+$/);
-  assert.match(report.captures[0].path, new RegExp(`${report.generation}/mobile\\.png$`));
-  assert.match(report.reportPath, new RegExp(`${report.generation}/capture\\.json$`));
+  assert.equal(report.captures[0].path, 'mobile.png');
+  assert.equal(report.reportPath, 'capture.json');
+  await access(join(root, '.browser-capture', 'evidence', report.generation, report.reportPath));
 });
 
 test('capture rejects an output ancestor symlink before creating outside directories', async () => {
@@ -76,6 +79,7 @@ test('capture blocks requests to a different loopback origin', {
   t.after(() => new Promise((resolveClose) => other.close(resolveClose)));
   const address = other.address();
   const root = await mkdtemp(join(tmpdir(), 'browser-capture-origin-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
   await writeFile(join(root, 'index.html'), `<!doctype html><html><head><title>Origin</title></head>
     <body><img src="http://127.0.0.1:${address.port}/probe" alt="">
     <script>new WebSocket('ws://127.0.0.1:${address.port}/socket')</script></body></html>`, 'utf8');
@@ -91,8 +95,9 @@ test('capture blocks requests to a different loopback origin', {
   assert.equal(report.captures[0].blockedRequests.length, 2);
   assert.ok(report.captures[0].blockedRequests.some((request) => request.endsWith(`:${address.port}/probe`)));
   assert.ok(report.captures[0].blockedRequests.some((request) => request.endsWith(`:${address.port}/socket`)));
-  await access(report.reportPath);
-  assert.equal(JSON.parse(await readFile(report.reportPath, 'utf8')).ok, false);
+  const reportPath = join(root, '.browser-capture', 'evidence', report.generation, report.reportPath);
+  await access(reportPath);
+  assert.equal(JSON.parse(await readFile(reportPath, 'utf8')).ok, false);
 });
 
 test('operational failure never publishes a partial new generation', {

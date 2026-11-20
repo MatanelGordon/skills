@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { access, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
+import { access, cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,6 +9,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { deflateSync } from 'node:zlib';
 
 const cli = fileURLToPath(new URL('../scripts/impeccable-lite.mjs', import.meta.url));
+const skillRoot = dirname(dirname(cli));
 
 const run = (root, args) => spawnSync(process.execPath, [cli, ...args], {
   cwd: root,
@@ -94,6 +95,8 @@ const writeCaptureEvidence = async (
     sha256: sha256(await readFile(join(root, path))),
   })));
   await writeFile(manifest, `${JSON.stringify({
+    schemaVersion: 1,
+    producer: 'browser-capture',
     ok: true,
     entry,
     artifactHash,
@@ -169,9 +172,10 @@ test('doctor reports the isolated browser-capture runtime', async () => {
   const checked = run(root, ['doctor', '--json', 'true']);
   assert.equal(checked.status, 0, checked.stderr);
   const report = JSON.parse(checked.stdout);
-  assert.equal(report.compatible, true);
-  assert.equal(report.dependencies, 'puppeteer-core 25.18.1');
-  assert.match(report.network, /exact loopback preview origin/);
+  assert.equal(report.captureAvailable, true);
+  assert.equal(report.nodeCompatible, true);
+  assert.match(report.dependency, /^puppeteer-core@/);
+  assert.ok(report.enforcement.some((item) => /deny proxy/i.test(item)));
 });
 
 test('missing capture companion fails capture but leaves standalone audit available', async () => {
@@ -181,7 +185,7 @@ test('missing capture companion fails capture but leaves standalone audit availa
   const invoke = (args) => spawnSync(process.execPath, [cli, ...args], { cwd: root, env, encoding: 'utf8' });
 
   const checked = invoke(['doctor', '--json', 'true']);
-  assert.equal(checked.status, 0, checked.stderr);
+  assert.equal(checked.status, 1, checked.stderr);
   assert.equal(JSON.parse(checked.stdout).captureAvailable, false);
   const audited = invoke(['audit', '--file', 'index.html']);
   assert.equal(audited.status, 0, audited.stderr);
@@ -205,7 +209,68 @@ test('capture delegates to browser-capture while preserving Impeccable defaults'
     { name: 'desktop', width: 1440, height: 1000 },
     { name: 'mobile', width: 390, height: 844 },
   ]);
-  assert.match(report.reportPath, /\.impeccable-lite\/evidence\/capture-[a-f0-9-]+\/capture\.json$/i);
+  assert.equal(report.reportPath, 'capture.json');
+});
+
+test('symlinked Impeccable entry point executes instead of silently succeeding', async (t) => {
+  const temporary = await mkdtemp(join(tmpdir(), 'impeccable-lite-symlink-'));
+  t.after(() => rm(temporary, { recursive: true, force: true }));
+  const linked = join(temporary, 'impeccable-lite');
+  await symlink(skillRoot, linked, 'dir');
+  const result = spawnSync(process.execPath, [join(linked, 'scripts', 'impeccable-lite.mjs'), 'help'], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /Impeccable Lite/);
+});
+
+test('a copied skill keeps a built-ins capture-to-completion path', {
+  timeout: 45_000,
+}, async (t) => {
+  const temporary = await mkdtemp(join(tmpdir(), 'impeccable-lite-copy-'));
+  const copiedSkill = join(temporary, 'impeccable-lite');
+  const root = join(temporary, 'project');
+  t.after(() => rm(temporary, { recursive: true, force: true }));
+  await cp(skillRoot, copiedSkill, { recursive: true });
+  await mkdir(root);
+  await writeBriefAndPage(root);
+  const copiedCli = join(copiedSkill, 'scripts', 'impeccable-lite.mjs');
+  const copiedRun = (args) => spawnSync(process.execPath, [copiedCli, ...args], { cwd: root, encoding: 'utf8' });
+
+  const doctor = copiedRun(['doctor', '--json', 'true']);
+  assert.equal(doctor.status, 0, doctor.stderr);
+  const doctorReport = JSON.parse(doctor.stdout);
+  assert.equal(doctorReport.captureAvailable, true);
+  assert.equal(doctorReport.dependency, 'Node.js built-ins only');
+
+  const captured = copiedRun(['capture', '--entry', 'index.html']);
+  assert.equal(captured.status, 0, captured.stderr);
+  const captureReport = JSON.parse(captured.stdout);
+  assert.equal(captureReport.producer, 'browser-capture');
+  const generationRoot = `.impeccable-lite/evidence/${captureReport.generation}`;
+
+  assert.equal(copiedRun(['init', '--brief', 'brief.json']).status, 0);
+  assert.equal(copiedRun(['advance', '--to', 'direction']).status, 0);
+  assert.equal(copiedRun(['advance', '--to', 'build']).status, 0);
+  assert.equal(copiedRun(['audit']).status, 0);
+  assert.equal(copiedRun([
+    'advance', '--to', 'audit', '--evidence', '.impeccable-lite/reports/audit.json',
+  ]).status, 0);
+  const state = JSON.parse(await readFile(join(root, '.impeccable-lite', 'session.json'), 'utf8'));
+  await writeFile(join(root, 'review.md'), `disposition: ship
+material_findings: none
+keep: the hierarchy
+session_id: ${state.sessionId}
+evidence_generation: ${captureReport.generation}
+`, 'utf8');
+  const complete = copiedRun([
+    'advance', '--to', 'complete',
+    '--evidence', '.impeccable-lite/reports/audit.json',
+    '--evidence', `${generationRoot}/desktop.png`,
+    '--evidence', `${generationRoot}/mobile.png`,
+    '--evidence', `${generationRoot}/capture.json`,
+    '--review', 'review.md',
+  ]);
+  assert.equal(complete.status, 0, complete.stderr);
+  assert.equal(JSON.parse(await readFile(join(root, '.impeccable-lite', 'session.json'), 'utf8')).phase, 'complete');
 });
 
 test('new HTML workflow can select direction before the artifact exists', async () => {

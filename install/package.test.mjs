@@ -14,6 +14,10 @@ test('npm package manifest is an allowlist and excludes sanctioned scratch trees
   try {
     const packageJson = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
     assert.deepEqual(Object.keys(packageJson.bin), ['install-skills']);
+    const councilTest = 'skills/council/tests/council-protocol.test.mjs';
+    assert.equal(packageJson.scripts['test:council'], `node --test ${councilTest}`);
+    assert.match(packageJson.scripts.test, new RegExp(`(?:^| )${councilTest.replaceAll('.', '\\.')}(?: |$)`));
+    assert.doesNotMatch(packageJson.scripts.test, /skills\/council\/tests\/\*/);
     assert(process.env.npm_execpath, 'package test must run through npm so npm_execpath is available');
     const packed = spawnSync(process.execPath, [process.env.npm_execpath, 'pack', '--dry-run', '--json', '--ignore-scripts'], {
       cwd: root,

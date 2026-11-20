@@ -119,6 +119,22 @@ const networkUrl = (value, allowedOrigin) => {
   }
 };
 
+const isFinishedTargetObservation = (error) => error instanceof Error
+  && /^Protocol error (?:\(Network\.enable\)|Network\.enable): (?:Target|Session) closed\.?$/.test(error.message);
+
+export const enableTargetNetworkObservation = async (session) => {
+  try {
+    await session.send('Network.enable');
+    return true;
+  } catch (error) {
+    // Prerender and worker targets may finish between creation and CDP
+    // attachment. The process-owned proxy remains the enforcement and
+    // evidence boundary; only this exact terminal observation race is benign.
+    if (isFinishedTargetObservation(error)) return false;
+    throw error;
+  }
+};
+
 const writeBrowserPreferences = async (profile) => {
   const defaults = join(profile, 'Default');
   await mkdir(defaults, { recursive: true, mode: 0o700 });
@@ -229,7 +245,7 @@ export const captureViewportWithPuppeteer = async ({
         targetSessions.add(session);
         session.on('Network.requestWillBeSent', ({ request }) => addBlocked(request.url));
         session.on('Network.webSocketCreated', ({ url: socketUrl }) => addBlocked(socketUrl));
-        await session.send('Network.enable');
+        await enableTargetNetworkObservation(session);
       })().catch((error) => { interceptionError ||= error; });
       targetTasks.add(task);
       task.finally(() => targetTasks.delete(task));

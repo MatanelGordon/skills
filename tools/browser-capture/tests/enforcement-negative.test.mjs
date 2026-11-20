@@ -5,7 +5,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 
-import { captureViewportWithPuppeteer, findBrowser } from '../lib/capture.mjs';
+import {
+  captureViewportWithPuppeteer,
+  enableTargetNetworkObservation,
+  findBrowser,
+} from '../lib/capture.mjs';
 import { createStaticServer } from '../lib/static-server.mjs';
 
 const localBrowser = await findBrowser();
@@ -15,6 +19,19 @@ const requireBrowser = !localBrowser && process.env.CI ? 'CI requires a supporte
 const fakeProxy = async () => Object.freeze({
   origin: 'http://127.0.0.1:9',
   close: async () => {},
+});
+
+test('target observation tolerates only the terminal CDP attachment race', async () => {
+  assert.equal(await enableTargetNetworkObservation({
+    send: async () => { throw new Error('Protocol error (Network.enable): Target closed.'); },
+  }), false);
+  assert.equal(await enableTargetNetworkObservation({ send: async () => {} }), true);
+  await assert.rejects(
+    enableTargetNetworkObservation({
+      send: async () => { throw new Error('Protocol error (Network.enable): permission denied'); },
+    }),
+    /permission denied/,
+  );
 });
 
 const runProbe = async (t, { html, interceptRequests }) => {
@@ -73,7 +90,8 @@ test('negative control proves prerender containment depends on the security prox
   let hits = 0;
   const listener = createServer((_request, response) => {
     hits += 1;
-    response.end();
+    response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    response.end('<!doctype html><meta name="viewport" content="width=device-width"><title>Prerender target</title>');
   });
   await new Promise((resolve, reject) => {
     listener.once('error', reject);
@@ -81,7 +99,7 @@ test('negative control proves prerender containment depends on the security prox
   });
   t.after(() => new Promise((resolve) => listener.close(resolve)));
   const target = `http://127.0.0.1:${listener.address().port}/prerender`;
-  const html = `<!doctype html><meta name="viewport" content="width=device-width"><title>Flags</title><link rel="prerender" href="${target}"><script type="speculationrules">{"prerender":[{"source":"list","urls":["${target}"]}]}</script>`;
+  const html = `<!doctype html><meta name="viewport" content="width=device-width"><title>Flags</title><script type="speculationrules">{"prerender":[{"source":"list","urls":["${target}"]}]}</script>`;
   await runProbe(t, { html, interceptRequests: true });
   assert.ok(hits > 0, 'negative control did not escape when the deny proxy flags were removed');
 });

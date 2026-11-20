@@ -26,6 +26,15 @@ import {
 
 const skillRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const protocol = join(skillRoot, 'scripts', 'mutation-protocol.mjs');
+const approvedLegacyPath = 'drivers/legacy-board.c';
+const baseRepositoryFiles = Object.freeze({
+  '.empty-gitconfig': '',
+  'src/calculator.js': 'export const add = (a, b) => a + b;\n',
+  'tests/calculator.test.js': 'base test\n',
+  [approvedLegacyPath]: 'approved legacy path\n',
+});
+const windowsReservedDevice = /^(?:con|prn|aux|nul|clock\$|conin\$|conout\$|com[1-9¹²³]|lpt[1-9¹²³])(?:\..*)?$/iu;
+const windowsInvalidPathCharacter = /[<>:"\\|?*\u0000-\u001f]/u;
 
 function runGit(repository, args, options = {}) {
   return execFileSync('git', args, {
@@ -40,13 +49,11 @@ function runGit(repository, args, options = {}) {
 async function makeRepository() {
   const root = await mkdtemp(join(tmpdir(), 'mutation-protocol-'));
   const repository = join(root, 'repository');
-  await mkdir(join(repository, 'src'), { recursive: true });
-  await mkdir(join(repository, 'tests'), { recursive: true });
-  await mkdir(join(repository, 'drivers'), { recursive: true });
-  await writeFile(join(repository, '.empty-gitconfig'), '');
-  await writeFile(join(repository, 'src', 'calculator.js'), 'export const add = (a, b) => a + b;\n');
-  await writeFile(join(repository, 'tests', 'calculator.test.js'), 'base test\n');
-  await writeFile(join(repository, 'drivers', 'aux.c'), 'approved legacy path\n');
+  for (const [relativePath, contents] of Object.entries(baseRepositoryFiles)) {
+    const destination = join(repository, relativePath);
+    await mkdir(dirname(destination), { recursive: true });
+    await writeFile(destination, contents);
+  }
   runGit(repository, ['init', '-q', '-b', 'work']);
   runGit(repository, ['config', 'user.name', 'Protocol Test']);
   runGit(repository, ['config', 'user.email', 'protocol@example.invalid']);
@@ -80,6 +87,18 @@ function cli(args, options = {}) {
     ...options,
   });
 }
+
+test('repository fixture paths avoid Windows device names and path hazards', () => {
+  for (const relativePath of Object.keys(baseRepositoryFiles)) {
+    for (const component of relativePath.split('/')) {
+      assert.doesNotMatch(component, windowsReservedDevice, relativePath);
+      assert.doesNotMatch(component, windowsInvalidPathCharacter, relativePath);
+      assert.doesNotMatch(component, /[. ]$/u, relativePath);
+      assert.notEqual(component, '.', relativePath);
+      assert.notEqual(component, '..', relativePath);
+    }
+  }
+});
 
 test('native engine meanings remain separate from workflow decisions', () => {
   const cases = [
@@ -151,7 +170,7 @@ test('legitimate ecosystem tests and fixture metadata pass the import policy', (
     ['**/*Test.java', 'src/test/CalculatorTest.java'],
     ['**/__snapshots__/**', 'src/__snapshots__/view.snap'],
     ['**/*.cy.ts', 'app/login.cy.ts'],
-    ['tests/**', 'tests/aux.test.js'],
+    ['tests/**', 'tests/auxiliary.test.js'],
   ];
   for (const [pattern, path] of cases) {
     assert.deepEqual(validateImportCandidate({ allowPatterns: [pattern], entries: [entry(path)] }).changed, [path]);
@@ -204,6 +223,7 @@ test('Git import accepts one direct test-only child and ignores approved legacy 
     allowPatterns: ['tests/**'],
   });
   assert.deepEqual(result.changed, ['tests/config.test.js', 'tests/fixtures/sample.toml']);
+  assert.equal(runGit(fixture.repository, ['show', `${candidate}:${approvedLegacyPath}`]), 'approved legacy path');
   assert.equal(result.candidate, candidate);
   assert.equal(result.importMethod, 'git-restore-paths');
 });

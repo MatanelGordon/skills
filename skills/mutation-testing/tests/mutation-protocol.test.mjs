@@ -126,6 +126,18 @@ test('budget exhaustion is incomplete and blocks a complete claim', () => {
   assert.equal(result.blocksCompletion, true);
 });
 
+test('classification is a reachable CLI command, not a test-only helper', () => {
+  const result = cli([
+    'classify', '--engine', 'cargo-mutants', '--status', 'Unviable',
+    '--mutant', 'm1', '--location', 'src/lib.rs:8',
+  ]);
+  assert.equal(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout);
+  assert.equal(output.raw.status, 'Unviable');
+  assert.equal(output.nativeMeaning, 'excluded');
+  assert.equal(output.workflowDecision, 'resolved');
+});
+
 test('legitimate ecosystem tests and fixture metadata pass the import policy', () => {
   const cases = [
     ['tests/**', 'tests/config.test.js'],
@@ -302,6 +314,17 @@ test('symlinked CLI invocation runs normally and preserves failure status', asyn
   ], { encoding: 'utf8' });
   assert.equal(result.status, 1);
   assert.equal(JSON.parse(result.stderr).ok, false);
+
+  const valid = await commitFrom(fixture.repository, fixture.base, 'valid', async (repository) => {
+    await writeFile(join(repository, 'tests', 'linked.test.js'), 'linked invocation\n');
+  });
+  const success = spawnSync(process.execPath, [
+    join(linkRoot, 'scripts', 'mutation-protocol.mjs'),
+    'git-import', '--repo', fixture.repository, '--approved', fixture.base,
+    '--integration', fixture.base, '--candidate', valid, '--allow', 'tests/**',
+  ], { encoding: 'utf8' });
+  assert.equal(success.status, 0, success.stderr);
+  assert.deepEqual(JSON.parse(success.stdout).changed, ['tests/linked.test.js']);
 });
 
 test('Git execution ignores inherited repository selectors', async (t) => {
@@ -412,4 +435,46 @@ test('shipped provenance identifies the actual pinned upstream and attribution',
   assert.equal(manifest.upstream.trackingRef, 'main');
   assert.match(attribution, /https:\/\/github\.com\/cursor\/plugins/);
   assert.match(attribution, /MIT/i);
+});
+
+test('pinned adapter examples contain executable version and scoping commands', async () => {
+  const adapters = join(skillRoot, 'references', 'adapters');
+  const [rust, csharp, python, go, javascript] = await Promise.all([
+    readFile(join(adapters, 'rust.md'), 'utf8'),
+    readFile(join(adapters, 'csharp.md'), 'utf8'),
+    readFile(join(adapters, 'python.md'), 'utf8'),
+    readFile(join(adapters, 'go.md'), 'utf8'),
+    readFile(join(adapters, 'javascript-typescript.md'), 'utf8'),
+  ]);
+  assert.match(rust, /cargo-mutants mutants[\s\S]*--in-diff/);
+  assert.match(rust, /--re '<mutant name>'/);
+  assert.match(csharp, /dotnet tool list --tool-path \.mutation-tools/);
+  assert.match(csharp, /--since:<merge-base>/);
+  assert.match(csharp, /Calculator\.cs\{42\.\.42\}/);
+  assert.doesNotMatch(python, /mutmut browse\n```/);
+  assert.match(python, /mutmut results[\s\S]*mutmut show[\s\S]*mutmut run '<mutant-name>'/);
+  assert.match(go, /gremlins --version/);
+  assert.doesNotMatch(go, /gremlins version/);
+  assert.match(javascript, /npm install --no-save --ignore-scripts/);
+  assert.match(javascript, /npx --no-install stryker run/);
+});
+
+test('workflow policy keeps hardening default and mutation opt-in with discriminating evals', async () => {
+  const root = dirname(skillRoot);
+  const workflow = await readFile(join(root, 'development-workflow', 'SKILL.md'), 'utf8');
+  const mutation = await readFile(join(skillRoot, 'SKILL.md'), 'utf8');
+  const workflowEvals = JSON.parse(await readFile(join(root, 'development-workflow', 'evals', 'evals.json'), 'utf8'));
+  const mutationEvals = JSON.parse(await readFile(join(skillRoot, 'evals', 'evals.json'), 'utf8'));
+  const hardeningEvals = JSON.parse(await readFile(join(root, 'test-hardening', 'evals', 'evals.json'), 'utf8'));
+  assert.match(workflow, /Test hardening — default for executable features/);
+  assert.match(workflow, /Mutation testing is separate and opt-in/);
+  assert.match(workflow, /engine is already configured[\s\S]*approved budget[\s\S]*critical decision/);
+  assert.match(mutation, /FINAL: incomplete` means:[\s\S]*stop for the user's[\s\S]*do not commit/);
+  assert(workflowEvals.evals.some((evaluation) => /no mutation engine/i.test(evaluation.prompt)));
+  assert(mutationEvals.evals.some((evaluation) => /cargo-mutants 27\.1\.0/.test(evaluation.prompt)));
+  assert(mutationEvals.evals.some((evaluation) => /static CSS spacing/.test(evaluation.prompt)));
+  assert(hardeningEvals.evals.some((evaluation) => evaluation.files.length > 0 && /supplied final diff/.test(evaluation.prompt)));
+  for (const evaluation of [...workflowEvals.evals, ...mutationEvals.evals, ...hardeningEvals.evals]) {
+    assert.match(evaluation.expected_output, /^The reply /, `eval ${evaluation.id} judges the reply`);
+  }
 });

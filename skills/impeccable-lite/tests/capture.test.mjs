@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { access, mkdir, mkdtemp, readFile, readdir, symlink, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 
 import {
   buildChromeArgs,
@@ -76,8 +76,9 @@ test('real Chrome capture uses the requested CSS viewport, not a cropped desktop
   assert.deepEqual(report.resources.map((resource) => resource.path), ['hero.svg', 'index.html']);
   assert.ok(report.resources.every((resource) => /^[a-f0-9]{64}$/.test(resource.sha256)));
   assert.match(report.generation, /^capture-[a-f0-9-]+$/);
-  assert.match(report.captures[0].path, new RegExp(`${report.generation}/mobile\\.png$`));
-  assert.match(report.reportPath, new RegExp(`${report.generation}/capture\\.json$`));
+  const evidenceRoot = dirname(dirname(report.reportPath));
+  assert.equal(relative(evidenceRoot, report.captures[0].path), join(report.generation, 'mobile.png'));
+  assert.equal(relative(evidenceRoot, report.reportPath), join(report.generation, 'capture.json'));
 });
 
 test('capture rejects an output ancestor symlink before creating outside directories', {

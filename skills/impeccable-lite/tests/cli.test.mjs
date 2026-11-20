@@ -501,9 +501,15 @@ test('reviewer packet requires passing audit plus desktop and mobile captures', 
     '--evidence', capture.manifest,
   ]);
   assert.equal(complete.status, 0, complete.stderr);
-  assert.match(complete.stdout, /capture-test\/desktop\.png/);
-  assert.match(complete.stdout, /capture-test\/capture\.json/);
-  assert.match(complete.stdout, /"auditReport":"\.impeccable-lite\/reports\/audit\.json"/);
+  const contextMatch = complete.stdout.match(/```json\r?\n([^\r\n]+)\r?\n```/u);
+  assert.ok(contextMatch, 'packet includes fenced JSON context');
+  const packetContext = JSON.parse(contextMatch[1]);
+  assert.deepEqual(packetContext.evidence, [
+    join('.impeccable-lite', 'evidence', 'capture-test', 'desktop.png'),
+    join('.impeccable-lite', 'evidence', 'capture-test', 'mobile.png'),
+    join('.impeccable-lite', 'evidence', 'capture-test', 'capture.json'),
+  ]);
+  assert.equal(packetContext.auditReport, join('.impeccable-lite', 'reports', 'audit.json'));
   assert.match(complete.stdout, /evidence_generation: capture-test/);
   assert.match(complete.stdout, /session_id: [a-f0-9-]{36}/i);
 });

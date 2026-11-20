@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.22.1 — 2026-11-21
+
+- Redesigned the README opening around an original light/dark hero, a concise
+  three-part value story, and a scannable contents list while preserving the
+  repository's existing facts, workflow, and installation guidance.
+- Replaced the old workflow illustration with a standard Mermaid flowchart so
+  the default path and optional mutation branch render natively on GitHub.
+- Removed the obsolete scratch-workspace fixtures, exclusions, validator
+  bypasses, package rules, and historical named references. Skill directories
+  are all validated normally; package tests keep their own isolated fixture.
+- Removed the separately installed upstream `pbakaus/impeccable` provider
+  builds, helper agents, and local updater state from this machine. The registry
+  now states the intended policy directly: interface work uses the checked-in
+  `impeccable-lite` skill, not the upstream full package.
+- Refreshed all 27 checked-in skills as symlinks for Claude Code, OpenAI Codex,
+  and GitHub Copilot, plus both Claude subagents, so each agent follows this
+  checkout without independent copies drifting.
+
 ## 1.22.0 — 2026-11-20
 
 - **Added `test-hardening`.** The default post-implementation pass adds bounded
@@ -133,17 +151,15 @@
 - **Command parsing is strict and tested.** Unknown or duplicate commands and
   flags fail before installation, `--all --yes` really targets every platform,
   and incompatible platform selections (including dependencies) are rejected.
-- **Validation now covers behavior and release surfaces.** It ignores the
-  sanctioned `rank-workspace` scratch directory without inspecting it, still
-  rejects malformed ordinary skills, checks eval schemas, README coverage,
+- **Validation now covers behavior and release surfaces.** It rejects malformed
+  skill directories, checks eval schemas, README coverage,
   changelog and lockfile versions, and caught/fixed a duplicate `adr` eval key.
 - **Eval suites can run.** `install/run-evals.mjs` executes a selected skill eval
   through caller-supplied candidate and judge processes with timeouts and a
   machine-readable verdict. Installer, validator, eval-runner, and npm-package
   integration tests run in CI on Linux, macOS, and Windows across Node 18–22.
 - **Published package contents are allowlisted.** Runtime installer, skills, and
-  agents ship; `.github` and the sanctioned `skills/rank-workspace/` scratch
-  tree do not.
+  agents ship; `.github` and local scratch workspaces do not.
 - **External-skill provenance was backfilled.** Attribution now covers 42
   Copilot copies and four Codex curated copies, and the README records upstream,
   license, revision limitations, normalization, and update caveats. Codex docs

@@ -1,22 +1,31 @@
-<div align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/hero-dark.svg">
+  <img src="assets/readme/hero-light.svg" width="100%" alt="Skills: one source of truth for 27 Agent Skills and 2 subagents, linked into Claude Code, OpenAI Codex, GitHub Copilot and Tabnine.">
+</picture>
 
-# skills
+One repository for the skills I want every coding agent to share. A skill is an
+ordinary folder with a `SKILL.md`; this repo keeps the useful ones together,
+tests them, and links the same source into each agent.
 
-**Write the lesson once. Every coding agent learns it.**
+Three things make the setup work:
 
-27 original Agent Skills and 2 subagents, kept in one repository and linked into<br>
-Claude Code · OpenAI Codex · GitHub Copilot · Tabnine
+- **One source of truth.** Update a skill here once; every symlinked agent sees
+  the change immediately.
+- **Native everywhere.** The same 27 skills serve Claude Code, OpenAI Codex,
+  GitHub Copilot, Tabnine, and tools that follow the shared `.agents` convention.
+- **Safe to own.** The installer detects conflicts before replacing anything,
+  validation runs across operating systems, and external work stays attributed.
 
-[Why](#why-this-exists) · [Quick start](#quick-start) · [How it works](#how-it-works) · [Workflow](#the-workflow) · [Skills](#the-skills) · [Agents](#original-agents) · [Authoring](#writing-your-own-portable-skill) · [Elsewhere](#good-skills-that-live-elsewhere)
+## Contents
 
-</div>
-
-```bash
-git clone https://github.com/MatanelGordon/skills.git && cd skills
-npm install && npm run install-skills
-```
-
-<br>
+- [Why this exists](#why-this-exists)
+- [Quick start](#quick-start)
+- [How it works](#how-it-works)
+- [The workflow](#the-workflow)
+- [The skills](#the-skills)
+- [Original agents](#original-agents)
+- [Writing a portable skill](#writing-your-own-portable-skill)
+- [Good skills that live elsewhere](#good-skills-that-live-elsewhere)
 
 ## Why this exists
 
@@ -120,10 +129,18 @@ to use it, so you ask for what you want and the right skills come in on their
 own. [`development-workflow`](skills/development-workflow/SKILL.md) is the spine
 that keeps them in order:
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/workflow-pipeline-dark.svg">
-  <img src="assets/readme/workflow-pipeline-light.svg" width="880" alt="The default feature workflow runs research, planning, test-first implementation, bounded test hardening, independent review, verification and a why-focused commit. Mutation testing is an optional branch for explicit requests or configured, budgeted critical logic.">
-</picture>
+```mermaid
+flowchart LR
+    Research["0. Research<br/>Reuse first"] --> Plan["1. Plan<br/>Define the proof"]
+    Plan --> Test["2. Test first<br/>Red, green, refactor"]
+    Test --> Implement["3. Implement<br/>Smallest change"]
+    Implement --> Harden["4. Test harden<br/>Fresh edge cases"]
+    Harden --> Review["5. Independent review"]
+    Review --> Verify["6. Verify<br/>Clean tests and diff"]
+    Verify --> Commit["7. Commit with why"]
+    Review -.-> Mutation["Optional mutation testing<br/>Explicit request or critical logic plus budget"]
+    Mutation -.-> Verify
+```
 
 0. **Research.** Before writing code, check whether it already exists in a
    registry, on GitHub, or in your codebase. If something proven covers about 80%
@@ -217,6 +234,9 @@ cross-model review is actually possible.
 | [functional-python](skills/functional-python/SKILL.md) | Frozen dataclasses, tagged unions with exhaustive `match`, `Result` over raising. |
 
 ### Interfaces
+
+This registry deliberately installs **`impeccable-lite`**, not the upstream
+`impeccable` package. Lite is the maintained local workflow for interface work.
 
 | Skill | What it does |
 |---|---|

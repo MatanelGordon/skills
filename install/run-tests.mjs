@@ -7,12 +7,10 @@ import { fileURLToPath } from 'node:url';
 
 const DEFAULT_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const TEST_ROOTS = Object.freeze(['install', 'skills']);
-const EXCLUDED_DIRECTORIES = new Set(['skills/rank-workspace']);
 const PROVISIONED_TESTS = new Set(['skills/impeccable-lite/tests/browser-integration.test.mjs']);
 const repositoryPath = (root, path) => relative(root, path).replaceAll('\\', '/');
 
 const discoverTestsUnder = async (root, directory) => {
-  if (EXCLUDED_DIRECTORIES.has(repositoryPath(root, directory))) return [];
   const entries = (await readdir(directory, { withFileTypes: true }))
     .sort((left, right) => left.name.localeCompare(right.name));
   const discovered = await Promise.all(entries.map((entry) => {

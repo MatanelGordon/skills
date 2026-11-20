@@ -2,8 +2,14 @@ name: validate
 on:
   push: { branches: [main] }
   pull_request:
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
 jobs:
   validate:
+    if: github.event_name != 'schedule'
     name: ${{ matrix.os }} / Node ${{ matrix.node }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -23,7 +29,8 @@ jobs:
       - run: npm test
       - run: npm run validate
   mutation-smoke:
-    name: calculator mutation smoke / Node 22
+    if: github.event_name != 'schedule'
+    name: test-only import smoke / Node 22
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -32,3 +39,18 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: npm run test:mutation-smoke
+  provenance:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    name: PSTACK provenance drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - run: >-
+          node skills/mutation-testing/scripts/mutation-protocol.mjs
+          provenance-check
+          --manifest skills/mutation-testing/references/provenance.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

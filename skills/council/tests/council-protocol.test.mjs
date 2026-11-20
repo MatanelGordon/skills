@@ -26,6 +26,8 @@ import {
   validateLiveSmokeLedger,
 } from '../scripts/council-protocol.mjs';
 
+const normalizeNewlines = (text) => text.replace(/\r\n?/g, '\n');
+
 const BRIEF = `DECISION: Choose the boundary for the billing capability.
 OPTIONS: A) Keep it in the monolith B) Extract a service
 CONSTRAINTS: Preserve the public API and avoid downtime.
@@ -402,8 +404,6 @@ test('live smoke ledger proves distinct spawns and exact round-two packet propag
 });
 
 test('protocol references contain the helper-owned literal prompt blocks', async () => {
-  const normalizeNewlines = (text) => text.replace(/\r\n?/g, '\n');
-  assert.equal(normalizeNewlines('one\r\ntwo\rthree'), 'one\ntwo\nthree');
   const protocol = normalizeNewlines(
     await readFile(new URL('../references/protocol.md', import.meta.url), 'utf8'),
   );

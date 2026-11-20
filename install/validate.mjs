@@ -29,7 +29,7 @@ function fencesBalanced(text) {
 const idKeyCount = (text) => [...text.matchAll(/"id"\s*:/g)].length;
 const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const extractFrontmatter = (text) => (
-  /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/.exec(text)?.[1]?.replace(/\r\n?/g, '\n')
+  /^---\r?\n([\s\S]*?)\r?\n---\r?\n/.exec(text)?.[1]?.replace(/\r\n?/g, '\n')
 );
 
 export async function validateRepository(root = DEFAULT_ROOT) {

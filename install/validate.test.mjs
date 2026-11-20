@@ -59,6 +59,16 @@ test('validator accepts CRLF frontmatter from Windows checkouts', async () => {
   assert.equal(result.failures.length, 0, result.failures.join('\n'));
 });
 
+test('validator requires a newline after the closing frontmatter delimiter', async () => {
+  const root = await writeValidRepo();
+  await writeFile(
+    join(root, 'skills', 'valid-skill', 'SKILL.md'),
+    '---\nname: valid-skill\ndescription: A valid fixture skill.\n---',
+  );
+  const result = await validateRepository(root);
+  assert(result.failures.some((line) => line.includes('no YAML frontmatter')));
+});
+
 test('validator still catches a malformed ordinary skill directory', async () => {
   const root = await writeValidRepo({ malformed: true });
   const result = await validateRepository(root);

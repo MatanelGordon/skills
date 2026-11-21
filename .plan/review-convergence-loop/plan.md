@@ -175,3 +175,7 @@ architecture decision.
   illustrations could imply one-pass review. Added the two scale assets to the
   file map, made non-trivial/risk-bearing small bugs explicit, and pinned the
   two-pass labels in the deterministic contract test.
+- 2026-11-21 — The first PR matrix found the new Mermaid contract test assumed
+  LF checkouts. Windows uses CRLF, so the extractor returned an empty graph.
+  Added a direct CRLF regression and made fence extraction line-ending neutral;
+  the policy and README content were unchanged.

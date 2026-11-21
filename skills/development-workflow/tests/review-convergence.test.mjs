@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const skillRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const repositoryRoot = dirname(dirname(skillRoot));
+const mermaidBlock = (markdown) => /```mermaid\r?\n([\s\S]*?)\r?\n```/.exec(markdown)?.[1] ?? '';
 
 const readContract = async () => {
   const [skill, readme, evalDocument, lightScale, darkScale] = await Promise.all([
@@ -50,7 +51,7 @@ test('the fourth unsuccessful pass fails closed instead of looping forever', asy
 
 test('README graph, stage guide, and registry summary mirror the convergence gate', async () => {
   const { readme, lightScale, darkScale } = await readContract();
-  const graph = /```mermaid\n([\s\S]*?)\n```/.exec(readme)?.[1] ?? '';
+  const graph = mermaidBlock(readme);
 
   assert.match(graph, /Review.*--.*Production fix.*-->.*Fix/i);
   assert.match(graph, /Fix.*-->.*TestFix/i);
@@ -68,6 +69,10 @@ test('README graph, stage guide, and registry summary mirror the convergence gat
     assert.match(scale, /bounded review convergence/i);
     assert.equal((scale.match(/>2\+ passes</g) ?? []).length, 2);
   }
+});
+
+test('README Mermaid extraction accepts Windows CRLF checkouts', () => {
+  assert.equal(mermaidBlock('```mermaid\r\nflowchart LR\r\n```'), 'flowchart LR');
 });
 
 test('evals cover a review fix and failure to converge by the cap', async () => {

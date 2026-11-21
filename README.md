@@ -135,10 +135,17 @@ flowchart LR
     Plan --> Test["2. Test first<br/>Red, green, refactor"]
     Test --> Implement["3. Implement<br/>Smallest change"]
     Implement --> Harden["4. Test harden<br/>Fresh edge cases"]
-    Harden --> Review["5. Independent review"]
-    Review --> Verify["6. Verify<br/>Clean tests and diff"]
+    Harden --> Review["5. Review convergence<br/>2+ fresh full-diff passes"]
+    Review -- "Production fix" --> Fix["Fix accepted findings"]
+    Fix --> TestFix["Rerun relevant tests"]
+    TestFix --> Review
+    Review --> Gate{"Converged?"}
+    Gate -- "Need another fresh pass" --> Review
+    Gate -- "Pass 4 unresolved" --> Escalate["Stop and escalate<br/>No completion claim"]
+    Gate -- "Yes" --> Clear["Review cleared"]
+    Clear --> Verify["6. Verify<br/>Clean tests and diff"]
     Verify --> Commit["7. Commit with why"]
-    Review -.-> Mutation["Optional mutation testing<br/>Explicit request or critical logic plus budget"]
+    Clear -.-> Mutation["Optional mutation testing<br/>Explicit request or critical logic plus budget"]
     Mutation -.-> Verify
 ```
 
@@ -155,10 +162,16 @@ flowchart LR
 4. **Test harden.** A fresh subagent reads the completed diff and adds tests for
    edge cases created by the implementation—not more production code. Then the
    green state is frozen.
-5. **Review.** Someone who didn't write the code reviews it. Mutation testing is
-   separate and opt-in: run it when explicitly requested, or when a configured
-   engine can cheaply probe plan-marked critical decision logic inside an
-   approved budget. The mutation branch is never merged.
+5. **Review.** Run two fresh full-diff passes at minimum, even when the first is
+   clean. Every pass sees the complete cumulative diff, acceptance criteria,
+   tests, and prior findings. A review-driven production fix invalidates approval:
+   rerun the affected tests and review the cumulative result again. Proceed only
+   when the latest pass has no unresolved CRITICAL/HIGH findings, tests are green,
+   and every MEDIUM/LOW finding has a disposition. On a fourth unsuccessful pass,
+   stop and escalate instead of claiming completion or looping forever. Mutation
+   testing remains separate and opt-in: run it when explicitly requested, or when
+   a configured engine can cheaply probe plan-marked critical decision logic
+   inside an approved budget. The mutation branch is never merged.
 6. **Verify.** Rerun clean relevant and repository tests and inspect the diff.
    If mutation testing was selected, import paths rather than candidate history
    and rerun its agreed proofs. Incomplete evidence stops that optional stage
@@ -169,7 +182,7 @@ Not every change needs the full feature pipeline. Scale it honestly:
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/readme/workflow-scale-dark.svg">
-  <img src="assets/readme/workflow-scale-light.svg" width="880" alt="Stage matrix: a typo uses the mandatory core; a small bug uses a reproducing test and fix; features default to research, planning, TDD, implementation, hardening, review, verification and commit. Mutation testing is a dashed optional cell selected by explicit request or a configured, critical, scoped and budgeted risk rule.">
+  <img src="assets/readme/workflow-scale-light.svg" width="880" alt="Stage matrix: a typo uses the mandatory core; a small bug uses a reproducing test and fix; features default to research, planning, TDD, implementation, hardening, bounded review convergence, verification and commit. Mutation testing is a dashed optional cell selected by explicit request or a configured, critical, scoped and budgeted risk rule.">
 </picture>
 
 Skipping a step is fine. Skipping it *silently* isn't: one sentence saying why
@@ -184,7 +197,7 @@ others when you install it.
 
 | Skill | What it does |
 |---|---|
-| [development-workflow](skills/development-workflow/SKILL.md) | The spine: research → plan → test-first → implement → test-harden → review → verify → commit. Mutation testing is an explicit risk/value option, not a default feature gate. → `research-first`, `confidence-ranker`, `deep-plan`, `test-hardening`, `mutation-testing`, `adr` |
+| [development-workflow](skills/development-workflow/SKILL.md) | The spine: research → plan → test-first → implement → test-harden → bounded review convergence → verify → commit. Review takes two fresh full-diff passes minimum, rechecks every production fix, and stops after a fourth unsuccessful pass. Mutation testing is an explicit risk/value option, not a default feature gate. → `research-first`, `confidence-ranker`, `deep-plan`, `test-hardening`, `mutation-testing`, `adr` |
 | [test-hardening](skills/test-hardening/SKILL.md) | Fresh post-implementation eyes add bounded tests for observable edge cases. Red proof happens in a scratch copy/worktree, production defects return as regressions, and hosts without subagents use a declared fresh-context fallback. |
 | [mutation-testing](skills/mutation-testing/SKILL.md) | Opt-in native mutation testing for an explicit scope or budgeted critical logic. Five adapters preserve engine meanings; a direct-parent Git guard rejects production history and imports only reviewed test paths. → `test-hardening` |
 | [deep-plan](skills/deep-plan/SKILL.md) | Turns "build X" into a plan someone with zero context could execute: a clarity gate before any writing, one owner per file path, every edge case enumerated with a status, and test commands quoted verbatim. Owns `.plan/`. |

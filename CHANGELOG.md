@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.22.2 — 2026-11-21
+
+- Changed `development-workflow` review from a one-shot check into a bounded
+  convergence gate: at least two fresh full-diff passes, mandatory re-review
+  after review-driven production fixes, explicit severity dispositions, and a
+  fail-closed stop after a fourth unsuccessful pass.
+- Updated the README workflow graph, light/dark scale illustration, stage guide,
+  and skill registry summary to show the review/fix/test loop, minimum pass
+  count, and escalation path.
+- Added deterministic policy regressions and agent eval cases for a clean first
+  pass, an incomplete first review fix, and failure to converge by the four-pass
+  cap.
+
 ## 1.22.1 — 2026-11-21
 
 - Redesigned the README opening around an original light/dark hero, a concise

@@ -2,12 +2,14 @@
 /** Portable discovery for the root suite; provisioned browser tests run separately. */
 import { spawnSync } from 'node:child_process';
 import { readdir } from 'node:fs/promises';
-import { join, relative, resolve } from 'node:path';
+import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isEntryPoint } from './entry-point.mjs';
 
 const DEFAULT_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const TEST_ROOTS = Object.freeze(['install', 'skills']);
 const PROVISIONED_TESTS = new Set(['skills/impeccable-lite/tests/browser-integration.test.mjs']);
+const SERIAL_FLAG = '--test-concurrency=1';
 const repositoryPath = (root, path) => relative(root, path).replaceAll('\\', '/');
 
 const discoverTestsUnder = async (root, directory) => {
@@ -28,19 +30,38 @@ export const discoverRootTests = async (root = DEFAULT_ROOT) => (
   await Promise.all(TEST_ROOTS.map((directory) => discoverTestsUnder(root, join(root, directory))))
 ).flat();
 
+// Asked of the running Node, not a version table: older Node 18 releases reject the flag as a bad option.
+const supportsSerialFlag = () => (
+  spawnSync(process.execPath, [SERIAL_FLAG, '--version'], { stdio: 'ignore' }).status === 0
+);
+
+// One file at a time either way: files that overlap race in the signal tests.
+export const serialTestCommands = (tests, hasSerialFlag) => (hasSerialFlag
+  ? [['--test', SERIAL_FLAG, ...tests]]
+  : tests.map((test) => ['--test', test]));
+
+// Like `node --test`, a failing file does not stop the rest. A child the OS reports as killed by a signal does.
+// One that catches the signal and exits non-zero, as `node --test` does on SIGTERM, looks like a failing file.
+export const runCommands = (commands, run) => commands.reduce((outcome, args) => {
+  if (outcome.signal) return outcome;
+  const result = run(args);
+  if (result.error) throw result.error;
+  if (result.signal) return { ...outcome, signal: result.signal };
+  return { ...outcome, status: outcome.status || (result.status ?? 1) };
+}, { status: 0, signal: null });
+
 export const main = async () => {
   const tests = await discoverRootTests();
   if (tests.length === 0) throw new Error('No root test files discovered.');
-  const result = spawnSync(process.execPath, ['--test', '--test-concurrency=1', ...tests], {
-    cwd: DEFAULT_ROOT,
-    stdio: 'inherit',
-  });
-  if (result.error) throw result.error;
-  if (result.signal) process.kill(process.pid, result.signal);
-  else process.exitCode = result.status ?? 1;
+  const outcome = runCommands(
+    serialTestCommands(tests, supportsSerialFlag()),
+    (args) => spawnSync(process.execPath, args, { cwd: DEFAULT_ROOT, stdio: 'inherit' }),
+  );
+  if (outcome.signal) process.kill(process.pid, outcome.signal);
+  else process.exitCode = outcome.status;
 };
 
-const invokedDirectly = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const invokedDirectly = isEntryPoint(import.meta.url);
 if (invokedDirectly) {
   main().catch((error) => {
     process.stderr.write(`root tests: ${error.message}\n`);

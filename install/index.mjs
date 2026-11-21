@@ -32,6 +32,7 @@ import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import chalk from 'chalk';
 import prompts from 'prompts';
+import { isEntryPoint } from './entry-point.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..');
@@ -694,7 +695,7 @@ async function main() {
   return cmdInstall(skills, options);
 }
 
-const invokedDirectly = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const invokedDirectly = isEntryPoint(import.meta.url);
 if (invokedDirectly) {
   main().catch((error) => {
     if (error instanceof UsageError) {

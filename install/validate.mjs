@@ -5,6 +5,7 @@ import { existsSync } from 'node:fs';
 import { extname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { isEntryPoint } from './entry-point.mjs';
 
 const DEFAULT_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const ALLOWED_KEYS = new Set(['name', 'description', 'license', 'allowed-tools', 'metadata', 'compatibility']);
@@ -230,7 +231,7 @@ export async function validateRepository(root = DEFAULT_ROOT) {
 
   const installRoot = join(root, 'install');
   if (existsSync(installRoot)) {
-    for (const file of ['install/index.mjs', 'install/validate.mjs', 'install/run-evals.mjs']) {
+    for (const file of ['install/index.mjs', 'install/validate.mjs', 'install/run-evals.mjs', 'install/entry-point.mjs']) {
       const path = join(root, file);
       if (!existsSync(path)) {
         fail(file, 'missing');
@@ -251,7 +252,7 @@ export async function validateRepository(root = DEFAULT_ROOT) {
   return { failures, skills: dirs, agentCount };
 }
 
-const invokedDirectly = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const invokedDirectly = isEntryPoint(import.meta.url);
 if (invokedDirectly) {
   const result = await validateRepository();
   for (const failure of result.failures) console.error(`  ✖ ${failure}`);

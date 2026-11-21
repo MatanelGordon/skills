@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
+import { mkdtemp, mkdir, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 import { validateRepository } from './validate.mjs';
 
@@ -127,4 +129,13 @@ test('validator syntax-checks repository tools without entering node_modules', a
   assert.equal(label, 'tools/browser-capture/broken.mjs');
   assert.doesNotMatch(label, /\\/);
   assert.ok(nativeStderr.length > 0, 'node --check stderr must remain in the diagnostic');
+});
+
+test('validator CLI runs when its directory is reached through a symlink', async () => {
+  const linkedInstall = join(await makeTemp(), 'install');
+  await symlink(dirname(fileURLToPath(import.meta.url)), linkedInstall, process.platform === 'win32' ? 'junction' : 'dir');
+
+  const result = spawnSync(process.execPath, [join(linkedInstall, 'validate.mjs')], { encoding: 'utf8' });
+  // Either verdict proves the CLI ran; printing nothing is the regression.
+  assert.match(result.stdout + result.stderr, /agents valid|problem\(s\)/);
 });

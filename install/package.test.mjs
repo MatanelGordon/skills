@@ -64,6 +64,7 @@ test('npm package manifest is an allowlist and excludes sanctioned scratch trees
     assert(!paths.some((path) => path.startsWith('tools/browser-capture/node_modules/')), paths.join('\n'));
     for (const required of [
       'install/index.mjs',
+      'install/entry-point.mjs',
       'install/run-tests.mjs',
       'install/validate.mjs',
       'install/run-evals.mjs',

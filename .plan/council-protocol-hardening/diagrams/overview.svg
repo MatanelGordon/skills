@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 232" role="img" aria-labelledby="t d">
-  <title id="t">Council before and after the protocol helper</title>
-  <desc id="d">Today the host agent does the prompt bookkeeping itself, and long round-two packets may be compacted on the way to the isolated agents. After this plan, council-protocol.mjs does the bookkeeping between the host agent and the isolated agents, and fails closed instead of shortening a packet.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 264" role="img" aria-labelledby="t d">
+  <title id="t">Council bookkeeping before and after the protocol helper</title>
+  <desc id="d">Before, the host agent did the bookkeeping between rounds by hand, and a long round-two packet could be compacted. After, council-protocol.mjs does it in code and gives round two the exact packet, or stops with PACKET_TOO_LARGE when it is over budget.</desc>
   <style>
     .bg { fill: #ffffff; }
     .zone { fill: none; stroke: #d1d9e0; stroke-dasharray: 4 4; }
@@ -34,29 +34,35 @@
       <path class="tip" d="M0 0 L8 4 L0 8 Z"/>
     </marker>
   </defs>
-  <rect class="bg" width="720" height="232" rx="8"/>
+  <rect class="bg" width="720" height="264" rx="8"/>
 
-  <text class="muted caps" x="24" y="36">TODAY</text>
-  <rect class="card" x="24" y="48" width="192" height="48" rx="8"/>
-  <text class="ink strong" x="120" y="69" text-anchor="middle">Host agent</text>
-  <text class="muted small" x="120" y="86" text-anchor="middle">bookkeeping by prompt</text>
-  <text class="muted small" x="376" y="64" text-anchor="middle">packets may be compacted</text>
-  <path class="wire" d="M216 72 H532" marker-end="url(#arrow)"/>
-  <rect class="card" x="536" y="48" width="160" height="48" rx="8"/>
-  <text class="ink" x="616" y="77" text-anchor="middle">Isolated agents</text>
+  <text class="muted caps" x="24" y="36">BEFORE</text>
+  <rect class="card" x="24" y="48" width="144" height="48" rx="8"/>
+  <text class="ink" x="96" y="69" text-anchor="middle">Round one</text>
+  <text class="muted small" x="96" y="86" text-anchor="middle">members answer</text>
+  <path class="wire" d="M168 72 H228" marker-end="url(#arrow)"/>
+  <rect class="card" x="232" y="48" width="200" height="48" rx="8"/>
+  <text class="ink" x="332" y="69" text-anchor="middle">Host agent</text>
+  <text class="muted small" x="332" y="86" text-anchor="middle">bookkeeping by hand</text>
+  <path class="wire" d="M432 72 H492" marker-end="url(#arrow)"/>
+  <rect class="card" x="496" y="48" width="200" height="48" rx="8"/>
+  <text class="ink" x="596" y="69" text-anchor="middle">Round two</text>
+  <text class="muted small" x="596" y="86" text-anchor="middle">packet may be compacted</text>
 
-  <text class="muted caps" x="24" y="132">AFTER THIS PLAN</text>
-  <rect class="card" x="24" y="144" width="192" height="48" rx="8"/>
-  <text class="ink strong" x="120" y="165" text-anchor="middle">Host agent</text>
-  <text class="muted small" x="120" y="182" text-anchor="middle">keeps the judgment</text>
-  <path class="wire" d="M216 168 H268" marker-end="url(#arrow)"/>
-  <rect class="new" x="272" y="144" width="208" height="48" rx="8"/>
-  <text class="ink strong" x="376" y="165" text-anchor="middle">council-protocol.mjs</text>
-  <text class="muted small" x="376" y="182" text-anchor="middle">bookkeeping, fails closed</text>
-  <path class="wire" d="M480 168 H532" marker-end="url(#arrow)"/>
-  <rect class="card" x="536" y="144" width="160" height="48" rx="8"/>
-  <text class="ink" x="616" y="173" text-anchor="middle">Isolated agents</text>
+  <text class="muted caps" x="24" y="132">AFTER</text>
+  <rect class="card" x="24" y="144" width="144" height="48" rx="8"/>
+  <text class="ink" x="96" y="165" text-anchor="middle">Round one</text>
+  <text class="muted small" x="96" y="182" text-anchor="middle">members answer</text>
+  <path class="wire" d="M168 168 H228" marker-end="url(#arrow)"/>
+  <rect class="new" x="232" y="144" width="200" height="48" rx="8"/>
+  <text class="ink strong" x="332" y="165" text-anchor="middle">council-protocol.mjs</text>
+  <text class="muted small" x="332" y="182" text-anchor="middle">bookkeeping in code</text>
+  <path class="wire" d="M432 168 H492" marker-end="url(#arrow)"/>
+  <rect class="card" x="496" y="144" width="200" height="48" rx="8"/>
+  <text class="ink" x="596" y="165" text-anchor="middle">Round two</text>
+  <text class="muted small" x="596" y="182" text-anchor="middle">gets the exact packet</text>
+  <text class="muted small" x="332" y="212" text-anchor="middle">over budget: stops with PACKET_TOO_LARGE</text>
 
-  <rect class="new" x="24" y="208" width="12" height="12" rx="3"/>
-  <text class="muted small" x="44" y="219">new in this plan</text>
+  <rect class="new" x="24" y="232" width="12" height="12" rx="3"/>
+  <text class="muted small" x="44" y="243">new in this plan</text>
 </svg>

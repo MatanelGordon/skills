@@ -94,23 +94,25 @@ per diagram. The first one always answers "what changes?".
 4. **Seven boxes at most,** not counting zones. To show structure, group
    boxes inside a `.zone` rectangle with a `.caps` label. More than seven:
    draw a second diagram.
-5. **One reading direction,** left to right or top to bottom. Arrows follow
+5. **Label rows by time:** `TODAY` and `AFTER THIS PLAN`, or `BEFORE` and
+   `AFTER` for a plan already carried out.
+6. **One reading direction,** left to right or top to bottom. Arrows follow
    it, stay horizontal or vertical, do not cross, and stop 4 units short of
    the box they point at. Label an arrow only when the relation is not obvious.
-6. **Colour means something or is absent.** `.new`: added or changed by this
+7. **Colour means something or is absent.** `.new`: added or changed by this
    plan. `.gone`: removed by it. `.ask`: an open question, labelled with its
    `Q` id. Everything else is `.card`. Colour picks out the few: when most
    boxes would be `.new`, make them all `.card` and drop the legend. Keep a
    legend line for each colour you used. Leave the style block as it is. No
    gradients, shadows, icons or emoji.
-7. **Say it in words too.** `<title>` names the diagram. `<desc>` is one or
+8. **Say it in words too.** `<title>` names the diagram. `<desc>` is one or
    two sentences a reader could use instead of the picture. The alt text in
    the Markdown link repeats the title.
-8. **Write it as strict XML.** For special characters use `&amp;`, `&lt;`,
+9. **Write it as strict XML.** For special characters use `&amp;`, `&lt;`,
    `&gt;` or a numeric reference such as `&#8594;`; `&nbsp;` and other HTML
    names break the file. Quote every attribute value. Link with plain `href`,
    not `xlink:href`, which needs a namespace declaration of its own.
-9. **Look at it.** Open the file in a browser, or take a headless-browser
+10. **Look at it.** Open the file in a browser, or take a headless-browser
    screenshot, when you can. Otherwise re-read the numbers: no box overlaps
    another, no label is wider than its box, and nothing lies outside the
    `viewBox`.

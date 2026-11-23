@@ -58,7 +58,8 @@ enough) and when the user wants a few sentences in chat, not a file.
    passes.
 6. **Hand over.** Give the user the path to `review.md`. For a draft, ask them
    to approve or to answer by id, and change no source file until they do.
-   Commit the new files the way the repo treats `plan.md`.
+   Commit the new files the way the repo treats `plan.md` (where `.plan` is
+   git-ignored, that means `git add -f`).
 
 ## The checker
 
@@ -115,7 +116,8 @@ a quarter high: up to 620 is fine.
 - **Real names and numbers** from the plan: files, commands, counts. Report
   the plan, not the repo, and invent nothing.
 - **Copy the plan's status.** For a plan that is executing or complete, say
-  what was done in the past tense.
+  what was done in the past tense, but only what the plan records as done: a
+  check it does not record as run stays a check to run.
 - **Every heading stays.** A section with nothing to say gets one line, such
   as "Nothing needs your decision."
 - **`Your call` holds every open `Q<n>` of the plan and no other.** Each row

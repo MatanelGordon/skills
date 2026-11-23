@@ -1,0 +1,274 @@
+# Plan: workflow-pr-mode
+
+**Status:** executing
+**Created:** 2026-11-23   **Base branch:** `origin/codex/review-convergence-loop` (`8e6e4fc`, PR #4)
+
+## Goal
+
+Add an opt-in pull-request review mode to `development-workflow`. In the mode,
+the branch is pushed and a draft pull request is opened when implementation is
+complete and before the first review pass, review fixes arrive as new commits,
+and nothing merges without the user's explicit permission. The skill asks the
+user once whether to use the mode, and states what happens when nobody answers.
+
+The observable signal: a new contract test passes, the repository suite and
+validator pass, and the three evaluation gates under "Evaluation" hold on
+`qwen/qwen3-coder-30b-a3b-instruct`.
+
+## Out of scope
+
+- Changing PR #4's review convergence rules (pass count, cap, severities).
+- A GitHub Action, a script, or any automation that opens or merges a PR.
+- Hosts other than GitHub (the wording uses `gh` as its example).
+- The Mermaid graph and the two scale SVGs in the README.
+- Any skill other than `development-workflow`.
+
+## Background
+
+PR #4 leaves the skill as stages 0 to 7 with stage 5 a bounded convergence
+gate: two or more fresh passes over the complete cumulative diff, re-review
+after any review-driven production change, a four-pass cap. Stage 3 already
+commits "at coherent green points when commits are in scope" and stage 4
+records a frozen green commit, so commits before review are not new. Nothing in
+the skill mentions pushing, pull requests or merging. `parallel-build` merges
+local worktrees; that is a different operation and stays untouched.
+
+The mode fits without altering stage 5: the "complete cumulative diff" a pass
+must review is exactly the pull request diff.
+
+Research (stage 0): this is a policy text change with no utility to reuse. The
+repository was searched for existing PR or merge handling in the skill (none).
+`gh pr create --draft` and `gh pr ready` are the two commands the mode names.
+
+Constraints found in the code:
+
+- `skills/development-workflow/tests/review-convergence.test.mjs` pins phrases
+  in stage 5 and the README row for the skill. Those lines stay as they are.
+- `skills/mutation-testing/tests/mutation-protocol.test.mjs` requires every
+  `expected_output` in this skill's evals to start with "The reply ".
+- `install/validate.mjs` requires `expectations` on every case, counts `"id":`
+  keys in the raw file (so a case may not nest an object with an `id`), and
+  requires equal versions in `package.json`, `package-lock.json` and the top
+  of `CHANGELOG.md`.
+- `.gitignore` ignores `.plan`; earlier plans were committed with `git add -f`.
+- The description rule for this run: 300 characters at most, trigger first.
+  The current description is 309 characters and has no "Use when".
+
+## Decisions
+
+1. **When to ask: once, with the plan (stage 1).** The answer changes what
+   happens next there: which branch the work goes on and whether commits are
+   in scope. It is also the moment the user is most likely still present. If
+   the skill is entered after that point, the question is asked before the
+   first review pass at the latest. An answer already given by the user, the
+   task brief or repository instructions counts and is not asked again. Changes
+   that skip review convergence (typo, rename) are not asked.
+2. **Default when nobody answers: the mode is off.** "Nobody answers" means
+   nobody can: an unattended or non-interactive run. In a live session the
+   question goes out with the plan and the reply to the plan answers it. With
+   nobody there the skill does not wait: review runs locally as stage 5
+   describes, and the report says the mode was off. A push and a pull request
+   are visible to other people, trigger CI and notifications, and cannot be
+   unsent. The local branch loses nothing: it can become a pull request later.
+   So the unanswered case takes the reversible path. This is the job owner's
+   choice, as the brief asked; it is listed for the user to overturn.
+3. **Where the PR opens: after stage 4's green freeze (after stage 3 when
+   hardening is skipped), before the first review pass.** That is the user's
+   "between finish implementing and reviewing". Hardening adds tests to the
+   implementation, so it belongs before the PR, and the frozen green commit is
+   what gets pushed.
+4. **Draft first, ready at the end.** The PR opens as a draft and is marked
+   ready after stage 6 verification. A four-pass escalation leaves it a draft.
+   This matches the interim process the other five jobs follow.
+5. **Merge rule.** Never merge without the user's explicit permission for that
+   pull request. Agreeing to the mode, green checks and a clean review are not
+   permission. Auto-merge and pushing to the base branch count as merging.
+6. **Failure to push or open the PR:** report the error and wait. The user
+   chose the mode to read the change on GitHub, so reviewing without the PR
+   would silently drop what they asked for.
+7. **Comments the user leaves on the PR before it is marked ready are findings
+   for the next review pass.** They then follow stage 5 like any finding,
+   including the four-pass cap, whose escalation goes to the same user. A
+   comment made after the PR is ready is a new request and outside this run of
+   the workflow. Comments from anyone else are not covered.
+
+Decisions 2, 4, 6 and 7 are choices made in this job, not the user's words.
+
+No ADR: a reversible workflow-policy addition.
+
+## Approach
+
+One short unnumbered section, "Pull-request review mode", placed between
+stage 4 and stage 5 where it applies in time, plus a one-line pointer in
+stage 1 where the question is asked, a note under the pipeline diagram, and
+one anti-pattern row. Stage 5's text is not edited. The README gets one
+paragraph and a clause in the skill's registry row.
+
+## File map
+
+| Path | Change | Phase | Owner |
+|---|---|---|---|
+| `.plan/workflow-pr-mode/plan.md` | new: this plan | 1 | J6 |
+| `skills/development-workflow/tests/pr-review-mode.test.mjs` | new: contract tests, written first | 1 | J6 |
+| `skills/development-workflow/SKILL.md` | description; stage 1 pointer; mode section; diagram note; anti-pattern row | 2 | J6 |
+| `skills/development-workflow/evals/evals.json` | four new cases (ids 11 to 14) in the run's eval format | 2 | J6 |
+| `README.md` | one paragraph in the workflow section; clause in the skill's registry row | 2 | J6 |
+| `CHANGELOG.md`, `package.json`, `package-lock.json` | 1.22.3 entry and version | 3 | J6 |
+
+## Phases
+
+### Phase 1: contract first
+
+Write `pr-review-mode.test.mjs` and watch it fail against PR #4's text.
+
+### Phase 2: skill, evals, README
+
+Write the mode, the description, the eval cases and the README paragraph until
+the new test and the existing ones pass.
+
+### Phase 3: release metadata, PR, review, evaluation
+
+Bump to 1.22.3, open a draft PR against `codex/review-convergence-loop`, run
+two or more fresh review passes over the PR diff, push fixes as new commits,
+run the evaluation, put the before/after table in the PR body, mark it ready.
+Do not merge.
+
+## Test strategy
+
+### Critical-path tests
+
+```bash
+node --test skills/development-workflow/tests/pr-review-mode.test.mjs
+node --test skills/development-workflow/tests/review-convergence.test.mjs
+npm test
+npm run validate
+git diff --check origin/codex/review-convergence-loop...HEAD
+```
+
+### What the contract test checks
+
+- The description is 300 characters or fewer and starts with "Use when".
+- The mode section exists, sits between stage 4 and stage 5, and stage 1
+  points to it.
+- It asks once and states that no answer means the mode is off.
+- The PR opens as a draft after stage 4 and before the first review pass.
+- Review fixes are new commits with no amend, rebase or force-push.
+- Nothing merges without explicit permission; agreeing to the mode, green
+  checks and a clean review are named as not being permission.
+- The README mentions the mode and its merge rule.
+- The evals include a case for each of: asking, opening at the right moment,
+  the unanswered default, and not merging, and those cases follow the run's
+  eval format (`assertions` identical to `expectations`, two to five each,
+  prompts that do not name the skill or its mode).
+
+### Edge cases
+
+| Case | Axis | Status |
+|---|---|---|
+| Nobody answers the question | absence | covered: mode off, stated in the report; eval 14 |
+| The answer was already given (brief, repo instructions) | state | covered: not asked again |
+| Trivial change | boundary | covered: not asked, since it skips review convergence |
+| Skill entered after implementation | ordering | covered: asked before the first review pass |
+| Mode on, push or PR creation fails | failure | covered: report and wait |
+| Review fix while the PR is open | state transition | covered: new pushed commit, pinned by the contract test; eval 12 asserts that amend, rebase and force-push are ruled out |
+| Four-pass cap reached with the PR open | boundary | covered: stays a draft, escalates as stage 5 says |
+| Gate open, checks green, user away | permission | covered: mark ready, do not merge; eval 13 |
+| "Yes" to the mode read as permission to merge | permission | covered: named as not permission |
+| Comment from the user on the PR before it is ready | input | covered: a finding for the next pass (decision 7), pinned by the contract test |
+| Comment from the user after the gate opened and the PR is ready | ordering | out of scope: a new request, not part of this run |
+| Comment from the user when pass four is already spent | boundary | covered by stage 5: the cap stops the run and escalates to the user |
+| GitLab or another host | dependency | out of scope |
+
+### Coverage
+
+The Node test covers the wording contract in `SKILL.md`, README parity and
+eval presence. The eval cases cover what a model does with the text. The root
+suite and validator cover discovery, schemas and release metadata.
+
+### Evaluation (before = PR #4's skill text with this branch's eval cases)
+
+`$RUN` is `/Users/matanelgordon/Desktop/Projects/skills-improvement-run`, the
+shared folder of this improvement run. It is outside the repository; the
+wrappers in `$RUN/bin/` hold the model settings and the spend guard.
+
+1. SkillEvaluator Tier 1, no model, before and after, each on an isolated copy
+   of the skill folder:
+
+   ```bash
+   $RUN/bin/se.sh tier1 $RUN/data/j6/before/skills/development-workflow --no-llm -r cli,json,html -o $RUN/data/j6/before-tier1
+   $RUN/bin/se.sh tier1 $RUN/data/j6/after/skills/development-workflow --no-llm -r cli,json,html -o $RUN/data/j6/after-tier1
+   ```
+
+2. agent-skills-eval on the 30B model. The wrapper has no attempts flag, so
+   three attempts are three runs per arm, at temperature 0.7 in both arms
+   (at 0 the attempts would repeat each other):
+
+   ```bash
+   for arm in before after; do for n in 1 2 3; do
+     ASE_TEMPERATURE=0.7 $RUN/bin/ase.sh $RUN/data/j6/$arm/skills $RUN/data/j6/ase/$arm/run$n
+   done; done
+   ```
+
+   Both arms carry the same `evals/`. For the ten older cases the copies under
+   `$RUN/data/j6/` get `assertions` copied from `expectations`, because this
+   evaluator grades only `assertions`; the repository file is not changed.
+
+3. A single attempt of the four new cases in each arm runs first, to check the
+   cases and measure cost. If six full runs would pass the $0.20 share, the
+   ten older cases keep three attempts per arm and the PR says which runs
+   were cut.
+
+**Gates**, on the with-skill replies, pass rate = assertions passed over
+assertions graded, an empty reply counted as invalid and rerun:
+
+- **G1, the new cases pass with the mode:** over cases 11 to 14 and three
+  attempts, the after arm's pass rate is at least 0.80.
+- **G2, the new cases need the mode:** on the same cases the after arm is at
+  least 0.15 above the before arm.
+- **G3, the older cases pass no less often:** over cases 1 to 10 and three
+  attempts, the after arm's pass rate is no more than 0.10 below the before
+  arm's. With about 90 graded assertions per arm the standard error of the
+  difference is about 0.07, so a smaller gap is not a change. Any single case
+  that falls by more than 0.33 has its replies read and is reported.
+
+Tier 3 is not planned: the J6 budget share is $0.20 and a container has no
+GitHub remote to push to, so the mode's actions cannot complete there.
+
+## Definition of done
+
+- The mode section is in `SKILL.md`, about thirty lines, and stage 5 is untouched.
+- The description is 300 characters or fewer and starts with its trigger.
+- The contract test, `npm test` and `npm run validate` pass.
+- Four eval cases cover the mode in the run's eval format.
+- Gates G1, G2 and G3 hold, or the PR and the report say which did not.
+- A draft PR against `codex/review-convergence-loop` is open, reviewed in two
+  or more fresh passes, carries the before/after table, and is marked ready.
+- Nothing is merged.
+
+## Risks and unknowns
+
+- The eval format standard (`$RUN/eval-format.md`) is not published yet. The
+  cases are written last; if it is still missing, the fallback in the run
+  README applies and the status file says so.
+- A one-reply evaluator cannot see a push or a PR. The cases ask for the next
+  steps in words, so they measure what the model says it will do.
+- The existing ten cases may shift by noise. Three attempts per arm, and a
+  difference under about 0.15 is not treated as a change.
+- The six PRs of this run collide on the version line. Expected; sorted at merge.
+
+## Amendments
+
+- 2026-11-23: `plan-reviewer` returned REVISE with three blockers: no numeric
+  gate for "pass no less often", evaluation commands not quoted, and user
+  comments on the PR claimed as covered with no decision or assertion behind
+  them. All three are fixed above (gates G1 to G3, the quoted commands,
+  decision 7 and its assertion). Decision 2 now says what "nobody answers"
+  means, as the review asked.
+- 2026-11-23: the contract test, the skill text, the README paragraph and the
+  release metadata were written while that review was running, before its
+  verdict. Nothing was committed until the blockers were fixed.
+- 2026-11-23: the eval format standard was published during the work. The new
+  cases follow it: `assertions` and `expectations` identical, one condition
+  per assertion, and prompts that describe the request in the user's words
+  instead of naming the mode. The ten older cases are left as they are; their
+  format is normalised by the job that owns the format.

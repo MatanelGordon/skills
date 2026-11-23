@@ -1,10 +1,10 @@
 ---
 name: development-workflow
 description: >
-  The full pipeline for non-trivial software work: research and reuse, planning,
-  test-first implementation, post-implementation test hardening, bounded review
-  convergence, verification, and why-focused commits. Mutation testing is an
-  explicit, risk-based option for critical logic, not a mandatory feature gate.
+  Use when implementing a feature, bug fix, or refactor, or when a change should
+  be reviewed through a pull request. Scales one pipeline to the change:
+  research, plan, test-first, test hardening, bounded review convergence, verify,
+  why-commit. Mutation testing is opt-in.
 license: MIT
 metadata:
   author: Matanel Gordon
@@ -24,6 +24,9 @@ find a reused solution, a missing seam, or a test that cannot fail.
                                                      ↓ optional mutate
                                               6 verify → 7 commit
 ```
+
+In opt-in **pull-request review mode**, a draft pull request goes up between 4
+and 5, and nothing merges without the user's explicit permission.
 
 ## Mandatory core
 
@@ -52,6 +55,9 @@ decision records. Big enough to split? `parallel-build` may execute the plan.
 
 Small changes still get a short plan in the conversation.
 
+If the change will enter review convergence, settle **pull-request review mode**
+(below) with the plan: ask once, unless the answer was already given.
+
 ## 2. Tests first
 
 1. **RED:** write the smallest behavior test and watch it fail for the reason
@@ -78,6 +84,42 @@ reset and reports that independent eyes were unavailable.
 
 Integrate green additions, verify production was not changed, and record the
 frozen green commit.
+
+## Pull-request review mode — opt-in
+
+The user reads the change on GitHub while review runs. The mode applies to any
+change that enters review convergence.
+
+**Ask once, with the plan:** "Review this through a pull request?" Ask before
+implementation starts, or before the first review pass if that moment has
+passed. An answer already given by the user, the task brief, or repository
+instructions counts: do not ask again. **No answer means no.** If nobody can
+answer (an unattended or non-interactive run), do not wait: review locally as
+stage 5 describes and report that the mode was off. A push and a pull request
+are visible to others and cannot be unsent; a local branch can still become a
+pull request later.
+
+When the mode is on:
+
+1. **Branch.** Work on a branch, never on the base branch.
+2. **Open after stage 4 (stage 3 when hardening is skipped), before the first
+   review pass.** Push the branch and open a draft pull request
+   (`gh pr create --draft`): title in commit form; body with what changed and
+   why, how to review it, the checks run, and "Review: in progress". Give the
+   user the URL. If the push or the pull request fails, report the error and
+   wait; do not review as if it existed.
+3. **Review on the pull request.** Stage 5 applies unchanged: its complete
+   cumulative diff is the pull request diff. Each review fix is a new pushed
+   commit, with no amend, rebase, or force-push, so the user can follow it.
+   Record each pass's findings and dispositions on the pull request. Comments
+   the user leaves there before it is ready are findings for the next pass.
+4. **Finish.** After stage 6, update the body with the results and anything
+   unverified, mark it ready (`gh pr ready`), and stop. A four-pass escalation
+   leaves it a draft.
+
+**Never merge without the user's explicit permission for that pull request**,
+and never enable auto-merge or push to the base branch. Agreeing to the mode,
+green checks, and a clean review are not permission.
 
 ## 5. Review convergence, with mutation testing only when justified
 
@@ -169,3 +211,4 @@ stage, reason, and residual risk in one sentence.
 | Call incomplete mutation evidence complete | A score cannot cover unrun work or a failed harness |
 | Merge a mutation worktree | Candidate history can contain deliberately faulty production |
 | Hide a skipped stage | Downstream reviewers cannot judge residual risk |
+| Merge, or push to the base branch, without the user's explicit permission | A clean review and green checks are evidence, not the user's decision to ship |

@@ -178,6 +178,13 @@ flowchart LR
    for a user risk decision; it is never reported as complete.
 7. **Commit.** The message says *why*. Hard-to-reverse calls become ADRs.
 
+**Pull-request review mode.** If you want to read a change on GitHub while it is
+reviewed, say yes when the workflow asks. It asks once, with the plan. It then
+pushes the branch and opens a draft pull request after stage 4 and before the
+first review pass, pushes every review fix as a new commit, and marks the pull
+request ready after verification. It never merges without your explicit
+permission. If nobody answers, the mode stays off and review runs locally.
+
 Not every change needs the full feature pipeline. Scale it honestly:
 
 <picture>
@@ -197,7 +204,7 @@ others when you install it.
 
 | Skill | What it does |
 |---|---|
-| [development-workflow](skills/development-workflow/SKILL.md) | The spine: research → plan → test-first → implement → test-harden → bounded review convergence → verify → commit. Review takes two fresh full-diff passes minimum, rechecks every production fix, and stops after a fourth unsuccessful pass. Mutation testing is an explicit risk/value option, not a default feature gate. → `research-first`, `confidence-ranker`, `deep-plan`, `test-hardening`, `mutation-testing`, `adr` |
+| [development-workflow](skills/development-workflow/SKILL.md) | The spine: research → plan → test-first → implement → test-harden → bounded review convergence → verify → commit. Review takes two fresh full-diff passes minimum, rechecks every production fix, and stops after a fourth unsuccessful pass. An opt-in pull-request review mode puts a draft PR up before review and never merges without your permission. Mutation testing is an explicit risk/value option, not a default feature gate. → `research-first`, `confidence-ranker`, `deep-plan`, `test-hardening`, `mutation-testing`, `adr` |
 | [test-hardening](skills/test-hardening/SKILL.md) | Fresh post-implementation eyes add bounded tests for observable edge cases. Red proof happens in a scratch copy/worktree, production defects return as regressions, and hosts without subagents use a declared fresh-context fallback. |
 | [mutation-testing](skills/mutation-testing/SKILL.md) | Opt-in native mutation testing for an explicit scope or budgeted critical logic. Five adapters preserve engine meanings; a direct-parent Git guard rejects production history and imports only reviewed test paths. → `test-hardening` |
 | [deep-plan](skills/deep-plan/SKILL.md) | Turns "build X" into a plan someone with zero context could execute: a clarity gate before any writing, one owner per file path, every edge case enumerated with a status, and test commands quoted verbatim. Owns `.plan/`. |

@@ -25,9 +25,12 @@ public static string Describe(OrderState s) => s switch
 };
 ```
 
-- A `closed` class is implicitly abstract; direct subtypes must be in the same
-  assembly. Derivation is not transitive, so keep the cases `sealed`.
-- A switch over `OrderState?` must also handle `null`.
+- `closed` cannot be combined with `sealed`, `static` or `abstract`; it
+  already implies `abstract`. Only *direct* subtypes are pinned to the
+  assembly, which is why each case is sealed.
+- A generic case must use every type parameter in its base:
+  `Leaf<T>(T Value) : Tree<T>` compiles, `Constant<U>(U Value) : Tree<int>`
+  does not.
 
 **A union** composes existing types without a common base:
 
@@ -43,10 +46,10 @@ string text = found switch
 };
 ```
 
-- The generated union is a struct holding `object?`, so value-type cases are
-  boxed. A custom `[Union]` type can store them without boxing.
-- Prefer a `null` arm to `_`: a discard also swallows a case added later, and
-  the compiler can no longer warn about it.
+- To avoid boxing value-type cases, write a custom `[Union]` struct that
+  implements `IUnion` and adds `HasValue` and one `TryGetValue` per case.
+- Why `null` rather than `_` for the empty case: a discard also swallows a
+  case added later, and the compiler can no longer warn about it.
 
 Use `closed` for states that carry their own data and belong together; use
 `union` for a return value that is one of several types that already exist.

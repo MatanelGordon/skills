@@ -52,10 +52,9 @@ public static Result<Order> Place(PlaceOrder request, IClock clock,
 
 ## Decider pattern
 
-Split "what should happen" from "how it is stored": a pure `Decide` that turns a
-command and current state into events, paired with a dumb `Evolve` fold that
-applies one event to state. All business rules live in `Decide`; `Evolve` is
-mechanical and never makes decisions.
+The bodies behind the two signatures in `SKILL.md`. A command that does not
+apply in the current state yields no events, and an event `Evolve` does not
+expect leaves the state as it is.
 
 ```csharp
 public static ImmutableList<OrderEvent> Decide(OrderState state, Command cmd) => cmd switch
@@ -73,5 +72,6 @@ public static OrderState Evolve(OrderState state, OrderEvent e) => (state, e) sw
 };
 ```
 
-The shell persists events and folds `Evolve` to rebuild state. `Decide` tests are
-table-driven — no mocks, no DB, no clock.
+A `Decide` test is one row per rule: the state, the command, the events
+expected, as in `(Unpaid, Pay(10, t)) -> [OrderPaid(10, t)]`. Add a row for
+each command that must be refused: it expects `[]`.

@@ -333,6 +333,27 @@ test('a fixture path must sit under evals/files and name a small text file', () 
   }
 });
 
+test('a fixture name must be usable on every platform CI runs on, and must not be picked up as a repo test', () => {
+  const names = [
+    'evals/files/1/what?.txt', 'evals/files/1/a:b.txt', 'evals/files/1/star*.md', 'evals/files/1/quote".txt',
+    'evals/files/1/pipe|.txt', 'evals/files/1/lt<gt>.txt', 'evals/files/1/trailing-dot.', 'evals/files/1/trailing-space ',
+    'evals/files/1/NUL', 'evals/files/1/con.txt', 'evals/files/1/sub/COM1.log', 'evals/files/1/cart.test.mjs',
+  ];
+  const lookup = lookupOf(Object.fromEntries(names.map((name) => [name, textFile()])));
+  for (const name of names.slice(0, -1)) {
+    const errors = errorsFor({ files: [name] }, lookup);
+    assert.equal(errors.length, 1, name);
+    assert.match(errors[0], /is not a valid file name on Windows/, name);
+  }
+  const testFile = errorsFor({ files: ['evals/files/1/cart.test.mjs'] }, lookup);
+  assert.equal(testFile.length, 1);
+  assert.match(testFile[0], /would be run by npm test/);
+
+  const fine = ['evals/files/1/cart.test.mjs.txt', 'evals/files/1/console.txt', 'evals/files/1/src/a b.ts', 'evals/files/1/.env.example'];
+  const fineLookup = lookupOf(Object.fromEntries(fine.map((name) => [name, textFile()])));
+  for (const name of fine) assert.deepEqual(errorsFor({ files: [name] }, fineLookup), [], name);
+});
+
 test('agent evals must have an empty files list', () => {
   const doc = { agent_name: 'reviewer', evals: [standardCase({ files: ['evals/files/1/a.txt'] })] };
   const result = checkEvalDocument(doc, lookupOf({ 'evals/files/1/a.txt': textFile() }), { kind: 'agent' });

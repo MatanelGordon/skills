@@ -27,9 +27,9 @@ with identical content. That is the only duplication the format needs.
   "evals": [
     {
       "id": 1,
-      "prompt": "CI went red on my branch. The log is attached as build.log (in a workspace it is at input/1/build.log). Which checks failed, and what should I fix first?",
+      "prompt": "CI went red on my branch. The log is attached as build-log.txt (in a workspace it is at input/1/build-log.txt). Which checks failed, and what should I fix first?",
       "expected_output": "Names the two failing checks with their error lines and says to fix the missing module first, because the test failure follows from it.",
-      "files": ["evals/files/1/build.log"],
+      "files": ["evals/files/1/build-log.txt"],
       "assertions": [
         "The reply names `build` and `test` as the failing checks and no others.",
         "The reply quotes the line `Cannot find module './tax'`.",
@@ -78,7 +78,7 @@ skills/build-log-triage/
   evals/
     evals.json
     files/
-      1/build.log
+      1/build-log.txt
       3/package.json
       3/src/price.ts
 ```
@@ -120,12 +120,12 @@ The negative case for the same skill:
 
 What each runner does with case 1:
 
-- **Repo runner:** sends the prompt and the list `["evals/files/1/build.log"]`
+- **Repo runner:** sends the prompt and the list `["evals/files/1/build-log.txt"]`
   to the candidate command, then the reply and `expectations` to the judge.
 - **agent-skills-eval:** puts the file's text ahead of the prompt as
-  `<file path="evals/files/1/build.log">…</file>`, takes one reply, grades the
+  `<file path="evals/files/1/build-log.txt">…</file>`, takes one reply, grades the
   three `assertions`.
-- **SkillEvaluator:** copies the file to `/workspace/input/1/build.log`,
+- **SkillEvaluator:** copies the file to `/workspace/input/1/build-log.txt`,
   starts the agent in `/workspace` with the prompt and nothing else, then
   grades the three `assertions` against the whole run.
 
@@ -181,8 +181,8 @@ to change nothing.
   implement it", "Give the test file in full". A case whose deliverable is
   unclear is graded on a guess.
 - **Name each fixture by file name and say where it is,** in words that work
-  both ways: "attached as `build.log` (in a workspace it is at
-  `input/1/build.log`)".
+  both ways: "attached as `build-log.txt` (in a workspace it is at
+  `input/1/build-log.txt`)".
 - **Do not ask for something a single reply cannot contain** unless you also
   accept it in the reply. "Write the plan to `.plan/x/plan.md`" becomes
   "Write the plan (to `.plan/x/plan.md` if you can write files, otherwise in
@@ -234,7 +234,18 @@ If a case cannot be made this small, split it.
   `evals/files/`.
 - Text only, UTF-8, at most 64 KB each (agent-skills-eval cuts a larger file
   and skips a binary one). File names must be valid on Windows, where CI also
-  runs.
+  runs: none of `< > : " | ? *`, no trailing dot or space, no `CON`, `NUL`,
+  `COM1` and the like.
+- **A fixture must not match `.gitignore`.** This repo ignores `*.log`,
+  `*.pyc`, `node_modules/`, `__pycache__/`, `.plan` and `*-workspace/`. Git
+  leaves such a file out without a word, the local checks still pass, and CI
+  reports the fixture missing. Name a log `build-log.txt`. Check with
+  `git status --short --ignored skills/<name>/evals`.
+- **The repo treats everything under `skills/` as code.** `npm test` runs any
+  `*.test.mjs` it finds, and `npm run validate` syntax-checks every `.js`,
+  `.mjs`, `.py` and `.sh` and the code fences of every `.md`. A fixture that is
+  a test file, or is broken on purpose, gets `.txt` added to its name
+  (`cart.test.mjs.txt`), and the prompt says so.
 - No secrets, tokens or real people's details, even as props.
 - `tier3 validate` does **not** check that `files` resolve. Only an evaluation
   run does, and it stops there. `npm run validate` checks it for you.

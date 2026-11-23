@@ -22,6 +22,12 @@ const NAME_KEYS = Object.freeze(['skill_name', 'agent_name']);
 // A `files` string longer than a file name can be, or spanning lines, is fixture text someone inlined.
 const MAX_PATH_LENGTH = 255;
 const FOLDER_SAFE_ID = /^[A-Za-z0-9._-]+$/;
+// CI also checks the repository out on Windows, where one such name fails the whole checkout.
+// eslint-disable-next-line no-control-regex
+const WINDOWS_FORBIDDEN_CHARACTERS = /[<>:"|?*\u0000-\u001f]/;
+const WINDOWS_RESERVED_NAME = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$/i;
+// install/run-tests.mjs runs every *.test.mjs under skills/, fixtures included.
+const REPO_TEST_FILE = /\.test\.mjs$/;
 const MISSING = Object.freeze({ kind: 'missing' });
 const nothingExists = () => MISSING;
 
@@ -39,6 +45,9 @@ const isSafeRelativePath = (path) => (
   && !path.split('/').includes('..')
 );
 const baseName = (path) => path.slice(path.lastIndexOf('/') + 1);
+const isPortableName = (segment) => (
+  !WINDOWS_FORBIDDEN_CHARACTERS.test(segment) && !WINDOWS_RESERVED_NAME.test(segment) && !/[. ]$/.test(segment)
+);
 const caseLabel = (evaluation, index) => (
   isObject(evaluation) && evaluation.id !== undefined && evaluation.id !== null
     ? `eval ${evaluation.id}`
@@ -201,6 +210,8 @@ function fixtureErrors(path, entryIndex, lookup) {
   const where = `files[${entryIndex}] ${JSON.stringify(path)}`;
   if (!path.startsWith(`${FIXTURE_ROOT}/`)) return [`${where} must start with ${FIXTURE_ROOT}/`];
   if (path.split('/').includes('..')) return [`${where} must not contain ..`];
+  if (!path.split('/').every(isPortableName)) return [`${where} is not a valid file name on Windows`];
+  if (REPO_TEST_FILE.test(path)) return [`${where} would be run by npm test; rename it (for example add .txt)`];
   const found = lookup(path);
   if (found.kind === 'missing') return [`${where} does not exist`];
   if (found.kind !== 'file') return [`${where} is not a regular file`];

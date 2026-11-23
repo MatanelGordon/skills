@@ -3,65 +3,193 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Here's our signup flow: email -> verify code -> profile -> workspace name -> invite teammates -> dashboard. Is this good UX?",
-      "expected_output": "Runs the rubric, not an opinion: heuristic walk with 0-4 severities per finding, a verdict naming which rule fired, findings table sorted by severity, and what to measure next.",
-      "files": [],
+      "prompt": "Here's our signup flow: email -> verify code -> profile -> workspace name -> invite teammates -> dashboard. Each step is described as it is built today in the attached `signup-flow.md` (in a workspace it is at `input/1/signup-flow.md`). Is this good UX? Reply with your verdict and the problems you found, six at most. No redesign and no mock-ups, please.",
+      "expected_output": "A verdict that the flow is not ready to ship, tied to its most severe problems (the invite step that cannot be skipped, the dead end at the verification code), then at most six problems, each with a usability heuristic and a 0-4 severity, and one or two numbers to measure next.",
+      "files": [
+        "evals/files/1/signup-flow.md"
+      ],
       "assertions": [
-        "Findings cite a specific heuristic and a 0-4 severity each",
-        "Verdict states which verdict rule fired, not just an adjective",
-        "Includes what is working, and 1-2 metrics to confirm the biggest finding",
-        "Does not comment on visual style or brand"
+        "Every problem the reply lists has a severity given as a number from 0 to 4 (a range such as `3-4` counts).",
+        "Every problem the reply lists names one of Nielsen's usability heuristics, by name (for example `User control and freedom`) or by number 1 to 10.",
+        "The reply's verdict names the severity level, 3 or 4, of the problem or problems that decided it.",
+        "The reply names at least one thing to measure next, such as the share of people who finish sign-up or the drop-off at one step."
       ],
       "expectations": [
-        "Findings cite a specific heuristic and a 0-4 severity each",
-        "Verdict states which verdict rule fired, not just an adjective",
-        "Includes what is working, and 1-2 metrics to confirm the biggest finding",
-        "Does not comment on visual style or brand"
+        "Every problem the reply lists has a severity given as a number from 0 to 4 (a range such as `3-4` counts).",
+        "Every problem the reply lists names one of Nielsen's usability heuristics, by name (for example `User control and freedom`) or by number 1 to 10.",
+        "The reply's verdict names the severity level, 3 or 4, of the problem or problems that decided it.",
+        "The reply names at least one thing to measure next, such as the share of people who finish sign-up or the drop-off at one step."
       ]
     },
     {
       "id": 2,
-      "prompt": "What's a good error message when the user's session expires mid-form?",
-      "expected_output": "Applies the error guidance: plain language, cause plus next action, preserve the user's input, most important part last. Severity framing for losing form data.",
-      "files": [],
+      "prompt": "People filling in our expense claim form keep getting thrown out when their session ends partway through. What they see today, with a few facts about the form, is in the attached `expired-session.txt` (in a workspace it is at `input/2/expired-session.txt`). How serious is this, and what should the message say instead? Give me the new message word for word, in your reply.",
+      "expected_output": "Rates the current behaviour at the top of a 0-4 severity scale because typed data is lost, gives a replacement message in plain words that says what happened and what to do next, and requires that the typed answers are still there after signing in again.",
+      "files": [
+        "evals/files/2/expired-session.txt"
+      ],
       "assertions": [
-        "Message names what happened and the exact next step",
-        "Calls out preserving the typed form data as the real requirement",
-        "No error codes or blame"
+        "The reply rates the current behaviour as severity 4, written as `severity 4`, `sev 4`, `4/4` or `4 out of 4` (a range such as `3-4` does not count).",
+        "The reply names one of Nielsen's usability heuristics for the problem, for example `Help users recognize, diagnose, and recover from errors` or `Error prevention`, by name or by number.",
+        "The reply names a number to track after the change, for example how many of the interrupted claims are submitted afterwards."
       ],
       "expectations": [
-        "Message names what happened and the exact next step",
-        "Calls out preserving the typed form data as the real requirement",
-        "No error codes or blame"
+        "The reply rates the current behaviour as severity 4, written as `severity 4`, `sev 4`, `4/4` or `4 out of 4` (a range such as `3-4` does not count).",
+        "The reply names one of Nielsen's usability heuristics for the problem, for example `Help users recognize, diagnose, and recover from errors` or `Error prevention`, by name or by number.",
+        "The reply names a number to track after the change, for example how many of the interrupted claims are submitted afterwards."
       ]
     },
     {
       "id": 3,
-      "prompt": "Our SUS score came back as 71. Is that good?",
-      "expected_output": "Interprets against published thresholds: 71 is above the 68 average, roughly a C+/B-, not a percentage. Recommends trend over point, and pairing with task success before celebrating.",
+      "prompt": "Our SUS score came back as 71. Is that good? And what would we have to score before we could call it excellent?",
+      "expected_output": "Says 71 is a little above the average of 68 and short of the 80.3 needed for an A, that SUS is not a percentage, and that the score should be tracked over time and checked against task success.",
       "files": [],
       "assertions": [
-        "States 68 is the average and 71 is slightly above",
-        "Says SUS is not a percentage",
-        "Recommends behavioral pairing (task success) and trend tracking"
+        "The reply states that a SUS score is not a percentage.",
+        "The reply gives 80.3 as the score for grade A or the top 10%.",
+        "The reply recommends measuring task success (task completion) rate alongside SUS.",
+        "The reply recommends comparing the score with earlier or later SUS results (a trend) instead of judging the single result."
       ],
       "expectations": [
-        "States 68 is the average and 71 is slightly above",
-        "Says SUS is not a percentage",
-        "Recommends behavioral pairing (task success) and trend tracking"
+        "The reply states that a SUS score is not a percentage.",
+        "The reply gives 80.3 as the score for grade A or the top 10%.",
+        "The reply recommends measuring task success (task completion) rate alongside SUS.",
+        "The reply recommends comparing the score with earlier or later SUS results (a trend) instead of judging the single result."
       ]
     },
     {
       "id": 4,
-      "prompt": "Center this modal vertically and make the button blue like the mockup.",
-      "expected_output": "Skill does NOT run a UX audit. This is a styling task; just do it.",
-      "files": [],
+      "prompt": "Center this modal vertically and make the button blue like the mockup. The mockup's blue is #2563EB with white text. The page is attached as `modal.html` (in a workspace it is at `input/4/modal.html`). Only the CSS needs to change. Give me the changed CSS rules in your reply, and edit the file too if you can.",
+      "expected_output": "The CSS change that centers the modal vertically and sets the button background to #2563EB with white text. No usability audit.",
+      "files": [
+        "evals/files/4/modal.html"
+      ],
       "assertions": [
-        "No heuristic audit for a mechanical styling request"
+        "The changed CSS, in the reply or in the edited `modal.html`, sets the background of `.btn-confirm` to `#2563eb` (any letter case).",
+        "The changed CSS, in the reply or in the edited `modal.html`, centers the modal vertically, for example with `align-items: center`, `place-items: center`, or `top: 50%` with a `translate`.",
+        "The reply contains no severity rating for any usability problem.",
+        "The reply does not cite any of Nielsen's usability heuristics by its full name (such as `Consistency and standards`) or by its number."
       ],
       "expectations": [
-        "No heuristic audit for a mechanical styling request"
+        "The changed CSS, in the reply or in the edited `modal.html`, sets the background of `.btn-confirm` to `#2563eb` (any letter case).",
+        "The changed CSS, in the reply or in the edited `modal.html`, centers the modal vertically, for example with `align-items: center`, `place-items: center`, or `top: 50%` with a `translate`.",
+        "The reply contains no severity rating for any usability problem.",
+        "The reply does not cite any of Nielsen's usability heuristics by its full name (such as `Consistency and standards`) or by its number."
+      ],
+      "expected_skill": null
+    },
+    {
+      "id": 5,
+      "prompt": "I maintain a small backup CLI called snapkeep. A terminal session with its help text and a few runs, plus my notes, is attached as `cli-session.txt` (in a workspace it is at `input/5/cli-session.txt`). Review how usable it is. Reply with a list of the problems, most serious first, and the change you would make for each. A list only: I don't need the tool rewritten.",
+      "expected_output": "A list of the problems in the session, each tied to a usability heuristic and rated 0-4, led by `purge` deleting every snapshot without asking at severity 4, with smaller problems such as the mixed option names rated lower.",
+      "files": [
+        "evals/files/5/cli-session.txt"
+      ],
+      "assertions": [
+        "The reply rates `purge` removing all three snapshots as severity 4.",
+        "The reply ties the 11 silent minutes of `snap` to the heuristic `Visibility of system status`, by name or as number 1.",
+        "The reply ties the bare `E1107` to the heuristic about helping users recognize, diagnose and recover from errors, by name, as `Error recovery`, or as number 9.",
+        "The reply rates at least one problem at severity 1 or 2."
+      ],
+      "expectations": [
+        "The reply rates `purge` removing all three snapshots as severity 4.",
+        "The reply ties the 11 silent minutes of `snap` to the heuristic `Visibility of system status`, by name or as number 1.",
+        "The reply ties the bare `E1107` to the heuristic about helping users recognize, diagnose and recover from errors, by name, as `Error recovery`, or as number 9.",
+        "The reply rates at least one problem at severity 1 or 2."
       ]
+    },
+    {
+      "id": 6,
+      "prompt": "Round two of the usability test on our new checkout is in the attached `test-results.md` (in a workspace it is at `input/6/test-results.md`). The team wants to ship on Friday. Do these numbers say we are ready? Answer yes or no in your reply, with the numbers that decide it. Under 400 words.",
+      "expected_output": "No: unaided completion of the pay task is 10 of 15, below the roughly 78% bar for a core task, and four errors were never recovered. The SUS of 81.5 is a grade-A score but does not outweigh that.",
+      "files": [
+        "evals/files/6/test-results.md"
+      ],
+      "assertions": [
+        "The reply compares the unaided completion of the pay task (10 of 15, about 67%) with a benchmark of about 78%.",
+        "The reply compares the pay task's ease rating of 4.1 with a benchmark of about 5 or 5.5.",
+        "The reply states that a SUS score is not a percentage.",
+        "The reply rates the four uncorrected errors on the pay task as severity 3 or 4."
+      ],
+      "expectations": [
+        "The reply compares the unaided completion of the pay task (10 of 15, about 67%) with a benchmark of about 78%.",
+        "The reply compares the pay task's ease rating of 4.1 with a benchmark of about 5 or 5.5.",
+        "The reply states that a SUS score is not a percentage.",
+        "The reply rates the four uncorrected errors on the pay task as severity 3 or 4."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "We have to pick one of two designs for deleting photos. Both are described, with what we saw in a quick test of each, in the attached `delete-options.md` (in a workspace it is at `input/7/delete-options.md`). Which one do we build? Give me one pick and what is wrong with each option, in your reply, under 400 words.",
+      "expected_output": "Picks the select-then-delete design with undo (or swipe only once deleted photos are recoverable), because permanent loss of photos is a severity-4 problem that the faster test times do not offset, and rates the hidden `Select` control as a lesser problem to fix.",
+      "files": [
+        "evals/files/7/delete-options.md"
+      ],
+      "assertions": [
+        "The reply rates Option A's permanent deletion (no undo, no trash) as severity 4.",
+        "The reply gives the hard-to-find `Select` control in Option B its own severity number.",
+        "The reply names one of Nielsen's usability heuristics for at least one problem, for example `User control and freedom`, `Error prevention` or `Recognition rather than recall`, by name or by number."
+      ],
+      "expectations": [
+        "The reply rates Option A's permanent deletion (no undo, no trash) as severity 4.",
+        "The reply gives the hard-to-find `Select` control in Option B its own severity number.",
+        "The reply names one of Nielsen's usability heuristics for at least one problem, for example `User control and freedom`, `Error prevention` or `Recognition rather than recall`, by name or by number."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Our settings page has grown to 12 switches and people can't find the one they want. The page, with how often each switch gets changed, is in the attached `settings-page.md` (in a workspace it is at `input/8/settings-page.md`). What do we cut? For each switch say keep, remove or move, and for anything you remove say what the app does instead. Reply with the list and a short reason for each.",
+      "expected_output": "A keep, remove or move decision for all 12 switches that drops the ones almost nobody changes in favour of a fixed default, replaces the archive confirmation with undo, keeps high contrast reachable, and explains the cut by the cost of too many choices (Hick's Law).",
+      "files": [
+        "evals/files/8/settings-page.md"
+      ],
+      "assertions": [
+        "The reply names Hick's Law.",
+        "The reply replaces the question asked before archiving a conversation (switch 10) with an Undo offered after archiving.",
+        "The reply does not remove the high-contrast option outright: it keeps the switch, or has the app follow the system's contrast setting."
+      ],
+      "expectations": [
+        "The reply names Hick's Law.",
+        "The reply replaces the question asked before archiving a conversation (switch 10) with an Undo offered after archiving.",
+        "The reply does not remove the high-contrast option outright: it keeps the switch, or has the app follow the system's contrast setting."
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "The dashboard for our folder-sharing feature has grown to 18 numbers and nobody reads it any more. The list, with the decision the dashboard is meant to serve, is attached as `dashboard-metrics.md` (in a workspace it is at `input/9/dashboard-metrics.md`). Which ones do we keep? Reply with the final list and one line on why each stays.",
+      "expected_output": "A final list of 6 to 8 numbers derived from the decision the dashboard serves, labelled by HEART category, that keeps share completion rate and warns that time spent is not a sign of success by itself.",
+      "files": [
+        "evals/files/9/dashboard-metrics.md"
+      ],
+      "assertions": [
+        "The final list in the reply has 6, 7 or 8 metrics.",
+        "The reply labels the metrics it keeps with HEART categories (Happiness, Engagement, Adoption, Retention, Task success).",
+        "The reply uses the terms goal, signal and metric together, for example as table columns or as a `Goal -> Signal -> Metric` chain.",
+        "The reply says that more time spent (session length or time in the Share dialog) can be a sign of confusion."
+      ],
+      "expectations": [
+        "The final list in the reply has 6, 7 or 8 metrics.",
+        "The reply labels the metrics it keeps with HEART categories (Happiness, Engagement, Adoption, Retention, Task success).",
+        "The reply uses the terms goal, signal and metric together, for example as table columns or as a `Goal -> Signal -> Metric` chain.",
+        "The reply says that more time spent (session length or time in the Share dialog) can be a sign of confusion."
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Pick a colour palette for the marketing page of our budgeting app. It should feel calm and trustworthy. Give me five colours as hex codes, with one line on where each is used. Just the palette, in your reply.",
+      "expected_output": "Five hex colours with a one-line use for each. No usability audit and no severity ratings.",
+      "files": [],
+      "assertions": [
+        "The reply gives a palette of five colours, each as a hex code.",
+        "The reply contains no severity rating for any usability problem.",
+        "The reply does not cite any of Nielsen's usability heuristics by its full name (such as `Consistency and standards`) or by its number."
+      ],
+      "expectations": [
+        "The reply gives a palette of five colours, each as a hex code.",
+        "The reply contains no severity rating for any usability problem.",
+        "The reply does not cite any of Nielsen's usability heuristics by its full name (such as `Consistency and standards`) or by its number."
+      ],
+      "expected_skill": null
     }
   ]
 }

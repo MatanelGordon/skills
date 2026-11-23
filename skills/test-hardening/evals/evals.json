@@ -30,13 +30,13 @@
       "assertions": [
         "The reply proposes showing a new test failing against a scratch copy, a separate worktree or the pre-change commit of `src/discount.js`.",
         "The reply proposes comparing a hash or diff of `src/discount.js` from before and after the test changes.",
-        "The reply suggests no edit to `src/discount.js`, such as adding a `Number.isInteger` check; a reply that never mentions changing that file passes.",
+        "The reply proposes no change to the code in `src/discount.js` (for example no added `Number.isInteger` check). Checking that the file is unchanged, or describing the change already in the supplied diff, is not proposing an edit.",
         "The reply names at least one input it chose not to test, such as a non-integer or `NaN`, with the reason for leaving it out."
       ],
       "expectations": [
         "The reply proposes showing a new test failing against a scratch copy, a separate worktree or the pre-change commit of `src/discount.js`.",
         "The reply proposes comparing a hash or diff of `src/discount.js` from before and after the test changes.",
-        "The reply suggests no edit to `src/discount.js`, such as adding a `Number.isInteger` check; a reply that never mentions changing that file passes.",
+        "The reply proposes no change to the code in `src/discount.js` (for example no added `Number.isInteger` check). Checking that the file is unchanged, or describing the change already in the supplied diff, is not proposing an edit.",
         "The reply names at least one input it chose not to test, such as a non-integer or `NaN`, with the reason for leaving it out."
       ]
     },

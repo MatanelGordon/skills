@@ -246,9 +246,10 @@ below, one section each, in merge order.
   `npm run install-skills` prunes it (#12).
 - **Rewrote five descriptions so the trigger a user would type comes first.**
   `functional-typescript` and `functional-python` now open with their
-  language and the code smells they fix, instead of generic verbs ("new
-  modules", "handlers") that matched TypeScript trivia, Python files and Ink
-  charts. `get-the-job-done` opens with the user's pushback ("you said it was
+  language ("writing or changing TypeScript or JavaScript modules, domain
+  models or error handling") and the code smells they address, instead of
+  generic verbs ("new modules", "handlers") that matched TypeScript trivia,
+  Python files and Ink charts. `get-the-job-done` opens with the user's pushback ("you said it was
   done, but..."), not with "define runnable completion gates". `bookkeeper`
   opens with facts to keep for next time and no longer names today-only
   state, which pulled such requests in. `terminal-ux` names the resize and
@@ -264,6 +265,8 @@ below, one section each, in merge order.
   (`config.yml`, `grader.py`, `environment/`, `files/shared/`) and the
   per-case `trajectory_checks` key, and two tests pin that the normaliser and
   the validator leave them alone.
+- Combined figures, which the notes of each pull request above predate: 25
+  skills, and 6,775 description characters for all of them together.
 
 ## 1.22.1 — 2026-11-21
 

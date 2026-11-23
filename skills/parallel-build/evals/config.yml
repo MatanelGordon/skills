@@ -1,0 +1,10 @@
+schema_version: 1
+
+harbor:
+  runtime_env:
+    # Claude Code drops skill descriptions from its listing once the listing
+    # passes a character budget, and in SkillEvaluator's Tier 3 container the
+    # bundled skills use that budget up, so this skill would be listed by name
+    # only and the agent would have no description to match a request against.
+    # A fixed budget keeps the description in the listing.
+    SLASH_COMMAND_TOOL_CHAR_BUDGET: "30000"

@@ -195,6 +195,17 @@ below, one section each, in merge order.
   are retired and their ids are not reused: `adr` 2 and 3, `bookkeeper` 2,
   `research-first` 2, `confidence-ranker` 1 and 3.
 
+### Integration
+
+- Ran `npm run normalize-evals` over the merged tree: the three
+  `development-workflow` cases #4 added gained their `assertions`.
+- The README's "Writing your own portable skill" now states the trigger-first
+  rule and both description limits that `npm run validate` enforces.
+- `EVALS.md` lists the files a skill may keep beside `evals.json`
+  (`config.yml`, `grader.py`, `environment/`, `files/shared/`) and the
+  per-case `trajectory_checks` key, and two tests pin that the normaliser and
+  the validator leave them alone.
+
 ## 1.22.1 — 2026-11-21
 
 - Redesigned the README opening around an original light/dark hero, a concise

@@ -1,0 +1,7 @@
+# SkillEvaluator Tier 3 run policy for this skill.
+schema_version: 1
+
+grading:
+  # The default judge scores each trial; grader.py also keeps what the agent
+  # wrote, so scripts/check-review.mjs can check every trial's files afterwards.
+  mode: default_plus_custom

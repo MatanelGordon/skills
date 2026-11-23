@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.23.0 — 2026-11-23
+
+- **Merged `openrouter-cli-subagent` into `cli-coding-subagents`.** One skill
+  now covers running a coding worker through the codex, copilot or OpenRouter
+  (`ori`) CLI. OpenRouter is a mode whose detail lives in
+  `references/openrouter.md`, and the three `ori-*.sh` helpers moved into the
+  merged skill's `scripts/`. SkillEvaluator had the two descriptions at 0.88
+  similarity. The old directory is gone, so a link to it from an earlier
+  install now dangles; `install-skills doctor` lists it.
+- **Refocused `parallel-build` on how to split a job between workers:** which
+  pieces are independent, who owns which files, what has to land first, how
+  many run at once, and how the run is tracked and resumed. Parallel is the
+  default for independent pieces. A quick split (an ownership table and one
+  dispatch) covers pieces that share no file; the three-phase build keeps its
+  precondition of an approved `deep-plan` plan. Everything about running a
+  single worker now lives only in `cli-coding-subagents`.
+- Workers get a git worktree automatically whenever the project is a git
+  repository. `wt.sh` exits 4 outside one, and the skill says what to do then.
+- Fixed the documented `codex exec resume` command. codex-cli 0.170.0 rejects
+  `--color never` after `resume`; it now comes before.
+- Fixed `ori-codex-home.sh` replacing all three links on every run instead of
+  leaving correct ones alone.
+- The installed skill is located by one resolver block that accepts a copy
+  only when all six helpers are executable. The shorter form used by two of the
+  three skills took the first directory that existed.
+- Added `skills/cli-coding-subagents/tests/scripts.test.mjs`: 14 tests over the
+  helpers' exit codes and the resolver block.
+- Rewrote both eval sets in the eval standard. `parallel-build`'s cases were
+  whole builds that no agent finished; each is now one step with its inputs
+  supplied as fixtures.
+- Both descriptions are under 300 characters (267 and 281, from 497, 827 and
+  712) and start with their trigger.
+
 ## 1.22.1 — 2026-11-21
 
 - Redesigned the README opening around an original light/dark hero, a concise

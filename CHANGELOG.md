@@ -1,6 +1,26 @@
 # Changelog
 
-## 1.22.3 — 2026-11-23
+## 1.23.0 — 2026-11-24
+
+One release for the improvement pull requests merged together on
+`integration/skills-improvement`, plus the routing changes made on top of
+them. Each pull request bumped the version on its own; their notes are kept
+below, one section each, in merge order.
+
+### Review convergence in `development-workflow` (#4, written as 1.22.2)
+
+- Changed `development-workflow` review from a one-shot check into a bounded
+  convergence gate: at least two fresh full-diff passes, mandatory re-review
+  after review-driven production fixes, explicit severity dispositions, and a
+  fail-closed stop after a fourth unsuccessful pass.
+- Updated the README workflow graph, light/dark scale illustration, stage guide,
+  and skill registry summary to show the review/fix/test loop, minimum pass
+  count, and escalation path.
+- Added deterministic policy regressions and agent eval cases for a clean first
+  pass, an incomplete first review fix, and failure to converge by the four-pass
+  cap.
+
+### Pull-request review mode in `development-workflow` (#5, written as 1.22.3)
 
 - Added an opt-in pull-request review mode to `development-workflow`. The skill
   asks once, with the plan, whether the change should be reviewed through a pull
@@ -15,18 +35,25 @@
 - Added contract tests for the mode and four eval cases: asking, opening the
   pull request at the right moment, the unanswered default, and not merging.
 
-## 1.22.2 — 2026-11-21
+### Short skill descriptions (#8)
 
-- Changed `development-workflow` review from a one-shot check into a bounded
-  convergence gate: at least two fresh full-diff passes, mandatory re-review
-  after review-driven production fixes, explicit severity dispositions, and a
-  fail-closed stop after a fourth unsuccessful pass.
-- Updated the README workflow graph, light/dark scale illustration, stage guide,
-  and skill registry summary to show the review/fix/test loop, minimum pass
-  count, and escalation path.
-- Added deterministic policy regressions and agent eval cases for a clean first
-  pass, an incomplete first review fix, and failure to converge by the four-pass
-  cap.
+- **Shortened every skill description to a routing line.** The 27 descriptions
+  totalled 14,636 characters, and Claude Code and Codex fit about 8,000 in the
+  skill list, so with every skill installed the descriptions were cut. In 25 of
+  them the "use when" part was missing or ended after character 60, which is
+  all some agents show. The 26 descriptions outside `development-workflow` now
+  open with the trigger, hold at most 300 characters, and name what only that
+  skill does; all 27 total 7,327. Only `description:` blocks changed. No skill
+  body, reference, script or eval was touched.
+- **The validator enforces both limits.** `npm run validate` fails a description
+  over 300 characters and fails the collection once all descriptions together
+  reach 7,500. Regression tests pin each boundary and that a folded description
+  is measured after its lines are joined. The old 1,024-character check is gone:
+  the new limit is stricter.
+- The validator now reads a description in every YAML form. It used to read
+  only `>` and `>-` blocks, so a `|` block, a plain value continued on the next
+  lines, or an empty `description:` was measured wrongly and could pass any
+  limit. No skill here used those forms.
 
 ## 1.22.1 — 2026-11-21
 

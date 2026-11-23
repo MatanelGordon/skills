@@ -1,8 +1,10 @@
 ---
 name: visual-plan
 description: >
-  Turn ordinary text plans into rich interactive visual plans with diagrams, file maps,
-  annotated code, open questions, and UI/prototype review when useful.
+  Use when /visual-plan is requested or a coding plan needs a reviewable visual surface
+  before code: diagrams, file maps, wireframes, or a live prototype for comments and
+  sign-off. Also to read feedback on a shared plan and update it. When deep-plan
+  applies, run it first, then layer this on top.
 license: MIT
 metadata:
   author: Matanel Gordon

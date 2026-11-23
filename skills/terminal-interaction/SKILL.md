@@ -1,17 +1,10 @@
 ---
 name: terminal-interaction
 description: >
-  Drive a terminal program the way a human tester would - launch it, send
-  keystrokes, read the screen back, report what happened. Use when asked to
-  manually test, try, poke at, or "see what happens" with a CLI, TUI, REPL,
-  installer, interactive prompt, wizard, or SSH session; when a terminal program
-  hangs, misdraws, or behaves differently under a pipe than in a real terminal;
-  and whenever verifying a terminal change by hand rather than by test suite.
-  Always searches for an existing tool first - an MCP server, a published skill,
-  or a CLI - and says so plainly when nothing fits. Covers the launch, interact,
-  capture, report loop, the poll-for-output rule that replaces sleeping, reading
-  ANSI and scrollback, and terminal size effects. For exploratory verification,
-  not for authoring test suites, assertions, or CI.
+  Use when manually testing a CLI, TUI, REPL, installer, wizard, prompt, or SSH session
+  in a real terminal or PTY, including requests to try, poke at, or see what happens.
+  Reproduce hangs, misdraws, or pipe-vs-TTY bugs. Not for building UIs, test suites, or
+  CI.
 license: MIT
 metadata:
   author: Matanel Gordon

@@ -1,7 +1,10 @@
 ---
 name: adr
 description: >
-  Record and consult Architectural Decision Records in ./.adr/. Use when asked to record or remember a decision; when making or reversing a hard-to-reverse architectural choice; and before planning, refactoring, integrating, redesigning, or choosing major dependencies. Supersede old ADRs rather than deleting them.
+  Use to check .adr/ before any plan, refactor, integration, redesign, dependency, or
+  module-boundary change, even when ADRs are not mentioned; also when asked to record or
+  remember a decision, or when making or reversing a hard-to-reverse architectural
+  choice.
 license: MIT
 metadata:
   author: Matanel Gordon

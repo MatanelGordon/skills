@@ -104,8 +104,8 @@ staging produces a link that downloads.
 
 - Export files pile up in S3 -> a lifecycle rule deletes them (see Q1).
 - A signed URL can be forwarded to someone else -> it expires after 1 hour; accepted.
-- Q1: How long is an export file kept, 7 days or 30 days -> your call; default 7 days.
-- Q2: When the file is ready, notify by email as well as in the page, or in the page only -> your call; default in the page only.
+- Q1: How long is an export file kept: 7 days or 30 days -> your call; recommend 7 days; default 7 days.
+- Q2: When the file is ready, notify: in the page only, or by email as well -> your call; recommend in the page only; default in the page only.
 
 ## Decisions
 

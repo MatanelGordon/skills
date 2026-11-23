@@ -28,9 +28,9 @@ END = "===== VISUAL-PLAN-EVAL END ====="
 
 
 def is_kept(relative):
-    """True for a small text file outside hidden folders and the staged skills."""
+    """True for a small text file, not hidden and not in a hidden folder (.plan aside), outside the staged skills."""
     parts = relative.parts
-    hidden = any(part.startswith(".") and part != ".plan" for part in parts[:-1])
+    hidden = any(part.startswith(".") and part != ".plan" for part in parts)
     return not hidden and not SKIPPED_DIRS.intersection(parts[:-1]) and relative.suffix.lower() in KEPT_SUFFIXES
 
 

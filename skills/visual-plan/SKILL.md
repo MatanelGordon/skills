@@ -43,9 +43,9 @@ enough) and when the user wants a few sentences in chat, not a file.
    implementer ticks, each with the command that proves it.
 2. **Number what the user must settle.** When you write the plan, decide
    everything the code lets you decide. A question only the user can answer
-   goes under `## Risks and unknowns` as
-   `- Q1: <question> -> your call; default <what happens if they say nothing>`.
-   In a plan you did not write, giving its open questions these ids is the
+   goes under `## Risks and unknowns` on one line:
+   `- Q1: <question>: <option> or <option> -> your call; recommend <option>; default <what happens with no answer>`.
+   In a plan you did not write, giving its open questions this form is the
    only edit you make.
 3. **Write `review.md`** in the shape below.
 4. **Draw 1 to 3 diagrams** as `diagrams/<short-name>.svg`. Read
@@ -69,9 +69,10 @@ exits 0 when clean and 1 with one line per failure. It counts the words a
 reader sees: link targets, alt text and table rules are left out.
 
 Without Node, check by hand: both files exist; every `.svg` in `diagrams/` is
-linked and parses as XML; `wc -w review.md`, which also counts table bars and
-link targets, prints 550 or less; every `Q<n>` and `ADR-NNNN` in the plan is
-in the review.
+linked and parses as XML (`xmllint --noout`, which must print nothing); every
+`Q<n>` and `ADR-NNNN` in the plan is in the review; and the review stays near
+the budget. `wc -w` also counts table bars and link targets, so it reads about
+a quarter high: up to 620 is fine.
 
 ## The review file
 
@@ -115,8 +116,9 @@ in the review.
   what was done in the past tense.
 - **Every heading stays.** A section with nothing to say gets one line, such
   as "Nothing needs your decision."
-- **`Your call` holds every `Q<n>` of the plan and no other.** Each row
-  recommends one option and says what happens with no answer.
+- **`Your call` holds every open `Q<n>` of the plan and no other.** Each row
+  gives the plan's recommendation and its default. An answered question moves
+  to "Already decided", keeping its id.
 - **Diagrams are linked files,** never inline `<svg>`: GitHub removes it.
 - **Design standard.** Hold the page and its diagrams to the `impeccable-lite`
   skill: one dominant idea, an obvious reading order, colour only for meaning.
@@ -124,7 +126,9 @@ in the review.
 
 ## After the user answers
 
-For each answer (`Q2: 1 hour`), resolve that line in `plan.md`, update the
-steps it affects, and add a dated line under `## Amendments`. On approval set
+For each answer (`Q2: 1 hour`), rewrite that line in `plan.md` as
+`- Q2: <question> -> answered <YYYY-MM-DD>: <answer>`, update the steps it
+affects, and add a dated line under `## Amendments`. An unanswered question
+takes its default the same way, marked "(default)". On approval set
 `**Status:** approved`. Then refresh `review.md` and run the check again, so
 the two files never disagree.

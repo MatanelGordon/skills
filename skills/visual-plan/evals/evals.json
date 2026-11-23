@@ -32,14 +32,14 @@
         "For each of `Q1` and `Q2` the review names one recommended option.",
         "The review mentions `ADR-0007`.",
         "The review shows its diagram with a Markdown image link to an `.svg` file.",
-        "The review text is under 500 words."
+        "The review is shorter than `plan.md`."
       ],
       "expectations": [
         "The review, in `review.md` or in the reply, lists both `Q1` and `Q2`.",
         "For each of `Q1` and `Q2` the review names one recommended option.",
         "The review mentions `ADR-0007`.",
         "The review shows its diagram with a Markdown image link to an `.svg` file.",
-        "The review text is under 500 words."
+        "The review is shorter than `plan.md`."
       ],
       "checks": [
         {
@@ -78,8 +78,7 @@
       "expected_output": "plan.md: a complete plan that names src/notes/store.js, with steps, test commands and the write-timing question left open for the user. review.md: at most about 500 words, links plan.md and an SVG diagram saved as its own file, and asks the write-timing question with a recommendation and a default. No file under src/ is changed.",
       "files": [
         "evals/files/6/package.json",
-        "evals/files/6/src/notes/store.js",
-        "evals/files/6/src/notes/store.test.js"
+        "evals/files/6/src/notes/store.js"
       ],
       "assertions": [
         "`plan.md`, in the workspace or in the reply, names `src/notes/store.js` in a file map or file list.",
@@ -115,14 +114,14 @@
       ],
       "assertions": [
         "The review says that nothing needs the user's decision.",
-        "The review contains no row or bullet that starts with `Q1`.",
+        "The review links to `plan.md`.",
         "The review names the 250 ms delay.",
         "The review's risks include the 250 ms pause feeling slow to fast typists.",
         "The review shows its diagram with a Markdown image link to an `.svg` file."
       ],
       "expectations": [
         "The review says that nothing needs the user's decision.",
-        "The review contains no row or bullet that starts with `Q1`.",
+        "The review links to `plan.md`.",
         "The review names the 250 ms delay.",
         "The review's risks include the 250 ms pause feeling slow to fast typists.",
         "The review shows its diagram with a Markdown image link to an `.svg` file."

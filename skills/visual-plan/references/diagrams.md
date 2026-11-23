@@ -68,7 +68,7 @@ per diagram. The first one always answers "what changes?".
   <path class="wire" d="M176 168 H276" marker-end="url(#arrow)"/>
   <rect class="new" x="280" y="144" width="152" height="48" rx="8"/>
   <text class="ink strong" x="356" y="165" text-anchor="middle">Rate limiter</text>
-  <text class="muted small" x="356" y="182" text-anchor="middle">5 failures, then lock</text>
+  <text class="muted small" x="356" y="182" text-anchor="middle">5 fails, then lock</text>
   <path class="wire" d="M432 168 H532" marker-end="url(#arrow)"/>
   <rect class="card" x="536" y="144" width="160" height="48" rx="8"/>
   <text class="ink" x="616" y="173" text-anchor="middle">Password check</text>
@@ -106,8 +106,10 @@ per diagram. The first one always answers "what changes?".
 7. **Say it in words too.** `<title>` names the diagram. `<desc>` is one or
    two sentences a reader could use instead of the picture. The alt text in
    the Markdown link repeats the title.
-8. **Only three entities exist:** `&amp;`, `&lt;`, `&gt;`. `&nbsp;` and other
-   named entities break the file. Quote every attribute value.
+8. **Write it as strict XML.** For special characters use `&amp;`, `&lt;`,
+   `&gt;` or a numeric reference such as `&#8594;`; `&nbsp;` and other HTML
+   names break the file. Quote every attribute value. Link with plain `href`,
+   not `xlink:href`, which needs a namespace declaration of its own.
 9. **Look at it.** Open the file in a browser, or take a headless-browser
    screenshot, when you can. Otherwise re-read the numbers: no box overlaps
    another, no label is wider than its box, and nothing lies outside the

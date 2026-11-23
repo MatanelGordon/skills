@@ -5,6 +5,7 @@ import { existsSync } from 'node:fs';
 import { extname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { findRetiredSkillReferences } from './retired-skill-references.mjs';
 import { isEntryPoint } from './entry-point.mjs';
 
 const DEFAULT_ROOT = fileURLToPath(new URL('..', import.meta.url));
@@ -227,6 +228,11 @@ export async function validateRepository(root = DEFAULT_ROOT) {
     } catch (error) {
       fail('release metadata', error.message);
     }
+  }
+
+  // A skill removed or renamed under skills/ must not still be named by a current file.
+  for (const { file, line, name } of await findRetiredSkillReferences(root, dirs)) {
+    fail(file, `line ${line} names '${name}', which is no longer a skill under skills/`);
   }
 
   const installRoot = join(root, 'install');

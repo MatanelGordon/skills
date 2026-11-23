@@ -1,0 +1,19 @@
+Orders page layouts - review session, 19 November 2026
+
+Who: 6 support agents, one at a time. Each tried all three variants, in a
+different order each time.
+Task given: "One order on this page is late. Find it and tell me the customer."
+
+Variant A (dense table, what we have today)
+  2 of 6 found it in under 10 seconds. Median 21 s. Two scrolled past it.
+
+Variant B (late orders pinned in a band on top)
+  6 of 6 found it in under 10 seconds. Median 4 s.
+
+Variant C (one card per order)
+  3 of 6 found it in under 10 seconds. Median 12 s.
+  "Too much scrolling" (said by 3 people).
+
+Afterwards all six said they preferred B.
+Asked for: keep the column sorting that A has.
+Decision in the room: go with B.

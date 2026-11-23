@@ -3,48 +3,226 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "We need to add multi-tenant support to this API - tenant-scoped auth, per-tenant rate limits, and tenant-aware queries. Plan it out before we build.",
-      "expected_output": "Skill triggers. Runs the clarity gate (goal, success signal, out of scope), investigates the code, and produces .plan/<name>/plan.md with a disjoint file map, edge-case table with statuses, verbatim test commands, and Status: draft until confirmed.",
-      "files": [],
+      "prompt": "We need to add multi-tenant support to the invoice API in the attached project (in a workspace: the folder `input/shared/invoice-api/`): tenant-scoped auth, per-tenant rate limits and tenant-aware queries. A tenant is what the code calls an organisation. The requirement is settled: it is done when a user of organisation A gets a 404 for organisation B's invoice, and A using up its rate limit leaves B unaffected. Onboarding organisations, billing and a shared rate-limit store are out of scope. Tests go in `test/` and run with `npm test`.\n\nThree agents will build it at the same time: one for auth, one for rate limits, one for queries. I'm away until tomorrow, so don't stop to ask me anything. Under the table, add a few lines on what you had to assume and anything else the three agents must know before they start.\n\nGive me only the file map of the plan: a table of every file that gets created or changed, with the columns path, change, phase and owner. No other plan sections and no code.",
+      "expected_output": "A file map table for the multi-tenant work in which every path has one owner and the piece all three agents depend on (how the organisation gets onto the request) lands in a phase before the parallel work. It moves the rate limiter behind `requireAuth` in `src/app.js` and cites ADR-0002 for taking the organisation from the token.",
+      "files": [
+        "evals/files/shared/invoice-api/src/app.js",
+        "evals/files/shared/invoice-api/src/middleware.js",
+        "evals/files/shared/invoice-api/src/db/query.js",
+        "evals/files/shared/invoice-api/src/routes/invoices.js",
+        "evals/files/shared/invoice-api/.adr/0002-organisation-from-token-claim.md"
+      ],
+      "assertions": [
+        "The reply contains a file map in which every path has exactly one owner (`src/middleware.js` and `src/app.js` are the paths most likely to have two).",
+        "In the file map, the row that puts the organisation on the request (in `requireAuth` or in a shared helper) is in an earlier phase than every row for rate limiting and every row for queries.",
+        "The reply says `rateLimit` has to be mounted after `requireAuth` in `src/app.js` (today it is mounted before it).",
+        "The reply cites `ADR-0002`."
+      ],
       "expectations": [
-        "Asks or answers the three gate questions before writing the plan",
-        "Reads actual code at the seams, not just file names",
-        "Checks .adr/ or git history for prior decisions",
-        "plan.md has a file map where no path has two phase-2 owners",
-        "Edge-case table rows each carry covered / out-of-scope / unknown",
-        "Plan is written with Status: draft and user confirmation is requested"
+        "The reply contains a file map in which every path has exactly one owner (`src/middleware.js` and `src/app.js` are the paths most likely to have two).",
+        "In the file map, the row that puts the organisation on the request (in `requireAuth` or in a shared helper) is in an earlier phase than every row for rate limiting and every row for queries.",
+        "The reply says `rateLimit` has to be mounted after `requireAuth` in `src/app.js` (today it is mounted before it).",
+        "The reply cites `ADR-0002`."
       ]
     },
     {
       "id": 2,
-      "prompt": "Fix the typo in the README - it says 'recieve' instead of 'receive'.",
-      "expected_output": "Skill does NOT produce a plan. One-file trivial change; just fix it.",
-      "files": [],
+      "prompt": "Fix the typo in the README: it says 'recieve' instead of 'receive'. The file is attached as `README.md` (in a workspace it is at `input/2/README.md`). Edit it if you can change files; otherwise reply with the corrected line.",
+      "expected_output": "The one line is corrected to 'You will receive a confirmation email within a minute.' and the reply says so in a sentence or two. No plan and no questions.",
+      "files": [
+        "evals/files/2/README.md"
+      ],
+      "assertions": [
+        "The reply, or the edited `README.md`, contains the confirmation email line with the word spelled `receive`, not `recieve`; whether the line starts with a capital letter does not matter.",
+        "The reply contains no file map and no edge-case table.",
+        "The reply proposes no plan document and no phases for this change."
+      ],
       "expectations": [
-        "No .plan/ directory is created",
-        "No planning ceremony for a one-line change"
-      ]
+        "The reply, or the edited `README.md`, contains the confirmation email line with the word spelled `receive`, not `recieve`; whether the line starts with a capital letter does not matter.",
+        "The reply contains no file map and no edge-case table.",
+        "The reply proposes no plan document and no phases for this change."
+      ],
+      "expected_skill": null
     },
     {
       "id": 3,
-      "prompt": "I want to migrate our REST endpoints to tRPC eventually. Not sure about the details yet, just thinking about it.",
-      "expected_output": "Clarity gate catches this: the ask is exploratory, not settled. The skill says this is research, not planning, and resolves goal/success/scope with the user instead of producing a confident plan.",
-      "files": [],
+      "prompt": "I want to migrate our REST endpoints to tRPC eventually. Not sure about the details yet, just thinking about it. My notes on what we have today are attached as `api-notes.md` (in a workspace it is at `input/3/api-notes.md`). Can you write the migration plan so the team has something to start from? Reply with it; don't change any code.",
+      "expected_output": "No migration plan. The reply says the request is still exploratory, and asks what observable result would count as success and what stays out of scope (the iOS app, the partner integrations) before any plan is written.",
+      "files": [
+        "evals/files/3/api-notes.md"
+      ],
+      "assertions": [
+        "The reply does not lay out the migration in phases or ordered steps (a short list of questions, or of things to find out first, does not count).",
+        "The reply asks the user what observable result would show that the migration worked.",
+        "The reply asks the user what is out of scope, for example whether the iOS app or the partner integrations stay on REST.",
+        "The reply says the request is not ready to be planned yet (for example, it calls it exploration or research)."
+      ],
       "expectations": [
-        "Does not produce a full plan for an unsettled requirement",
-        "Names what is missing: success signal and scope",
-        "Offers investigation or a conversation, not a file map"
+        "The reply does not lay out the migration in phases or ordered steps (a short list of questions, or of things to find out first, does not count).",
+        "The reply asks the user what observable result would show that the migration worked.",
+        "The reply asks the user what is out of scope, for example whether the iOS app or the partner integrations stay on REST.",
+        "The reply says the request is not ready to be planned yet (for example, it calls it exploration or research)."
       ]
     },
     {
       "id": 4,
-      "prompt": "Continue the checkout-refactor work from yesterday.",
-      "expected_output": "Looks for .plan/checkout-refactor/plan.md, finds nothing, says so rather than silently re-planning or inventing prior work, and offers to create the plan now.",
-      "files": [],
+      "prompt": "Continue the checkout-refactor work from yesterday. We got as far as writing the plan, which is attached as `plan.md` (in a workspace it is at `input/4/plan.md`; in our repo it is `.plan/checkout-refactor/plan.md`). Nothing has been built yet, and the code is not attached, so don't write any. Tell me, as a short numbered list, what happens next and in what order.",
+      "expected_output": "A short ordered list in which the user approves the draft plan before anything is built, and the plan's status line is updated as the work moves on.",
+      "files": [
+        "evals/files/4/plan.md"
+      ],
+      "assertions": [
+        "The reply points out that the plan's status is `draft`.",
+        "In the list, a step where the user approves or confirms the plan comes before any step that starts phase 1.",
+        "The reply says the plan's status line is updated from `draft` before or when phase 1 starts."
+      ],
       "expectations": [
-        "Checks for .plan/checkout-refactor/plan.md before acting",
-        "States that no plan exists rather than silently re-planning",
-        "Offers to write the plan rather than assuming yesterday's work happened"
+        "The reply points out that the plan's status is `draft`.",
+        "In the list, a step where the user approves or confirms the plan comes before any step that starts phase 1.",
+        "The reply says the plan's status line is updated from `draft` before or when phase 1 starts."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Next piece of the invoice API work; the files that matter are attached (in a workspace: the folder `input/shared/invoice-api/`). `rateLimit` in `src/middleware.js` is going to count requests per organisation instead of per client IP. It takes the organisation from `req.user.orgId` (auth is being changed separately to set that; treat it as done) and each organisation's `max` from a `limits` map, with today's `max` as the fallback. Settled: it is done when organisation A gets 429s after using up its limit while organisation B still gets through. Counters stay in process memory, and running more than one instance is out of scope. Node is not installed where you are, so nothing can be run; on my machine `npm test` passes all three existing tests in about a second. I'm out until tomorrow, so don't wait on me for anything.\n\nWrite only the test strategy section of the plan for this change. No implementation steps and no code.",
+      "expected_output": "A test strategy for the per-organisation limiter: the literal command that must pass (`npm test` or `node --test`), a list of edge cases each marked covered, out of scope or unknown (more than one instance is out of scope), and a coverage target tied to `rateLimit` in `src/middleware.js`.",
+      "files": [
+        "evals/files/shared/invoice-api/src/middleware.js",
+        "evals/files/shared/invoice-api/test/rate-limit.test.js",
+        "evals/files/shared/invoice-api/package.json"
+      ],
+      "assertions": [
+        "The test strategy lists edge cases, each one marked with a status: covered by a test, out of scope, or unknown.",
+        "At least one edge case is marked out of scope or unknown instead of covered.",
+        "The test strategy writes out the command that must pass as a literal `npm test` or `node --test` command line.",
+        "The test strategy states a coverage target together with the file or function it applies to (for example `rateLimit` in `src/middleware.js`)."
+      ],
+      "expectations": [
+        "The test strategy lists edge cases, each one marked with a status: covered by a test, out of scope, or unknown.",
+        "At least one edge case is marked out of scope or unknown instead of covered.",
+        "The test strategy writes out the command that must pass as a literal `npm test` or `node --test` command line.",
+        "The test strategy states a coverage target together with the file or function it applies to (for example `rateLimit` in `src/middleware.js`)."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "In the attached invoice API (in a workspace: the folder `input/shared/invoice-api/`), `GET /invoices` always returns up to 100 rows. Let the caller choose with `?limit=`: 50 when it is absent, anything above 200 cut down to 200, and a 400 with an error message when it is not a positive whole number. `findAll` in `src/db/query.js` already takes a `limit` option, so only `src/routes/invoices.js` needs to change. Edit the file if you can change files; otherwise reply with the new `GET /` handler in full.",
+      "expected_output": "The `GET /` handler in `src/routes/invoices.js` reads `req.query.limit`, defaults to 50, caps at 200, answers 400 for a value that is not a positive whole number, and passes the limit to `findAll`. The change is made directly, with no plan.",
+      "files": [
+        "evals/files/shared/invoice-api/src/routes/invoices.js",
+        "evals/files/shared/invoice-api/src/db/query.js"
+      ],
+      "assertions": [
+        "The new `GET /` handler, in the edited `src/routes/invoices.js` or in the reply, reads `req.query.limit`.",
+        "The handler code, in the edited `src/routes/invoices.js` or in the reply, caps the limit at 200; a description of the change without code does not count.",
+        "The handler code, in the edited `src/routes/invoices.js` or in the reply, answers 400 when `limit` is not a positive whole number; a description of the change without code does not count.",
+        "The reply contains no file map, no edge-case table and no `Status:` line."
+      ],
+      "expectations": [
+        "The new `GET /` handler, in the edited `src/routes/invoices.js` or in the reply, reads `req.query.limit`.",
+        "The handler code, in the edited `src/routes/invoices.js` or in the reply, caps the limit at 200; a description of the change without code does not count.",
+        "The handler code, in the edited `src/routes/invoices.js` or in the reply, answers 400 when `limit` is not a positive whole number; a description of the change without code does not count.",
+        "The reply contains no file map, no edge-case table and no `Status:` line."
+      ],
+      "expected_skill": null
+    },
+    {
+      "id": 7,
+      "prompt": "I'm about to hand the attached plan to three agents who will work in parallel. It is `plan.md`, and the project's `package.json` is next to it (in a workspace: the folder `input/7/`). Check the plan before I dispatch it: tell me whether it is ready, and list what has to be fixed first, quoting the line each problem is on. Leave out wording and style.",
+      "expected_output": "The plan is not ready. The reply quotes four problems: `src/checkout/totals.js` has two phase-2 owners, the `package.json` change sits with a phase-2 owner instead of phase 1, `npm run test:integration` is not a script in `package.json`, and the edge case `coupon applied twice` has no status.",
+      "files": [
+        "evals/files/7/plan.md",
+        "evals/files/7/package.json"
+      ],
+      "assertions": [
+        "The reply flags that `src/checkout/totals.js` has two owners, `p2-cart` and `p2-payment`.",
+        "The reply says the `package.json` change belongs in phase 1 instead of with `p2-payment`.",
+        "The reply states that the supplied `package.json` has no `test:integration` script; saying only that it may not exist does not count.",
+        "The reply flags that the edge case `coupon applied twice` has no status."
+      ],
+      "expectations": [
+        "The reply flags that `src/checkout/totals.js` has two owners, `p2-cart` and `p2-payment`.",
+        "The reply says the `package.json` change belongs in phase 1 instead of with `p2-payment`.",
+        "The reply states that the supplied `package.json` has no `test:integration` script; saying only that it may not exist does not count.",
+        "The reply flags that the edge case `coupon applied twice` has no status."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Yesterday, partway through phase 2 of our checkout refactor, it turned out that `p2-payment` also had to change `src/checkout/totals.js`, which the plan gives to `p2-cart`: the card surcharge has to be rounded together with everything else. We stopped both agents, had `p1-foundation` take over `totals.js` and finish it, then started the two again. The plan still shows the old split. It is attached as `plan.md` (in a workspace it is at `input/8/plan.md`; in our repo it is `.plan/checkout-refactor/plan.md`). Today is 2026-11-23. Bring the plan up to date: edit the file if you can change files, otherwise reply with every section you changed, in full.",
+      "expected_output": "The plan's file map and phase list now give `src/checkout/totals.js` to `p1-foundation`, and the plan itself gains a dated entry (under a heading such as `Amendments`) saying what changed and why: `p2-payment` needed the file too.",
+      "files": [
+        "evals/files/8/plan.md"
+      ],
+      "assertions": [
+        "The updated plan contains a section that records changes made to the plan (headed `Amendments`, `Change log` or similar).",
+        "That section has an entry dated 2026-11-22 or 2026-11-23.",
+        "The amendment entry names the card surcharge or `p2-payment` as the reason for the change."
+      ],
+      "expectations": [
+        "The updated plan contains a section that records changes made to the plan (headed `Amendments`, `Change log` or similar).",
+        "That section has an entry dated 2026-11-22 or 2026-11-23.",
+        "The amendment entry names the card surcharge or `p2-payment` as the reason for the change."
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "I have four coding agents free this afternoon. The job, in the attached invoice API (in a workspace: the folder `input/shared/invoice-api/`): soft delete for invoices. That is a `DELETE /invoices/:id` route that sets `deleted_at`, `findAll` and `findById` in `src/db/query.js` skipping rows where `deleted_at` is set, and tests for both in `test/`. It is settled and nothing else is in scope. Split it across the four agents and tell me who owns which files. Just the split, no code. I'm offline until tomorrow, so don't wait on me for anything.",
+      "expected_output": "The reply advises against four agents: the job is two source files and their tests, and the route depends on the query change, so one agent does it in order. It gives no four-way ownership table.",
+      "files": [
+        "evals/files/shared/invoice-api/src/routes/invoices.js",
+        "evals/files/shared/invoice-api/src/db/query.js",
+        "evals/files/shared/invoice-api/package.json"
+      ],
+      "assertions": [
+        "The reply recommends that one agent (or one session) does the whole job.",
+        "The reply contains no file map or list that gives different files to two or more agents working in parallel.",
+        "The reply gives a reason tied to this job: the small number of files it touches, or that the route change depends on the `src/db/query.js` change."
+      ],
+      "expectations": [
+        "The reply recommends that one agent (or one session) does the whole job.",
+        "The reply contains no file map or list that gives different files to two or more agents working in parallel.",
+        "The reply gives a reason tied to this job: the small number of files it touches, or that the route change depends on the `src/db/query.js` change."
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "We're adding a CSV export to the invoice API (project attached; in a workspace: the folder `input/shared/invoice-api/`). `GET /invoices/export.csv` returns every invoice that matches the same `status` filter as the list route, as a download. Settled: it is done when finance can open the file in Excel and its row count equals what the list route reports for the same filter. Other formats, scheduled exports and emailing the file are out of scope. One thing nobody knows is how many invoices the biggest export will hold; `findAll` reads every row into memory.\n\nIt is several files' work for one person, and someone who was not in this conversation will pick it up next week. I'm away until tomorrow, so don't stop to ask me anything.\n\nWrite only the top part of the plan document: everything that comes before the list of files. Leave out the file list, the steps and the tests; I'll ask for those next.",
+      "expected_output": "The opening of a plan named in short hyphenated form (such as `invoice-csv-export`), with a status line reading `draft`, the goal with its success signal, the out-of-scope list and the unknown export size, plus a statement that nothing is built until the user approves the plan.",
+      "files": [
+        "evals/files/shared/invoice-api/src/routes/invoices.js",
+        "evals/files/shared/invoice-api/src/db/query.js",
+        "evals/files/shared/invoice-api/package.json"
+      ],
+      "assertions": [
+        "The plan text has a status line that reads `draft`.",
+        "The reply says nothing is to be built until the user has approved the plan."
+      ],
+      "expectations": [
+        "The plan text has a status line that reads `draft`.",
+        "The reply says nothing is to be built until the user has approved the plan."
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "Plan adding due dates to the invoice API in the attached project (in a workspace: the folder `input/shared/invoice-api/`): every invoice gets a `due_on` date set to 30 days after creation, and `GET /invoices?overdue=true` lists the invoices past their due date. Settled: it is done when an invoice created today shows up in the overdue list 31 days from now and not before. Reminders and late fees are out of scope. One question is my call, not yours: whether `due_on` may be changed after the invoice is created.\n\nI will not read the whole plan; I approve plans from a short version. Write the plan into `.plan/` if you can write files; otherwise give everything you would write, in full, in your reply. Do not build anything.",
+      "expected_output": "A plan with a `draft` status and, beside it, a short document for the user that links the plan, shows an SVG diagram file, and asks whether `due_on` may change under the same id the plan gives that question (such as `Q1`), with a recommendation and a default.",
+      "files": [
+        "evals/files/shared/invoice-api/src/routes/invoices.js",
+        "evals/files/shared/invoice-api/src/db/query.js",
+        "evals/files/shared/invoice-api/package.json"
+      ],
+      "assertions": [
+        "Besides the plan itself, the output includes a second, shorter document written for the user to approve from.",
+        "The shorter document shows a diagram as a Markdown image link to an `.svg` file.",
+        "The question whether `due_on` may be changed after creation carries the same id, such as `Q1`, in the plan and in the shorter document.",
+        "The shorter document links to the plan file."
+      ],
+      "expectations": [
+        "Besides the plan itself, the output includes a second, shorter document written for the user to approve from.",
+        "The shorter document shows a diagram as a Markdown image link to an `.svg` file.",
+        "The question whether `due_on` may be changed after creation carries the same id, such as `Q1`, in the plan and in the shorter document.",
+        "The shorter document links to the plan file."
       ]
     }
   ]

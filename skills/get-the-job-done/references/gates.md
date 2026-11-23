@@ -108,17 +108,22 @@ CHECK: ! ./cli import --file /nonexistent 2>/dev/null
 ```
 
 **Nothing still names what was removed or renamed** — search every spelling,
-leave out history files and the gates file (it names the old name too), and
-look for links left pointing at nothing:
+leave out history files and the gates files (they name the old name too), and
+look for links into the repo left pointing at nothing:
 
 ```
-CHECK: ! git grep --untracked -nIw -e 'old-name' -e 'old_name' -- . ':!CHANGELOG.md' ':!.plan/' ':!.adr/' ':!GATES.md'
-CHECK: ! find ~/.claude/skills ~/.codex/skills ~/.copilot/skills ~/.agents/skills -maxdepth 1 -type l ! -exec test -e {} \; -print 2>/dev/null | grep .
+CHECK: git grep --untracked -nIw -e 'old-name' -e 'old_name' -- . ':!*CHANGELOG.md' ':!.plan/' ':!.adr/' ':!GATES.md' ':!gates/'; test $? -eq 1
+CHECK: ! find -H ~/.claude/skills ~/.codex/skills ~/.copilot/skills ~/.agents/skills ~/.tabnine/agent/skills ~/.claude/agents -maxdepth 1 -type l -lname "$PWD/*" ! -exec test -e {} \; -print 2>/dev/null | grep .
 ```
 
-A repo search does not reach installed copies or the user's own rules and
-memory files. Search those too; a hit you may not edit goes in the report with
-its path, not into a gate that can never pass.
+`git grep` exits 1 for no match and 128 for an error, so `test $? -eq 1` passes
+only on a clean search; a leading `!` would turn "not a git repository" into a
+pass. `-w` treats `-` as a word boundary, so `old-name-two` is a hit too.
+`find -H` follows an agent folder that is itself a link, and `-lname "$PWD/*"`
+keeps links that point somewhere else out of the gate (run it from the repo
+root, as the checker is). A repo search does not reach installed copies or the
+user's own rules and memory files. Search those too; a hit you may not edit
+goes in the report with its path, not into a gate that can never pass.
 
 **Nothing regressed elsewhere** — the blunt one, and often the right one:
 

@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
+import { mkdir, mkdtemp, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 import {
   compilePattern,
@@ -233,4 +235,38 @@ test('parseArgs refuses a call it cannot act on', () => {
   assert.throws(() => parseArgs([]), /run folder/);
   assert.throws(() => parseArgs(['runs/a', '--cases']), /--cases needs a path/);
   assert.throws(() => parseArgs(['runs/a', '--josn']), /unknown flag '--josn'/);
+});
+
+test('a case with reply checks and no trajectory checks shows its source column as n/a', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'planning-eval-test-'));
+  await writeRun(root, [['with-skill', '6__aaaaaaa', goodRun]]);
+  const casesPath = join(root, 'evals.json');
+  const { trajectory_checks: _dropped, ...replyChecksOnly } = planningCase;
+  await writeFile(casesPath, JSON.stringify({ skill_name: 'adr', evals: [replyChecksOnly] }));
+
+  const report = await scoreRun(root, { casesPath });
+
+  assert.equal(report.summary.totals['with-skill'].consultable, 0);
+  assert.match(renderMarkdown(report), /\| 6 \| with-skill \| 1 \| 1\/1 \| n\/a \| 1\/1 \|/);
+});
+
+test('the command prints its table when started through a symlink', { skip: process.platform === 'win32' }, async () => {
+  const root = await mkdtemp(join(tmpdir(), 'planning-eval-test-'));
+  await writeRun(root, [['with-skill', '6__aaaaaaa', goodRun]]);
+  const link = join(root, 'score-link.mjs');
+  await symlink(fileURLToPath(new URL('./score.mjs', import.meta.url)), link);
+
+  const result = spawnSync(process.execPath, [link, root], { encoding: 'utf8' });
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /\| 6 \| with-skill \| 1 \|/);
+});
+
+test('the command exits 2 with the usage line when given nothing to score', () => {
+  const script = fileURLToPath(new URL('./score.mjs', import.meta.url));
+
+  const result = spawnSync(process.execPath, [script], { encoding: 'utf8' });
+
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /Usage: node tools\/planning-eval\/score\.mjs/);
 });

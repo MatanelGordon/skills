@@ -32,6 +32,25 @@ the fact.
 Patterns are regular expressions that mean the same in Python and JavaScript.
 A leading `(?i)` is allowed; no other inline flag.
 
+`evals/config.yml` also sets `SLASH_COMMAND_TOOL_CHAR_BUDGET`. Claude Code
+drops descriptions from its skill listing once the listing passes a character
+budget, and in the evaluation container the bundled skills use that budget up.
+Without the setting the skill under test is listed by name alone, and "did the
+agent load it" measures the name, not the description.
+
+### Writing a new planted-fact case
+
+- The token in the reply check must be knowable only by finding the fact. Grep
+  the fixture for it: it should appear in the one place the fact lives in (and
+  in code that already uses it, if the fact is "this exists").
+- It must not appear in the prompt (`datasets.test.mjs` fails if it does) or
+  in the skill's own `SKILL.md`. A decision record numbered like the skill's
+  worked example can be cited by an agent that never opened it.
+- Prefer a token to a phrase. A phrase the agent could arrive at by reading
+  the code next to the planted spot is not a planted fact.
+- Ask for a plan that names the files it touches. A small model otherwise
+  answers from general knowledge without opening the repository, in both arms.
+
 ## Running it
 
 SkillEvaluator needs Docker and a model provider. The commands below use the
@@ -54,9 +73,22 @@ se.sh tier3 evaluate "$stage" --agents claude-code --agent-model claude-code=<mo
 node tools/planning-eval/score.mjs /tmp/planning-eval/results/adr/<run-id>
 ```
 
+That gives two conditions: the skill not installed, and the skill installed.
+A third separates "the agent did not load the skill" from "the skill text did
+not help": put `/<skill> ` in front of each staged prompt, which makes Claude
+Code load the skill itself, and run the with-skill arm alone.
+
+```bash
+jq '.evals |= (map(select(.id == 5 or .id == 6)) | map(.prompt = "/adr " + .prompt))' \
+  skills/adr/evals/evals.json > "$stage/evals/evals.json"
+se.sh tier3 evaluate "$stage" ... --skip-baseline
+```
+
+Never commit a prompt that names the skill: the baseline arm cannot follow it.
+This is a measuring device for a staged copy.
+
 To compare two versions of a skill, stage each `SKILL.md` with the same
-`evals/` and run step 2 for both. `--skip-baseline` reruns the with-skill arm
-alone.
+`evals/` and run the with-skill arm for both.
 
 To score a finished run against newer checks, without paying for the agent
 again:
@@ -86,6 +118,9 @@ node tools/planning-eval/score.mjs <run-dir> --cases skills/adr/evals/evals.json
   place of it: the full row is what installing the skill gets you.
 - **Source opened** counts attempts where a tool call named the place the fact
   lives in. An attempt can open the source and still not reflect the fact.
+  The skills' own first commands (`ls .adr/`, `test -f .memory/index.md`) count,
+  so expect this column to be higher with the skill; that is what it is for.
+  It reads `n/a` for a case without `trajectory_checks`.
 - An attempt with no reply or no trajectory is **invalid** and left out of the
   rates. Rerun it.
 - `file_exists` checks need the container, so the scorer skips them and says

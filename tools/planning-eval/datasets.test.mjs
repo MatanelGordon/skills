@@ -27,20 +27,23 @@ const replyPatterns = (evalCase) => (evalCase.checks ?? [])
 const tracePatterns = (evalCase) => (evalCase.trajectory_checks ?? []).map((check) => check.pattern);
 const label = (skill, evalCase) => `${skill} case ${evalCase.id}`;
 
-test('every check pattern in the repository compiles for the scorer', async () => {
-  for (const { skill, cases } of await datasets()) {
-    for (const evalCase of cases) {
-      for (const pattern of [...replyPatterns(evalCase), ...tracePatterns(evalCase)]) {
-        assert.doesNotThrow(() => compilePattern(pattern), `${label(skill, evalCase)}: ${pattern}`);
-      }
-    }
-  }
-});
+// These tests cover planted-fact cases only: the ones that carry `trajectory_checks`.
+// Other cases and other skills are free to use checks this scorer does not read.
 
 test('some skill carries planted-fact cases', async () => {
   const planted = (await datasets()).flatMap(({ cases }) => cases.filter((evalCase) => evalCase.trajectory_checks));
 
   assert.ok(planted.length > 0, 'no case has trajectory_checks; the tests below would pass on nothing');
+});
+
+test('every pattern of a planted-fact case compiles for the scorer', async () => {
+  for (const { skill, cases } of await datasets()) {
+    for (const evalCase of cases.filter((candidate) => candidate.trajectory_checks)) {
+      for (const pattern of [...replyPatterns(evalCase), ...tracePatterns(evalCase)]) {
+        assert.doesNotThrow(() => compilePattern(pattern), `${label(skill, evalCase)}: ${pattern}`);
+      }
+    }
+  }
 });
 
 test('a planted-fact case names the fact with a reply check', async () => {

@@ -12,7 +12,8 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+
+import { isEntryPoint } from '../../install/entry-point.mjs';
 
 const ARMS = Object.freeze(['with-skill', 'without-skill']);
 const LOADED_ONLY = 'with-skill, loaded';
@@ -98,14 +99,18 @@ export function scoreTrial({ trajectory, evalCase, skillName, arm }) {
   };
 }
 
-const emptyCount = () => ({ scored: 0, invalid: 0, factsReflected: 0, sourceConsulted: 0, loaded: 0 });
+const emptyCount = () => ({
+  scored: 0, invalid: 0, factsReflected: 0, consultable: 0, sourceConsulted: 0, loaded: 0,
+});
 
+// `consultable` counts the scored attempts whose case says where its fact lives.
 const addTrial = (count, trial) => (trial.status === 'invalid'
   ? { ...count, invalid: count.invalid + 1 }
   : {
     ...count,
     scored: count.scored + 1,
     factsReflected: count.factsReflected + (trial.factsReflected ? 1 : 0),
+    consultable: count.consultable + (trial.sourceConsulted === null ? 0 : 1),
     sourceConsulted: count.sourceConsulted + (trial.sourceConsulted ? 1 : 0),
     loaded: count.loaded + (trial.loaded ? 1 : 0),
   });
@@ -191,9 +196,12 @@ export async function scoreRun(runDir, { casesPath } = {}) {
 
 const ratio = (count, of) => `${count}/${of}`;
 
+const NOT_APPLICABLE = 'n/a';
+
 function row(label, arm, count) {
-  const loaded = arm === 'without-skill' ? 'n/a' : ratio(count.loaded, count.scored);
-  return `| ${label} | ${arm} | ${count.scored} | ${loaded} | ${ratio(count.sourceConsulted, count.scored)} | ${ratio(count.factsReflected, count.scored)} |`
+  const loaded = arm === 'without-skill' ? NOT_APPLICABLE : ratio(count.loaded, count.scored);
+  const opened = count.consultable ? ratio(count.sourceConsulted, count.consultable) : NOT_APPLICABLE;
+  return `| ${label} | ${arm} | ${count.scored} | ${loaded} | ${opened} | ${ratio(count.factsReflected, count.scored)} |`
     + (count.invalid ? ` ${count.invalid} invalid |` : '');
 }
 
@@ -263,7 +271,7 @@ async function main(args) {
   console.log(asJson ? JSON.stringify(reports, null, 2) : reports.map(renderMarkdown).join('\n'));
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+if (isEntryPoint(import.meta.url)) {
   main(process.argv.slice(2)).catch((error) => {
     console.error(error.message);
     if (error instanceof UsageError) console.error(USAGE);

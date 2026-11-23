@@ -1,0 +1,21 @@
+diff --git a/src/cli.ts b/src/cli.ts
+--- a/src/cli.ts
++++ b/src/cli.ts
+@@ -12,7 +12,7 @@ export function buildCli(): Command {
+   return new Command('shipit')
+     .argument('<target>', 'environment to deploy to')
+-    .option('--dry', 'print the plan without deploying')
++    .option('--preview', 'print the plan without deploying')
+     .option('--yes', 'skip the confirmation prompt')
+     .action(runDeploy);
+ }
+diff --git a/test/cli.test.ts b/test/cli.test.ts
+--- a/test/cli.test.ts
++++ b/test/cli.test.ts
+@@ -20,8 +20,8 @@ describe('shipit', () => {
+-  it('prints the plan with --dry', async () => {
+-    const out = await run(['staging', '--dry']);
++  it('prints the plan with --preview', async () => {
++    const out = await run(['staging', '--preview']);
+     expect(out).toContain('Plan for staging');
+   });

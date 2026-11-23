@@ -59,6 +59,11 @@ conflict: interactive installs can move it to a timestamped backup first;
 noninteractive installs keep it in place, report the conflict, and exit
 nonzero.
 
+A link into this repo whose target is gone, because a skill was removed or
+renamed here, is pruned by the next `install` or `uninstall`, which prints each
+one. Nothing else is removed: not a real folder, not a live link, not a link
+anywhere else.
+
 **Non-interactive.** For when you're in a hurry, or scripting it:
 
 ```bash
@@ -403,8 +408,10 @@ npm run validate
 
 These exercise the installer, validator, package contents, and eval harness,
 then check the subtle repository invariants: unbalanced code fences, literal
-escape characters, script syntax, eval schemas, README coverage, and aligned
-release metadata. CI runs them across Node 18/20/22 on Linux, macOS, and
+escape characters, script syntax, eval schemas, README coverage, aligned
+release metadata, and any current file that still names a skill removed or
+renamed under `skills/` (git history says which; `CHANGELOG.md`, `.plan/` and
+`.adr/` are exempt). CI runs them across Node 18/20/22 on Linux, macOS, and
 Windows.
 
 Eval JSON is executable rather than decorative. Provide any candidate and

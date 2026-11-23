@@ -203,6 +203,35 @@ below, one section each, in merge order.
   are retired and their ids are not reused: `adr` 2 and 3, `bookkeeper` 2,
   `research-first` 2, `confidence-ranker` 1 and 3.
 
+### Removal and rename sweeps (#12)
+
+- **Removing or renaming something now includes sweeping for what still names
+  it.** `get-the-job-done` gains a rule: a removal or rename is not done until
+  a sweep gate passes (a search that must come back empty outside history
+  files) and every hit is fixed or listed for the user with its path. The sweep
+  covers the repo (README tables, SVG text, eval cases, tests, other skills,
+  CI, the installer), installed copies and links in every agent folder, and the
+  user's own rules and memory. "It will dangle" is named as an anti-pattern.
+  Four new eval cases (16 to 19): a removal, a flag rename, an agent report
+  with dangling leftovers, and a negative case.
+- `npm run validate` now fails when a current file names a skill that used to
+  be under `skills/` and is not any more: by path (`skills/name`,
+  `../name/SKILL.md`) anywhere, and a hyphenated name in any form. A
+  single-word name (the retired `rank`) counts only as a path or, in docs, a
+  `[rank](…)` link, because `` `rank` `` and **rank** are ordinary words there;
+  that is the one form the check misses. Retired names come from git
+  history, so committed and uncommitted removals and the old side of a rename
+  are all caught with no list to maintain. `CHANGELOG.md` files, `.plan/` and `.adr/` are exempt. CI now checks
+  out with full history, which the check needs, and a shallow clone under CI is
+  reported instead of passing silently.
+- `npm run install-skills` (and `uninstall`) prune links in the chosen agent
+  folders that point into this repo's `skills/` or `agents/` and whose target
+  is gone, printing each one. A real file or folder, a live link, a link
+  elsewhere, and a target that exists but cannot be read are never touched.
+  `doctor` now says so for such links. Running `install` from a branch that
+  lacks a skill prunes that skill's link; installing again from the branch
+  that has it restores it.
+
 ### Routing fixes
 
 - **Folded `tui-builder` into `terminal-ux`.** A 30B model sent seven of

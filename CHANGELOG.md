@@ -25,6 +25,13 @@
   `expected_skill: null`). Cases that only made sense in an empty repository
   are retired and their ids are not reused: `adr` 2 and 3, `bookkeeper` 2,
   `research-first` 2, `confidence-ranker` 1 and 3.
+- **Measured, and no skill text changed.** On `nvidia/nemotron-3-nano-30b-a3b`
+  as a Claude Code agent, none of the four skills changed the plan: installed,
+  none loaded on a planning prompt (0 of 23 attempts); loaded by a slash
+  command, they found the planted fact in 2 of 24 attempts, as often as the
+  agent did without them. A body change was tried for each skill against its
+  observed failure and measured the same way; none passed the bar set in
+  advance, so none ships. Figures and raw output are in the pull request.
 
 ## 1.22.1 — 2026-11-21
 

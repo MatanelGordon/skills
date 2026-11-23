@@ -17,7 +17,10 @@
   precondition of an approved `deep-plan` plan. Everything about running a
   single worker now lives only in `cli-coding-subagents`.
 - Workers get a git worktree automatically whenever the project is a git
-  repository. `wt.sh` exits 4 outside one, and the skill says what to do then.
+  repository. `wt.sh` exits 4 outside one, and the skill says what to do then
+  (in the new `references/worktrees.md`, with the `wt.sh` exit-code recovery).
+- Both `SKILL.md` files stay under 16,000 characters, the read cap OpenClaw
+  applies below 100K tokens of context; the old OpenRouter skill was 19,329.
 - Added `wt.sh rundir <name>`: a place for the prompts, logs and status files
   of a run that has no plan directory, beside the worktrees and outside the
   repository (in the project's `.sa-runs/` when there is no git).
@@ -30,8 +33,8 @@
 - The installed skill is located by one resolver block that accepts a copy
   only when all six helpers are executable. The shorter form used by two of the
   three skills took the first directory that existed.
-- Added `skills/cli-coding-subagents/tests/scripts.test.mjs`: 17 tests over the
-  helpers' exit codes and the resolver block.
+- Added `skills/cli-coding-subagents/tests/scripts.test.mjs`: 23 tests over the
+  helpers' exit codes, the capability and wallet checks, and the resolver block.
 - Rewrote both eval sets in the eval standard. `parallel-build`'s cases were
   whole builds that no agent finished; each is now one step with its inputs
   supplied as fixtures.

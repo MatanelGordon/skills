@@ -1,0 +1,21 @@
+{
+  "name": "catalog-sync",
+  "version": "1.14.2",
+  "private": true,
+  "description": "Keeps the storefront catalog in step with the supplier's stock system",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "import": "node src/importer/run.js",
+    "test": "node --test test/unit",
+    "test:integration": "node --test test/importer.integration.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "odbc": "^2.4.8",
+    "pg": "^8.11.5"
+  }
+}

@@ -1,0 +1,7 @@
+schema_version: 1
+
+harbor:
+  # Every case starts inside the fixture checkout, the way an agent is started
+  # at the root of a real repository.
+  agent_workdir: /srv/partner-reports
+  custom_dockerfile_mode: preserve

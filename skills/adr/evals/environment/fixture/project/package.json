@@ -1,0 +1,19 @@
+{
+  "name": "orders-api",
+  "version": "2.7.0",
+  "private": true,
+  "description": "Order intake for the storefront",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "amqplib": "^0.10.4",
+    "express": "^4.19.2",
+    "pg": "^8.11.5"
+  }
+}

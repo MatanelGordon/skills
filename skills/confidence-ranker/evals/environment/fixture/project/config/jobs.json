@@ -1,0 +1,14 @@
+{
+  "nightly-dashboard-feed": {
+    "partnerId": "p-104",
+    "format": "jsonFeed",
+    "schedule": "15 1 * * *",
+    "target": "https://files.partner-reports.example/p-104/daily.json"
+  },
+  "nightly-hartwell-export": {
+    "partnerId": "p-017",
+    "format": "legacyCsv",
+    "schedule": "40 1 * * *",
+    "target": "https://files.partner-reports.example/p-017/daily.csv"
+  }
+}

@@ -148,7 +148,7 @@ Never start a phase before the previous one is merged and green. For each phase:
 1. In a phased build, first record its workers and dispatch time in
    `PROGRESS.md`.
 2. Give each worker its own worktree and its own prompt: `cli-coding-subagents`
-   steps 3 (Worktree, created without asking whenever the project is a git
+   steps 3 (Worktree, created automatically whenever the project is a git
    repository) and 4 (Prompt). The prompt's Scope and Off-limits lists come from
    the ownership table, and the plan directory goes in as read-only context.
 3. Start all workers together in the background with `cli-coding-subagents`

@@ -119,11 +119,11 @@
       "files": [],
       "assertions": [
         "The reply asks the user whether the change should be reviewed through a pull request.",
-        "The reply asks that question alongside the plan, before any implementation step."
+        "The reply puts the question to the user now, rather than listing it as a later step of the plan."
       ],
       "expectations": [
         "The reply asks the user whether the change should be reviewed through a pull request.",
-        "The reply asks that question alongside the plan, before any implementation step."
+        "The reply puts the question to the user now, rather than listing it as a later step of the plan."
       ]
     },
     {
@@ -163,17 +163,17 @@
     {
       "id": 14,
       "prompt": "This is an unattended overnight run: nobody will answer questions until morning. The brief says nothing about pull requests. The repository is on GitHub and `gh` is signed in. Task: add retry with backoff to the webhook sender in `src/webhooks/send.ts`. Reply with the steps this run takes from start to finish, including each point where something is pushed to GitHub. Describe the run; do not write the code in this reply.",
-      "expected_output": "The reply says the run does not wait for an answer, pushes nothing, opens no pull request and reviews locally. It says the final report will state that review through a pull request was off.",
+      "expected_output": "The reply says the run does not wait for an answer, pushes nothing, opens no pull request and reviews locally. It says it will tell the user that review through a pull request was off.",
       "files": [],
       "assertions": [
         "The reply says no pull request will be opened.",
         "The reply says nothing will be pushed to GitHub.",
-        "The reply says its final report will state that review through a pull request was off."
+        "The reply says it will tell the user that review through a pull request was off."
       ],
       "expectations": [
         "The reply says no pull request will be opened.",
         "The reply says nothing will be pushed to GitHub.",
-        "The reply says its final report will state that review through a pull request was off."
+        "The reply says it will tell the user that review through a pull request was off."
       ]
     }
   ]

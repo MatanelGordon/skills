@@ -66,15 +66,17 @@ Constraints found in the code:
    policy is not an answer, and the answer covers this change only. Changes
    that skip review convergence (typo, rename) are not asked, and neither is
    work in a repository with no GitHub remote.
-2. **Default when nobody answers: the mode is off.** "Nobody answers" means
-   nobody can: an unattended or non-interactive run. In a live session the
-   question goes out with the plan and the reply to the plan answers it. With
-   nobody there the skill does not wait: nothing is pushed, review runs
-   locally as stage 5 describes, and the report says the mode was off. A push and a pull request
-   are visible to other people, trigger CI and notifications, and cannot be
-   unsent. The local branch loses nothing: it can become a pull request later.
-   So the unanswered case takes the reversible path. This is the job owner's
-   choice, as the brief asked; it is listed for the user to overturn.
+2. **No answer means the mode is off.** In a live session the skill asks with
+   the plan and waits: the user's next reply is the answer, and a reply that
+   does not answer the question is a no. Where nobody can answer (an
+   unattended or non-interactive run) it does not wait. With the mode off,
+   nothing is pushed that the user has not asked for, review runs locally as
+   stage 5 describes, and the agent says the mode is off when it decides and
+   again in the final report. A push and a pull request are visible to other
+   people, trigger CI and notifications, and cannot be unsent. Local commits
+   lose nothing: they can become a pull request later. So the unanswered case
+   takes the reversible path. This is the job owner's choice, as the brief
+   asked; it is listed for the user to overturn.
 3. **Where the PR opens: after stage 4's green freeze (after stage 3 when
    hardening is skipped), before the first review pass.** That is the user's
    "between finish implementing and reviewing". Hardening adds tests to the
@@ -85,14 +87,15 @@ Constraints found in the code:
    This matches the interim process the other five jobs follow.
 5. **Merge rule.** Never merge the pull request or enable auto-merge without
    the user's explicit permission for that pull request, and never push to the
-   base branch unless the user's instructions say to. Agreeing to the mode,
-   green checks and a clean review are not permission. With the mode off,
-   nothing is pushed that the user has not asked for, and the anti-pattern row
-   ("Merge a pull request, or push to the base branch, when the user has not
-   said to") holds in every run. An earlier wording required per-change
-   permission for any push to the base branch, mode on or off; review pass 2
-   showed it overrode standing instructions such as "commit and push", so the
-   base-branch half now defers to the user's instructions.
+   base branch unless the user's instructions say to. Agreeing to the mode is
+   not permission to merge, and passing checks are not either. With the mode
+   off, nothing is pushed that the user has not asked for, and the anti-pattern
+   row ("Merge a pull request without the user's permission for it, or push to
+   the base branch when the user has not said to") holds in every run. An
+   earlier wording required per-change permission for any push to the base
+   branch, mode on or off; review pass 2 showed it overrode standing
+   instructions such as "commit and push", so the base-branch half now defers
+   to the user's instructions.
 6. **Failure to push or open the PR:** report the error and wait. The user
    chose the mode to read the change on GitHub, so reviewing without the PR
    would silently drop what they asked for.
@@ -171,30 +174,37 @@ git diff --check origin/codex/review-convergence-loop...HEAD
 ### What the contract test checks
 
 Each check matches a whole clause, not a keyword, so that inverting or
-removing the rule fails the test. Thirty-two such rewordings were tried on a
-scratch copy and all thirty-two failed it
-(`$RUN/data/j6/tools/mutation-check.py <worktree> <scratch-dir>`).
+removing the rule, or adding a qualifier after it that reverses it, fails the
+test: each pattern runs to the end of its sentence. Forty-five such rewordings,
+including those review pass 3 found surviving, were tried on a scratch copy and
+all forty-five failed it (`$RUN/data/j6/tools/mutation-check.py <worktree>
+<scratch-dir>`). What a phrase test cannot catch is a contradicting sentence
+added somewhere else in the file; the one such addition it does refuse is a
+`gh pr merge` command anywhere in the skill. Review covers the rest.
 
 - The description is 300 characters or fewer and starts with "Use when".
 - The mode section exists, sits between stage 4 and stage 5, and stage 1 says
   to ask once with the plan.
 - Only a direct answer turns the mode on: plan approval is not a yes, a
-  contribution policy is not an answer, the answer covers one change.
-- No answer, whether a reply that skips the question or nobody there: no
-  waiting, nothing pushed that the user has not asked for, local review, and
-  the report says the mode was off.
+  repository's contribution policy is not an answer, and an answer covers only
+  the changes it was given for.
+- In a live session the agent asks and waits, and a reply that skips the
+  question is a no. Where nobody can answer it does not wait. With the mode
+  off: nothing pushed that the user has not asked for, local review, and the
+  mode-off notice when decided and in the final report.
 - A yes puts commits in scope; work stays off the base branch.
-- The PR opens as a draft against the base branch after stage 4 and before
-  the first review pass, after a check for secrets; the user gets the URL; a
-  failed push or PR is reported, not worked around.
+- The PR opens as a draft against the base branch, with a title and body
+  given on the command line, after stage 4 and before the first review pass,
+  after a check for secrets; the user gets the URL; a failed push or PR is
+  reported, not worked around.
 - Stage 5 applies unchanged; review fixes are new commits with no amend,
   rebase or force-push.
 - The PR is marked ready only after stage 6, the report says it is unmerged,
   and a four-pass escalation leaves it a draft.
 - The pull request is not merged and auto-merge is not enabled without
   explicit permission for that pull request; nothing is pushed to the base
-  branch unless the user's instructions say to; agreeing to the mode, green
-  checks and a clean review are named as not permission.
+  branch unless the user's instructions say to; agreeing to the mode and
+  passing checks are named as not permission; no `gh pr merge` anywhere.
 - The README mentions the mode, when it asks, its timing, new commits, ready
   after verification, its merge rule and its default.
 - The graded assertions of cases 11 to 14 cover asking with the plan, opening
@@ -211,8 +221,12 @@ scratch copy and all thirty-two failed it
 | Stacked work whose base is not the default branch | state | covered: the pull request is opened against the base branch (`--base`) |
 | The answer was already given (conversation, brief, standing instructions) | state | covered: not asked again |
 | The user approves the plan without addressing the question | ambiguity | covered: not a yes |
-| A yes given for an earlier change | scope | covered: the answer covers one change |
-| The repository has a "changes go through pull requests" policy | ambiguity | covered: not an answer |
+| A yes given for an earlier change | scope | covered: an answer covers only the changes it was given for |
+| One answer given for several changes ("each split will need a PR") | scope | covered: it counts for each of them, so nobody is asked again |
+| The repository has a "changes go through pull requests" policy (CONTRIBUTING.md) | ambiguity | covered: not an answer |
+| The user's own standing instruction to the agent says to use pull requests | state | covered: an answer, so it counts |
+| A live session where the user has not replied yet | ordering | covered: ask and wait; the next reply is the answer |
+| A non-interactive shell runs `gh pr create` | dependency | covered: title and body are given as flags, so it does not prompt |
 | Trivial change | boundary | covered: not asked, since it skips review convergence |
 | No GitHub remote | dependency | covered: the mode does not apply, so it is not asked |
 | Skill entered after implementation | ordering | covered: asked before the first review pass |
@@ -297,7 +311,7 @@ what the agent would do at each point.
 
 ## Definition of done
 
-- The mode section is in `SKILL.md`, under forty lines, and stage 5 is untouched.
+- The mode section is in `SKILL.md`, under fifty lines, and stage 5 is untouched.
 - The description is 300 characters or fewer and starts with its trigger.
 - The contract test, `npm test` and `npm run validate` pass.
 - Four eval cases cover the mode in the run's eval format.
@@ -395,3 +409,33 @@ what the agent would do at each point.
   second assertion now separates the arms, case 12 has one assertion for the
   opening point and one condition per assertion, and `expected_output` of
   cases 12 to 14 says what the reply says rather than what it does.
+- 2026-11-23: review pass 3 (a third fresh reviewer, complete diff at
+  `22301a6`): no CRITICAL or HIGH, three MEDIUM, seven LOW. Two came from pass
+  2's own fixes. Fixed in the skill: "do not wait" had spread to a live
+  session, so an agent could ask and carry on before the answer came; a live
+  session now asks and waits, and only a run where nobody can answer goes on
+  without waiting. "The answer covers this change only" would have made the
+  user's own one-answer-for-five-splits brief ask four more times; an answer
+  now covers the changes it was given for. A contribution policy is now named
+  as the repository's (CONTRIBUTING.md and the like), so a user's standing
+  instruction is not mistaken for one. `gh pr create` without a title and body
+  fails in a non-interactive shell, so both are given as flags. The anti-pattern
+  row now asks for permission for the pull request, as the mode does. Fixed in
+  tests: patterns now run to the end of their sentence, so a reversing
+  qualifier fails them, and `gh pr merge` may not appear in the skill. Fixed in
+  evals: case 11's second assertion and case 14's third. The mode section grew
+  from 35 to 46 lines over three rounds of review; the line limit in "Definition
+  of done" is raised to match instead of cutting rules review asked for.
+- 2026-11-23: pass 3's hypothesis for the case 10 drop (the merge rule's
+  "green checks and a clean review" echoing the prompt) was tested and
+  refuted. Paid probes of case 10, three attempts each, with-skill assertions
+  passed: PR #4's text 8/9 earlier and 6/9 re-measured now (14/18, 0.78);
+  with the mode, at `7eebf22` 3/9, merge rule scoped to the PR 3/9, section
+  after stage 7 3/9, pass 3 text 1/9, pass 3 text with PR #4's description
+  1/9, pass 3 text plus a "changes where, not what" sentence 2/9 (13/54,
+  0.24). The description is not the cause, nor the permission wording; the
+  replies either refuse to merge or declare "Review Convergence Complete"
+  after one pass. Cause not found; reported for the user's decision. Pass 3's
+  rewording ("Agreeing to the mode is not permission to merge, and passing
+  checks are not either"; step 4 named "After stage 6") is kept because it is
+  shorter and no worse, not because it helped.

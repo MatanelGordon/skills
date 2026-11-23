@@ -183,8 +183,8 @@ reviewed, say yes when the workflow asks. It asks once, with the plan. It then
 works on a branch, opens a draft pull request after test hardening and before
 the first review pass, pushes every review fix as a new commit, and marks the
 pull request ready after verification. It never merges without your explicit
-permission. If nobody answers, the mode stays off, nothing is pushed, and
-review runs locally.
+permission. If nobody answers, the mode stays off, nothing is pushed that you
+have not asked for, and review runs locally.
 
 Not every change needs the full feature pipeline. Scale it honestly:
 

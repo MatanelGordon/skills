@@ -135,7 +135,7 @@ exactly once:
 |---|---|
 | 1–3 files, one seam | Just do it. Plan only if the user wants a record. |
 | Several files, one coherent change | Solo, but write `plan.md` — future sessions need it. |
-| Multiple independent seams, or >½ day | **Hand to `parallel-build`** for phased subagent execution. |
+| Multiple independent seams, or >½ day | **Hand to `parallel-build`**, which splits it across subagents. |
 
 Do not manufacture parallelism. Four agents on a three-file feature cost more in
 coordination and conflicts than they save.

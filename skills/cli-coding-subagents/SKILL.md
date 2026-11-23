@@ -139,8 +139,9 @@ after the user says yes to the overage (step 1, code 20).
 
 Whenever the project is a git repository, every worker gets its own worktree.
 Create it automatically, as part of every dispatch; the user does not have to
-request it. A worktree starts from the last commit, so first commit anything
-the worker needs to see.
+request it. A worktree starts from the last commit, so the worker does not see
+uncommitted changes. If it needs them, ask the user whether to commit them
+first; otherwise say in the prompt what is missing.
 
 ```bash
 SK=/path/printed/by/setup

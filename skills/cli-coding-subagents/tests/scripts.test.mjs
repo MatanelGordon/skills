@@ -77,7 +77,8 @@ const fakeBin = (root, commands) => {
     writeFileSync(join(bin, name), `#!/bin/sh\n${body}\n`);
     chmodSync(join(bin, name), 0o755);
   }
-  const python = run('bash', ['-c', 'command -v python3']).stdout.trim();
+  // The interpreter itself, not a pyenv or asdf shim, which would need its manager on PATH.
+  const python = run('python3', ['-c', 'import sys; print(sys.executable)']).stdout.trim();
   symlinkSync(python, join(bin, 'python3'));
   return `${bin}:/usr/bin:/bin`;
 };
@@ -196,9 +197,72 @@ test('wt.sh rundir outside a git repository uses .sa-runs in the project', optio
   for (const part of ['prompts', 'agents', 'logs']) assert.ok(existsSync(join(project, '.sa-runs', 'date-fix', part)));
 });
 
+test('wt.sh uses a worktree root beside the repository by default', options, (t) => {
+  const { repo, env } = repository(t);
+  const { PARALLEL_WT_ROOT: _unused, ...defaults } = env;
+  const root = join(dirname(repo), '.wt-repo');
+
+  const created = script('wt.sh', ['new', 'p2-a'], { cwd: repo, env: { ...defaults, PARALLEL_WT_ROOT: '' } });
+  assert.equal(created.status, EXIT.ok, created.stderr);
+  assert.equal(created.stdout.trim(), join(root, 'p2-a'));
+  const runs = script('wt.sh', ['rundir', 'fixes'], { cwd: repo, env: { ...defaults, PARALLEL_WT_ROOT: '' } });
+  assert.equal(runs.stdout.trim(), join(root, '.runs', 'fixes'));
+  assert.ok(!runs.stdout.trim().startsWith(`${repo}/`));
+});
+
+test('wt.sh merge -F uses the given message, and gc removes merged worktrees only when clean', options, (t) => {
+  const { repo, env, worktree } = repository(t);
+  script('wt.sh', ['new', 'p2-a'], { cwd: repo, env });
+  commitFile(worktree('p2-a'), env, 'feature.txt', 'work\n', 'feat: work');
+  const message = join(dirname(repo), 'message.txt');
+  writeFileSync(message, 'merge: p2-a, for the reason in the plan\n');
+  assert.equal(script('wt.sh', ['merge', 'p2-a', '-F', message], { cwd: repo, env }).status, EXIT.ok);
+  assert.match(git(repo, env, 'log', '-1', '--format=%B'), /for the reason in the plan/);
+
+  for (const slug of ['p2-b', 'p2-c']) {
+    script('wt.sh', ['new', slug], { cwd: repo, env });
+    commitFile(worktree(slug), env, `${slug}.txt`, 'work\n', `feat: ${slug}`);
+    git(repo, env, 'merge', '-q', '--no-ff', '-m', `merge ${slug}`, `sa/${slug}`);
+  }
+  writeFileSync(join(worktree('p2-c'), 'draft.txt'), 'unsaved\n');
+  const swept = script('wt.sh', ['gc'], { cwd: repo, env });
+  assert.equal(swept.status, EXIT.error, 'gc must report the worktree it skipped');
+  assert.ok(!existsSync(worktree('p2-b')));
+  assert.ok(existsSync(join(worktree('p2-c'), 'draft.txt')));
+});
+
+test('wt.sh merge does not start during another merge or over an untracked file', options, (t) => {
+  const { repo, env, worktree } = repository(t);
+  script('wt.sh', ['new', 'p2-a'], { cwd: repo, env });
+  commitFile(worktree('p2-a'), env, 'feature.txt', 'work\n', 'feat: work');
+  writeFileSync(join(repo, 'feature.txt'), 'the lead\'s untracked copy\n');
+  const blocked = script('wt.sh', ['merge', 'p2-a'], { cwd: repo, env });
+  assert.equal(blocked.status, EXIT.notAttempted);
+  assert.match(blocked.stderr, /untracked file/);
+  rmSync(join(repo, 'feature.txt'));
+
+  script('wt.sh', ['new', 'p2-b'], { cwd: repo, env });
+  commitFile(worktree('p2-b'), env, 'shared.txt', 'from p2-b\n', 'feat: p2-b');
+  commitFile(repo, env, 'shared.txt', 'from the lead\n', 'feat: lead');
+  assert.equal(script('wt.sh', ['merge', 'p2-b'], { cwd: repo, env }).status, EXIT.conflict);
+  const during = script('wt.sh', ['merge', 'p2-a'], { cwd: repo, env });
+  assert.equal(during.status, EXIT.notAttempted);
+  assert.match(during.stderr, /already in progress/);
+});
+
+test('wt.sh says git is missing when it is, rather than "not a git repository"', options, (t) => {
+  const dir = scratch(t);
+  mkdirSync(join(dir, 'empty-bin'));
+  const result = run('/bin/bash', [join(SCRIPTS, 'wt.sh'), 'list'], { cwd: dir, env: { PATH: join(dir, 'empty-bin'), HOME: dir } });
+  assert.equal(result.status, EXIT.error);
+  assert.match(result.stderr, /git is not installed/);
+});
+
 test('wt.sh rejects a slug with a path separator and an unknown command', options, (t) => {
   const { repo, env } = repository(t);
   assert.equal(script('wt.sh', ['new', 'a/b'], { cwd: repo, env }).status, EXIT.error);
+  assert.equal(script('wt.sh', ['new', '-x'], { cwd: repo, env }).status, EXIT.error);
+  assert.equal(script('wt.sh', ['rundir', '--help'], { cwd: repo, env }).status, EXIT.error);
   assert.equal(script('wt.sh', ['teleport'], { cwd: repo, env }).status, EXIT.usage);
 });
 
@@ -253,6 +317,57 @@ test('ori-precheck.sh separates a missing CLI, a missing credential and a usable
   const asJson = JSON.parse(script('ori-precheck.sh', ['--json'], { env: { PATH: path } }).stdout);
   assert.equal(asJson.exit_code, EXIT.ok);
   assert.doesNotMatch(JSON.stringify(asJson), /user_private_1/);
+
+  const unauthenticated = script('ori-precheck.sh', [], {
+    env: { PATH: fakeBin(join(root, 'd'), { ori: `echo '{"data":{"authenticated":false}}'` }) },
+  });
+  assert.equal(unauthenticated.status, EXIT.notLoggedIn);
+  const garbled = script('ori-precheck.sh', [], { env: { PATH: fakeBin(join(root, 'e'), { ori: 'echo not-json' }) } });
+  assert.equal(garbled.status, EXIT.unavailable);
+});
+
+/** A fake curl that serves the models list and the key record from files. */
+const FAKE_CURL = `out=""; url=""
+while [ $# -gt 0 ]; do
+  case "$1" in -o) out="$2"; shift 2 ;; -H|--max-time) shift 2 ;; -*) shift ;; *) url="$1"; shift ;; esac
+done
+case "$url" in */models) cp "$FAKE_MODELS" "$out" ;; */key) cp "$FAKE_KEY" "$out" ;; *) exit 22 ;; esac`;
+
+const MODELS = { data: [
+  { id: 'google/lyria-3-pro-preview', context_length: 1048576, pricing: { prompt: '0', completion: '0' },
+    architecture: { output_modalities: ['audio'] }, supported_parameters: [] },
+  { id: 'vendor-a/coder:free', context_length: 1048576, pricing: { prompt: '0', completion: '0' },
+    architecture: { output_modalities: ['text'] }, supported_parameters: ['tools'] },
+  { id: 'vendor-b/reviewer:free', context_length: 262144, pricing: { prompt: '0', completion: '0' },
+    architecture: { output_modalities: ['text'] }, supported_parameters: ['tools'] },
+  { id: 'vendor-c/cheap', context_length: 1048576, pricing: { prompt: '0.0000001', completion: '0.0000002' },
+    architecture: { output_modalities: ['text'] }, supported_parameters: ['tools'] },
+] };
+
+test('ori-models.sh decides from capability fields and checks the wallet before paid models', options, (t) => {
+  const root = scratch(t);
+  const files = { FAKE_MODELS: join(root, 'models.json'), FAKE_KEY: join(root, 'key.json') };
+  writeFileSync(files.FAKE_MODELS, JSON.stringify(MODELS));
+  const env = { HOME: root, PATH: fakeBin(root, { curl: FAKE_CURL }), ...files };
+
+  const free = script('ori-models.sh', ['--free-only', '--json', '--all'], { env });
+  assert.equal(free.status, EXIT.ok, free.stderr);
+  const listing = JSON.parse(free.stdout);
+  assert.deepEqual(listing.author_tier.models.map((m) => m.id), ['vendor-a/coder:free']);
+  assert.deepEqual(listing.review_tier.models.map((m) => m.id).sort(), ['vendor-a/coder:free', 'vendor-b/reviewer:free']);
+  const lyria = listing.rejected.find((m) => m.id === 'google/lyria-3-pro-preview');
+  assert.match(lyria.reason, /not text/);
+
+  writeFileSync(files.FAKE_KEY, JSON.stringify({ data: { limit_remaining: 0, is_free_tier: true } }));
+  const broke = script('ori-models.sh', ['--json'], { env: { ...env, OPENROUTER_API_KEY: 'test-key' } });
+  assert.equal(broke.status, EXIT.notLoggedIn, 'an empty wallet must stop paid recommendations');
+  assert.equal(JSON.parse(broke.stdout).wallet.blocks_paid_models, true);
+  assert.doesNotMatch(broke.stdout, /test-key/);
+
+  writeFileSync(files.FAKE_KEY, JSON.stringify({ data: { limit_remaining: 5, is_free_tier: false } }));
+  const funded = script('ori-models.sh', ['--json'], { env: { ...env, OPENROUTER_API_KEY: 'test-key' } });
+  assert.equal(funded.status, EXIT.ok, funded.stderr);
+  assert.ok(JSON.parse(funded.stdout).author_tier.models.some((m) => m.id === 'vendor-c/cheap'));
 });
 
 test('precheck.sh reads "Not logged in" as logged out, and a spent window as exhausted', options, (t) => {
@@ -276,6 +391,34 @@ test('precheck.sh reads "Not logged in" as logged out, and a spent window as exh
   assert.equal(JSON.parse(spent.stdout).worst_code, EXIT.exhausted);
 
   assert.equal(script('precheck.sh', ['gemini'], { env: { HOME: root, PATH: path } }).status, EXIT.usage);
+});
+
+test('precheck.sh asks before copilot bills paid overage, and stops when overage is not allowed', options, (t) => {
+  const root = scratch(t);
+  mkdirSync(join(root, '.copilot'));
+  writeFileSync(join(root, '.copilot', 'config.json'), JSON.stringify({ loggedInUsers: [{ login: 'someone' }] }));
+  const quota = join(root, 'quota.json');
+  const path = fakeBin(root, { node: 'echo v24.3.0', copilot: 'exit 0', gh: `cat "${quota}"` });
+  const snapshot = (fields) => JSON.stringify({
+    copilot_plan: 'pro', quota_reset_date: '2026-12-01',
+    quota_snapshots: { premium_interactions: { entitlement: 300, credits_used: 300, ...fields } },
+  });
+  const check = () => script('precheck.sh', ['copilot'], { env: { HOME: root, PATH: path } });
+
+  writeFileSync(quota, snapshot({ percent_remaining: 0, overage_count: 12, overage_entitlement: 100, overage_permitted: true }));
+  const overage = check();
+  assert.equal(overage.status, 20, overage.stderr);
+  assert.match(overage.stdout, /PAID OVERAGE/);
+  assert.match(overage.stdout, /12\/100/);
+
+  writeFileSync(quota, snapshot({ percent_remaining: 0, overage_permitted: false }));
+  assert.equal(check().status, EXIT.exhausted);
+
+  writeFileSync(quota, snapshot({ credits_used: 120, percent_remaining: 60 }));
+  assert.equal(check().status, EXIT.ok);
+
+  writeFileSync(quota, 'not json');
+  assert.equal(check().status, 20, 'an unreadable quota must ask, not assume headroom');
 });
 
 test('codex-session.py picks the newest session recorded for a worktree', options, (t) => {

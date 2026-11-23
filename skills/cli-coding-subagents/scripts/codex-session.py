@@ -10,6 +10,8 @@ Exit codes: 0 id printed · 1 no session ran in that directory · 64 bad usage.
 The reason for choosing a session this way, and the command that takes the id,
 are in references/invocation.md under "Follow-ups".
 """
+from __future__ import annotations  # keeps `str | None` working on Python 3.9, macOS's system python
+
 import glob
 import json
 import os

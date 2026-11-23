@@ -35,13 +35,15 @@ case "${1:-}" in
   *) echo "wt: unknown command: $1" >&2; usage >&2; exit 64 ;;
 esac
 
+command -v git >/dev/null 2>&1 || die "git is not installed (or not on PATH)"
+
 # Without git no worktree is possible, but a run still needs somewhere for its
 # prompts and logs, so rundir alone falls back to the project directory.
 if ! git rev-parse --git-dir >/dev/null 2>&1; then
   if [ "$1" = "rundir" ]; then
     name="${2:-}"
     [ -n "$name" ] || die "missing <name>"
-    case "$name" in *[!a-zA-Z0-9._-]*|.*) die "name must be [a-zA-Z0-9._-] and not start with a dot: $name" ;; esac
+    case "$name" in *[!a-zA-Z0-9._-]*|.*|-*) die "name must be [a-zA-Z0-9._-] and not start with a dot or a dash: $name" ;; esac
     dir="$PWD/.sa-runs/$name"
     mkdir -p "$dir/prompts" "$dir/agents" "$dir/logs" || die "cannot create $dir"
     echo "$dir"
@@ -60,6 +62,7 @@ slug_check() {
   case "$1" in
     *[!a-zA-Z0-9._-]*) die "slug must be [a-zA-Z0-9._-]: $1" ;;
     .*) die "slug may not start with a dot: $1" ;;
+    -*) die "slug may not start with a dash: $1" ;;
   esac
 }
 

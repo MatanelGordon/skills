@@ -231,7 +231,8 @@ refuse with exit 3, and the commits give the run a history worth having.
    done about each, the test results as they actually are, and anything left
    undone.
 
-Do not commit or push beyond the merges unless asked.
+Beyond the merges and the plan-directory commits in step 6, do not commit or
+push unless asked.
 
 ## Resuming an interrupted build
 

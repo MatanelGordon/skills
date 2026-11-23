@@ -272,6 +272,8 @@ test('duplicate keys in one JSON object are found at any depth, and keys in sepa
   assert.deepEqual(duplicateKeys('{"a":"x\\"a\\":","a":2}'), ['a']);
   assert.deepEqual(duplicateKeys('{"k":{"z":1,"z":2},"k2":{"y":1,"y":1}}'), ['z', 'y']);
   assert.deepEqual(duplicateKeys('[1, "{\\"a\\":1,\\"a\\":2}"]'), []);
+  assert.deepEqual(duplicateKeys('{"\\n":1,"n":2}'), [], 'an escaped key is not the letter it escapes');
+  assert.deepEqual(duplicateKeys('{"\\u0041":1,"A":2}'), ['A'], 'two spellings of one key are one key');
 });
 
 test('a document with a duplicate key is reported and not rewritten', () => {

@@ -8,7 +8,7 @@
  * the second time, so it is safe to rerun after any merge.
  */
 import { closeSync, lstatSync, openSync, readSync } from 'node:fs';
-import { copyFile, mkdir, readFile, readdir, rm, rmdir, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, readdir, rename, rm, rmdir, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isEntryPoint } from './entry-point.mjs';
@@ -136,18 +136,34 @@ async function pruneEmptyFolders(baseDir, relativeFolder) {
   }
 }
 
-/** Put one fixture in place. A move is a copy here: its source is removed only once the dataset no longer names it. */
+/**
+ * Put one fixture in place. A move is a copy here: its source is removed only once the dataset no
+ * longer names it. The file is written under a temporary name and renamed, so an interrupted run
+ * never leaves a truncated fixture that a rerun would mistake for a real conflict.
+ */
 async function placeFixture(baseDir, action) {
   const destinationPath = inside(baseDir, destinationOf(action));
   if (await exists(destinationPath)) return;
   await mkdir(dirname(destinationPath), { recursive: true });
-  if (action.type === 'write') await writeFile(destinationPath, action.content);
-  else await copyFile(inside(baseDir, action.from), destinationPath);
+  const partialPath = `${destinationPath}.partial-${process.pid}`;
+  try {
+    if (action.type === 'write') await writeFile(partialPath, action.content);
+    else await copyFile(inside(baseDir, action.from), partialPath);
+    await rename(partialPath, destinationPath);
+  } finally {
+    await rm(partialPath, { force: true });
+  }
 }
 
+/** Remove the source of a move. A failure here leaves a stray copy, never a broken dataset, so it is reported, not thrown. */
 async function removeMovedSource(baseDir, action) {
-  await rm(inside(baseDir, action.from), { force: true });
-  await pruneEmptyFolders(baseDir, action.from.slice(0, action.from.lastIndexOf('/')));
+  try {
+    await rm(inside(baseDir, action.from), { force: true });
+    await pruneEmptyFolders(baseDir, action.from.slice(0, action.from.lastIndexOf('/')));
+    return null;
+  } catch (error) {
+    return `could not remove ${action.from} after moving it (${error.code ?? error.message}); evals.json already names the new copy, so delete the old file by hand`;
+  }
 }
 
 /**
@@ -181,10 +197,13 @@ export async function normalizeEvalFile(target, { root = DEFAULT_ROOT, write = t
     return { ...report, changed, problems: [...problems, failure] };
   }
   await writeFile(target.file, text);
+  const leftovers = [];
   for (const action of result.actions) {
-    if (action.type === 'move') await removeMovedSource(target.baseDir, action);
+    if (action.type !== 'move') continue;
+    const leftover = await removeMovedSource(target.baseDir, action);
+    if (leftover) leftovers.push(leftover);
   }
-  return { ...report, changed, written: true, problems };
+  return { ...report, changed, written: true, problems: [...problems, ...leftovers] };
 }
 
 export async function normalizeRepository(root = DEFAULT_ROOT, { write = true } = {}) {

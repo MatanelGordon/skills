@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdtemp, mkdir, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises';
+import { chmod, mkdtemp, mkdir, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import test from 'node:test';
@@ -166,6 +166,35 @@ test('a failure while placing fixtures leaves the dataset and its sources as the
   assert.deepEqual(doc.evals.map((evaluation) => evaluation.files), [['evals/files/1/a.md'], ['evals/files/2/b.md']]);
   assert.equal(await read(root, 'skills/half/evals/files/1/a.md'), 'a\n');
   assert.equal(existsSync(join(root, 'skills', 'half', 'evals', 'fixtures')), false);
+});
+
+test('a moved source that cannot be removed is reported, not thrown', {
+  skip: process.platform === 'win32' || process.getuid?.() === 0,
+}, async () => {
+  const root = await makeTemp();
+  await put(root, 'skills/stuck/SKILL.md', '---\nname: stuck\ndescription: A fixture.\n---\n');
+  await put(root, 'skills/stuck/evals/evals.json', JSON.stringify({
+    skill_name: 'stuck',
+    evals: [{ id: 1, prompt: 'p', expected_output: 'e', files: ['evals/fixtures/a.md'], expectations: ['One.'] }],
+  }));
+  await put(root, 'skills/stuck/evals/fixtures/a.md', 'a\n');
+  const fixturesFolder = join(root, 'skills', 'stuck', 'evals', 'fixtures');
+  await chmod(fixturesFolder, 0o555);
+  try {
+    const [result] = await normalizeRepository(root);
+    assert.equal(result.written, true);
+    assert.ok(result.problems.some((problem) => /could not remove evals\/fixtures\/a\.md/.test(problem)), result.problems.join('\n'));
+    assert.deepEqual((await readJson(root, 'skills/stuck/evals/evals.json')).evals[0].files, ['evals/files/1/a.md']);
+  } finally {
+    await chmod(fixturesFolder, 0o755);
+  }
+});
+
+test('placing a fixture leaves no temporary file behind', async () => {
+  const root = await writeMessyRepo();
+  await normalizeRepository(root);
+  const leftovers = (await snapshot(root)).map(([path]) => path).filter((path) => /\.partial-/.test(path));
+  assert.deepEqual(leftovers, []);
 });
 
 test('fixtures are compared as bytes, so two texts that decode alike are still told apart', async () => {

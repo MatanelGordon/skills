@@ -80,16 +80,17 @@ export function duplicateKeys(text) {
   const found = [];
   const objects = [];
   let index = 0;
+  // Returns the decoded key, so `"\\u0041"` and `"A"` are the same key and `"\\n"` is not `"n"`.
   const readString = () => {
-    let value = '';
+    const start = index;
     index++;
-    while (index < text.length && text[index] !== '"') {
-      if (text[index] === '\\') index++;
-      value += text[index];
-      index++;
+    while (index < text.length && text[index] !== '"') index += text[index] === '\\' ? 2 : 1;
+    index++;
+    try {
+      return JSON.parse(text.slice(start, index));
+    } catch {
+      return text.slice(start, index);
     }
-    index++;
-    return value;
   };
   while (index < text.length) {
     const char = text[index];

@@ -17,8 +17,9 @@
   It never overwrites a fixture that differs (compared byte for byte), never
   guesses between two lists that disagree, and never rewrites a file with a
   duplicated key. It places every fixture before it rewrites `evals.json` and
-  removes a moved source only after, so an interrupted run is finished by
-  rerunning it.
+  removes a moved source only after, writing each fixture under a temporary
+  name first, so an interrupted run is finished by rerunning it. A source it
+  cannot remove is reported, not left silently.
 - **`npm run validate` now enforces the format.** A case with no assertions, a
   fixture path that does not resolve, a fixture that is (or sits in) a
   symlink, is binary or over 64 KB, or has a name Windows rejects,

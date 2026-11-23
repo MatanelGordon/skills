@@ -1,10 +1,10 @@
 ---
 name: tui-builder
 description: >
-  Use when a full-screen interactive TUI is being built or changed, especially with Ink
-  and React, or has resize bugs: ghosted or repeated content, blank screens, stale
-  widths, or broken alternate-screen cleanup. For layout, charts, and tests, also use
-  terminal-ux.
+  Use when wiring full-screen TUI lifecycle or fixing resize artifacts: alternate-screen
+  entry and exit, clear-handler ordering, width state, ghosted content, blank redraws,
+  or stale layouts. Especially for Ink and React; for general UI design and
+  visualization, use terminal-ux.
 license: MIT
 metadata:
   author: Matanel Gordon

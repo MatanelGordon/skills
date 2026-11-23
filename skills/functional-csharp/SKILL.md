@@ -1,9 +1,10 @@
 ---
 name: functional-csharp
 description: >
-  Use when writing, reviewing, or refactoring C# or .NET handlers, state machines,
-  domain boundaries, or new domain code, especially where mutable state, inheritance,
-  nullable fields, or exceptions for expected failures obscure the model.
+  Use for functional-style C# or .NET handlers, state machines, domain boundaries, or
+  new domain code when writing, reviewing, or refactoring, especially where mutable
+  state, inheritance, nullable fields, or exceptions for expected failures obscure the
+  model.
 license: MIT
 metadata:
   author: Matanel Gordon

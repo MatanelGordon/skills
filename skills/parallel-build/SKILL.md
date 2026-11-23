@@ -1,10 +1,10 @@
 ---
 name: parallel-build
 description: >
-  Use to execute or resume a large approved deep-plan with phased Codex or Copilot CLI
-  subagents, including continue or keep going after interruption, or to plan then
-  parallelize a feature, migration, or refactor. Not for plan writing (use deep-plan) or
-  ad-hoc dispatches (use cli-coding-subagents).
+  Use to execute a large approved deep-plan with parallel subagents in foundation,
+  implementation, and review phases tracked in PROGRESS.md; to plan then parallelize a
+  big build; or to resume one when asked to continue or keep going. Not for writing the
+  plan itself (use deep-plan).
 license: MIT
 metadata:
   author: Matanel Gordon

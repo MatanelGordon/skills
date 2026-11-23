@@ -1,10 +1,10 @@
 ---
 name: get-the-job-done
 description: >
-  Use to define runnable completion gates before work that may stop early. Also before
-  reporting done; when asked is it done or tested; when criteria were not re-run; when
-  work drifted or scope narrowed; when picking up work called finished; or when a
-  failing requirement may be skipped or downgraded.
+  Use to define runnable completion gates for sizeable work that might otherwise stop
+  early. Also before reporting done; when asked is it done or tested; when criteria were
+  not rerun; when work or scope drifted; when resuming finished work; or before skipping
+  or downgrading a failing requirement.
 license: MIT
 metadata:
   author: Matanel Gordon

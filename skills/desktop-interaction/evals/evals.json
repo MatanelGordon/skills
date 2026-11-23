@@ -49,12 +49,14 @@
       "assertions": [
         "The reply says `tauri-driver` does not work on macOS.",
         "The reply's install commands do not install `tauri-driver`.",
-        "The reply says an in-app WebDriver plugin (for example `tauri-plugin-webdriver` or `tauri-webdriver`) works only in debug builds."
+        "The reply says an in-app WebDriver plugin (for example `tauri-plugin-webdriver` or `tauri-webdriver`) works only in debug builds.",
+        "The reply recommends WebdriverIO with `@wdio/tauri-service` as the setup to use on this Mac."
       ],
       "expectations": [
         "The reply says `tauri-driver` does not work on macOS.",
         "The reply's install commands do not install `tauri-driver`.",
-        "The reply says an in-app WebDriver plugin (for example `tauri-plugin-webdriver` or `tauri-webdriver`) works only in debug builds."
+        "The reply says an in-app WebDriver plugin (for example `tauri-plugin-webdriver` or `tauri-webdriver`) works only in debug builds.",
+        "The reply recommends WebdriverIO with `@wdio/tauri-service` as the setup to use on this Mac."
       ]
     },
     {
@@ -103,13 +105,13 @@
         "The reply says that pywebview's default renderer on macOS (Cocoa/WebKit) provides no remote debugging port.",
         "The reply says `debug=True` only gives a web inspector that a person opens by hand.",
         "The reply offers at least one of these: running the app with the Qt renderer for testing, or testing the web UI in an ordinary browser outside the app.",
-        "The reply does not present setting `REMOTE_DEBUGGING_PORT` on the default macOS renderer as a working way to attach."
+        "The reply does not claim that an outside script can drive the app's own window while it runs on pywebview's default macOS renderer, whether through `REMOTE_DEBUGGING_PORT`, `debug=True` or another setting."
       ],
       "expectations": [
         "The reply says that pywebview's default renderer on macOS (Cocoa/WebKit) provides no remote debugging port.",
         "The reply says `debug=True` only gives a web inspector that a person opens by hand.",
         "The reply offers at least one of these: running the app with the Qt renderer for testing, or testing the web UI in an ordinary browser outside the app.",
-        "The reply does not present setting `REMOTE_DEBUGGING_PORT` on the default macOS renderer as a working way to attach."
+        "The reply does not claim that an outside script can drive the app's own window while it runs on pywebview's default macOS renderer, whether through `REMOTE_DEBUGGING_PORT`, `debug=True` or another setting."
       ]
     },
     {
@@ -122,13 +124,13 @@
       ],
       "assertions": [
         "The report says the Account menu in the menu bar was not checked, or could not be seen, in this session.",
-        "The report says a debugging-port connection like the one used shows only the window, so it could not have read the menu (which belongs to the main process).",
+        "The report says the debugging-port connection used in the session reaches only the window (the renderer), not the main process.",
         "The report says the installed 4.2.1 app from the ticket was not the build that was tested.",
         "The report includes the launch command `npm start -- --remote-debugging-port=9333`."
       ],
       "expectations": [
         "The report says the Account menu in the menu bar was not checked, or could not be seen, in this session.",
-        "The report says a debugging-port connection like the one used shows only the window, so it could not have read the menu (which belongs to the main process).",
+        "The report says the debugging-port connection used in the session reaches only the window (the renderer), not the main process.",
         "The report says the installed 4.2.1 app from the ticket was not the build that was tested.",
         "The report includes the launch command `npm start -- --remote-debugging-port=9333`."
       ]
@@ -162,12 +164,12 @@
       "assertions": [
         "The reply lists an Electron MCP server (for example `electron-mcp-server` or `debug-electron-mcp`) among its options.",
         "The reply ranks a ready-made tool, such as that MCP server, above writing a new Playwright script.",
-        "The reply includes a step that looks for an existing tool before building one (for example a `gh search` command, or checking which MCP servers the agent already has configured)."
+        "The reply includes a step that checks whether a suitable tool already exists (for example a `gh search` command, or checking which MCP servers the agent already has configured)."
       ],
       "expectations": [
         "The reply lists an Electron MCP server (for example `electron-mcp-server` or `debug-electron-mcp`) among its options.",
         "The reply ranks a ready-made tool, such as that MCP server, above writing a new Playwright script.",
-        "The reply includes a step that looks for an existing tool before building one (for example a `gh search` command, or checking which MCP servers the agent already has configured)."
+        "The reply includes a step that checks whether a suitable tool already exists (for example a `gh search` command, or checking which MCP servers the agent already has configured)."
       ]
     },
     {
@@ -195,12 +197,12 @@
       "expected_output": "Starts with commands that find out what the app is built with (an `app.asar` check, a `strings` search for Tauri), and makes the debugging-port attach conditional on the result: Electron only, not Tauri, and not at all if the app is native.",
       "files": [],
       "assertions": [
-        "Before any command that starts or attaches to the app, the reply gives a command that inspects the bundle to find out what it is built with (for example looking for `app.asar`, or running `strings` on the binary).",
+        "In the reply's list of commands, one that inspects the app bundle (for example looking for `app.asar`, or running `strings` on the binary) comes before any command that starts or attaches to the app; a check mentioned only after the list does not count.",
         "The reply says `--remote-debugging-port` does not work for a Tauri app.",
         "The reply says that if the app turns out to be native, the Playwright and debugging-port route does not apply."
       ],
       "expectations": [
-        "Before any command that starts or attaches to the app, the reply gives a command that inspects the bundle to find out what it is built with (for example looking for `app.asar`, or running `strings` on the binary).",
+        "In the reply's list of commands, one that inspects the app bundle (for example looking for `app.asar`, or running `strings` on the binary) comes before any command that starts or attaches to the app; a check mentioned only after the list does not count.",
         "The reply says `--remote-debugging-port` does not work for a Tauri app.",
         "The reply says that if the app turns out to be native, the Playwright and debugging-port route does not apply."
       ]

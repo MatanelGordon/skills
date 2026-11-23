@@ -6,6 +6,7 @@ license: MIT
 metadata:
   author: Matanel Gordon
   source: https://github.com/MatanelGordon/skills
+  inspired_by: https://github.com/BuilderIO/agent-native
   requires: Node.js 18+ for the bundled checker (optional)
 ---
 

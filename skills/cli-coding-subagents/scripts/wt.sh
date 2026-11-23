@@ -12,8 +12,11 @@
 #                                 -F supplies the full merge message
 #   wt.sh drop <slug>             discard the worktree and branch without merging
 #   wt.sh gc                      remove worktrees whose branch is already merged
+#   wt.sh rundir <name>           create a run directory (prompts/ agents/ logs/) and print its path
 #
 # Branch naming: sa/<slug>.   Worktree root: <repo-parent>/.wt-<repo-name>/<slug>
+# Run directories: <worktree-root>/_runs/<name>. A slug cannot contain "_", so
+# the two never collide, and gc leaves _runs alone.
 # Override the root with PARALLEL_WT_ROOT.
 #
 # Exit codes: 0 ok · 1 error (see message) · 2 merge conflict, needs resolution
@@ -27,7 +30,7 @@ die() { echo "wt: $1" >&2; exit "${2:-1}"; }
 usage() { awk 'NR>1 && /^#/ { sub(/^# ?/, ""); print; next } NR>1 { exit }' "$0"; }
 case "${1:-}" in
   -h|--help|help|'') usage; exit 0 ;;
-  new|path|list|merge|drop|gc) ;;
+  new|path|list|merge|drop|gc|rundir) ;;
   *) echo "wt: unknown command: $1" >&2; usage >&2; exit 64 ;;
 esac
 
@@ -207,6 +210,15 @@ case "$cmd" in
     rmdir "$WT_ROOT" 2>/dev/null
     # Non-zero when anything was left behind, so "gc && done" cannot lie.
     exit "$gc_failed"
+    ;;
+
+  rundir)
+    # Prompts, logs and status files need a home that outlives a reboot and is
+    # outside every worktree, so no worker's branch ever carries them.
+    name="${1:-}"; slug_check "$name"
+    dir="$WT_ROOT/_runs/$name"
+    mkdir -p "$dir/prompts" "$dir/agents" "$dir/logs" || die "cannot create $dir"
+    echo "$dir"
     ;;
 
   *) usage >&2; exit 64 ;;   # unreachable: validated above

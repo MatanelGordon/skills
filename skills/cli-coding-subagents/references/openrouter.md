@@ -13,10 +13,10 @@ contract, native report handling, verification, merge, cleanup, and resume.
 
 ## 1. Pre-flight: always before dispatch
 
-Use the path printed by the main skill's Setup section:
+`SK` is the path printed by the main skill's Setup section:
 
 ```bash
-SK=<the path it printed>
+SK=/path/printed/by/setup
 "$SK/scripts/ori-precheck.sh"          # or --json
 ```
 
@@ -38,13 +38,13 @@ with a key. Non-interactive alternatives exist, but the user must run them:
 
 The script reports whether the resolved credential is global or workspace
 scoped. A workspace credential may not resolve inside the separate worktrees
-where workers run. It never prints the key, the contents of
-`~/.ori/credentials.json`, or the account identifier.
+where workers run. It never prints the key, the contents of the credential
+file, or the account identifier.
 
 ## 2. Pick models from the script, never from memory
 
 ```bash
-SK=<the path it printed>
+SK=/path/printed/by/setup
 "$SK/scripts/ori-models.sh"                          # default: output <= $0.50 per 1M tokens
 "$SK/scripts/ori-models.sh" --free-only              # free models only
 "$SK/scripts/ori-models.sh" --max-output-price 0.10  # tighter ceiling
@@ -111,7 +111,7 @@ leaking the wrong model configuration into a worker run. Prepare an isolated
 home before dispatch:
 
 ```bash
-SK=<the path it printed>
+SK=/path/printed/by/setup
 "$SK/scripts/ori-codex-home.sh"   # idempotent; links AGENTS.md, rules/, and skills/
 ```
 

@@ -21,6 +21,16 @@ This skill owns how to run each worker. When a job has several pieces, use the
 `parallel-build` skill first to decide the split, then apply this workflow to
 each worker.
 
+**The five rules:**
+
+1. Never dispatch without a passing pre-flight check.
+2. Every worker gets its own git worktree whenever the project is a git
+   repository. Create it automatically; the user does not have to ask.
+3. Never send a prompt lacking acceptance criteria, critical-path tests, and
+   file ownership.
+4. Never let a worker's transcript into your context. Redirect it to a log.
+5. Never leave a worktree behind after merging.
+
 ## Requirements
 
 - Bash and Python 3 on macOS or Linux. On Windows, use WSL or Git Bash.
@@ -31,9 +41,11 @@ each worker.
 ## Setup
 
 The helpers are installed with this skill, not with the project. Run the
-resolver below and use the first complete copy it prints. Later command blocks
-start with `SK=<the path it printed>` because shell variables do not survive
-between Bash calls. Never run `./scripts/...` from the project directory.
+resolver below once. It prints the directory of the first complete copy of this
+skill. Every later command block starts with `SK=/path/printed/by/setup`:
+replace that with the path the resolver printed, in each Bash call, because
+shell variables do not survive between calls. Never run `./scripts/...` from
+the project directory.
 
 ```bash
 SK=$(for root in "$HOME/.claude/skills" "${CODEX_HOME:-$HOME/.codex}/skills" "$HOME/.codex/skills" \
@@ -48,19 +60,26 @@ done)
 echo "$SK"
 ```
 
-Prompts, logs, and status files go in a run directory that survives a reboot
-and sits outside every worktree. With a plan, use its plan directory. Without a
-plan in git, use `<git common dir>/sa-runs/<name>/`; it is untracked, reachable
-from every worktree, and outside `.plan/`, which `deep-plan` owns. With no git,
-use `.sa-runs/<name>/` in the project. Never use `/tmp`; macOS purges it, and
-the log must remain available after a crash.
+Prompts, logs, and status files go in a **run directory** that survives a
+reboot and sits outside every worktree. Never use `/tmp`: macOS purges it, and
+the log must remain available after a crash. In a phased build the run
+directory is the plan directory. For anything else, create one:
+
+```bash
+SK=/path/printed/by/setup
+RUN_DIR=$("$SK/scripts/wt.sh" rundir upload-retries)   # prints the path; has prompts/ agents/ logs/
+```
+
+It lives beside the worktrees, outside the repository and outside `.plan/`,
+which `deep-plan` owns. With no git repository, use `.sa-runs/<name>/` in the
+project.
 
 ## Available scripts
 
 | Script | Purpose | Arguments |
 |---|---|---|
 | `precheck.sh` | Check native CLI availability, login, and quota without spending API tokens. | `[codex\|copilot\|all] [--json]` |
-| `wt.sh` | Create, locate, list, merge, drop, and garbage-collect worker worktrees. | `new <slug> [base-ref]`, `path <slug>`, `list`, `merge <slug> [-F file]`, `drop <slug>`, `gc` |
+| `wt.sh` | Create, locate, list, merge, drop, and garbage-collect worker worktrees; create a run directory. | `new <slug> [base-ref]`, `path <slug>`, `list`, `merge <slug> [-F file]`, `drop <slug>`, `gc`, `rundir <name>` |
 | `codex-session.py` | Find the newest codex session whose recorded working directory matches a worktree. | `<worktree-path>` |
 | `ori-precheck.sh` | Check `ori`, Python, and resolved OpenRouter credentials without exposing secrets. | `[--json]` |
 | `ori-models.sh` | Discover current tool-capable OpenRouter author and reviewer models under a price ceiling. | `[--max-output-price D] [--min-context N] [--review-min-context N] [--json] [--all] [--free-only]` |
@@ -73,7 +92,7 @@ the log must remain available after a crash.
 Run pre-flight before every dispatch session:
 
 ```bash
-SK=<the path it printed>
+SK=/path/printed/by/setup
 "$SK/scripts/precheck.sh"                     # add: codex | copilot | --json
 ```
 
@@ -103,25 +122,27 @@ but ask again in a new one.
 | Code review or security audit | **codex** or a Claude `Agent` |
 
 Native codex always runs `gpt-5.6-sol`, without a sandbox and with full
-permissions. In OpenRouter mode, choose the model only from `ori-models.sh`.
+permissions. In OpenRouter mode the model comes from a listing made at run
+time, as that section describes, never from this table.
 When copilot is in paid overage, route work to codex unless the user approves
 copilot.
 
 ### 3. Worktree
 
-Whenever the project is a git repository, give every worker its own worktree
-without asking the user. A worktree starts from the last commit, so first
-commit anything the worker needs to see.
+Whenever the project is a git repository, every worker gets its own worktree.
+Create it automatically, as part of every dispatch; the user does not have to
+request it. A worktree starts from the last commit, so first commit anything
+the worker needs to see.
 
 ```bash
-SK=<the path it printed>
+SK=/path/printed/by/setup
 SLUG=p2-parser
 WT=$("$SK/scripts/wt.sh" new "$SLUG")
 echo "$WT"
 ```
 
 If `wt.sh new` exits 4, the project is not a git repository. Do not run
-`git init` without asking. Dispatch with the project directory as the working
+`git init` unless the user agrees. Dispatch with the project directory as the working
 directory, leave the Commit section out of the prompt, and tell the user the
 run is not isolated. There is nothing to merge. Run workers at the same time
 only on paths that do not overlap.
@@ -162,7 +183,7 @@ re-dispatch with the missing flag rather than waiting on an unattended prompt.
 Run this sequence in order for a git worktree:
 
 ```bash
-SK=<the path it printed>
+SK=/path/printed/by/setup
 SLUG=p2-parser
 WT=$("$SK/scripts/wt.sh" path "$SLUG")
 (cd "$WT" && npm test)                       # the worker's critical-path tests
@@ -173,11 +194,17 @@ npm test                                      # the same tests on the merged bra
 Report the work as finished only after the last run passes. A worker's
 `STATUS: DONE` is a claim, not evidence.
 
-Read the report before merging. For `PARTIAL` or `BLOCKED`, inspect `BLOCKED`
-and either resume with a sharper answer, finish the work yourself, or merge the
-good part and track the rest. `QUESTION:` means the worker proceeded on an
-assumption; `BLOCKED:` means it could not proceed. Answer both by resuming the
-same session through invocation.md's Follow-ups section. Batch questions from
+Read the worker's report before merging:
+
+- `STATUS: DONE`: verify the critical-path tests actually pass, then merge.
+- `PARTIAL` or `BLOCKED`: read `BLOCKED`, then decide: re-dispatch with a
+  sharper prompt, finish it yourself, or merge what is good and track the rest.
+
+**Questions come back in the report, not as prompts.** `QUESTION:` means the
+worker proceeded on an assumption and wants it confirmed; `BLOCKED:` means it
+could not proceed. Answer either by resuming that session, not by
+re-dispatching: see "Follow-ups" in
+[references/invocation.md](references/invocation.md). Batch questions from
 concurrent workers and ask the user once.
 
 Merge one worker at a time and resolve conflicts as they appear. `wt.sh` exit
@@ -199,24 +226,46 @@ branch, prunes, and reports removal failures. Other commands are `wt.sh list`
 
 ## OpenRouter mode
 
-Use this mode when the user requests OpenRouter, `ori`, or free OpenRouter models.
+Run the same six steps through OpenRouter with the `ori` CLI, so worker runs
+cost nothing when free models are good enough. Use this mode when the user asks
+to run agents on OpenRouter, to use `ori`, to work on free models or cheap ones
+under a price ceiling, to cut subagent cost, or to route work to a specific
+OpenRouter model. Also use it when free-model work stalls on rate limits,
+dropped tool calls, or a model that vanished mid-run.
 
 > **TEMPORARY: DO NOT USE CLAUDE WITH THIS SKILL.** `ori claude` is not working
 > currently. Use `ori codex` only until this warning is removed.
 
 Read [references/openrouter.md](references/openrouter.md) before dispatch. Differences:
 
-- Run its own pre-flight before model discovery.
-- Get the model from `ori-models.sh`, never from memory.
-- Launch codex with the isolated `CODEX_HOME` prepared by its helper.
-- Put the `ori` `--model` flag before `--`.
-- Enforce both mandatory review gates.
-- Run only two or three workers at once on free models.
-- Cap each worker at 750K tokens using the `HANDOFF.md` protocol.
+- Pre-flight is `ori-precheck.sh`. On exit 10 stop and ask the user to run
+  `ori login`; never attempt the browser login yourself.
+- The model comes from `ori-models.sh` at the start of every run, never from
+  memory. The default ceiling is 0.50 USD per 1M output tokens; raising it is
+  the user's decision.
+- Codex launches with the isolated `CODEX_HOME` that `ori-codex-home.sh` prepares.
+- `--model` is an `ori` flag and goes before the `--`.
+- These models are not trusted. A different model reviews every code change
+  and every plan before anything merges.
+- Free models share a rate limit, so run two or three workers at once, not eight.
+- Each worker has a 750K-token ceiling, kept by handing off through
+  `HANDOFF.md` in iterations.
 
 ## Examples
 
-Apply the six steps to every chosen worker.
+- **"Have codex add retry logic to the uploader while I review the API."**
+  One worker, so no split. Pre-flight, worktree `upload-retries`, a prompt file
+  with acceptance criteria, the test command and the paths it owns, a
+  background codex dispatch at `high` with the transcript in a log. Then read
+  the report, test in the worktree, merge, and test again.
+- **Pre-flight prints copilot at code 20.** Stop. Quote the overage figures it
+  printed, ask whether to bill them, and offer codex for the same work.
+- **A report ends with `QUESTION: assumed the v2 schema.`** Resume that
+  worker's session with the answer. Do not dispatch a new worker.
+- **"Run these on free OpenRouter models."** OpenRouter mode: read its
+  reference, run `ori-precheck.sh`, then `ori-models.sh --free-only`.
+- **The folder is not a git repository** (`wt.sh new` exits 4). No worktree and
+  no `git init`: the worker edits the project directory, and you say so.
 
 ## Troubleshooting
 
@@ -234,4 +283,16 @@ Apply the six steps to every chosen worker.
 
 ## Limitations
 
-Availability changes; re-run every per-session check.
+- This skill runs workers. It does not decide how to split a job
+  (`parallel-build`) or write the plan (`deep-plan`).
+- Native codex runs without a sandbox and with full permissions. The worktree
+  and the prompt's Scope list are conventions the worker is told to respect,
+  not a fence it cannot cross.
+- The pre-flight reads login and quota. It does not test the connection: a
+  dispatch can still stall on the network, which is why step 5 watches the log.
+- Copilot quota comes from an undocumented GitHub endpoint. When it cannot be
+  read, the pre-flight asks (code 20) rather than assuming headroom.
+- Login state and quota change. Run the pre-flight again in every session.
+- The OpenRouter rate limits are published figures, not measured here, and the
+  750K ceiling is kept by structure, not by a token count.
+- The helpers are bash and Python 3. On Windows they need WSL or Git Bash.

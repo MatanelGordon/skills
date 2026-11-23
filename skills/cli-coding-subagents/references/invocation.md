@@ -179,6 +179,8 @@ cd "$WT" && codex exec --color never resume "$SID" \
 ```
 
 `-C/--cd` is rejected by `codex exec resume`; change into the worktree instead.
+`--color never` goes before the word `resume`: codex-cli 0.170.0 rejects it
+after (`unexpected argument '--color'`).
 `codex exec resume --last` exists but is unsafe with parallel workers, so always
 pass an explicit id.
 

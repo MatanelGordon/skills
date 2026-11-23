@@ -166,6 +166,26 @@ test('wt.sh drop discards an unmerged worktree and its branch', options, (t) => 
   assert.ok(!existsSync(join(repo, 'feature.txt')));
 });
 
+test('wt.sh rundir creates a run directory beside the worktrees, outside the repository', options, (t) => {
+  const { repo, env, worktree } = repository(t);
+  const runDirectory = join(dirname(worktree('any')), '_runs', 'quick-fixes');
+
+  const created = script('wt.sh', ['rundir', 'quick-fixes'], { cwd: repo, env });
+  assert.equal(created.status, EXIT.ok, created.stderr);
+  assert.equal(created.stdout.trim(), runDirectory);
+  for (const part of ['prompts', 'agents', 'logs']) assert.ok(existsSync(join(runDirectory, part)));
+  assert.ok(!runDirectory.startsWith(repo));
+  assert.equal(script('wt.sh', ['rundir', 'quick-fixes'], { cwd: repo, env }).stdout.trim(), runDirectory);
+  assert.equal(script('wt.sh', ['rundir', 'a/b'], { cwd: repo, env }).status, EXIT.error);
+
+  // A run directory must not get in the way of the worktree lifecycle or be swept by gc.
+  script('wt.sh', ['new', 'p2-a'], { cwd: repo, env });
+  commitFile(worktree('p2-a'), env, 'feature.txt', 'work\n', 'feat: work');
+  assert.equal(script('wt.sh', ['merge', 'p2-a'], { cwd: repo, env }).status, EXIT.ok);
+  assert.equal(script('wt.sh', ['gc'], { cwd: repo, env }).status, EXIT.ok);
+  assert.ok(existsSync(join(runDirectory, 'logs')));
+});
+
 test('wt.sh rejects a slug with a path separator and an unknown command', options, (t) => {
   const { repo, env } = repository(t);
   assert.equal(script('wt.sh', ['new', 'a/b'], { cwd: repo, env }).status, EXIT.error);
@@ -204,7 +224,7 @@ test('ori-codex-home.sh repairs a link that points somewhere else', options, (t)
 
 test('ori-precheck.sh separates a missing CLI, a missing credential and a usable one', options, (t) => {
   const root = scratch(t);
-  const auth = '{"data":{"authenticated":true,"userId":"user_private_1","source":{"kind":"workspace","location":"/w/.ori/credentials.json"}}}';
+  const auth = '{"data":{"authenticated":true,"userId":"user_private_1","source":{"kind":"workspace","location":"/w/.ori/store.json"}}}';
 
   const missing = script('ori-precheck.sh', [], { env: { PATH: fakeBin(join(root, 'a'), {}) } });
   assert.equal(missing.status, EXIT.unavailable);

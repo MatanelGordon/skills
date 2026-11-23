@@ -12,16 +12,21 @@
   Four new eval cases (16 to 19): a removal, a flag rename, an agent report
   with dangling leftovers, and a negative case.
 - `npm run validate` now fails when a current file names a skill that used to
-  be under `skills/` and is not any more: as `` `name` ``, `skills/name`,
-  `**name**`, `[name]`, or, for a hyphenated name, in plain prose. Retired
-  names come from git history, so committed and uncommitted removals and the
-  old side of a rename are all caught with no list to maintain.
-  `CHANGELOG.md`, `.plan/` and `.adr/` are exempt. CI now checks out with full
-  history, which the check needs.
-- `npm run install-skills` (and `uninstall`) prune links in the agent folders
-  that point into this repo's `skills/` or `agents/` and whose target is gone,
-  printing each one. A real file or folder, a live link, and a link elsewhere
-  are never touched. `doctor` now says so for such links.
+  be under `skills/` and is not any more: by path (`skills/name`,
+  `../name/SKILL.md`) anywhere; in docs also as `` `name` ``, `**name**`, a
+  `[name](…)` link or a `/name` command; and, for a hyphenated name, in plain
+  text. Retired names come from git history, so committed and uncommitted
+  removals and the old side of a rename are all caught with no list to
+  maintain. `CHANGELOG.md` files, `.plan/` and `.adr/` are exempt. CI now checks
+  out with full history, which the check needs, and a shallow clone under CI is
+  reported instead of passing silently.
+- `npm run install-skills` (and `uninstall`) prune links in the chosen agent
+  folders that point into this repo's `skills/` or `agents/` and whose target
+  is gone, printing each one. A real file or folder, a live link, a link
+  elsewhere, and a target that exists but cannot be read are never touched.
+  `doctor` now says so for such links. Running `install` from a branch that
+  lacks a skill prunes that skill's link; installing again from the branch
+  that has it restores it.
 
 ## 1.22.1 — 2026-11-21
 

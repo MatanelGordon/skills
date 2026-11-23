@@ -8,10 +8,11 @@
  * minus the skills present now. That covers committed and uncommitted removals
  * and the old side of a rename, with no list to keep up to date. Without git
  * history (not a repository, or a shallow clone) the set is empty and nothing
- * is reported, which is why CI checks out with full history.
+ * is reported. CI checks out with full history, and a shallow clone under CI is
+ * reported as a problem so the check cannot pass by having nothing to compare.
  */
 import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { extname, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 const SKILL_FILE = /^skills\/([^/]+)\/SKILL\.md$/;
@@ -21,6 +22,10 @@ const isHistoryFile = (path) => (
   HISTORY_DIRS.some((dir) => path.startsWith(dir)) || /(^|\/)CHANGELOG\.md$/i.test(path)
 );
 const NAME_CHAR = '[A-Za-z0-9_-]';
+// In code, `x`, [x] and **x** are template strings, indexing and arithmetic, not names.
+const CODE_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts', '.tsx', '.jsx', '.py', '.sh', '.bash', '.zsh',
+  '.ps1', '.rb', '.go', '.rs', '.cs', '.java', '.kt', '.swift', '.c', '.h', '.cpp', '.php', '.lua', '.pl']);
+const isCode = (path) => CODE_EXTENSIONS.has(extname(path).toLowerCase());
 const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 function gitLines(root, args) {
@@ -39,20 +44,22 @@ export function retiredSkillNames(root, currentSkills) {
 }
 
 /**
- * How a skill is named in this repo: `name`, skills/name/..., **name**, [name].
- * A hyphenated name is distinctive enough to count in plain prose too; a single
- * word such as "rank" is not, so it counts only in those formatted forms.
+ * How a skill is named: by path (skills/name, ../name/SKILL.md) anywhere; in
+ * prose also as `name`, **name**, a [name](...) link and a /name command. A
+ * hyphenated name is distinctive enough to count bare as well; a single word
+ * such as "rank" is not, so it counts only in those forms.
  */
-function namePattern(name) {
+function namePattern(name, prose) {
   const n = escapeRegex(name);
-  const formatted = [`\`${n}\``, `(?<!${NAME_CHAR})skills/${n}(?!${NAME_CHAR})`, `\\*\\*${n}\\*\\*`, `\\[${n}\\]`];
-  if (name.includes('-')) formatted.push(`(?<!${NAME_CHAR})${n}(?!${NAME_CHAR})`);
-  return new RegExp(formatted.join('|'));
+  const forms = [`(?<!${NAME_CHAR})skills[\\\\/]${n}(?!${NAME_CHAR})`, `(?<!${NAME_CHAR})${n}/SKILL\\.md`];
+  if (prose) forms.push(`\`${n}\``, `\\*\\*${n}\\*\\*`, `\\[${n}\\][(:[]`, `(?<![^\\s(\`'"])/${n}(?!${NAME_CHAR})`);
+  if (name.includes('-')) forms.push(`(?<!${NAME_CHAR})${n}(?!${NAME_CHAR})`);
+  return new RegExp(forms.join('|'));
 }
 
 /** Every line of `text` that names one of `names`, as { line, name } (1-based lines). */
-export function scanText(text, names) {
-  const patterns = names.map((name) => ({ name, pattern: namePattern(name) }));
+export function scanText(text, names, { prose = true } = {}) {
+  const patterns = names.map((name) => ({ name, pattern: namePattern(name, prose) }));
   const hits = [];
   text.split(/\r?\n/).forEach((content, index) => {
     for (const { name, pattern } of patterns) {
@@ -81,7 +88,29 @@ export async function findRetiredSkillReferences(root, currentSkills) {
       continue; // listed in the index but deleted in the work tree
     }
     if (bytes.includes(0)) continue; // binary
-    for (const hit of scanText(bytes.toString('utf8'), retired)) references.push({ file, ...hit });
+    for (const hit of scanText(bytes.toString('utf8'), retired, { prose: !isCode(file) })) {
+      references.push({ file, ...hit });
+    }
   }
   return references;
+}
+
+const isShallow = (root) => gitLines(root, ['rev-parse', '--is-shallow-repository'])?.[0] === 'true';
+
+/**
+ * What `npm run validate` reports, as { scope, message }: each reference to a
+ * retired skill, and, in CI, a shallow clone, where the check could not work.
+ */
+export async function retiredSkillProblems(root, currentSkills, env = process.env) {
+  const problems = [];
+  if (env.CI && isShallow(root)) {
+    problems.push({
+      scope: 'repository',
+      message: 'git history is shallow, so removed skills cannot be found; check out with fetch-depth: 0',
+    });
+  }
+  for (const { file, line, name } of await findRetiredSkillReferences(root, currentSkills)) {
+    problems.push({ scope: file, message: `line ${line} names '${name}', which is no longer a skill under skills/` });
+  }
+  return problems;
 }

@@ -4,8 +4,11 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
+import { pathToFileURL } from 'node:url';
 
-import { findRetiredSkillReferences, retiredSkillNames, scanText } from './retired-skill-references.mjs';
+import {
+  findRetiredSkillReferences, retiredSkillNames, retiredSkillProblems, scanText,
+} from './retired-skill-references.mjs';
 import { validateRepository } from './validate.mjs';
 
 const makeTemp = () => mkdtemp(join(tmpdir(), 'skills-retired-refs-test-'));
@@ -48,8 +51,22 @@ test('scanText finds a single-word retired name only where it is formatted as a 
     '[oldword](https://example.com)',
     'The `oldwords` and `new-oldword` skills are different.',
     'A path like skills/oldword-two/ is another skill.',
+    'See [the old one](../oldword/SKILL.md), or skills\\oldword on Windows.',
+    'Type /oldword to start; https://example.com/oldword is a URL.',
+    'An array index: best = sorted[oldword];',
   ].join('\n');
-  assert.deepEqual(scanText(text, ['oldword']).map((hit) => hit.line), [1, 3, 4, 5]);
+  assert.deepEqual(scanText(text, ['oldword']).map((hit) => hit.line), [1, 3, 4, 5, 8, 9]);
+});
+
+test('scanText in code counts only paths for a single-word name, since `x` and [x] are code there', () => {
+  const code = [
+    'const best = sorted[oldword];',
+    'sortBy(`oldword`);',
+    'const total = a **oldword** b;',
+    "const dir = join(root, 'skills/oldword/SKILL.md');",
+  ].join('\n');
+  assert.deepEqual(scanText(code, ['oldword'], { prose: false }).map((hit) => hit.line), [4]);
+  assert.deepEqual(scanText("const name = 'old-thing';", ['old-thing'], { prose: false }), [{ line: 1, name: 'old-thing' }]);
 });
 
 test('scanText finds a hyphenated retired name in plain prose, but not inside a longer name', () => {
@@ -115,6 +132,29 @@ test('a rename retires the old name, including inside the moved skill, and leave
   ]);
   await put(root, 'skills/new-name/SKILL.md', skillText('new-name'));
   assert.deepEqual(hitsOf(await findRetiredSkillReferences(root, ['new-name'])), ['README.md:3:old-name']);
+});
+
+test('code files are scanned in code mode', async () => {
+  const root = await repoWithHistory({ current: ['keep-me'], retired: ['oldword'] });
+  await put(root, 'install/tool.mjs', 'const best = sorted[oldword];\nconst path = "skills/oldword/x";\n');
+  await put(root, 'docs/guide.md', 'Use `oldword`.\n');
+  assert.deepEqual(hitsOf(await findRetiredSkillReferences(root, ['keep-me'])), [
+    'docs/guide.md:1:oldword',
+    'install/tool.mjs:2:oldword',
+  ]);
+});
+
+test('a shallow clone is a problem under CI, where the check would otherwise find nothing', async () => {
+  const origin = await repoWithHistory();
+  const clone = await makeTemp();
+  const result = spawnSync('git', ['clone', '-q', '--depth', '1', pathToFileURL(origin).href, clone], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+
+  const inCi = await retiredSkillProblems(clone, ['keep-me'], { CI: 'true' });
+  assert.deepEqual(inCi.map(({ scope }) => scope), ['repository']);
+  assert.match(inCi[0].message, /shallow.*fetch-depth: 0/);
+  assert.deepEqual(await retiredSkillProblems(clone, ['keep-me'], {}), []);
+  assert.deepEqual(await retiredSkillProblems(origin, ['keep-me'], { CI: 'true' }), []);
 });
 
 test('outside a git repository there is no history, so nothing is reported', async () => {

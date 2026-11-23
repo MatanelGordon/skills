@@ -3,6 +3,9 @@
 
 Usage: codex-session.py <worktree-path>
 
+Reads the sessions under $CODEX_HOME (default ~/.codex), so run it with the
+same CODEX_HOME the worker ran under: ~/.ori-codex for an `ori codex` worker.
+
 Exit codes: 0 id printed · 1 no session ran in that directory · 64 bad usage.
 The reason for choosing a session this way, and the command that takes the id,
 are in references/invocation.md under "Follow-ups".
@@ -16,7 +19,8 @@ import sys
 def session_for(worktree: str) -> str | None:
     want = os.path.realpath(worktree)
     newest_mtime, session = 0.0, None
-    pattern = os.path.expanduser("~/.codex/sessions/**/rollout-*.jsonl")
+    codex_home = os.environ.get("CODEX_HOME") or os.path.expanduser("~/.codex")
+    pattern = os.path.join(codex_home, "sessions", "**", "rollout-*.jsonl")
     for path in glob.glob(pattern, recursive=True):
         try:
             with open(path, errors="ignore") as fh:

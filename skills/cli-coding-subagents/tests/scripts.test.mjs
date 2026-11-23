@@ -186,6 +186,14 @@ test('wt.sh rundir creates a run directory beside the worktrees, outside the rep
   assert.ok(existsSync(join(runDirectory, 'logs')));
 });
 
+test('wt.sh rundir outside a git repository uses .sa-runs in the project', options, (t) => {
+  const project = scratch(t);
+  const created = script('wt.sh', ['rundir', 'date-fix'], { cwd: project, env: gitEnv(project) });
+  assert.equal(created.status, EXIT.ok, created.stderr);
+  assert.equal(created.stdout.trim(), join(project, '.sa-runs', 'date-fix'));
+  for (const part of ['prompts', 'agents', 'logs']) assert.ok(existsSync(join(project, '.sa-runs', 'date-fix', part)));
+});
+
 test('wt.sh rejects a slug with a path separator and an unknown command', options, (t) => {
   const { repo, env } = repository(t);
   assert.equal(script('wt.sh', ['new', 'a/b'], { cwd: repo, env }).status, EXIT.error);
@@ -283,11 +291,26 @@ test('codex-session.py picks the newest session recorded for a worktree', option
   rollout('new', 'session-new', worktree, 2_000);
   rollout('other', 'session-other', join(home, 'wt', 'p2-b'), 3_000);
 
-  const found = script('codex-session.py', [worktree], { env: { HOME: home } });
+  const found = script('codex-session.py', [worktree], { env: { HOME: home, CODEX_HOME: '' } });
   assert.equal(found.status, EXIT.ok, found.stderr);
   assert.equal(found.stdout.trim(), 'session-new');
   assert.equal(script('codex-session.py', [join(home, 'wt', 'p2-c')], { env: { HOME: home } }).status, EXIT.error);
   assert.equal(script('codex-session.py', [], { env: { HOME: home } }).status, EXIT.usage);
+});
+
+test('codex-session.py reads the sessions of the CODEX_HOME the worker ran under', options, (t) => {
+  const home = scratch(t);
+  const worktree = join(home, 'wt', 'or-fix');
+  const sessions = join(home, '.ori-codex', 'sessions', '2026', '11', '23');
+  mkdirSync(sessions, { recursive: true });
+  mkdirSync(worktree, { recursive: true });
+  writeFileSync(join(sessions, 'rollout-or.jsonl'), `${JSON.stringify({ type: 'session_meta', payload: { session_id: 'session-ori', cwd: worktree } })}\n`);
+
+  const env = { HOME: home, CODEX_HOME: join(home, '.ori-codex') };
+  const found = script('codex-session.py', [worktree], { env });
+  assert.equal(found.status, EXIT.ok, found.stderr);
+  assert.equal(found.stdout.trim(), 'session-ori');
+  assert.equal(script('codex-session.py', [worktree], { env: { HOME: home, CODEX_HOME: '' } }).status, EXIT.error);
 });
 
 /** The first bash block under "## Setup" in SKILL.md: what an agent is told to run. */

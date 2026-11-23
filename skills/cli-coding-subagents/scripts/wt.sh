@@ -16,7 +16,8 @@
 #
 # Branch naming: sa/<slug>.   Worktree root: <repo-parent>/.wt-<repo-name>/<slug>
 # Run directories: <worktree-root>/_runs/<name>. A slug cannot contain "_", so
-# the two never collide, and gc leaves _runs alone.
+# the two never collide, and gc leaves _runs alone. Outside a git repository
+# rundir still works and uses ./.sa-runs/<name> in the current directory.
 # Override the root with PARALLEL_WT_ROOT.
 #
 # Exit codes: 0 ok · 1 error (see message) · 2 merge conflict, needs resolution
@@ -34,7 +35,20 @@ case "${1:-}" in
   *) echo "wt: unknown command: $1" >&2; usage >&2; exit 64 ;;
 esac
 
-git rev-parse --git-dir >/dev/null 2>&1 || die "not a git repository: $PWD (no worktree is possible here)" 4
+# Without git no worktree is possible, but a run still needs somewhere for its
+# prompts and logs, so rundir alone falls back to the project directory.
+if ! git rev-parse --git-dir >/dev/null 2>&1; then
+  if [ "$1" = "rundir" ]; then
+    name="${2:-}"
+    [ -n "$name" ] || die "missing <name>"
+    case "$name" in *[!a-zA-Z0-9._-]*|.*) die "name must be [a-zA-Z0-9._-] and not start with a dot: $name" ;; esac
+    dir="$PWD/.sa-runs/$name"
+    mkdir -p "$dir/prompts" "$dir/agents" "$dir/logs" || die "cannot create $dir"
+    echo "$dir"
+    exit 0
+  fi
+  die "not a git repository: $PWD (no worktree is possible here)" 4
+fi
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 REPO_NAME="$(basename "$REPO_ROOT")"
 WT_ROOT="${PARALLEL_WT_ROOT:-$(dirname "$REPO_ROOT")/.wt-$REPO_NAME}"

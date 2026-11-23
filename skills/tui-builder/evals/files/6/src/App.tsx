@@ -11,9 +11,6 @@ export default function App() {
   const [paused, setPaused] = useState(false);
   const [size, setSize] = useState(readSize);
 
-  // Keep the cursor parked top-left so the header never drifts.
-  process.stdout.write('\x1B[H');
-
   useEffect(() => {
     const onResize = () => setSize(readSize());
     process.stdout.on('resize', onResize);

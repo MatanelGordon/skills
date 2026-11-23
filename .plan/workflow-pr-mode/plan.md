@@ -60,14 +60,17 @@ Constraints found in the code:
    happens next there: which branch the work goes on and whether commits are
    in scope. It is also the moment the user is most likely still present. If
    the skill is entered after that point, the question is asked before the
-   first review pass at the latest. An answer already given by the user, the
-   task brief or repository instructions counts and is not asked again. Changes
-   that skip review convergence (typo, rename) are not asked.
+   first review pass at the latest. An answer the user already gave, in the
+   conversation, the task brief or standing instructions to the agent, counts
+   and is not asked again. Approving the plan is not a yes, a contribution
+   policy is not an answer, and the answer covers this change only. Changes
+   that skip review convergence (typo, rename) are not asked, and neither is
+   work in a repository with no GitHub remote.
 2. **Default when nobody answers: the mode is off.** "Nobody answers" means
    nobody can: an unattended or non-interactive run. In a live session the
    question goes out with the plan and the reply to the plan answers it. With
-   nobody there the skill does not wait: review runs locally as stage 5
-   describes, and the report says the mode was off. A push and a pull request
+   nobody there the skill does not wait: nothing is pushed, review runs
+   locally as stage 5 describes, and the report says the mode was off. A push and a pull request
    are visible to other people, trigger CI and notifications, and cannot be
    unsent. The local branch loses nothing: it can become a pull request later.
    So the unanswered case takes the reversible path. This is the job owner's
@@ -86,13 +89,25 @@ Constraints found in the code:
 6. **Failure to push or open the PR:** report the error and wait. The user
    chose the mode to read the change on GitHub, so reviewing without the PR
    would silently drop what they asked for.
-7. **Comments the user leaves on the PR before it is marked ready are findings
-   for the next review pass.** They then follow stage 5 like any finding,
-   including the four-pass cap, whose escalation goes to the same user. A
-   comment made after the PR is ready is a new request and outside this run of
-   the workflow. Comments from anyone else are not covered.
+7. **Comments on the PR, and posting review findings to it, are out of
+   scope.** An earlier draft had the agent record each pass on the PR and
+   treat the user's comments as findings. Review pass 1 showed four cases
+   that sentence left open (nobody told to read them, a comment during the
+   pass that opens the gate, a comment at pass four, and no way to tell the
+   agent's comments from the user's under one account). Neither behaviour was
+   asked for, so both were cut. The commits and their why-messages are how the
+   user follows the review.
+8. **A yes puts commits in scope and the branch comes first.** Stage 3 commits
+   "when commits are in scope"; the mode needs commits before review, so the
+   yes settles that. Work that already sits on the base branch moves to a new
+   branch and only that branch is pushed.
+9. **Stage 7 does not move.** Its why-message and decision-record rules apply
+   to every commit pushed in the mode. The PR is marked ready only after
+   stage 6 passes.
+10. **Secrets are checked before the push.** The mode publishes the diff
+    before any review pass has read it.
 
-Decisions 2, 4, 6 and 7 are choices made in this job, not the user's words.
+Decisions 2, 4, 6 and 8 to 10 are choices made in this job, not the user's words.
 
 No ADR: a reversible workflow-policy addition.
 
@@ -147,36 +162,53 @@ git diff --check origin/codex/review-convergence-loop...HEAD
 
 ### What the contract test checks
 
+Each check matches a whole clause, not a keyword, so that inverting or
+removing the rule fails the test. Sixteen such rewordings were tried on a
+scratch copy and all sixteen failed it.
+
 - The description is 300 characters or fewer and starts with "Use when".
-- The mode section exists, sits between stage 4 and stage 5, and stage 1
-  points to it.
-- It asks once and states that no answer means the mode is off.
-- The PR opens as a draft after stage 4 and before the first review pass.
-- Review fixes are new commits with no amend, rebase or force-push.
-- Nothing merges without explicit permission; agreeing to the mode, green
-  checks and a clean review are named as not being permission.
-- The README mentions the mode and its merge rule.
-- The evals include a case for each of: asking, opening at the right moment,
-  the unanswered default, and not merging, and those cases follow the run's
-  eval format (`assertions` identical to `expectations`, two to five each,
-  prompts that do not name the skill or its mode).
+- The mode section exists, sits between stage 4 and stage 5, and stage 1 says
+  to ask once with the plan.
+- Only a direct answer turns the mode on: plan approval is not a yes, a
+  contribution policy is not an answer, the answer covers one change.
+- With nobody to answer: no waiting, nothing pushed, local review, reported.
+- A yes puts commits in scope; work stays off the base branch.
+- The PR opens as a draft after stage 4 and before the first review pass,
+  after a check for secrets; a failed push or PR is reported, not worked around.
+- Stage 5 applies unchanged; review fixes are new commits with no amend,
+  rebase or force-push.
+- The PR is marked ready only after stage 6; a four-pass escalation leaves it
+  a draft.
+- The pull request is never merged without explicit permission for that pull
+  request; auto-merge and pushing to the base branch are ruled out; agreeing
+  to the mode, green checks and a clean review are named as not permission.
+- The README mentions the mode, its timing, its merge rule and its default.
+- The graded assertions of cases 11 to 14 cover asking, opening before review
+  and after hardening, the draft, new commits, the unanswered default, not
+  merging, and waiting for permission. Those four cases follow the run's eval
+  format.
 
 ### Edge cases
 
 | Case | Axis | Status |
 |---|---|---|
-| Nobody answers the question | absence | covered: mode off, stated in the report; eval 14 |
-| The answer was already given (brief, repo instructions) | state | covered: not asked again |
+| Nobody answers the question | absence | covered: mode off, nothing pushed, stated in the report; eval 14 |
+| The answer was already given (conversation, brief, standing instructions) | state | covered: not asked again |
+| The user approves the plan without addressing the question | ambiguity | covered: not a yes |
+| A yes given for an earlier change | scope | covered: the answer covers one change |
+| The repository has a "changes go through pull requests" policy | ambiguity | covered: not an answer |
 | Trivial change | boundary | covered: not asked, since it skips review convergence |
+| No GitHub remote | dependency | covered: the mode does not apply, so it is not asked |
 | Skill entered after implementation | ordering | covered: asked before the first review pass |
+| Work already on the base branch when the yes arrives | state | covered: moves to a new branch; only that branch is pushed |
 | Mode on, push or PR creation fails | failure | covered: report and wait |
-| Review fix while the PR is open | state transition | covered: new pushed commit, pinned by the contract test; eval 12 asserts that amend, rebase and force-push are ruled out |
+| A secret in the diff | security | covered: checked before the push |
+| Review fix while the PR is open | state transition | covered: new pushed commit, pinned by the contract test; eval 12 asserts fixes are never amended or force-pushed |
 | Four-pass cap reached with the PR open | boundary | covered: stays a draft, escalates as stage 5 says |
 | Gate open, checks green, user away | permission | covered: mark ready, do not merge; eval 13 |
 | "Yes" to the mode read as permission to merge | permission | covered: named as not permission |
-| Comment from the user on the PR before it is ready | input | covered: a finding for the next pass (decision 7), pinned by the contract test |
-| Comment from the user after the gate opened and the PR is ready | ordering | out of scope: a new request, not part of this run |
-| Comment from the user when pass four is already spent | boundary | covered by stage 5: the cap stops the run and escalates to the user |
+| The base branch moves or the PR conflicts | concurrency | not covered: the merge rule now names the pull request, so merging the base into the branch is not forbidden, but no step describes it |
+| Comments left on the PR | input | out of scope (decision 7) |
 | GitLab or another host | dependency | out of scope |
 
 ### Coverage
@@ -209,17 +241,22 @@ wrappers in `$RUN/bin/` hold the model settings and the spend guard.
    done; done
    ```
 
-   Both arms carry the same `evals/`. For the ten older cases the copies under
-   `$RUN/data/j6/` get `assertions` copied from `expectations`, because this
-   evaluator grades only `assertions`; the repository file is not changed.
+   Both arms are built first by `zsh $RUN/data/j6/tools/prepare-arms.sh`,
+   which exports the skill from each commit into `$RUN/data/j6/before/` and
+   `$RUN/data/j6/after/` and gives both the same `evals/`. For the ten older
+   cases it copies `expectations` into `assertions`, because this evaluator
+   grades only `assertions`; the repository file is not changed.
+   `python3 -I $RUN/data/j6/tools/ase-summary.py $RUN/data/j6/ase/before $RUN/data/j6/ase/after`
+   prints the tables.
 
 3. A single attempt of the four new cases in each arm runs first, to check the
    cases and measure cost. If six full runs would pass the $0.20 share, the
    ten older cases keep three attempts per arm and the PR says which runs
    were cut.
 
-**Gates**, on the with-skill replies, pass rate = assertions passed over
-assertions graded, an empty reply counted as invalid and rerun:
+**Gates**, on the with-skill replies. Pass rate means assertions passed over
+assertions graded, pooled over the cases and attempts named, not a mean of
+per-case rates. An empty reply is invalid and is rerun:
 
 - **G1, the new cases pass with the mode:** over cases 11 to 14 and three
   attempts, the after arm's pass rate is at least 0.80.
@@ -236,7 +273,7 @@ GitHub remote to push to, so the mode's actions cannot complete there.
 
 ## Definition of done
 
-- The mode section is in `SKILL.md`, about thirty lines, and stage 5 is untouched.
+- The mode section is in `SKILL.md`, under forty lines, and stage 5 is untouched.
 - The description is 300 characters or fewer and starts with its trigger.
 - The contract test, `npm test` and `npm run validate` pass.
 - Four eval cases cover the mode in the run's eval format.
@@ -252,8 +289,8 @@ GitHub remote to push to, so the mode's actions cannot complete there.
   README applies and the status file says so.
 - A one-reply evaluator cannot see a push or a PR. The cases ask for the next
   steps in words, so they measure what the model says it will do.
-- The existing ten cases may shift by noise. Three attempts per arm, and a
-  difference under about 0.15 is not treated as a change.
+- The existing ten cases may shift by noise. Three attempts per arm; gate G3
+  says how large a gap counts.
 - The six PRs of this run collide on the version line. Expected; sorted at merge.
 
 ## Amendments
@@ -272,3 +309,17 @@ GitHub remote to push to, so the mode's actions cannot complete there.
   per assertion, and prompts that describe the request in the user's words
   instead of naming the mode. The ten older cases are left as they are; their
   format is normalised by the job that owns the format.
+- 2026-11-23: `plan-reviewer` approved the revision. Its two remaining notes
+  are applied: the stale 0.15 tolerance under "Risks" now points to G3, and
+  the step that builds the two arms is quoted.
+- 2026-11-23: review pass 1 on the pull request (a fresh reviewer, complete
+  diff): no CRITICAL or HIGH, nine MEDIUM, six LOW. Accepted and fixed: when
+  to branch; what counts as an answer; stage 7 and commits in scope; the
+  merge rule's object; no remote, mode-off push and secrets; tests that
+  matched keywords instead of clauses; eval coverage read from prompts
+  instead of graded assertions; eval cases that passed without the mode or
+  asserted actions a reply cannot perform. Cut instead of fixed: findings on
+  the PR and user comments (decision 7). Left open and listed above: what to
+  do when the base branch moves.
+- 2026-11-23: the preliminary evaluation (four new cases, one attempt per
+  arm) cost about $0.011, so six full runs fit the share and nothing is cut.

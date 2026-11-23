@@ -88,38 +88,41 @@ frozen green commit.
 ## Pull-request review mode — opt-in
 
 The user reads the change on GitHub while review runs. The mode applies to any
-change that enters review convergence.
+change that enters review convergence in a repository with a GitHub remote.
 
 **Ask once, with the plan:** "Review this through a pull request?" Ask before
 implementation starts, or before the first review pass if that moment has
-passed. An answer already given by the user, the task brief, or repository
-instructions counts: do not ask again. **No answer means no.** If nobody can
-answer (an unattended or non-interactive run), do not wait: review locally as
-stage 5 describes and report that the mode was off. A push and a pull request
-are visible to others and cannot be unsent; a local branch can still become a
-pull request later.
+passed. An answer the user already gave, in the conversation, the task brief,
+or standing instructions to the agent, counts: do not ask again. Approving the
+plan is not a yes, a contribution policy is not an answer, and the answer
+covers this change only. **No answer means no.** If nobody can answer (an
+unattended or non-interactive run), do not wait: push nothing, review locally
+as stage 5 describes, and report that the mode was off. A push and a pull
+request are visible to others and cannot be unsent; a local branch can still
+become a pull request later.
 
 When the mode is on:
 
-1. **Branch.** Work on a branch, never on the base branch.
+1. **Branch first.** A yes puts commits in scope. From then on, work on a
+   branch, never on the base branch; work already on the base branch moves to
+   a new branch, and only that branch is pushed.
 2. **Open after stage 4 (stage 3 when hardening is skipped), before the first
-   review pass.** Push the branch and open a draft pull request
-   (`gh pr create --draft`): title in commit form; body with what changed and
-   why, how to review it, the checks run, and "Review: in progress". Give the
-   user the URL. If the push or the pull request fails, report the error and
-   wait; do not review as if it existed.
+   review pass.** Check the diff for secrets, push the branch, and open a draft
+   pull request (`gh pr create --draft`): title in commit form; body with what
+   changed and why, how to review it, the checks run, and "Review: in
+   progress". Give the user the URL. If the push or the pull request fails,
+   report the error and wait; do not review as if it existed.
 3. **Review on the pull request.** Stage 5 applies unchanged: its complete
    cumulative diff is the pull request diff. Each review fix is a new pushed
    commit, with no amend, rebase, or force-push, so the user can follow it.
-   Record each pass's findings and dispositions on the pull request. Comments
-   the user leaves there before it is ready are findings for the next pass.
-4. **Finish.** After stage 6, update the body with the results and anything
-   unverified, mark it ready (`gh pr ready`), and stop. A four-pass escalation
-   leaves it a draft.
+4. **Finish.** Stage 7's rules apply to every commit pushed here. Only after
+   stage 6 passes, update the body with the results and anything unverified,
+   mark it ready (`gh pr ready`), and stop. A four-pass escalation leaves it a
+   draft.
 
-**Never merge without the user's explicit permission for that pull request**,
-and never enable auto-merge or push to the base branch. Agreeing to the mode,
-green checks, and a clean review are not permission.
+**Never merge the pull request without the user's explicit permission for that
+pull request**, and never enable auto-merge or push to the base branch.
+Agreeing to the mode, green checks, and a clean review are not permission.
 
 ## 5. Review convergence, with mutation testing only when justified
 
@@ -211,4 +214,4 @@ stage, reason, and residual risk in one sentence.
 | Call incomplete mutation evidence complete | A score cannot cover unrun work or a failed harness |
 | Merge a mutation worktree | Candidate history can contain deliberately faulty production |
 | Hide a skipped stage | Downstream reviewers cannot judge residual risk |
-| Merge, or push to the base branch, without the user's explicit permission | A clean review and green checks are evidence, not the user's decision to ship |
+| Merge a pull request, or push to its base branch, without the user's explicit permission | A clean review and green checks are evidence, not the user's decision to ship |

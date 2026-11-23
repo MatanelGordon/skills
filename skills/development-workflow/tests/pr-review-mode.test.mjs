@@ -8,7 +8,7 @@ const skillRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const repositoryRoot = dirname(dirname(skillRoot));
 const MAX_DESCRIPTION_LENGTH = 300;
 const MODE_HEADING = '## Pull-request review mode';
-const FIRST_MODE_CASE_ID = 11;
+const MODE_CASE_IDS = [11, 12, 13, 14];
 const MIN_ASSERTIONS = 2;
 const MAX_ASSERTIONS = 5;
 
@@ -71,46 +71,88 @@ test('the mode sits between hardening and review, and planning points to it', as
 
   assert.notEqual(mode, '', 'missing the pull-request review mode section');
   assert(hardening < modeStart && modeStart < review, 'the mode belongs between stage 4 and stage 5');
-  assert.match(flatten(sectionOf(skill, '## 1. Plan')), /pull-request review mode/i);
+  assertPhrase(
+    flatten(sectionOf(skill, '## 1. Plan')),
+    /settle \*\*pull-request review mode\*\* \(below\) with the plan: ask once/i,
+    'stage 1',
+  );
 });
 
-test('the mode is asked once and is off when nobody answers', async () => {
+test('the mode is opt-in and only a direct answer turns it on', async () => {
   const { mode } = await readContract();
+  const where = 'the mode section';
 
-  assertPhrase(mode, /opt-in/i, 'the mode section');
-  assertPhrase(mode, /ask once/i, 'the mode section');
-  assertPhrase(mode, /do not ask again/i, 'the mode section');
-  assertPhrase(mode, /no answer means no/i, 'the mode section');
-  assertPhrase(mode, /nobody can answer \(an unattended or non-interactive run\), do not wait/i, 'the mode section');
-  assertPhrase(mode, /cannot be unsent/i, 'the mode section');
+  assertPhrase(mode, /opt-in/i, where);
+  assertPhrase(mode, /\*\*ask once, with the plan:\*\*/i, where);
+  assertPhrase(mode, /counts: do not ask again/i, where);
+  assertPhrase(mode, /approving the plan is not a yes/i, where);
+  assertPhrase(mode, /a contribution policy is not an answer/i, where);
+  assertPhrase(mode, /the answer covers this change only/i, where);
+  assertPhrase(mode, /repository with a github remote/i, where);
+});
+
+test('with nobody to answer the mode is off and nothing is pushed', async () => {
+  const { mode } = await readContract();
+  const where = 'the mode section';
+
+  assertPhrase(mode, /\*\*no answer means no\.\*\*/i, where);
+  assertPhrase(
+    mode,
+    /nobody can answer \(an unattended or non-interactive run\), do not wait: push nothing, review locally as stage 5 describes, and report that the mode was off/i,
+    where,
+  );
+  assertPhrase(mode, /visible to others and cannot be unsent/i, where);
 });
 
 test('the pull request opens as a draft after stage 4 and before the first review pass', async () => {
   const { mode } = await readContract();
+  const where = 'the mode section';
 
-  assertPhrase(mode, /after stage 4.*before the first review pass/i, 'the mode section');
-  assertPhrase(mode, /gh pr create --draft/, 'the mode section');
-  assertPhrase(mode, /report the error and wait/i, 'the mode section');
-  assertPhrase(mode, /gh pr ready/, 'the mode section');
+  assertPhrase(mode, /a yes puts commits in scope/i, where);
+  assertPhrase(mode, /work on a branch, never on the base branch/i, where);
+  assertPhrase(mode, /open after stage 4 \(stage 3 when hardening is skipped\), before the first review pass/i, where);
+  assertPhrase(
+    mode,
+    /check the diff for secrets, push the branch, and open a draft pull request \(`gh pr create --draft`\)/i,
+    where,
+  );
+  assertPhrase(mode, /fails, report the error and wait; do not review as if it existed/i, where);
 });
 
 test('review fixes are new commits and stage 5 still governs the review', async () => {
   const { skill, mode } = await readContract();
+  const where = 'the mode section';
 
-  assertPhrase(mode, /new pushed commit/i, 'the mode section');
-  assertPhrase(mode, /no amend, rebase,? or force-push/i, 'the mode section');
-  assertPhrase(mode, /complete cumulative diff is the pull request diff/i, 'the mode section');
-  assertPhrase(mode, /comments the user leaves there before it is ready are findings for the next pass/i, 'the mode section');
-  assert.match(flatten(sectionOf(skill, '## 5. Review convergence')), /at least two review passes/i);
+  assertPhrase(mode, /stage 5 applies unchanged: its complete cumulative diff is the pull request diff/i, where);
+  assertPhrase(mode, /each review fix is a new pushed commit, with no amend, rebase, or force-push/i, where);
+  assertPhrase(flatten(sectionOf(skill, '## 5. Review convergence')), /at least two review passes/i, 'stage 5');
+});
+
+test('the pull request is marked ready only after verification', async () => {
+  const { mode } = await readContract();
+  const where = 'the mode section';
+
+  assertPhrase(mode, /stage 7's rules apply to every commit pushed here/i, where);
+  assertPhrase(mode, /only after stage 6 passes, .{0,80}mark it ready \(`gh pr ready`\), and stop/i, where);
+  assertPhrase(mode, /a four-pass escalation leaves it a draft/i, where);
 });
 
 test('nothing merges without explicit permission', async () => {
   const { skill, mode } = await readContract();
+  const where = 'the mode section';
 
-  assertPhrase(mode, /never merge without the user's explicit permission/i, 'the mode section');
-  assertPhrase(mode, /auto-merge/i, 'the mode section');
-  assertPhrase(mode, /agreeing to the mode.*green checks.*clean review.*not permission/i, 'the mode section');
-  assert.match(sectionOf(skill, '## Anti-patterns'), /merge[^\n|]*without[^\n|]*permission/i);
+  assertPhrase(
+    mode,
+    /never merge the pull request without the user's explicit permission for that pull request/i,
+    where,
+  );
+  assertPhrase(mode, /and never enable auto-merge or push to the base branch/i, where);
+  assertPhrase(mode, /agreeing to the mode, green checks, and a clean review are not permission/i, where);
+  assertPhrase(
+    flatten(sectionOf(skill, '## Anti-patterns')),
+    /\| merge a pull request, or push to its base branch, without the user's explicit permission \|/i,
+    'the anti-pattern table',
+  );
 });
 
 test('README mirrors the mode and its merge rule', async () => {
@@ -120,37 +162,35 @@ test('README mirrors the mode and its merge rule', async () => {
   assertPhrase(readmeWorkflow, /pull-request review mode/i, where);
   assertPhrase(readmeWorkflow, /draft pull request.{0,80}before the first review pass/i, where);
   assertPhrase(readmeWorkflow, /never merges without your explicit permission/i, where);
+  assertPhrase(readmeWorkflow, /if nobody answers, the mode stays off/i, where);
 });
 
-test('evals cover asking, timing, the unanswered default, and not merging', async () => {
+test('evals assert asking, timing, new commits, the unanswered default, and not merging', async () => {
   const { evalDocument } = await readContract();
-  const hasCase = (promptPattern, expectedPattern) => evalDocument.evals.some((evaluation) => (
-    promptPattern.test(evaluation.prompt) && expectedPattern.test(evaluation.expected_output)
-  ));
+  const graded = evalDocument.evals
+    .filter((evaluation) => MODE_CASE_IDS.includes(evaluation.id))
+    .flatMap((evaluation) => evaluation.assertions ?? []);
+  const required = {
+    'asking about the mode': /asks the user whether the change should be reviewed through a pull request/i,
+    'opening before review': /places the opening of the pull request before the first review pass/i,
+    'opening after hardening': /places the opening of the pull request after test hardening/i,
+    'opening as a draft': /pull request is opened as a draft/i,
+    'fixes as new commits': /never amended or force-pushed/i,
+    'the unanswered default': /no pull request will be opened/i,
+    'not merging': /no step that merges the pull request/i,
+    'waiting for permission to merge': /merging waits for the user's explicit permission/i,
+  };
 
-  assert(
-    hasCase(/before you write any code/i, /asks once.*pull request/i),
-    'missing the case where the skill asks about the mode',
-  );
-  assert(
-    hasCase(/as a pull request while it is being reviewed/i, /draft pull request.*before the first review pass/i),
-    'missing the case that opens the pull request at the right moment',
-  );
-  assert(
-    hasCase(/nobody will answer/i, /does not push the branch or open a pull request/i),
-    'missing the unanswered-default case',
-  );
-  assert(
-    hasCase(/finish up/i, /does not merge/i),
-    'missing the case that refuses to merge without permission',
-  );
+  for (const [behaviour, pattern] of Object.entries(required)) {
+    assert(graded.some((assertion) => pattern.test(assertion)), `no graded assertion covers ${behaviour}`);
+  }
 });
 
 test('eval cases for the mode follow the shared eval format', async () => {
   const { evalDocument } = await readContract();
-  const modeCases = evalDocument.evals.filter((evaluation) => evaluation.id >= FIRST_MODE_CASE_ID);
+  const modeCases = evalDocument.evals.filter((evaluation) => MODE_CASE_IDS.includes(evaluation.id));
 
-  assert(modeCases.length >= 4, `expected the four mode cases, found ${modeCases.length}`);
+  assert.equal(modeCases.length, MODE_CASE_IDS.length, 'a mode case is missing');
   for (const evaluation of modeCases) {
     const label = `eval ${evaluation.id}`;
     assert.match(evaluation.expected_output, /^The reply /, `${label} states an outcome of the reply`);
@@ -161,7 +201,7 @@ test('eval cases for the mode follow the shared eval format', async () => {
     );
     assert.deepEqual(evaluation.expectations, evaluation.assertions, `${label} keeps both graders' lists identical`);
     for (const assertion of evaluation.assertions) {
-      assert.match(assertion, /^The reply /, `${label}: an assertion is a statement about the reply`);
+      assert.match(assertion, /^The reply('s)? /, `${label}: an assertion is a statement about the reply`);
     }
     assert.doesNotMatch(evaluation.prompt, /development-workflow|review mode/i, `${label} names the skill`);
   }

@@ -83,12 +83,16 @@ Constraints found in the code:
 4. **Draft first, ready at the end.** The PR opens as a draft and is marked
    ready after stage 6 verification. A four-pass escalation leaves it a draft.
    This matches the interim process the other five jobs follow.
-5. **Merge rule, with the mode on or off.** Never merge a pull request, enable
-   auto-merge, or push to the base branch without the user's explicit
-   permission for that change. Agreeing to the mode, green checks and a clean
-   review are not permission. The rule is not limited to the mode because the
-   30B model, told only what the mode forbids, planned to commit on the base
-   branch and push at the end of an unattended run with the mode off.
+5. **Merge rule.** Never merge the pull request or enable auto-merge without
+   the user's explicit permission for that pull request, and never push to the
+   base branch unless the user's instructions say to. Agreeing to the mode,
+   green checks and a clean review are not permission. With the mode off,
+   nothing is pushed that the user has not asked for, and the anti-pattern row
+   ("Merge a pull request, or push to the base branch, when the user has not
+   said to") holds in every run. An earlier wording required per-change
+   permission for any push to the base branch, mode on or off; review pass 2
+   showed it overrode standing instructions such as "commit and push", so the
+   base-branch half now defers to the user's instructions.
 6. **Failure to push or open the PR:** report the error and wait. The user
    chose the mode to read the change on GitHub, so reviewing without the PR
    would silently drop what they asked for.
@@ -110,7 +114,8 @@ Constraints found in the code:
 10. **Secrets are checked before the push.** The mode publishes the diff
     before any review pass has read it.
 
-Decisions 2, 4, 6 and 8 to 10 are choices made in this job, not the user's words.
+Decisions 2, 4, 6 and 8 to 10, and the parts of decision 5 beyond "wait for my
+permission before merging", are choices made in this job, not the user's words.
 
 No ADR: a reversible workflow-policy addition.
 
@@ -166,37 +171,44 @@ git diff --check origin/codex/review-convergence-loop...HEAD
 ### What the contract test checks
 
 Each check matches a whole clause, not a keyword, so that inverting or
-removing the rule fails the test. Twenty such rewordings were tried on a
-scratch copy and all twenty failed it.
+removing the rule fails the test. Thirty-two such rewordings were tried on a
+scratch copy and all thirty-two failed it
+(`$RUN/data/j6/tools/mutation-check.py <worktree> <scratch-dir>`).
 
 - The description is 300 characters or fewer and starts with "Use when".
 - The mode section exists, sits between stage 4 and stage 5, and stage 1 says
   to ask once with the plan.
 - Only a direct answer turns the mode on: plan approval is not a yes, a
   contribution policy is not an answer, the answer covers one change.
-- With nobody to answer: no waiting, nothing pushed, local review, reported.
+- No answer, whether a reply that skips the question or nobody there: no
+  waiting, nothing pushed that the user has not asked for, local review, and
+  the report says the mode was off.
 - A yes puts commits in scope; work stays off the base branch.
-- The PR opens as a draft after stage 4 and before the first review pass,
-  after a check for secrets; a failed push or PR is reported, not worked around.
+- The PR opens as a draft against the base branch after stage 4 and before
+  the first review pass, after a check for secrets; the user gets the URL; a
+  failed push or PR is reported, not worked around.
 - Stage 5 applies unchanged; review fixes are new commits with no amend,
   rebase or force-push.
-- The PR is marked ready only after stage 6; a four-pass escalation leaves it
-  a draft.
-- With the mode on or off, no pull request is merged, no auto-merge enabled
-  and nothing pushed to the base branch without explicit permission for that
-  change; agreeing to the mode, green checks and a clean review are named as
-  not permission.
-- The README mentions the mode, its timing, its merge rule and its default.
-- The graded assertions of cases 11 to 14 cover asking, opening before review
-  and after hardening, the draft, new commits, the unanswered default, not
-  merging, and waiting for permission. Those four cases follow the run's eval
-  format.
+- The PR is marked ready only after stage 6, the report says it is unmerged,
+  and a four-pass escalation leaves it a draft.
+- The pull request is not merged and auto-merge is not enabled without
+  explicit permission for that pull request; nothing is pushed to the base
+  branch unless the user's instructions say to; agreeing to the mode, green
+  checks and a clean review are named as not permission.
+- The README mentions the mode, when it asks, its timing, new commits, ready
+  after verification, its merge rule and its default.
+- The graded assertions of cases 11 to 14 cover asking with the plan, opening
+  between hardening and review, the draft, no force-push, staying unmerged,
+  the unanswered default (no PR, no push, reported), not merging, and waiting
+  for permission. Those four cases follow the run's eval format.
 
 ### Edge cases
 
 | Case | Axis | Status |
 |---|---|---|
 | Nobody answers the question | absence | covered: mode off, nothing pushed, stated in the report; eval 14 |
+| The user replies to the plan but skips the question | absence | covered: no answer, so the mode is off and the report says so |
+| Stacked work whose base is not the default branch | state | covered: the pull request is opened against the base branch (`--base`) |
 | The answer was already given (conversation, brief, standing instructions) | state | covered: not asked again |
 | The user approves the plan without addressing the question | ambiguity | covered: not a yes |
 | A yes given for an earlier change | scope | covered: the answer covers one change |
@@ -207,7 +219,7 @@ scratch copy and all twenty failed it.
 | Work already on the base branch when the yes arrives | state | covered: moves to a new branch; only that branch is pushed |
 | Mode on, push or PR creation fails | failure | covered: report and wait |
 | A secret in the diff | security | covered: checked before the push |
-| Review fix while the PR is open | state transition | covered: new pushed commit, pinned by the contract test; eval 12 asserts fixes are never amended or force-pushed |
+| Review fix while the PR is open | state transition | covered: new pushed commit, pinned by the contract test; eval 12 asserts force-pushing is ruled out |
 | Four-pass cap reached with the PR open | boundary | covered: stays a draft, escalates as stage 5 says |
 | Gate open, checks green, user away | permission | covered: mark ready, do not merge; eval 13 |
 | "Yes" to the mode read as permission to merge | permission | covered: named as not permission |
@@ -235,13 +247,19 @@ wrappers in `$RUN/bin/` hold the model settings and the spend guard.
    $RUN/bin/se.sh tier1 $RUN/data/j6/after/skills/development-workflow --no-llm -r cli,json,html -o $RUN/data/j6/after-tier1
    ```
 
-2. agent-skills-eval on the 30B model. The wrapper has no attempts flag, so
-   three attempts are three runs per arm, at temperature 0.7 in both arms
-   (at 0 the attempts would repeat each other):
+2. agent-skills-eval at the 30B size, on the free pair: model under test
+   `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free`, grader
+   `nvidia/nemotron-3-ultra-550b-a55b:free` (see amendment "budget"). The
+   wrapper has no attempts flag, so three attempts are three runs per arm, at
+   temperature 0.7 in both arms (at 0 the attempts would repeat each other).
+   Free runs go through the shared lock:
 
    ```bash
+   export ASE_TARGET=nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
+   export ASE_JUDGE=nvidia/nemotron-3-ultra-550b-a55b:free
+   export ASE_TEMPERATURE=0.7 ASE_CONCURRENCY=4
    for arm in before after; do for n in 1 2 3; do
-     ASE_TEMPERATURE=0.7 $RUN/bin/ase.sh $RUN/data/j6/$arm/skills $RUN/data/j6/ase/$arm/run$n
+     $RUN/bin/with-lock.sh free 3 $RUN/bin/ase.sh $RUN/data/j6/$arm/skills $RUN/data/j6/ase-free/$arm/run$n
    done; done
    ```
 
@@ -250,13 +268,14 @@ wrappers in `$RUN/bin/` hold the model settings and the spend guard.
    `$RUN/data/j6/after/` and gives both the same `evals/`. For the ten older
    cases it copies `expectations` into `assertions`, because this evaluator
    grades only `assertions`; the repository file is not changed.
-   `python3 -I $RUN/data/j6/tools/ase-summary.py $RUN/data/j6/ase/before $RUN/data/j6/ase/after`
-   prints the tables.
+   `python3 -I $RUN/data/j6/tools/ase-summary.py $RUN/data/j6/ase-free/before $RUN/data/j6/ase-free/after`
+   prints the tables. An empty reply (the reasoning model spent its allowance)
+   is invalid and its case is rerun.
 
-3. A single attempt of the four new cases in each arm runs first, to check the
-   cases and measure cost. If six full runs would pass the $0.20 share, the
-   ten older cases keep three attempts per arm and the PR says which runs
-   were cut.
+3. The earlier paid measurement on `qwen/qwen3-coder-30b-a3b-instruct`, graded
+   by `qwen/qwen3.8-flash`, is kept in `$RUN/data/j6/ase/` and reported beside
+   the free pair. It is not mixed with it: different model and grader, and the
+   four new cases were reworded after it ran.
 
 **Gates**, on the with-skill replies. Pass rate means assertions passed over
 assertions graded, pooled over the cases and attempts named, not a mean of
@@ -272,8 +291,9 @@ per-case rates. An empty reply is invalid and is rerun:
   difference is about 0.07, so a smaller gap is not a change. Any single case
   that falls by more than 0.33 has its replies read and is reported.
 
-Tier 3 is not planned: the J6 budget share is $0.20 and a container has no
-GitHub remote to push to, so the mode's actions cannot complete there.
+Tier 3 is not planned: a container has no GitHub remote to push to, so the
+mode's actions cannot complete there, and the single-reply cases already ask
+what the agent would do at each point.
 
 ## Definition of done
 
@@ -339,3 +359,39 @@ GitHub remote to push to, so the mode's actions cannot complete there.
   hardening) instead of only numbering it, and ends step 4 with "stop there,
   unmerged". Two case-12 assertions no longer require the opening point to be
   inside the numbered list.
+- 2026-11-23: correction to the previous entry. With the mode off, reading the
+  branch rule as applying only when the mode is on was a correct reading, not
+  a misreading: the branch rule sits under "When the mode is on". What was
+  wrong was the planned push, and that is what the text now rules out. Local
+  commits on the base branch with the mode off are left to stage 3 as before.
+- 2026-11-23: three-attempt paid run at `7eebf22` (cases 11 to 14 as worded
+  then), qwen3-coder-30b graded by qwen3.8-flash, with-skill pass rates:
+  new cases before 0.21 (8/39), after 0.77 (30/39), so G2 held and G1 missed
+  by 0.03; older cases before 0.55 (51/93), after 0.49 (46/93), so G3 held.
+  Case 10 fell from 8/9 to 3/9 assertions: the after replies answered "mark
+  this complete" with "I cannot mark it complete or merge without your
+  permission" instead of asking for a second fresh full-diff pass. Two
+  scratch variants (the merge rule scoped to the pull request, and the mode
+  section moved after stage 7) also scored 3/9 on case 10 over three
+  attempts each, so neither placement nor the "mode on or off" wording
+  explains it. Reported, not fixed.
+- 2026-11-23, budget: the shared key passed the $4.50 guard, so paid runs
+  stopped. This job's paid runs (22 runs, 224 graded replies) cost about
+  $0.11 in visible tokens; the grader's hidden reasoning tokens are not
+  counted, so the true figure is higher, and the key's total cannot be split
+  by job. The final measurement moves to the free pair (step 2 above).
+- 2026-11-23: review pass 2 (a second fresh reviewer, complete diff at
+  `7eebf22`): no CRITICAL or HIGH, five MEDIUM, six LOW. Fixed in the skill:
+  "push nothing at any stage" contradicted the merge rule's own exception and
+  left the attended no-answer case unreported, so "no answer" now covers a
+  reply that skips the question and pushes nothing the user has not asked
+  for; the mode-on-or-off base-branch rule overrode standing instructions, so
+  it now defers to them (decision 5); the pull request now names its base.
+  Fixed in tests: the opt-in clauses, the answer clause, "only that branch is
+  pushed", the stage 1 condition and "give the user the URL" are pinned, bold
+  markers are stripped before matching, and the README check pins when it
+  asks, new commits and ready after verification. Fixed in evals: case 14 no
+  longer hands over its answer ("what, if anything, you will push"), case 11's
+  second assertion now separates the arms, case 12 has one assertion for the
+  opening point and one condition per assertion, and `expected_output` of
+  cases 12 to 14 says what the reply says rather than what it does.

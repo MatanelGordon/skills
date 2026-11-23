@@ -3,75 +3,206 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Our Electron app shows the wrong account name in the title bar after switching workspaces. Can you reproduce it?",
-      "expected_output": "Searches for existing Electron tooling, launches the app under control, drives the workspace switch, and reports with evidence from both the window and the main process.",
-      "files": [],
+      "prompt": "Our Electron app shows the wrong account name in the title bar after switching workspaces. Its `package.json` and `main.js` are attached (in a workspace they are at `input/1/package.json` and `input/1/main.js`). In the window, the switcher is a button labelled `Switch workspace` and each workspace is a button showing its name. Write one script I can run from the project folder on my own machine that starts the app, switches from `Acme` to `Globex`, and prints the evidence I need for a bug report, including what the title bar says afterwards. There is no display and no Node here, so do not install or run anything: reply with the script in full and the command that runs it.",
+      "expected_output": "A Node script using Playwright's Electron launch that drives the main window rather than the splash window, reads the title bar text from the main process with `getTitle()`, and prints window evidence such as console messages.",
+      "files": [
+        "evals/files/1/package.json",
+        "evals/files/1/main.js"
+      ],
+      "assertions": [
+        "The script reads the title bar text in the main process: it calls `evaluate` on the Electron application object (or on a `browserWindow` handle) and uses `getTitle()` there.",
+        "The script picks the main window by something other than `firstWindow()` alone (for example a URL containing `index.html`, or waiting for a second window), so it does not drive the splash window.",
+        "The script records the window's console messages (for example with `on('console', ...)`)."
+      ],
       "expectations": [
-        "Checks for an Electron MCP server or published skill before writing a driver",
-        "Uses Playwright's Electron launch API from Node, not Python",
-        "Reaches the main process as well as the renderer, since title bar and window state live there",
-        "Reports actions, evidence and reproduction including app version and OS",
-        "Closes the app afterwards"
+        "The script reads the title bar text in the main process: it calls `evaluate` on the Electron application object (or on a `browserWindow` handle) and uses `getTitle()` there.",
+        "The script picks the main window by something other than `firstWindow()` alone (for example a URL containing `index.html`, or waiting for a second window), so it does not drive the splash window.",
+        "The script records the window's console messages (for example with `on('console', ...)`)."
       ]
     },
     {
       "id": 2,
-      "prompt": "The app is in a broken state on my machine right now - don't restart it, just look at what's on screen.",
-      "expected_output": "Recognises that relaunching would destroy the state. Attaches to the running app over a debugging port, and states that this reaches the window only, not the main process.",
-      "files": [],
+      "prompt": "Our Electron app Acme Notes is in a broken state on my Mac right now: the sidebar is empty and `File > Export` in the menu bar is greyed out. It took an hour of use to get it like this, so it must not be restarted. The `ps` output for it is attached as `ps-output.txt` (in a workspace it is at `input/2/ps-output.txt`). The app is on my Mac, not in your environment, so do not look for it. Tell me exactly what to run to inspect it as it is now, and for each of the two symptoms say whether that will show me what is going on. Reply only.",
+      "expected_output": "Commands that attach to the running app through port 9333 without relaunching it, with the statement that this reaches the window only: the empty sidebar can be inspected, the greyed-out menu item cannot.",
+      "files": [
+        "evals/files/2/ps-output.txt"
+      ],
+      "assertions": [
+        "The reply says that connecting through the debugging port reaches only the window (the renderer), not the main process.",
+        "The reply says the greyed-out `File > Export` menu item cannot be inspected through that connection.",
+        "The reply's commands connect to the running app on port 9333 (for example `http://127.0.0.1:9333`), the debugging port it was started with in `ps-output.txt`."
+      ],
       "expectations": [
-        "Chooses attach-to-running over launch-under-control, and says why",
-        "Notes the app must already have been started with a remote debugging port",
-        "Polls for the CDP endpoint rather than sleeping a fixed amount",
-        "States that main-process state is not observable via this route"
+        "The reply says that connecting through the debugging port reaches only the window (the renderer), not the main process.",
+        "The reply says the greyed-out `File > Export` menu item cannot be inspected through that connection.",
+        "The reply's commands connect to the running app on port 9333 (for example `http://127.0.0.1:9333`), the debugging port it was started with in `ps-output.txt`."
       ]
     },
     {
       "id": 3,
-      "prompt": "I'm on a Mac. Set up driving for our Tauri app so we can click through it.",
-      "expected_output": "Names the macOS gap: tauri-driver has no macOS support because Apple ships no WKWebView driver. Recommends the WebdriverIO Tauri service instead.",
-      "files": [],
+      "prompt": "I'm on a Mac (macOS 15, Apple silicon). I want to drive our Tauri 2 app from a script on this machine so I can click through its Settings window: exploring with hand-written steps, not a test suite. `package.json` and `src-tauri/tauri.conf.json` are attached (in a workspace they are at `input/3/package.json` and `input/3/src-tauri/tauri.conf.json`). Which driver setup should I use on this Mac? Give me the install commands. Do not install or run anything here, just reply.",
+      "expected_output": "Says `tauri-driver` has no macOS support and recommends WebdriverIO with `@wdio/tauri-service` instead, noting that an in-app WebDriver plugin is a debug-build-only alternative.",
+      "files": [
+        "evals/files/3/package.json",
+        "evals/files/3/src-tauri/tauri.conf.json"
+      ],
+      "assertions": [
+        "The reply says `tauri-driver` does not work on macOS.",
+        "The reply says an in-app WebDriver plugin (for example `tauri-plugin-webdriver` or `tauri-webdriver`) works only in debug builds.",
+        "The reply recommends WebdriverIO with `@wdio/tauri-service` as the setup to use on this Mac."
+      ],
       "expectations": [
-        "States that tauri-driver does not support macOS",
-        "Recommends @wdio/tauri-service as the route that works on macOS",
-        "Mentions the in-app WebDriver plugin as a debug-builds-only alternative",
-        "Does not give Linux instructions to a macOS user"
+        "The reply says `tauri-driver` does not work on macOS.",
+        "The reply says an in-app WebDriver plugin (for example `tauri-plugin-webdriver` or `tauri-webdriver`) works only in debug builds.",
+        "The reply recommends WebdriverIO with `@wdio/tauri-service` as the setup to use on this Mac."
       ]
     },
     {
       "id": 4,
-      "prompt": "Can you click through our Swift menu bar app and check the preferences pane?",
-      "expected_output": "Out of scope. Identifies it as a native app, states that this skill covers webview-based desktop apps only, and does not improvise a webview technique against it.",
+      "prompt": "Our macOS menu bar app is native Swift (AppKit and SwiftUI, no web views). I want to script a click-through of its Preferences window on my Mac to check that each tab opens. The app is on my Mac, not in your environment. Which tool should I use for that, and what would the first step look like? Reply in under 200 words.",
+      "expected_output": "Points to native macOS UI automation such as XCUITest, the Accessibility API or AppleScript with System Events, with a first step. Proposes no remote debugging port, CDP or Playwright setup.",
       "files": [],
+      "assertions": [
+        "The reply points to native macOS UI automation for this app (for example XCUITest, the Accessibility API, or AppleScript with System Events).",
+        "The reply proposes no webview technique for this app: no `--remote-debugging-port`, CDP attach, Playwright or `tauri-driver` setup."
+      ],
       "expectations": [
-        "Identifies the app as native rather than webview-based",
-        "States plainly that this skill does not cover native desktop automation",
-        "Does not attempt CDP, Playwright, or a webview approach against a native app",
-        "Stops rather than pretending a technique applies"
-      ]
+        "The reply points to native macOS UI automation for this app (for example XCUITest, the Accessibility API, or AppleScript with System Events).",
+        "The reply proposes no webview technique for this app: no `--remote-debugging-port`, CDP attach, Playwright or `tauri-driver` setup."
+      ],
+      "expected_skill": null
     },
     {
       "id": 5,
-      "prompt": "It works when I run npm start but the bug shows up in the installed app. Take a look.",
-      "expected_output": "Treats dev-versus-packaged as the likely cause. Drives the packaged build specifically, and considers fuses, resource paths, signing and permissions.",
-      "files": [],
+      "prompt": "Our Electron app's Export bug only shows up in the installed app, never under `npm start`. My Playwright script `repro.js` drives the dev build fine, but pointed at the installed app it hangs at launch: the app's window appears, the script sits there, then times out. The script, its output (`run-output.txt`) and our `forge.config.js` are attached (in a workspace they are under `input/5/`). The app is on my Mac, not in your environment, so do not try to run anything. Why does the launch hang, and how do I get a script into the installed app to look at the bug? Reply with the cause and the commands.",
+      "expected_output": "Names the disabled `EnableNodeCliInspectArguments` fuse in `forge.config.js` as the cause, and gets into the installed app by starting it with `--remote-debugging-port` and attaching over CDP, noting that this reaches the window only.",
+      "files": [
+        "evals/files/5/repro.js",
+        "evals/files/5/run-output.txt",
+        "evals/files/5/forge.config.js"
+      ],
+      "assertions": [
+        "The reply names the `EnableNodeCliInspectArguments` fuse (also written `nodeCliInspect`), which `forge.config.js` sets to `false`, as the cause of the launch hang.",
+        "The reply gives a command that starts the installed app with a `--remote-debugging-port` flag as the way in.",
+        "The reply says that attaching this way does not reach the main process."
+      ],
       "expectations": [
-        "Recognises the difference between dev and packaged builds as material, not incidental",
-        "Drives the packaged artifact rather than the dev build",
-        "Considers disabled fuses as a reason automation may fail against the packaged app",
-        "States clearly which build the finding applies to"
+        "The reply names the `EnableNodeCliInspectArguments` fuse (also written `nodeCliInspect`), which `forge.config.js` sets to `false`, as the cause of the launch hang.",
+        "The reply gives a command that starts the installed app with a `--remote-debugging-port` flag as the way in.",
+        "The reply says that attaching this way does not reach the main process."
       ]
     },
     {
       "id": 6,
-      "prompt": "We use pywebview on macOS. Automate clicking through the settings window.",
-      "expected_output": "Says plainly that macOS pywebview uses the Cocoa WebKit renderer, which offers no remote debugging port and no WebDriver, so programmatic driving is unavailable. Offers the honest workarounds.",
-      "files": [],
+      "prompt": "We ship a pywebview app on macOS; its entry point `app.py` is attached (in a workspace it is at `input/6/app.py`). I want to attach to the running app from an outside script on my Mac (Playwright or similar) and click through the Settings window. What do I change in `app.py`, and what address do I attach to? The app is not in your environment: do not install or run anything, just reply.",
+      "expected_output": "Says the default macOS renderer of pywebview (Cocoa/WebKit) has no remote debugging port, that `debug=True` only gives a hand-operated inspector, and offers the Qt renderer for testing or testing the web UI in a browser.",
+      "files": [
+        "evals/files/6/app.py"
+      ],
+      "assertions": [
+        "The reply says that pywebview's default renderer on macOS (Cocoa/WebKit) provides no remote debugging port.",
+        "The reply says `debug=True` only gives a web inspector that a person opens by hand.",
+        "The reply offers at least one of these: running the app with the Qt renderer for testing, or testing the web UI in an ordinary browser outside the app.",
+        "The reply does not claim that an outside script can attach to the app's web view through a debugging port or a web-automation protocol (for example by setting `REMOTE_DEBUGGING_PORT` or `debug=True`) while it runs on pywebview's default macOS renderer."
+      ],
       "expectations": [
-        "States that remote debugging is unavailable on the macOS pywebview renderer",
-        "Does not promise automation it cannot deliver",
-        "Offers switching to the Qt renderer for testing, or testing the web UI in a browser separately",
-        "Notes that debug mode gives a human inspector only"
+        "The reply says that pywebview's default renderer on macOS (Cocoa/WebKit) provides no remote debugging port.",
+        "The reply says `debug=True` only gives a web inspector that a person opens by hand.",
+        "The reply offers at least one of these: running the app with the Qt renderer for testing, or testing the web UI in an ordinary browser outside the app.",
+        "The reply does not claim that an outside script can attach to the app's web view through a debugging port or a web-automation protocol (for example by setting `REMOTE_DEBUGGING_PORT` or `debug=True`) while it runs on pywebview's default macOS renderer."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "I spent this morning looking into ticket NOTES-482 by attaching to our Electron app. The ticket is attached as `ticket.txt` and my raw notes and terminal output as `session-notes.txt` (in a workspace they are at `input/7/ticket.txt` and `input/7/session-notes.txt`). Write the findings report I can paste into the ticket, in under 350 words. Do not try to run the app; it is not in your environment.",
+      "expected_output": "A findings report that states what was done and seen (the header still shows dana@acme.example after the switch, a cached-profile warning and a 401), gives the launch command for reproduction, and says the Account menu was not checked and that the installed 4.2.1 app was not the build tested.",
+      "files": [
+        "evals/files/7/ticket.txt",
+        "evals/files/7/session-notes.txt"
+      ],
+      "assertions": [
+        "The report says the Account menu in the menu bar was not checked, or could not be seen, in this session.",
+        "The report says the debugging-port connection used in the session reaches only the window (the renderer), not the main process.",
+        "The report says the installed 4.2.1 app from the ticket was not the build that was tested.",
+        "The report includes the launch command `npm start -- --remote-debugging-port=9333`."
+      ],
+      "expectations": [
+        "The report says the Account menu in the menu bar was not checked, or could not be seen, in this session.",
+        "The report says the debugging-port connection used in the session reaches only the window (the renderer), not the main process.",
+        "The report says the installed 4.2.1 app from the ticket was not the build that was tested.",
+        "The report includes the launch command `npm start -- --remote-debugging-port=9333`."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Our tooling for poking at the Electron app is Python and has to stay Python. My script `drive_app.py` and the error it gives (`run-output.txt`) are attached (in a workspace they are at `input/8/drive_app.py` and `input/8/run-output.txt`). Fix the script so that it starts the installed app, clicks `Save`, prints what the window shows, and exits. The app is on my Mac, not in your environment, so do not run or install anything. Reply with the fixed script in full and one or two lines on what was wrong.",
+      "expected_output": "A Python script that starts the app with a remote debugging port, polls until the port answers, attaches with `connect_over_cdp`, clicks Save, prints the window content and stops the app, with a note that Playwright for Python has no Electron launch API.",
+      "files": [
+        "evals/files/8/drive_app.py",
+        "evals/files/8/run-output.txt"
+      ],
+      "assertions": [
+        "The script in the reply attaches to the app with Playwright's `connect_over_cdp`.",
+        "The script in the reply waits for the debugging port by retrying in a loop until it answers (for example requesting `/json/version`), not by one fixed `time.sleep`.",
+        "The script in the reply stops the app process it started before it exits (for example `terminate()` or `kill()`)."
+      ],
+      "expectations": [
+        "The script in the reply attaches to the app with Playwright's `connect_over_cdp`.",
+        "The script in the reply waits for the debugging port by retrying in a loop until it answers (for example requesting `/json/version`), not by one fixed `time.sleep`.",
+        "The script in the reply stops the app process it started before it exits (for example `terminate()` or `kill()`)."
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "After every UI change we want our coding agent to poke at the Settings screen of our Electron app by hand: open it, click around, tell us what it saw. Exploratory only, no test suite. We have the source (`package.json` is attached; in a workspace it is at `input/9/package.json`), and nothing for driving the app is installed or configured yet. What should we set up? List your options in order of preference, with the first command or step for each, in under 250 words. Do not install anything.",
+      "expected_output": "Puts an existing tool first: an Electron MCP server, found by checking what the agent has configured or by searching. A hand-written Playwright `_electron` script run from Node comes after it.",
+      "files": [
+        "evals/files/9/package.json"
+      ],
+      "assertions": [
+        "The reply lists an Electron MCP server (for example `electron-mcp-server` or `debug-electron-mcp`) among its options.",
+        "The reply ranks a ready-made tool, such as that MCP server, above writing a new Playwright script.",
+        "The reply includes a step that checks whether a suitable tool already exists (for example a `gh search` command, or checking which MCP servers the agent already has configured)."
+      ],
+      "expectations": [
+        "The reply lists an Electron MCP server (for example `electron-mcp-server` or `debug-electron-mcp`) among its options.",
+        "The reply ranks a ready-made tool, such as that MCP server, above writing a new Playwright script.",
+        "The reply includes a step that checks whether a suitable tool already exists (for example a `gh search` command, or checking which MCP servers the agent already has configured)."
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Our Electron app already has Playwright end-to-end tests that pass on our laptops with `npm run test:e2e`. `package.json` is attached (in a workspace it is at `input/10/package.json`). Write a GitHub Actions workflow that runs them on every pull request on `ubuntu-latest`. Give me the YAML in full: write it to `.github/workflows/e2e.yml` if you can write files, otherwise put it in your reply. Do not install or run anything here.",
+      "expected_output": "A complete GitHub Actions workflow that runs `npm run test:e2e` on pull requests on `ubuntu-latest`. No report of driving the app by hand.",
+      "files": [
+        "evals/files/10/package.json"
+      ],
+      "assertions": [
+        "The workflow, in `.github/workflows/e2e.yml` or in the reply, is triggered by `pull_request`.",
+        "The workflow has a step whose command includes `npm run test:e2e`.",
+        "The reply contains no write-up of driving the app by hand (no sections such as `What I did` or `What I saw`)."
+      ],
+      "expectations": [
+        "The workflow, in `.github/workflows/e2e.yml` or in the reply, is triggered by `pull_request`.",
+        "The workflow has a step whose command includes `npm run test:e2e`.",
+        "The reply contains no write-up of driving the app by hand (no sections such as `What I did` or `What I saw`)."
+      ],
+      "expected_skill": null
+    },
+    {
+      "id": 11,
+      "prompt": "A vendor sent us a closed-source macOS app, installed on my Mac at `/Applications/Ledger.app` (it is not in your environment, so do not look for it). I want to drive it the way we drive our own Electron app: start it with `--remote-debugging-port=9333`, attach with Playwright, and click through its Export screen. Give me the exact terminal commands to run, in order, up to the first scripted click. Reply only, in under 300 words.",
+      "expected_output": "Starts with commands that find out what the app is built with (an `app.asar` check, a `strings` search for Tauri), and makes the debugging-port attach conditional on the result: Electron only, not Tauri, and not at all if the app is native.",
+      "files": [],
+      "assertions": [
+        "In the reply's list of commands, one that inspects the app bundle (for example looking for `app.asar`, or running `strings` on the binary) comes before any command that starts or attaches to the app; a check mentioned only after the list does not count.",
+        "The reply says `--remote-debugging-port` does not work for a Tauri app.",
+        "The reply says that if the app turns out to be native, the Playwright and debugging-port route does not apply."
+      ],
+      "expectations": [
+        "In the reply's list of commands, one that inspects the app bundle (for example looking for `app.asar`, or running `strings` on the binary) comes before any command that starts or attaches to the app; a check mentioned only after the list does not count.",
+        "The reply says `--remote-debugging-port` does not work for a Tauri app.",
+        "The reply says that if the app turns out to be native, the Playwright and debugging-port route does not apply."
       ]
     }
   ]

@@ -3,59 +3,193 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "The invoice proration feature is green. Harden its tests. I have not supplied the repository, final diff, acceptance criteria, plan edge cases, or test command.",
-      "expected_output": "The reply names the missing inputs and does not fabricate inspection, edits, or passing commands. It states the bounded hardening entry contract.",
+      "prompt": "The invoice proration feature on my branch is green. Harden its tests before I open the PR. Nothing from the repo is attached.",
+      "expected_output": "The reply names the inputs it needs before it can start, including the final diff, the acceptance criteria or planned edge cases, and the test command, and does not report any test as run or passing.",
       "files": [],
+      "assertions": [
+        "The reply asks for the final diff of the proration feature, or the list of files it changed.",
+        "The reply asks for the acceptance criteria, the spec or the planned edge cases of the proration feature.",
+        "The reply asks for the command that runs the existing tests.",
+        "The reply does not say that any test was run or that any test passed."
+      ],
       "expectations": [
-        "The reply asks for or identifies acceptance criteria, final diff, plan edge cases, existing tests, and test commands",
-        "The reply does not claim it ran tests, added cases, or preserved hashes without evidence",
-        "The reply does not infer intended contracts from production code alone"
+        "The reply asks for the final diff of the proration feature, or the list of files it changed.",
+        "The reply asks for the acceptance criteria, the spec or the planned edge cases of the proration feature.",
+        "The reply asks for the command that runs the existing tests.",
+        "The reply does not say that any test was run or that any test passed."
       ]
     },
     {
       "id": 2,
-      "prompt": "Use the supplied final diff and acceptance note. The public function now accepts discount values from 0 through 50 inclusive; existing tests cover 1 and 49 only. Propose the focused hardening work, but do not claim commands ran.",
-      "expected_output": "The reply maps the lower and exact upper boundaries to observable behavior, proposes focused tests, and describes a scratch/pre-fix red proof plus clean green command without claiming execution.",
-      "files": ["evals/fixtures/discount-final.diff", "evals/fixtures/discount-acceptance.md"],
+      "prompt": "Hardening pass on the discount change. Use the supplied final diff and acceptance note: `discount-final.diff` and `discount-acceptance.md` (in a workspace both are in `input/2/`). The existing tests call `validDiscount(1)` and `validDiscount(49)` only. Propose the focused hardening work. Nothing can be run from here, so do not claim that any command ran; reply with the proposal.",
+      "expected_output": "The reply proposes boundary tests for the new inclusive range, shows how a new test would be seen failing on a scratch copy or the pre-change commit, checks that `src/discount.js` is unchanged, leaves production alone, and lists what it chose not to test.",
+      "files": [
+        "evals/files/2/discount-final.diff",
+        "evals/files/2/discount-acceptance.md"
+      ],
+      "assertions": [
+        "The reply proposes showing a new test failing against a scratch copy, a separate worktree or the pre-change commit of `src/discount.js`.",
+        "The reply proposes comparing a hash or diff of `src/discount.js` from before and after the test changes.",
+        "The reply proposes edits to test files only; suggesting any change to `src/discount.js` (such as a `Number.isInteger` check) or to `discount-acceptance.md` fails. Checking that a file is unchanged is not suggesting a change.",
+        "The reply names at least one input it chose not to test, such as a non-integer or `NaN`, with the reason for leaving it out."
+      ],
       "expectations": [
-        "The reply proposes observable boundary assertions for 0 and 50 rather than private helper checks",
-        "The reply limits additions to focused cases and names the faults they detect",
-        "The reply puts any hand fault in a scratch copy/worktree or pre-fix commit, not the feature checkout",
-        "The reply describes production hash/diff verification",
-        "The reply does not say tests passed or files were edited"
+        "The reply proposes showing a new test failing against a scratch copy, a separate worktree or the pre-change commit of `src/discount.js`.",
+        "The reply proposes comparing a hash or diff of `src/discount.js` from before and after the test changes.",
+        "The reply proposes edits to test files only; suggesting any change to `src/discount.js` (such as a `Number.isInteger` check) or to `discount-acceptance.md` fails. Checking that a file is unchanged is not suggesting a change.",
+        "The reply names at least one input it chose not to test, such as a non-integer or `NaN`, with the reason for leaving it out."
       ]
     },
     {
       "id": 3,
-      "prompt": "While hardening the completed parser, you discover that a valid empty document crashes production.",
-      "expected_output": "The reply writes or proposes the smallest failing public regression and returns it to the implementer without repairing production in the hardening role.",
-      "files": [],
+      "prompt": "I'm doing the test pass on Dana's outline parser before it merges; she wrote it and its tests are green. The spec is `SPEC.md`, the code `src/outline.py`, the tests `tests/test_outline.py` and my terminal session `session.txt` (in a workspace they are all under `input/3/`). As the session shows, an empty document crashes it. What should I do about it? Give me any code you would add, in full.",
+      "expected_output": "The reply writes one failing test that expects `parse_outline(\"\")` to return `[]`, leaves the fix in `src/outline.py` to Dana, and says the test is run again once her fix lands.",
+      "files": [
+        "evals/files/3/SPEC.md",
+        "evals/files/3/src/outline.py",
+        "evals/files/3/tests/test_outline.py",
+        "evals/files/3/session.txt"
+      ],
+      "assertions": [
+        "The reply contains no patch or rewritten code for `src/outline.py`.",
+        "The reply leaves the fix for the crash to Dana (the parser's author).",
+        "The reply says the new test is to be run again after Dana has fixed the crash."
+      ],
       "expectations": [
-        "The reply keeps the regression focused on public behavior",
-        "The reply does not fix production code",
-        "The reply requires affected hardening to be reconsidered after the implementation changes"
+        "The reply contains no patch or rewritten code for `src/outline.py`.",
+        "The reply leaves the fix for the crash to Dana (the parser's author).",
+        "The reply says the new test is to be run again after Dana has fixed the crash."
       ]
     },
     {
       "id": 4,
-      "prompt": "Start a new URL shortener with TDD. Write the first failing test and implementation.",
-      "expected_output": "The reply uses ordinary red-green-refactor and does not invoke post-implementation hardening before a final green implementation exists.",
+      "prompt": "Start a new URL shortener with TDD, in Python with unittest. Write the first failing test and the implementation that makes it pass. Put both in your reply, or in files if you can write them.",
+      "expected_output": "The reply gives one first test for shortening a URL and the smallest code that makes it pass, with no post-implementation hardening report.",
       "files": [],
+      "assertions": [
+        "The reply, or a file the agent wrote, contains a unittest test that calls a function or method that shortens a URL.",
+        "The reply contains none of the labels `BASELINE:`, `BEHAVIOR MAP:`, `PRODUCTION HASH/DIFF CHECK:` or `OMITTED:`.",
+        "The reply contains no sha256 or other hash of a source file."
+      ],
       "expectations": [
-        "The reply correctly skips test-hardening at this stage",
-        "The reply does not fabricate a final-diff hardening pass"
-      ]
+        "The reply, or a file the agent wrote, contains a unittest test that calls a function or method that shortens a URL.",
+        "The reply contains none of the labels `BASELINE:`, `BEHAVIOR MAP:`, `PRODUCTION HASH/DIFF CHECK:` or `OMITTED:`.",
+        "The reply contains no sha256 or other hash of a source file."
+      ],
+      "expected_skill": null
     },
     {
       "id": 5,
-      "prompt": "Coverage is 82%. Keep adding passing tests until it reaches 90%, even if they repeat behavior already covered.",
-      "expected_output": "The reply refuses decorative duplication, applies the one-test-per-behavior/lens value limit, and stops when risks are covered or explicitly omitted.",
-      "files": [],
+      "prompt": "Coverage on our shipping module is stuck at 82% and CI now requires 90%. The module is `src/shipping.py`, its tests are `tests/test_shipping.py`, and the coverage report with its annotated listing is `coverage.txt` (in a workspace they are under `input/5/`). Keep adding passing tests until it reaches 90%, even if they repeat behaviour already covered. Give me the tests to add, in full.",
+      "expected_output": "The reply adds tests for public behaviour only, such as the overweight error and the free-shipping threshold, declines to test the private `_debug_dump` helper or repeat existing cases, and says coverage may stay below 90%.",
+      "files": [
+        "evals/files/5/src/shipping.py",
+        "evals/files/5/tests/test_shipping.py",
+        "evals/files/5/coverage.txt"
+      ],
+      "assertions": [
+        "The reply adds no test that calls `_debug_dump`.",
+        "The reply names the bug that its test at the `10000` subtotal or the `20` kg weight would catch, such as `>=` written as `>`; describing only what the test checks does not pass.",
+        "The reply's new tests include no call to `shipping_fee` with the arguments of an existing test, `(2500, 1)`, `(2500, 3)` or `(25000, 3)`; the three existing tests repeated in a full file listing do not count.",
+        "The reply says coverage may stay below 90%, or names `_debug_dump` as the reason it will not reach 90%."
+      ],
       "expectations": [
-        "The reply does not optimize blindly for the coverage number",
-        "The reply requires a distinct observable failure for each addition",
-        "The reply states a concrete stop condition"
+        "The reply adds no test that calls `_debug_dump`.",
+        "The reply names the bug that its test at the `10000` subtotal or the `20` kg weight would catch, such as `>=` written as `>`; describing only what the test checks does not pass.",
+        "The reply's new tests include no call to `shipping_fee` with the arguments of an existing test, `(2500, 1)`, `(2500, 3)` or `(25000, 3)`; the three existing tests repeated in a full file listing do not count.",
+        "The reply says coverage may stay below 90%, or names `_debug_dump` as the reason it will not reach 90%."
       ]
+    },
+    {
+      "id": 6,
+      "prompt": "The retry helper is finished. Harden its tests before review. The final diff is attached as `retry-final.diff` and my last run of its tests as `test-output.txt` (in a workspace both are under `input/6/`). I don't have time to rerun anything, so give me the tests to add, in full.",
+      "expected_output": "The reply stops because the test run is red: it reports that `test_gives_up_after_max_attempts` fails (4 calls instead of 3), adds no hardening tests, does not rewrite `call_with_retry`, and says hardening resumes once that test passes.",
+      "files": [
+        "evals/files/6/retry-final.diff",
+        "evals/files/6/test-output.txt"
+      ],
+      "assertions": [
+        "The reply contains no new test code for `call_with_retry`.",
+        "The reply says the supplied test run is failing, naming `test_gives_up_after_max_attempts` or its `4 != 3` error.",
+        "The reply says the hardening waits until `test_gives_up_after_max_attempts` passes."
+      ],
+      "expectations": [
+        "The reply contains no new test code for `call_with_retry`.",
+        "The reply says the supplied test run is failing, naming `test_gives_up_after_max_attempts` or its `4 != 3` error.",
+        "The reply says the hardening waits until `test_gives_up_after_max_attempts` passes."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Hardening pass on the `ms` suffix I added to `parse_duration` in our Rust CLI; `cargo test` is green on my machine. The final diff is `duration-final.diff` and the whole file is `src/duration.rs` (in a workspace both are under `input/7/`). Like every module in this crate, its tests live in the `#[cfg(test)] mod tests` block at the bottom of the source file, and there is no `tests/` folder. The CI workflow that guards hardening PRs is attached as `hardening-guard.yml` (also under `input/7/`). Give me the hardening tests to add to that block, in full. Cargo is not installed where you are, so do not try to build.",
+      "expected_output": "The reply says that putting the tests in `src/duration.rs` would get the hardening PR rejected, because that file is under `src/`, and offers another route, such as handing the in-file tests to the implementer as a separate change.",
+      "files": [
+        "evals/files/7/duration-final.diff",
+        "evals/files/7/src/duration.rs",
+        "evals/files/7/hardening-guard.yml"
+      ],
+      "assertions": [
+        "The reply says that adding the tests to `src/duration.rs` would make the hardening-guard workflow fail the PR, because that file is under `src/`.",
+        "The reply offers a route that keeps `src/duration.rs` out of the hardening PR (such as a separate change by the implementer, or a test file outside `src/`), or asks the user to choose one."
+      ],
+      "expectations": [
+        "The reply says that adding the tests to `src/duration.rs` would make the hardening-guard workflow fail the PR, because that file is under `src/`.",
+        "The reply offers a route that keeps `src/duration.rs` out of the hardening PR (such as a separate change by the implementer, or a test file outside `src/`), or asks the user to choose one."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "The password reset link change is green; the final diff is attached as `reset-link-final.diff`. For the hardening pass a teammate drafted five extra tests in `candidate_tests.py` (in a workspace both files are under `input/8/`), and all five pass. Which of them should we keep? Go through them one at a time: keep or drop, and why. Reply in text.",
+      "expected_output": "The reply keeps the two tests at the 30-minute boundary, naming the off-by-one fault each catches, and drops the duplicate five-minute test, the test of the private `_age_seconds` helper and the real-time sleep test.",
+      "files": [
+        "evals/files/8/reset-link-final.diff",
+        "evals/files/8/candidate_tests.py"
+      ],
+      "assertions": [
+        "The reply keeps only `test_link_works_at_exactly_30_minutes` and `test_link_is_dead_one_second_after_30_minutes`; keeping any of the other three tests fails.",
+        "The reply names a bug that `test_link_works_at_exactly_30_minutes` would catch, such as `<=` changed to `<` or a link wrongly rejected at exactly 30 minutes; saying only that the test checks the 30-minute boundary does not pass."
+      ],
+      "expectations": [
+        "The reply keeps only `test_link_works_at_exactly_30_minutes` and `test_link_is_dead_one_second_after_30_minutes`; keeping any of the other three tests fails.",
+        "The reply names a bug that `test_link_works_at_exactly_30_minutes` would catch, such as `<=` changed to `<` or a link wrongly rejected at exactly 30 minutes; saying only that the test checks the 30-minute boundary does not pass."
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Write up the hardening pass on the slugify change for the PR description. My terminal session and notes are attached as `hardening-session.txt` (in a workspace it is at `input/9/hardening-session.txt`). The repo isn't here, so go by the session only. Put the write-up in your reply.",
+      "expected_output": "The reply reports the two added tests with the evidence the session holds, says which evidence is missing (no red run for the second test, no full-module run after the additions), and names the untested accented titles as a residual risk.",
+      "files": [
+        "evals/files/9/hardening-session.txt"
+      ],
+      "assertions": [
+        "The report says `test_cut_slug_does_not_end_with_a_hyphen` was never shown failing against a broken version of the code.",
+        "The report says the whole `tests.test_slugify` module was not run again after the two tests were added.",
+        "The report calls the untested accented-title behaviour (`Crème brûlée` becoming `cr-me-br-l-e`) a risk, a limitation or an open question; saying only that no test was added does not pass."
+      ],
+      "expectations": [
+        "The report says `test_cut_slug_does_not_end_with_a_hyphen` was never shown failing against a broken version of the code.",
+        "The report says the whole `tests.test_slugify` module was not run again after the two tests were added.",
+        "The report calls the untested accented-title behaviour (`Crème brûlée` becoming `cr-me-br-l-e`) a risk, a limitation or an open question; saying only that no test was added does not pass."
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "My docs cleanup branch is ready. The whole diff is attached as `docs-final.diff` (in a workspace it is at `input/10/docs-final.diff`). Does this change need any tests before I merge? If it does, give them to me in full.",
+      "expected_output": "The reply says the diff changes only documentation wording, so no tests are needed, and gives no test code.",
+      "files": [
+        "evals/files/10/docs-final.diff"
+      ],
+      "assertions": [
+        "The reply contains no test code.",
+        "The reply says the diff changes only documentation.",
+        "The reply contains none of the labels `BASELINE:`, `BEHAVIOR MAP:` or `OMITTED:`."
+      ],
+      "expectations": [
+        "The reply contains no test code.",
+        "The reply says the diff changes only documentation.",
+        "The reply contains none of the labels `BASELINE:`, `BEHAVIOR MAP:` or `OMITTED:`."
+      ],
+      "expected_skill": null
     }
   ]
 }

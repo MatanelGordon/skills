@@ -1,0 +1,15 @@
+{
+  "name": "acme-notes",
+  "productName": "Acme Notes",
+  "version": "4.3.0",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "make": "electron-forge make"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "7.5.0",
+    "electron": "33.2.0"
+  }
+}

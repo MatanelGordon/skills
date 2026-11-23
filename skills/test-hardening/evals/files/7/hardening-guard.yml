@@ -1,0 +1,19 @@
+name: hardening-guard
+on:
+  pull_request:
+    types: [opened, synchronize, labeled]
+jobs:
+  test-only:
+    if: contains(github.event.pull_request.labels.*.name, 'hardening')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Hardening PRs change tests only
+        run: |
+          changed=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+          if echo "$changed" | grep -q '^src/'; then
+            echo "This PR is labelled hardening and changes files under src/." >&2
+            exit 1
+          fi

@@ -1,0 +1,19 @@
+$ cd /home/dev/outline
+$ python3 -m unittest discover -s tests -v
+test_document_without_headings_has_empty_outline (test_outline.ParseOutlineTest.test_document_without_headings_has_empty_outline) ... ok
+test_ignores_byte_order_mark (test_outline.ParseOutlineTest.test_ignores_byte_order_mark) ... ok
+test_returns_headings_in_document_order (test_outline.ParseOutlineTest.test_returns_headings_in_document_order) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+$ python3 -c "from src.outline import parse_outline; print(parse_outline(''))"
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/home/dev/outline/src/outline.py", line 10, in parse_outline
+    if lines[0].startswith(BYTE_ORDER_MARK):
+       ~~~~~^^^
+IndexError: list index out of range
+$ git status --short
+$

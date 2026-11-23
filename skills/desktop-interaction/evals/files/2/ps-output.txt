@@ -1,0 +1,13 @@
+$ ps -axo pid,lstart,command | grep "Acme Notes" | grep -v grep
+ 4812 Mon Nov 23 08:02:11 2026 /Applications/Acme Notes.app/Contents/MacOS/Acme Notes --remote-debugging-port=9333
+ 4819 Mon Nov 23 08:02:12 2026 /Applications/Acme Notes.app/Contents/Frameworks/Acme Notes Helper (GPU).app/Contents/MacOS/Acme Notes Helper (GPU) --type=gpu-process --user-data-dir=/Users/me/Library/Application Support/Acme Notes
+ 4821 Mon Nov 23 08:02:12 2026 /Applications/Acme Notes.app/Contents/Frameworks/Acme Notes Helper.app/Contents/MacOS/Acme Notes Helper --type=utility --utility-sub-type=network.mojom.NetworkService
+ 4827 Mon Nov 23 08:02:13 2026 /Applications/Acme Notes.app/Contents/Frameworks/Acme Notes Helper (Renderer).app/Contents/MacOS/Acme Notes Helper (Renderer) --type=renderer --app-path=/Applications/Acme Notes.app/Contents/Resources/app.asar
+
+$ ls "/Applications/Acme Notes.app/Contents/Resources"
+app.asar
+electron.icns
+en.lproj
+
+$ date
+Mon Nov 23 09:14:40 GMT 2026

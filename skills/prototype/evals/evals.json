@@ -3,77 +3,165 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Before we build this, I'm not sure the booking state machine actually holds up. Can you try a quick version so we can see?",
-      "expected_output": "Greenfield throwaway: writes the question down first, builds a single script with a pure module plus a scenario list that prints state after every step, no tests, no abstractions, no persistence.",
-      "files": [],
+      "prompt": "Before we build this, I'm not sure the booking state machine actually holds up once events arrive late or more than once. The draft is attached as `booking-states.md` (in a workspace it is at `input/1/booking-states.md`). Can you try a quick version so we can see? Python 3, one short script of about 60 lines. Give me the script in full in your reply, and write it to a file too if you can write files. If you are able to run it, run it and tell me what it showed; if you are not, I will run it myself.",
+      "expected_output": "One throwaway Python script whose opening comment states the question in one sentence and a prediction of the answer, and which replays late and repeated events from hardcoded scenarios, including a `pay_ok` that arrives after the hold has expired. No tests.",
+      "files": [
+        "evals/files/1/booking-states.md"
+      ],
+      "assertions": [
+        "The script, in the reply or in a file the agent wrote, has an opening comment or docstring that states, in one sentence, the question the script is meant to answer.",
+        "A prediction of what the run will show, labelled as a prediction, guess or expectation, appears in the script's opening comment, or in the text addressed to the user before any output of the script.",
+        "The script includes a scenario in which `pay_ok` arrives after `hold_timeout` has already moved the booking to `expired`."
+      ],
       "expectations": [
-        "States the question in one sentence at the top of the prototype before writing logic",
-        "Predicts the answer before running, so the run can surprise",
-        "Keeps the model pure and separate from the throwaway scenario runner",
-        "Scenario list prints state after every step so results are observable",
-        "Adds no tests, no error handling beyond runnability, and no persistence",
-        "Pushes scenarios through the awkward cases, not just the happy path"
+        "The script, in the reply or in a file the agent wrote, has an opening comment or docstring that states, in one sentence, the question the script is meant to answer.",
+        "A prediction of what the run will show, labelled as a prediction, guess or expectation, appears in the script's opening comment, or in the text addressed to the user before any output of the script.",
+        "The script includes a scenario in which `pay_ok` arrives after `hold_timeout` has already moved the booking to `expired`."
       ]
     },
     {
       "id": 2,
-      "prompt": "We want to try ranking the feed by engagement instead of recency, but this is our main production service and I don't want a hack welded into it.",
-      "expected_output": "Brownfield mode: defines the seam interface first, shaped for the real implementation, puts deliberately bad code behind it, verifies the swap is one line, marks it loudly and writes the exit path into the prototype file.",
-      "files": [],
+      "prompt": "We want to try ranking the home feed by engagement instead of recency, to see whether the feed actually looks better before anyone commits to building the stats pipeline for it. But this is our main production service and I don't want a hack welded into it. The three files that matter are attached: `feed/service.py`, `feed/store.py` and `feed/app.py` (in a workspace they are under `input/2/feed/`). Likes and comments are not in this service's database; they sit in the analytics warehouse, which the service has no client for. Show me the code for the trial: every new file in full, and every line you change in an existing file. Python 3.12. Nothing needs to run.",
+      "expected_output": "A ranking interface that `home_feed` calls, with the engagement ordering as a throwaway implementation whose name says so, which sorts by hardcoded numbers, carries a comment saying how it is removed, and is swapped in by one line in `feed/app.py`.",
+      "files": [
+        "evals/files/2/feed/service.py",
+        "evals/files/2/feed/store.py",
+        "evals/files/2/feed/app.py"
+      ],
+      "assertions": [
+        "The class, function or file that holds the engagement ordering has `prototype`, `proto`, `spike` or `throwaway` in its name (any letter case).",
+        "The engagement numbers the trial code sorts by are literals written in that code (for example a hardcoded dict of post ids to scores), not values fetched from the warehouse, an HTTP call or a new client class.",
+        "A comment inside the engagement-ordering code says what happens to that code if the trial's answer is no (for example that the file is deleted).",
+        "Which ranker the feed uses is decided at one place in the trial code (for example the `FeedService(...)` construction in `feed/app.py`, or one flag check), not by a ranking argument or flag added to each call of `home_feed`."
+      ],
       "expectations": [
-        "Writes the seam interface before any prototype code",
-        "Shapes the interface around what the real implementation needs, not around the hack's conveniences",
-        "Runs the one-line-swap test and moves the seam if call sites would need editing",
-        "Adds no abstractions behind the seam - the bad code stays bad",
-        "Marks the prototype at the boundary via filename, type name and flag name",
-        "Writes an exit path naming both the yes-branch and the no-branch"
+        "The class, function or file that holds the engagement ordering has `prototype`, `proto`, `spike` or `throwaway` in its name (any letter case).",
+        "The engagement numbers the trial code sorts by are literals written in that code (for example a hardcoded dict of post ids to scores), not values fetched from the warehouse, an HTTP call or a new client class.",
+        "A comment inside the engagement-ordering code says what happens to that code if the trial's answer is no (for example that the file is deleted).",
+        "Which ranker the feed uses is decided at one place in the trial code (for example the `FeedService(...)` construction in `feed/app.py`, or one flag check), not by a ranking argument or flag added to each call of `home_feed`."
       ]
     },
     {
       "id": 3,
-      "prompt": "Add a --version flag to our CLI that prints the version from package.json.",
-      "expected_output": "No prototype. The behaviour is fully understood and the implementation is a few lines; prototyping it would cost tokens and answer nothing. Implements it directly.",
-      "files": [],
+      "prompt": "Add a `--version` flag to our CLI that prints the version from package.json. The CLI is two files, attached as `package.json` and `bin/tasklog.js` (in a workspace they are under `input/3/`). Edit `bin/tasklog.js` if you can write files, and either way show me the lines you added or changed. Node is not installed where you are, so don't try to run it.",
+      "expected_output": "`bin/tasklog.js` with a few added lines that print the `version` field of `package.json` when the argument is `--version`. No trial version of the change, and no question or prediction lines.",
+      "files": [
+        "evals/files/3/package.json",
+        "evals/files/3/bin/tasklog.js"
+      ],
+      "assertions": [
+        "The changed `bin/tasklog.js`, in the reply or in the edited file, handles a `--version` argument by printing the `version` field it loads from `package.json`.",
+        "The added code contains no hardcoded copy of the version number `2.4.1`.",
+        "The reply does not propose or build a prototype, spike or throwaway version before making the change.",
+        "The reply contains no line labelled `Question:` or `Prediction:`."
+      ],
       "expectations": [
-        "Does not propose a prototype, spike, or throwaway version",
-        "Does not ask which surface or which mode applies",
-        "Implements the change directly"
-      ]
+        "The changed `bin/tasklog.js`, in the reply or in the edited file, handles a `--version` argument by printing the `version` field it loads from `package.json`.",
+        "The added code contains no hardcoded copy of the version number `2.4.1`.",
+        "The reply does not propose or build a prototype, spike or throwaway version before making the change.",
+        "The reply contains no line labelled `Question:` or `Prediction:`."
+      ],
+      "expected_skill": null
     },
     {
       "id": 4,
-      "prompt": "Here's my prototype for the new pricing rules. Can you add tests and make the discount tiers configurable before we review it?",
-      "expected_output": "Names this as over-prototyping. Tests and configurability mean it is no longer throwaway; asks whether the question is answered, and if it is, pushes to capture the verdict and rewrite properly rather than hardening the prototype.",
-      "files": [],
+      "prompt": "Here's my spike for the new pricing rules, attached as `pricing_spike.py` (in a workspace it is at `input/4/pricing_spike.py`). Can you add tests and make the discount tiers configurable before we review it on Thursday? Show me the result in your reply, and write the files too if you can.",
+      "expected_output": "Does not add the tests or the configuration. Says they mean the file is no longer a throwaway, points out that the spike already answers its question (yes: the 1000-unit loyal order is at about 18.3% margin, so the prediction was wrong), and offers two paths: record the answer and discard the spike, or write the rules again as production code.",
+      "files": [
+        "evals/files/4/pricing_spike.py"
+      ],
+      "assertions": [
+        "The reply says that tests or configurable tiers do not belong on throwaway code, or that adding them means `pricing_spike.py` is no longer a throwaway.",
+        "The reply sets out two separate paths for the user to pick from: keep `pricing_spike.py` a throwaway and record its answer, or write the pricing rules again as production code.",
+        "The reply says the spike's question is already answered, and that the answer is yes: an order in it falls below the 20% minimum margin (the 1000-unit order for a loyal customer comes out at about 18.3%).",
+        "No test function or test file is shown in the reply or written to disk."
+      ],
       "expectations": [
-        "Flags tests on a prototype as the signal it has stopped being throwaway",
-        "Flags configurability as generality for a case nobody asked about",
-        "Forces the explicit choice: promote it properly, or stop and capture the verdict",
-        "Does not silently harden the prototype into production code"
+        "The reply says that tests or configurable tiers do not belong on throwaway code, or that adding them means `pricing_spike.py` is no longer a throwaway.",
+        "The reply sets out two separate paths for the user to pick from: keep `pricing_spike.py` a throwaway and record its answer, or write the pricing rules again as production code.",
+        "The reply says the spike's question is already answered, and that the answer is yes: an order in it falls below the 20% minimum margin (the 1000-unit order for a loyal customer comes out at about 18.3%).",
+        "No test function or test file is shown in the reply or written to disk."
       ]
     },
     {
       "id": 5,
-      "prompt": "The variant B layout won, everyone agrees. What now?",
-      "expected_output": "Captures the question, the answer, and the evidence that settled it; folds the decision into the real code; pushes the prototype to a throwaway branch and deletes it from main. Offers an architecture decision record if the call was hard to reverse.",
-      "files": [],
+      "prompt": "We tried three layouts for the support orders page behind `?variant=`. The code is on `main`, attached as `orders-page.tsx`, and my notes from the review session are in `review-notes.txt` (in a workspace both are under `input/5/`). Variant B won, everyone agrees. What should happen now? Reply with the steps in order. Don't change any files.",
+      "expected_output": "Steps in order: a written record of the outcome holding the question, the answer B and the figures from the review notes; variant B built again as production code; the variant code kept on a throwaway branch and removed from `main`.",
+      "files": [
+        "evals/files/5/orders-page.tsx",
+        "evals/files/5/review-notes.txt"
+      ],
+      "assertions": [
+        "The reply includes the wording of a record of the outcome (not only an instruction to write one) that cites at least one figure or remark from `review-notes.txt`, such as `6 of 6` or the 4-second median.",
+        "That record states the question the variants were built to answer (which layout lets a support agent find a late order fastest).",
+        "The reply says to build variant B again as production code instead of shipping the `VariantB` component as written.",
+        "The reply says the variant code is kept on a separate throwaway branch rather than left on `main`."
+      ],
       "expectations": [
-        "Records the question, the verdict, and what was observed that settled it",
-        "Deletes the prototype and the losing variants from the main branch",
-        "Does not promote prototype code straight to production unrewritten",
-        "Suggests recording the decision durably when it is hard to reverse and would surprise a future reader"
+        "The reply includes the wording of a record of the outcome (not only an instruction to write one) that cites at least one figure or remark from `review-notes.txt`, such as `6 of 6` or the 4-second median.",
+        "That record states the question the variants were built to answer (which layout lets a support agent find a late order fastest).",
+        "The reply says to build variant B again as production code instead of shipping the `VariantB` component as written.",
+        "The reply says the variant code is kept on a separate throwaway branch rather than left on `main`."
       ]
     },
     {
       "id": 6,
-      "prompt": "I've got a prototype importer behind an interface, but swapping in the real one means updating the twelve places that call it. Is that normal?",
-      "expected_output": "No - that is the seam being in the wrong place. The one-line-swap test has failed; move the seam to where the real implementation would sit, before writing anything further.",
-      "files": [],
+      "prompt": "I've got a spike of the new contact importer behind an interface in our CRM service. `imports/importer.py` and `imports/jobs.py` are attached (in a workspace they are under `input/6/imports/`). `jobs.py` shows three of the twelve places that create an importer; the other nine look the same. When the final importer is written, swapping it in will mean editing all twelve. Is that normal? I want to merge the spike to `main` this week so the team can try it. Tell me what you would change before that: a short list, most important first, one or two sentences per item. Don't rewrite the files.",
+      "expected_output": "A short list: create the importer in one place so the swap is one line, rename the flag and the class to say the code is a spike, write down in the code how the spike ends, take `sample_rows()` off the interface, and drop the helper classes behind it.",
+      "files": [
+        "evals/files/6/imports/importer.py",
+        "evals/files/6/imports/jobs.py"
+      ],
+      "assertions": [
+        "The reply says to rename the flag `NEW_IMPORTER` or the class `NewContactImporter` so that the name marks the code as a prototype, a spike or temporary.",
+        "The reply says the spike needs a note in the code about how it ends: what replaces it if the trial succeeds, or that it is deleted if the trial fails.",
+        "The reply says `sample_rows()` should be taken off the `ContactImporter` interface, or reshaped, because it exposes something only the spike can provide.",
+        "The reply says to remove `RowCleaner` or `ImporterSettings`, or to fold them into the spike class, instead of keeping helper classes behind the interface."
+      ],
       "expectations": [
-        "Identifies the failed one-line-swap test as a misplaced seam, not an unavoidable cost",
-        "Recommends moving the seam so call sites are untouched by the swap",
-        "Points at a registration, injection or factory point as the single line that should change",
-        "Does not suggest keeping the prototype and fixing the call sites later"
+        "The reply says to rename the flag `NEW_IMPORTER` or the class `NewContactImporter` so that the name marks the code as a prototype, a spike or temporary.",
+        "The reply says the spike needs a note in the code about how it ends: what replaces it if the trial succeeds, or that it is deleted if the trial fails.",
+        "The reply says `sample_rows()` should be taken off the `ContactImporter` interface, or reshaped, because it exposes something only the spike can provide.",
+        "The reply says to remove `RowCleaner` or `ImporterSettings`, or to fold them into the spike class, instead of keeping helper classes behind the interface."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "I wrote a quick spike to check that our waitlist promotion idea works. It is attached as `waitlist_spike.py`, and what it printed is in `run-output.txt` (in a workspace both are under `input/7/`). It ran with no errors, so I think we're fine to build it for real. Agree? If not, show me the smallest change to the spike that would let it settle the matter: the changed or added lines only.",
+      "expected_output": "Disagrees, because the output shows nothing about the seats or the waitlist. The change is a one-sentence question at the top and a print of the seats and the waitlist after every step, which shows `dee` holding both seats before the last cancel.",
+      "files": [
+        "evals/files/7/waitlist_spike.py",
+        "evals/files/7/run-output.txt"
+      ],
+      "assertions": [
+        "The changed lines print the seats and the waitlist after each step inside `run`, not only once at the end of a scenario or of the script.",
+        "The changed lines add a comment at the top of the spike that states, in one sentence, the question the spike is meant to answer, or the reply asks the user to write that question down.",
+        "The reply says the run output (`all scenarios ran, no errors`) cannot show whether the promotion logic works, because it prints nothing about the seats or the waitlist."
+      ],
+      "expectations": [
+        "The changed lines print the seats and the waitlist after each step inside `run`, not only once at the end of a scenario or of the script.",
+        "The changed lines add a comment at the top of the spike that states, in one sentence, the question the spike is meant to answer, or the reply asks the user to write that question down.",
+        "The reply says the run output (`all scenarios ran, no errors`) cannot show whether the promotion logic works, because it prints nothing about the seats or the waitlist."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Before we commit to the retry rules for refund webhooks, I want to see whether they can refund a customer twice. The rules are in the attached `retry-rules.md` (in a workspace it is at `input/8/retry-rules.md`). Can you spike it in Python 3? I was thinking of a small worker that pulls jobs from the Redis on my laptop and calls the payment provider's sandbox, so it's realistic. Give me the code in full in your reply, and write it to a file too if you can write files. Redis and the sandbox key exist only on my laptop, so I will be the one to run that part.",
+      "expected_output": "One Python file that replays the retry rules as a fixed series of events against an in-memory queue and a fake provider, with no Redis, HTTP or provider library and no sleeping, plus the reason Redis and the sandbox were left out.",
+      "files": [
+        "evals/files/8/retry-rules.md"
+      ],
+      "assertions": [
+        "The code imports no Redis, HTTP or payment-provider library (for example `redis`, `requests`, `httpx`, `stripe`).",
+        "The reply gives the user a reason for leaving Redis and the provider sandbox out of the code.",
+        "The code ends after replaying a fixed, hardcoded series of events: it has no endless worker loop such as `while True`, no thread and no wait for Ctrl+C.",
+        "The code does not wait out the retry delays: it contains no `sleep` call."
+      ],
+      "expectations": [
+        "The code imports no Redis, HTTP or payment-provider library (for example `redis`, `requests`, `httpx`, `stripe`).",
+        "The reply gives the user a reason for leaving Redis and the provider sandbox out of the code.",
+        "The code ends after replaying a fixed, hardcoded series of events: it has no endless worker loop such as `while True`, no thread and no wait for Ctrl+C.",
+        "The code does not wait out the retry delays: it contains no `sleep` call."
       ]
     }
   ]

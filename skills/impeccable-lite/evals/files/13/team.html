@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Team · Quillmate</title>
+<style>
+  @font-face { font-family: "Quill Serif"; src: url("fonts/quill-serif.woff2") format("woff2"); }
+  body { margin: 0; font: 16px/1.5 "Quill Serif", Georgia, serif; color: #1B1F23; background: #FBFAF7; }
+  main { max-width: 56rem; margin: 0 auto; padding: 32px; }
+  .page-head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #1B1F23; padding-bottom: 8px; }
+  h1 { font-size: 1.75rem; margin: 0; }
+  .btn { font: inherit; padding: 8px 16px; border: 1px solid #1B1F23; border-radius: 2px; background: transparent; color: #1B1F23; }
+  .btn-primary { background: #B4411F; border-color: #B4411F; color: #FBFAF7; }
+  .btn:focus-visible { outline: 2px solid #1B1F23; outline-offset: 2px; }
+  .members { width: 100%; border-collapse: collapse; margin-top: 24px; }
+  .members th { text-align: left; font-weight: 400; color: #5F6368; border-bottom: 1px solid #D9D5CC; padding: 8px 0; }
+  .members td { border-bottom: 1px solid #D9D5CC; padding: 8px 0; }
+</style>
+</head>
+<body>
+<main>
+  <div class="page-head">
+    <h1>Team</h1>
+    <button class="btn btn-primary" type="button" data-action="invite">Invite teammate</button>
+  </div>
+  <table class="members">
+    <thead><tr><th>Name</th><th>Role</th><th>Last active</th></tr></thead>
+    <tbody id="member-rows">
+      <!-- One <tr> per member. Empty when nobody has been invited yet. -->
+    </tbody>
+  </table>
+</main>
+</body>
+</html>

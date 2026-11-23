@@ -1,0 +1,37 @@
+$ pwd
+/home/dev/wt/pricing-mutation
+$ git status --short --branch
+## mutation/pricing-discount
+$ git rev-parse HEAD
+39913fe5aa9936fad51de143d24a5f9bec8ddc99
+$ git merge-base origin/main HEAD
+f8bfe04c9d0e4cf03fe199514806cfb125279194
+$ git diff --stat f8bfe04 39913fe
+ src/pricing.rs     | 14 +++++++++-----
+ tests/discounts.rs | 21 +++++++++++++++++++++
+ 2 files changed, 30 insertions(+), 5 deletions(-)
+$ cargo test
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.41s
+     Running unittests src/lib.rs (target/debug/deps/pricing-1c0f9c2e5d7a8b34)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/discounts.rs (target/debug/deps/discounts-7e4d2a9b0c1f6e53)
+
+running 12 tests
+[12 lines trimmed]
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+$ cargo install cargo-mutants --version 27.1.0 --locked --root .mutation-tools
+    Updating crates.io index
+  Installing cargo-mutants v27.1.0
+[compile output trimmed]
+    Finished `release` profile [optimized] target(s) in 1m 52s
+  Installing /home/dev/wt/pricing-mutation/.mutation-tools/bin/cargo-mutants
+   Installed package `cargo-mutants v27.1.0` (executable `cargo-mutants`)
+warning: be sure to add `/home/dev/wt/pricing-mutation/.mutation-tools/bin` to your PATH to be able to run the installed binaries
+$ ls .mutation-tools/bin
+cargo-mutants

@@ -6,6 +6,7 @@ import { extname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { isEntryPoint } from './entry-point.mjs';
+import { checkRepositoryEvals } from './normalize-evals.mjs';
 
 const DEFAULT_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const ALLOWED_KEYS = new Set(['name', 'description', 'license', 'allowed-tools', 'metadata', 'compatibility']);
@@ -40,7 +41,7 @@ export async function validateRepository(root = DEFAULT_ROOT) {
   const fail = (scope, message) => failures.push(`${scope}: ${message}`);
 
   if (!existsSync(skillsRoot)) {
-    return { failures: ['repository: skills/ missing'], skills: [], agentCount: 0 };
+    return { failures: ['repository: skills/ missing'], warnings: [], skills: [], agentCount: 0 };
   }
 
   const dirs = (await readdir(skillsRoot, { withFileTypes: true }))
@@ -192,6 +193,12 @@ export async function validateRepository(root = DEFAULT_ROOT) {
     }
   }
 
+  // The eval format standard (EVALS.md): errors stop an external runner from loading or
+  // grading a file; warnings are shortfalls that do not.
+  const evalFormat = await checkRepositoryEvals(root);
+  for (const { scope, message } of evalFormat.errors) fail(scope, message);
+  const warnings = evalFormat.warnings.map(({ scope, message }) => `${scope}: ${message}`);
+
   const readmePath = join(root, 'README.md');
   if (!existsSync(readmePath)) fail('README.md', 'missing');
   else {
@@ -231,7 +238,7 @@ export async function validateRepository(root = DEFAULT_ROOT) {
 
   const installRoot = join(root, 'install');
   if (existsSync(installRoot)) {
-    for (const file of ['install/index.mjs', 'install/validate.mjs', 'install/run-evals.mjs', 'install/entry-point.mjs']) {
+    for (const file of ['install/index.mjs', 'install/validate.mjs', 'install/run-evals.mjs', 'install/entry-point.mjs', 'install/eval-format.mjs', 'install/normalize-evals.mjs']) {
       const path = join(root, file);
       if (!existsSync(path)) {
         fail(file, 'missing');
@@ -249,12 +256,13 @@ export async function validateRepository(root = DEFAULT_ROOT) {
     await walk('tools', toolsRoot);
   }
 
-  return { failures, skills: dirs, agentCount };
+  return { failures, warnings, skills: dirs, agentCount };
 }
 
 const invokedDirectly = isEntryPoint(import.meta.url);
 if (invokedDirectly) {
   const result = await validateRepository();
+  for (const warning of result.warnings) console.error(`  ⚠ ${warning}`);
   for (const failure of result.failures) console.error(`  ✖ ${failure}`);
   if (result.failures.length) {
     console.error(`\n${result.failures.length} problem(s).`);

@@ -1,0 +1,10 @@
+{
+  "name": "tasklog",
+  "version": "2.4.1",
+  "description": "Log what you worked on, from the terminal.",
+  "bin": {
+    "tasklog": "bin/tasklog.js"
+  },
+  "type": "commonjs",
+  "license": "MIT"
+}

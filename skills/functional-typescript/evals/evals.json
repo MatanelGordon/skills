@@ -3,44 +3,204 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Model the checkout session state for me - it can be idle, loading, done with a receipt, or failed with an error.",
-      "expected_output": "A discriminated union with one variant per state, readonly fields, exhaustive switch with assertNever - not a status string plus optional fields.",
+      "prompt": "Write the TypeScript types for our checkout session state, plus one function `statusMessage(state)` that returns the text we show the customer. The session has a status: idle, loading, done or failed. Once it is done we have the receipt number and the amount charged in cents. When it has failed we have the reason (card declined, payment request timed out, or cart expired while the customer was paying) and, for a declined card, the bank's decline code. One file, no libraries. Paste the whole file in your reply, or write it to `output/checkout-state.ts` if you can write files. Node is not installed here, so there is nothing to compile or run.",
+      "expected_output": "One TypeScript file: the session state as a union with one variant per status and every property `readonly`, the receipt only on the done variant, the failure reason as its own union in which only the card-declined variant carries the decline code, and a `statusMessage` whose switch ends in a `never` exhaustiveness check.",
       "files": [],
+      "assertions": [
+        "Every property in the file's type declarations is marked `readonly`.",
+        "The decline code is a field of a card-declined variant only; it is not an optional (`?:`) property.",
+        "`statusMessage` has a compile-time exhaustiveness check that uses the `never` type (for example a `default` branch with `return assertNever(state)`, or `const unreachable: never = state`)."
+      ],
       "expectations": [
-        "Discriminated union, not optional-field soup",
-        "readonly on properties and arrays",
-        "Exhaustive match with assertNever or ts-pattern"
+        "Every property in the file's type declarations is marked `readonly`.",
+        "The decline code is a field of a card-declined variant only; it is not an optional (`?:`) property.",
+        "`statusMessage` has a compile-time exhaustiveness check that uses the `never` type (for example a `default` branch with `return assertNever(state)`, or `const unreachable: never = state`)."
       ]
     },
     {
       "id": 2,
-      "prompt": "Write the client function that POSTs the new user to /api/users and returns the created record.",
-      "expected_output": "zod schemas on BOTH directions: request body validated before sending, response parsed before returning; Result-typed errors, no thrown exceptions for expected failures.",
+      "prompt": "Write the TypeScript client function `createUser` for our web app. It POSTs a new user to `/api/users` and gives back the created record. The request body is `{ email, plan }`, where plan is \"free\" or \"pro\"; both values come straight from a signup form. The server answers 201 with `{ id, email, plan, createdAt }` (id is a UUID, createdAt an ISO date string), 409 when the email is already registered, and 422 when it rejects the body. zod is already a dependency and `fetch` is global. One file. Paste it in full in your reply, or write it to `output/users.ts` if you can write files. Node is not installed here, so there is nothing to install or run.",
+      "expected_output": "A `createUser` that checks the input against a zod schema before sending, checks the response JSON against a second schema before returning it, and returns a `Result` whose error is a tagged union (email taken, rejected body, bad response and so on) instead of throwing.",
       "files": [],
+      "assertions": [
+        "The `{ email, plan }` input is checked against a schema (for example `CreateUser.safeParse(input)`) before `fetch` is called.",
+        "A response body that fails the response schema leads to a returned error value (for example `return { ok: false, error: { kind: \"badResponse\" } }`), not to a `throw` and not to zod's throwing `.parse(`.",
+        "The declared return type of `createUser` is a `Promise` of a `Result`-style union (an `ok: true` variant with the user, an `ok: false` variant with an error), or a neverthrow `ResultAsync`.",
+        "A 409 response is returned as a tagged error value (for example `{ kind: \"emailTaken\" }`), not thrown and not returned as a bare string or `Error`."
+      ],
       "expectations": [
-        "Outbound body goes through safeParse before fetch",
-        "Response is parsed before being returned; res.json() is never trusted raw",
-        "Expected failures return a typed Result, not throw"
+        "The `{ email, plan }` input is checked against a schema (for example `CreateUser.safeParse(input)`) before `fetch` is called.",
+        "A response body that fails the response schema leads to a returned error value (for example `return { ok: false, error: { kind: \"badResponse\" } }`), not to a `throw` and not to zod's throwing `.parse(`.",
+        "The declared return type of `createUser` is a `Promise` of a `Result`-style union (an `ok: true` variant with the user, an `ok: false` variant with an error), or a neverthrow `ResultAsync`.",
+        "A 409 response is returned as a tagged error value (for example `{ kind: \"emailTaken\" }`), not thrown and not returned as a bare string or `Error`."
       ]
     },
     {
       "id": 3,
-      "prompt": "Add a UserService class to hold the cart logic.",
-      "expected_output": "Suggests a module of pure functions over a readonly Cart type instead; classes reserved for framework demands or genuine resource lifecycles.",
-      "files": [],
+      "prompt": "`CartService.ts` is attached (in a workspace it is at `input/3/src/cart/CartService.ts`). Refactor it: I want the cart logic to be easy to unit-test, and the order-summary email job needs to reuse it as well as the checkout page. Keep the same four operations (add an item, remove an item, apply a coupon, total) and the same maths. Paste the new file in full in your reply, or write it to `output/cart.ts` if you can write files. Do not write tests. Node is not installed here, so there is nothing to run.",
+      "expected_output": "A module of standalone functions over a `readonly` cart type, with no class: add and remove return a new cart instead of changing the one passed in, and an unknown coupon or a missing sku comes back as an error value instead of a thrown exception.",
+      "files": [
+        "evals/files/3/src/cart/CartService.ts"
+      ],
+      "assertions": [
+        "The refactored file contains no `class` declaration.",
+        "The cart's item list is typed read-only (`readonly Item[]`, `ReadonlyArray<Item>` or a `readonly` property).",
+        "The function that adds an item does not modify the cart passed to it: there is no `.push(` on its item list and no `qty +=` on one of its items.",
+        "An unknown coupon code is reported through the return value (for example `{ ok: false, error: ... }` or `err(...)`), not by a `throw`."
+      ],
       "expectations": [
-        "Proposes functions + immutable data rather than a stateful class",
-        "Explains the exception cases (framework-required classes) honestly"
+        "The refactored file contains no `class` declaration.",
+        "The cart's item list is typed read-only (`readonly Item[]`, `ReadonlyArray<Item>` or a `readonly` property).",
+        "The function that adds an item does not modify the cart passed to it: there is no `.push(` on its item list and no `qty +=` on one of its items.",
+        "An unknown coupon code is reported through the return value (for example `{ ok: false, error: ... }` or `err(...)`), not by a `throw`."
       ]
     },
     {
       "id": 4,
-      "prompt": "This React error boundary has to be a class component, right?",
-      "expected_output": "Yes - acknowledged as a legitimate class case; no dogmatic rewrite.",
-      "files": [],
+      "prompt": "Our `ErrorBoundary.tsx` is attached (in a workspace it is at `input/4/src/components/ErrorBoundary.tsx`). When it has caught an error, the fallback should also show a \"Try again\" button that clears the error so the children render again. Make that change and paste the whole updated file in your reply, or write it to `output/ErrorBoundary.tsx` if you can write files. Node is not installed here, so there is nothing to run.",
+      "expected_output": "The whole file with a \"Try again\" button added next to the fallback that resets `hasError` through `this.setState`; `ErrorBoundary` stays a class component and nothing else is restructured.",
+      "files": [
+        "evals/files/4/src/components/ErrorBoundary.tsx"
+      ],
+      "assertions": [
+        "The updated `ErrorBoundary` is still declared as a class that extends `React.Component`.",
+        "Clicking the \"Try again\" button leads to `this.setState({ hasError: false })`, directly or through a method such as `reset`.",
+        "The reply contains no version of `ErrorBoundary` written as a function component.",
+        "The updated file contains none of `Result`, `assertNever` or `Brand`."
+      ],
       "expectations": [
-        "Accepts the framework-mandated class without forcing FP ceremony"
+        "The updated `ErrorBoundary` is still declared as a class that extends `React.Component`.",
+        "Clicking the \"Try again\" button leads to `this.setState({ hasError: false })`, directly or through a method such as `reset`.",
+        "The reply contains no version of `ErrorBoundary` written as a function component.",
+        "The updated file contains none of `Result`, `assertNever` or `Brand`."
       ]
+    },
+    {
+      "id": 5,
+      "prompt": "`methods.ts` is attached (in a workspace it is at `input/5/src/shipping/methods.ts`). I need a fourth shipping method, courier bike: a flat 899 cents whatever the weight, it carries a delivery zone (\"A\", \"B\" or \"C\"), and its label is `Courier bike, zone B`. Nothing imports this module yet, and checkout is being rebuilt on top of whatever you produce, so you are free to restructure it: rewrite the file the way you would write it from scratch today, with the fourth method included and the same costs and labels for the other three. Paste the whole file in your reply, or write it to `output/methods.ts` if you can write files. Node is not installed here, so there is nothing to run.",
+      "expected_output": "The four shipping methods as one union type with a literal tag per variant and no classes; cost and label are standalone functions that switch on the tag, with a `never` exhaustiveness check.",
+      "files": [
+        "evals/files/5/src/shipping/methods.ts"
+      ],
+      "assertions": [
+        "The rewritten file contains no `class` declaration.",
+        "The four shipping methods are variants of one union type, each with a literal tag field (for example `kind: \"courierBike\"`).",
+        "The cost function has an exhaustiveness check that uses the `never` type (for example `default: return assertNever(method)`)."
+      ],
+      "expectations": [
+        "The rewritten file contains no `class` declaration.",
+        "The four shipping methods are variants of one union type, each with a literal tag field (for example `kind: \"courierBike\"`).",
+        "The cost function has an exhaustiveness check that uses the `never` type (for example `default: return assertNever(method)`)."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Review `refund.ts` (attached; in a workspace it is at `input/6/src/orders/refund.ts`) before I merge it. It works and its tests pass, so I am not asking you to hunt for bugs. Tell me what you would change about how it is written. Reply with a numbered list of at most six findings, most important first. For each one give the line or construct, what is wrong with it, and in a line or two what you would write instead. Do not rewrite the file.",
+      "expected_output": "A numbered list of at most six findings that includes: return the refund failures as values instead of throwing, replace the optional fields on `Order` with one variant per status, pass the current time in instead of calling `Date.now()`, and return a new order instead of changing the one passed in.",
+      "files": [
+        "evals/files/6/src/orders/refund.ts"
+      ],
+      "assertions": [
+        "One finding says the `throw new Error(...)` checks in `refundOrder` should become a returned error value (a `Result` or an ok/error union) instead of exceptions.",
+        "One finding says the optional fields on `Order` (such as `paidAt?` and `refundedAt?`) should be replaced by a union with one variant per status.",
+        "One finding says `refundOrder` should receive the current time as a parameter instead of calling `Date.now()` or `new Date()`.",
+        "One finding says `refundOrder` should return a new order object instead of assigning to, or pushing into, the `order` it was given."
+      ],
+      "expectations": [
+        "One finding says the `throw new Error(...)` checks in `refundOrder` should become a returned error value (a `Result` or an ok/error union) instead of exceptions.",
+        "One finding says the optional fields on `Order` (such as `paidAt?` and `refundedAt?`) should be replaced by a union with one variant per status.",
+        "One finding says `refundOrder` should receive the current time as a parameter instead of calling `Date.now()` or `new Date()`.",
+        "One finding says `refundOrder` should return a new order object instead of assigning to, or pushing into, the `order` it was given."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Start the domain module for our support tool: one TypeScript file, no libraries. A ticket has an id, the id of the customer who opened it, the customer's email address, and a priority from 1 to 4. Both ids are UUID strings. All four values reach us as loose input (the ids from the URL, the rest from a form post), so the file also needs the function that turns that raw input into a ticket and rejects a malformed UUID, a malformed email and a priority outside 1 to 4. Paste the whole file in your reply, or write it to `output/ticket.ts` if you can write files. Do not write tests. Node is not installed here, so there is nothing to run.",
+      "expected_output": "A `Ticket` type with `readonly` fields whose ticket id and customer id are two distinct branded types, and a parse function that returns a `Result` with a closed union of error cases instead of throwing.",
+      "files": [],
+      "assertions": [
+        "The ticket id and the customer id are two different branded types (each a `string` intersected with its own brand property), not plain `string`.",
+        "The function that builds a ticket from raw input declares a return type that is a union of a success variant carrying the ticket and a failure variant carrying an error (for example `Result<Ticket, TicketError>`).",
+        "The error type lists the rejection reasons as a closed union (tagged objects such as `{ kind: \"badEmail\" }`, or string literals such as `\"badEmail\"`), not `string` or `Error`.",
+        "Every field of the ticket type is declared `readonly`."
+      ],
+      "expectations": [
+        "The ticket id and the customer id are two different branded types (each a `string` intersected with its own brand property), not plain `string`.",
+        "The function that builds a ticket from raw input declares a return type that is a union of a success variant carrying the ticket and a failure variant carrying an error (for example `Result<Ticket, TicketError>`).",
+        "The error type lists the rejection reasons as a closed union (tagged objects such as `{ kind: \"badEmail\" }`, or string literals such as `\"badEmail\"`), not `string` or `Error`.",
+        "Every field of the ticket type is declared `readonly`."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "`expireTrials.ts` is attached (in a workspace it is at `input/8/src/billing/expireTrials.ts`). It runs every night. To test the 14-day and 3-day rules I currently have to mock the `db` module and the `mailer` module, and the tests break every time someone touches the loop. Restructure the file so the rules can be tested on their own. The behaviour and the `db` and `mailer` APIs stay as they are. Paste the new file in full in your reply, or write it to `output/expireTrials.ts` if you can write files. Do not write the tests. Node is not installed here, so there is nothing to run.",
+      "expected_output": "The 14-day and 3-day rules moved into a synchronous function that takes a trial and the current time and returns a tagged union of actions (expire, remind, nothing), with a thin outer function that reads the clock, loads the trials and performs the saves and sends; no trial object is changed in place.",
+      "files": [
+        "evals/files/8/src/billing/expireTrials.ts"
+      ],
+      "assertions": [
+        "The function holding the 14-day and 3-day rules takes the current time as a parameter (for example `now: Date`).",
+        "The rules function returns a tagged union with one variant per outcome (for example `{ kind: \"expire\" } | { kind: \"remind\"; daysLeft: number } | { kind: \"none\" }`), not one object of flags such as `shouldSendEmail` and `emailSubject?`.",
+        "The new file contains no assignment to a field of an existing trial object (no `trial.status = ...` and no `trial.remindedAt = ...`)."
+      ],
+      "expectations": [
+        "The function holding the 14-day and 3-day rules takes the current time as a parameter (for example `now: Date`).",
+        "The rules function returns a tagged union with one variant per outcome (for example `{ kind: \"expire\" } | { kind: \"remind\"; daysLeft: number } | { kind: \"none\" }`), not one object of flags such as `shouldSendEmail` and `emailSubject?`.",
+        "The new file contains no assignment to a field of an existing trial object (no `trial.status = ...` and no `trial.remindedAt = ...`)."
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Quick one before a hotfix goes out. In `StockCounter.ts` (attached; in a workspace it is at `input/9/src/inventory/StockCounter.ts`) `available()` is wrong: after receiving 10 of a sku and reserving 4 it returns 14, and it should return 6. Fix it and show me the line you changed.",
+      "expected_output": "The one-line fix: `available` subtracts the reserved quantity instead of adding it. The class and its other methods are left as they are.",
+      "files": [
+        "evals/files/9/src/inventory/StockCounter.ts"
+      ],
+      "assertions": [
+        "The corrected `available` subtracts the reserved quantity from the on-hand quantity (for example `(this.onHand.get(sku) ?? 0) - (this.reserved.get(sku) ?? 0)`).",
+        "The change shown or applied touches no line outside the `available` method.",
+        "The reply does not turn `StockCounter` into standalone functions or an immutable type.",
+        "The reply does not change `reserve` to return a `Result` or other error value in place of its `throw`."
+      ],
+      "expectations": [
+        "The corrected `available` subtracts the reserved quantity from the on-hand quantity (for example `(this.onHand.get(sku) ?? 0) - (this.reserved.get(sku) ?? 0)`).",
+        "The change shown or applied touches no line outside the `available` method.",
+        "The reply does not turn `StockCounter` into standalone functions or an immutable type.",
+        "The reply does not change `reserve` to return a `Result` or other error value in place of its `throw`."
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Write `plans.ts` for our billing page in TypeScript, no libraries. We sell three plans: free (label \"Free\", 1 seat, 0 cents a month), team (\"Team\", 10 seats, 4900 cents) and business (\"Business\", 50 seats, 19900 cents). The file should export the table of plans, the type of a plan id, a `monthlyCents(planId)` lookup, and a function that turns the `plan` query-string value (any string, or missing) into a plan id. Paste the whole file in your reply, or write it to `output/plans.ts` if you can write files. Node is not installed here, so there is nothing to run.",
+      "expected_output": "A plans table declared `as const satisfies ...`, the plan id type derived from the table's keys instead of listed again, no `enum`, and a function that turns the query-string value into a plan id or a failure value.",
+      "files": [],
+      "assertions": [
+        "The plans table is declared with `as const`.",
+        "The plans table is checked with `satisfies` (for example `as const satisfies Record<string, PlanInfo>`), not given a `: Record<...>` type annotation.",
+        "The plan id type is derived from the table (for example `keyof typeof PLANS`), not written out as a second list of the three plan names."
+      ],
+      "expectations": [
+        "The plans table is declared with `as const`.",
+        "The plans table is checked with `satisfies` (for example `as const satisfies Record<string, PlanInfo>`), not given a `: Record<...>` type annotation.",
+        "The plan id type is derived from the table (for example `keyof typeof PLANS`), not written out as a second list of the three plan names."
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "Something in TypeScript confuses me and I only want to understand it; I am not asking you to write or change any code. `greet` takes a parameter of type `{ name: string }`. If I call `greet({ name: \"Ada\", age: 36 })` I get \"Object literal may only specify known properties, and 'age' does not exist in type '{ name: string; }'\". But if I first write `const person = { name: \"Ada\", age: 36 };` and then call `greet(person)`, there is no error. Why does TypeScript treat the two calls differently? A few sentences are enough.",
+      "expected_output": "A short explanation: an object literal passed directly gets an excess property check, while a value from a variable is only checked structurally and has the required `name`. No code rewrite and no branded or `Result` types.",
+      "files": [],
+      "assertions": [
+        "The reply says the error comes from a check that applies only to an object literal written directly where the typed value is expected (an excess property check, sometimes called freshness).",
+        "The reply says `greet(person)` is accepted because `person` has every property that `{ name: string }` requires.",
+        "The reply contains no branded type, no `Result` type and no `readonly` modifier."
+      ],
+      "expectations": [
+        "The reply says the error comes from a check that applies only to an object literal written directly where the typed value is expected (an excess property check, sometimes called freshness).",
+        "The reply says `greet(person)` is accepted because `person` has every property that `{ name: string }` requires.",
+        "The reply contains no branded type, no `Result` type and no `readonly` modifier."
+      ],
+      "expected_skill": null
     }
   ]
 }

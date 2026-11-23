@@ -1,0 +1,69 @@
+Hardening pass on branch feat/post-slugs (the slugify change). Terminal session first, my notes at the end.
+
+$ cd ~/blog
+$ git rev-parse --short HEAD
+5292735
+$ python3 -m unittest tests.test_slugify -v
+test_collapses_repeated_separators (tests.test_slugify.SlugifyTest.test_collapses_repeated_separators) ... ok
+test_cuts_a_long_title_to_60_characters (tests.test_slugify.SlugifyTest.test_cuts_a_long_title_to_60_characters) ... ok
+test_drops_punctuation_at_both_ends (tests.test_slugify.SlugifyTest.test_drops_punctuation_at_both_ends) ... ok
+test_lower_cases_and_joins_words_with_hyphens (tests.test_slugify.SlugifyTest.test_lower_cases_and_joins_words_with_hyphens) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.000s
+
+OK
+$ sha256sum src/slugify.py
+6e5d172aed3e52c25bbdbe0918e1d884d7d9ab490129cbf7f94072e23a99e856  src/slugify.py
+
+(added two tests to tests/test_slugify.py in the editor)
+
+$ git diff
+diff --git a/tests/test_slugify.py b/tests/test_slugify.py
+index 3762081..27e2b28 100644
+--- a/tests/test_slugify.py
++++ b/tests/test_slugify.py
+@@ -15,3 +15,9 @@ class SlugifyTest(unittest.TestCase):
+ 
+     def test_cuts_a_long_title_to_60_characters(self):
+         self.assertEqual(slugify("x" * 80), "x" * 60)
++
++    def test_title_without_letters_or_digits_becomes_untitled(self):
++        self.assertEqual(slugify("!!!"), "untitled")
++
++    def test_cut_slug_does_not_end_with_a_hyphen(self):
++        self.assertEqual(slugify("a" * 59 + " tail"), "a" * 59)
+$ python3 -m unittest tests.test_slugify.SlugifyTest.test_title_without_letters_or_digits_becomes_untitled tests.test_slugify.SlugifyTest.test_cut_slug_does_not_end_with_a_hyphen -v
+test_title_without_letters_or_digits_becomes_untitled (tests.test_slugify.SlugifyTest.test_title_without_letters_or_digits_becomes_untitled) ... ok
+test_cut_slug_does_not_end_with_a_hyphen (tests.test_slugify.SlugifyTest.test_cut_slug_does_not_end_with_a_hyphen) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.000s
+
+OK
+$ cp -R . /tmp/slug-scratch && cd /tmp/slug-scratch
+$ sed -i 's/        return FALLBACK_SLUG/        return slug/' src/slugify.py
+$ python3 -m unittest tests.test_slugify.SlugifyTest.test_title_without_letters_or_digits_becomes_untitled
+F
+======================================================================
+FAIL: test_title_without_letters_or_digits_becomes_untitled (tests.test_slugify.SlugifyTest.test_title_without_letters_or_digits_becomes_untitled)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/slug-scratch/tests/test_slugify.py", line 20, in test_title_without_letters_or_digits_becomes_untitled
+    self.assertEqual(slugify("!!!"), "untitled")
+AssertionError: '' != 'untitled'
++ untitled
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (failures=1)
+$ cd ~/blog && rm -rf /tmp/slug-scratch
+$ sha256sum src/slugify.py
+6e5d172aed3e52c25bbdbe0918e1d884d7d9ab490129cbf7f94072e23a99e856  src/slugify.py
+$ git status --short
+ M tests/test_slugify.py
+
+Notes
+- The first new test covers a title with nothing usable in it; the second covers a cut that lands right after a hyphen.
+- Accented titles: slugify("Crème brûlée") gives "cr-me-br-l-e". I did not add a test for that. The diff does not touch transliteration and the acceptance criteria do not mention it.

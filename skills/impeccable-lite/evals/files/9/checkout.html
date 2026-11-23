@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checkout · Pinecrate</title>
+<style>
+  body { margin: 0; font: 16px/1.5 system-ui, sans-serif; color: #1f2328; }
+  main { max-width: 30rem; margin: 2rem auto; padding: 0 1rem; }
+  h1 { font-size: 1.5rem; }
+  .summary { border: 1px solid #c9ced6; padding: 1rem; margin-bottom: 1rem; }
+  .summary dl { display: grid; grid-template-columns: 1fr auto; margin: 0; }
+  .summary dd { margin: 0; text-align: right; }
+  label { display: block; margin-top: 0.75rem; }
+  input[type="text"], input[type="email"] { width: 100%; box-sizing: border-box; padding: 0.5rem; font: inherit; }
+  .secure { font-family: "Comic Sans MS", cursive; color: #d40000; text-transform: uppercase; }
+  .btn { margin-top: 1rem; padding: 0.75rem 1rem; font: inherit; background: #14532d; color: #fff; border: 0; width: 100%; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Your basket</h1>
+  <p><a href="/cart">Edit cart</a></p>
+  <section class="summary">
+    <h2>Bag summary</h2>
+    <dl>
+      <dt>Cedar planter box</dt><dd>$48.00</dd>
+      <dt>Delivery</dt><dd>Free</dd>
+      <dt>Total</dt><dd>$48.00</dd>
+    </dl>
+  </section>
+  <form action="/pay" method="post">
+    <label for="email">Email</label>
+    <input id="email" name="email" type="email" autocomplete="email">
+    <label for="card">Card number</label>
+    <input id="card" name="card" type="text" inputmode="numeric" autocomplete="cc-number">
+    <label><input type="checkbox" name="protection" checked> Add delivery protection (4.99 USD)</label>
+    <p class="secure">100% secure checkout guaranteed!!!</p>
+    <button class="btn" type="submit">Continue — $52.99</button>
+  </form>
+</main>
+</body>
+</html>

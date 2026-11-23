@@ -1,5 +1,35 @@
 # Changelog
 
+## 1.23.0 — 2026-11-23
+
+- **Added an eval format standard, [EVALS.md](EVALS.md).** One `evals.json`
+  shape now loads as committed in the repo runner, agent-skills-eval and
+  SkillEvaluator. Two evaluation runs had shown that neither external tool
+  graded a single assertion (they read `assertions`; the datasets had only
+  `expectations`), and that three datasets could not be staged at all. The
+  standard also sets rules for case count, case size, fixtures, container
+  dependencies and assertion wording, with the tool behaviour and published
+  guidance each rule rests on.
+- **Added `npm run normalize-evals`.** It mirrors `expectations` and
+  `assertions`, adds the `files` list a case was missing, moves inline text,
+  `{path, content}` objects and misplaced fixtures to
+  `evals/files/<case id>/`, and orders the keys. A second run changes nothing.
+  It never overwrites a fixture that differs (compared byte for byte), never
+  guesses between two lists that disagree, and never rewrites a file with a
+  duplicated key. It places every fixture before it rewrites `evals.json` and
+  removes a moved source only after, writing each fixture under a temporary
+  name first, so an interrupted run is finished by rerunning it. A source it
+  cannot remove is reported, not left silently.
+- **`npm run validate` now enforces the format.** A case with no assertions, a
+  fixture path that does not resolve, a fixture that is (or sits in) a
+  symlink, is binary or over 64 KB, or has a name Windows rejects,
+  `assertions` and `expectations` that differ, or a duplicated key fails
+  validation. Fewer than six cases, no negative case, or a case with fewer
+  than 2 or more than 5 assertions is printed as a warning.
+- Normalised all 27 skill eval files and both agent eval files. Fixtures moved
+  from `evals/fixtures/` to `evals/files/` in development-workflow,
+  mutation-testing and test-hardening.
+
 ## 1.22.1 — 2026-11-21
 
 - Redesigned the README opening around an original light/dark hero, a concise

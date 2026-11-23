@@ -8,11 +8,11 @@
  * the second time, so it is safe to rerun after any merge.
  */
 import { closeSync, lstatSync, openSync, readSync } from 'node:fs';
-import { copyFile, mkdir, readFile, readdir, rename, rm, rmdir, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, readdir, rm, rmdir, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isEntryPoint } from './entry-point.mjs';
-import { checkEvalDocument, normalizeEvalDocument, serializeEvalDocument } from './eval-format.mjs';
+import { checkEvalDocument, duplicateKeys, normalizeEvalDocument, serializeEvalDocument } from './eval-format.mjs';
 
 const DEFAULT_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const TEXT_PROBE_BYTES = 4096;
@@ -48,15 +48,28 @@ function looksLikeText(path, bytes) {
   return !probe.includes(0);
 }
 
-/** Describe a path relative to `baseDir` without following a symlink, so a link can never pass as a fixture. */
-export const lookupIn = (baseDir) => (relativePath) => {
-  let stats;
+const lstatOrNull = (path) => {
   try {
-    stats = lstatSync(inside(baseDir, relativePath));
+    return lstatSync(path);
   } catch (error) {
-    if (error.code === 'ENOENT' || error.code === 'ENOTDIR') return { kind: 'missing' };
+    if (error.code === 'ENOENT' || error.code === 'ENOTDIR') return null;
     throw error;
   }
+};
+
+/**
+ * Describe a path relative to `baseDir` without following a symlink at any level, so neither a
+ * linked file nor a file inside a linked folder can pass as a fixture.
+ */
+export const lookupIn = (baseDir) => (relativePath) => {
+  const segments = relativePath.split('/');
+  for (let depth = 1; depth < segments.length; depth++) {
+    const folder = lstatOrNull(inside(baseDir, segments.slice(0, depth).join('/')));
+    if (folder === null) return { kind: 'missing' };
+    if (!folder.isDirectory()) return { kind: 'other' };
+  }
+  const stats = lstatOrNull(inside(baseDir, relativePath));
+  if (stats === null) return { kind: 'missing' };
   if (stats.isDirectory()) return { kind: 'dir' };
   if (!stats.isFile()) return { kind: 'other' };
   return { kind: 'file', bytes: stats.size, isText: looksLikeText(inside(baseDir, relativePath), stats.size) };
@@ -96,19 +109,19 @@ async function readEvalFile(target, root) {
   }
 }
 
-const sourceText = async (baseDir, action) => (
-  action.type === 'write' ? action.content : readFile(inside(baseDir, action.from), 'utf8')
+// Bytes, not decoded text: two different files that decode to the same replacement characters must differ.
+const sourceBytes = async (baseDir, action) => (
+  action.type === 'write' ? Buffer.from(action.content, 'utf8') : readFile(inside(baseDir, action.from))
 );
 const destinationOf = (action) => (action.type === 'write' ? action.path : action.to);
 
 /** Why an action cannot be applied, or null. Checked for every action before any is applied. */
 async function blockerFor(baseDir, action) {
   const destination = destinationOf(action);
-  const destinationPath = inside(baseDir, destination);
-  if (!(await exists(destinationPath))) return null;
+  if (!(await exists(inside(baseDir, destination)))) return null;
   const found = lookupIn(baseDir)(destination);
   const sameContent = found.kind === 'file'
-    && (await readFile(destinationPath, 'utf8')) === (await sourceText(baseDir, action));
+    && (await readFile(inside(baseDir, destination))).equals(await sourceBytes(baseDir, action));
   return sameContent ? null : `${destination} already exists with different content; it was not overwritten`;
 }
 
@@ -123,40 +136,55 @@ async function pruneEmptyFolders(baseDir, relativeFolder) {
   }
 }
 
-async function applyAction(baseDir, action) {
+/** Put one fixture in place. A move is a copy here: its source is removed only once the dataset no longer names it. */
+async function placeFixture(baseDir, action) {
   const destinationPath = inside(baseDir, destinationOf(action));
-  const destinationExists = await exists(destinationPath);
-  if (!destinationExists) await mkdir(dirname(destinationPath), { recursive: true });
+  if (await exists(destinationPath)) return;
+  await mkdir(dirname(destinationPath), { recursive: true });
+  if (action.type === 'write') await writeFile(destinationPath, action.content);
+  else await copyFile(inside(baseDir, action.from), destinationPath);
+}
 
-  if (action.type === 'write' && !destinationExists) await writeFile(destinationPath, action.content);
-  if (action.type === 'copy' && !destinationExists) await copyFile(inside(baseDir, action.from), destinationPath);
-  if (action.type === 'move') {
-    const sourcePath = inside(baseDir, action.from);
-    if (destinationExists) await rm(sourcePath);
-    else await rename(sourcePath, destinationPath);
-    await pruneEmptyFolders(baseDir, action.from.slice(0, action.from.lastIndexOf('/')));
-  }
+async function removeMovedSource(baseDir, action) {
+  await rm(inside(baseDir, action.from), { force: true });
+  await pruneEmptyFolders(baseDir, action.from.slice(0, action.from.lastIndexOf('/')));
 }
 
 /**
- * Normalise one eval file. With `write: false` nothing on disk changes and
- * `changed` says whether a real run would change something.
+ * Normalise one eval file. With `write: false` nothing on disk changes: `changed` says whether a
+ * real run would change something, and `problems` include what would block it.
+ * `written` says whether this run rewrote the file.
+ *
+ * Order of work, so an interrupted run never leaves the dataset naming a file that is gone:
+ * every fixture is placed first (moves as copies), then evals.json is rewritten, then the
+ * sources of moves are removed. A rerun after any failure finishes the job.
  */
 export async function normalizeEvalFile(target, { root = DEFAULT_ROOT, write = true } = {}) {
   const { raw, doc } = await readEvalFile(target, root);
-  const result = normalizeEvalDocument(doc, lookupIn(target.baseDir), { kind: target.kind });
+  const result = normalizeEvalDocument(doc, lookupIn(target.baseDir), { kind: target.kind, raw });
+  const report = { scope: target.scope, file: toRepositoryPath(root, target.file), actions: result.actions, written: false };
+  if (result.doc === null) return { ...report, changed: false, problems: result.problems };
+
   const text = serializeEvalDocument(result.doc);
   const changed = text !== withUnixNewlines(raw) || result.actions.length > 0;
-  const report = { scope: target.scope, file: toRepositoryPath(root, target.file), changed, actions: result.actions };
-  if (!write || !changed) return { ...report, problems: result.problems };
+  if (!changed) return { ...report, changed, problems: result.problems };
 
   const blockers = (await Promise.all(result.actions.map((action) => blockerFor(target.baseDir, action)))).filter(Boolean);
+  const problems = [...result.problems, ...blockers];
   // A dataset must never be rewritten to point at a fixture this run did not put there.
-  if (blockers.length > 0) return { ...report, problems: [...result.problems, ...blockers] };
+  if (!write || blockers.length > 0) return { ...report, changed, problems };
 
-  for (const action of result.actions) await applyAction(target.baseDir, action);
+  try {
+    for (const action of result.actions) await placeFixture(target.baseDir, action);
+  } catch (error) {
+    const failure = `could not place fixtures (${error.code ?? error.message}); evals.json was not rewritten and no source was removed, so fix the cause and rerun`;
+    return { ...report, changed, problems: [...problems, failure] };
+  }
   await writeFile(target.file, text);
-  return { ...report, problems: result.problems };
+  for (const action of result.actions) {
+    if (action.type === 'move') await removeMovedSource(target.baseDir, action);
+  }
+  return { ...report, changed, written: true, problems };
 }
 
 export async function normalizeRepository(root = DEFAULT_ROOT, { write = true } = {}) {
@@ -184,13 +212,18 @@ export async function checkRepositoryEvals(root = DEFAULT_ROOT) {
       if (error instanceof EvalFileError) continue;
       throw error;
     }
+    // The validator reports a duplicated `id` itself; every other duplicated key is reported here.
+    const duplicated = duplicateKeys(parsed.raw).filter((key) => key !== 'id');
+    for (const key of duplicated) {
+      errors.push({ scope: target.scope, message: `duplicate key ${JSON.stringify(key)} in one object; JSON keeps only the last` });
+    }
     const lookup = lookupIn(target.baseDir);
     const checked = checkEvalDocument(parsed.doc, lookup, { kind: target.kind });
     for (const message of checked.errors) errors.push({ scope: target.scope, message });
     for (const message of checked.warnings) warnings.push({ scope: target.scope, message });
 
     const normalized = normalizeEvalDocument(parsed.doc, lookup, { kind: target.kind });
-    const isStandardLayout = normalized.actions.length === 0
+    const isStandardLayout = normalized.doc !== null && normalized.actions.length === 0
       && serializeEvalDocument(normalized.doc) === withUnixNewlines(parsed.raw);
     if (!isStandardLayout) warnings.push({ scope: target.scope, message: LAYOUT_HINT });
   }
@@ -227,16 +260,18 @@ async function main() {
   }
 
   const changed = results.filter((result) => result.changed);
+  const written = results.filter((result) => result.written);
   const problemCount = results.reduce((total, result) => total + result.problems.length, 0);
   for (const result of changed) {
     const fixtures = result.actions.length ? ` (${result.actions.length} fixture ${result.actions.length === 1 ? 'file' : 'files'})` : '';
-    console.log(`${options.check ? 'would rewrite' : 'rewrote'} ${result.file}${fixtures}`);
+    const verb = options.check ? 'would rewrite' : result.written ? 'rewrote' : 'not rewritten';
+    console.log(`${verb} ${result.file}${fixtures}`);
   }
   for (const result of results) {
     for (const problem of result.problems) console.error(`  ✖ ${result.scope}: ${problem}`);
   }
-  const verb = options.check ? 'would be rewritten' : 'rewritten';
-  console.log(`${results.length} eval files checked, ${changed.length} ${verb}, ${problemCount} ${problemCount === 1 ? 'problem' : 'problems'}`);
+  const summary = options.check ? `${changed.length} would be rewritten` : `${written.length} rewritten`;
+  console.log(`${results.length} eval files checked, ${summary}, ${problemCount} ${problemCount === 1 ? 'problem' : 'problems'}`);
   if (problemCount > 0 || (options.check && changed.length > 0)) process.exitCode = EXIT_PROBLEMS;
 }
 

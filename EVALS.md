@@ -54,7 +54,7 @@ with identical content. That is the only duplication the format needs.
 | `files` | Always present. A list of strings, `[]` when the case has no fixture. See [Fixtures](#fixtures). |
 | `assertions` | 2 to 5 strings. See [Assertions](#assertions). |
 | `expectations` | The same strings as `assertions`, in the same order. Edit `assertions`; the normaliser copies them here. |
-| `expected_skill` | Only on a negative case, and then `null`. See [The negative case](#the-negative-case). Leave it out everywhere else: SkillEvaluator fills in the skill's name. |
+| `expected_skill` | `null` on a negative case. See [The negative case](#the-negative-case). Leave it out everywhere else: SkillEvaluator fills in the skill's name. (The validator also accepts another skill's name, which SkillEvaluator reads as "this request belongs to that skill"; no set here uses it.) |
 | `checks` | Optional. SkillEvaluator's deterministic checks (`output_contains`, `output_matches`, `file_exists`). Only SkillEvaluator reads them, so the same requirement must still appear in `assertions`. |
 
 Keys appear in the order of this table. Two-space indent, UTF-8, one trailing
@@ -64,11 +64,19 @@ newline. Fields not listed here are kept as they are.
 `agent_name`. Only the repo's validator reads those files.
 
 `npm run normalize-evals` fills in whichever of `assertions` and
-`expectations` is missing, adds `files: []`, orders the keys and moves inline
-or misplaced fixtures into `evals/files/`. `npm run validate` fails on
-anything this section forbids. Running the normaliser twice changes nothing
-the second time. Where the two lists differ, or a fixture path resolves
-nowhere, it changes nothing for that case and says so.
+`expectations` is missing, adds `files: []`, orders the keys, writes inline
+fixtures to files, moves fixtures from the old `evals/fixtures/` folder and
+copies any other listed file into `evals/files/`. Running it twice changes
+nothing the second time. It never overwrites a fixture that differs, never
+guesses between two lists that differ, and never rewrites a file with a
+duplicated key; it leaves those entries as written and reports them.
+
+`npm run validate` fails on what would stop a runner from loading or grading
+a case: no assertions, `assertions` and `expectations` that differ, a
+duplicated key, an id that is not an integer, and a fixture path that is not
+a small text file under `evals/files/` with a name Windows accepts. It warns,
+without failing, on the size rules below: fewer than 6 cases, no negative
+case, and fewer than 2 or more than 5 assertions in a case.
 
 ## Worked example
 

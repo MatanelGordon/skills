@@ -14,12 +14,17 @@
   `assertions`, adds the `files` list a case was missing, moves inline text,
   `{path, content}` objects and misplaced fixtures to
   `evals/files/<case id>/`, and orders the keys. A second run changes nothing.
-  It never overwrites a fixture that differs and never guesses between two
-  lists that disagree.
+  It never overwrites a fixture that differs (compared byte for byte), never
+  guesses between two lists that disagree, and never rewrites a file with a
+  duplicated key. It places every fixture before it rewrites `evals.json` and
+  removes a moved source only after, so an interrupted run is finished by
+  rerunning it.
 - **`npm run validate` now enforces the format.** A case with no assertions, a
-  fixture path that does not resolve, a fixture that is a symlink, binary or
-  over 64 KB, or `assertions` and `expectations` that differ fails validation.
-  Fewer than six cases, or no negative case, is printed as a warning.
+  fixture path that does not resolve, a fixture that is (or sits in) a
+  symlink, is binary or over 64 KB, or has a name Windows rejects,
+  `assertions` and `expectations` that differ, or a duplicated key fails
+  validation. Fewer than six cases, no negative case, or a case with fewer
+  than 2 or more than 5 assertions is printed as a warning.
 - Normalised all 27 skill eval files and both agent eval files. Fixtures moved
   from `evals/fixtures/` to `evals/files/` in development-workflow,
   mutation-testing and test-hardening.

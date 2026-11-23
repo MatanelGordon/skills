@@ -15,16 +15,23 @@ export const CASE_KEY_ORDER = Object.freeze([
 ]);
 export const FIXTURE_ROOT = 'evals/files';
 export const MIN_CASES = 6;
+export const MIN_ASSERTIONS = 2;
+export const MAX_ASSERTIONS = 5;
 export const MAX_FIXTURE_BYTES = 64 * 1024;
 
 const SHARED_FOLDER = 'shared';
 const NAME_KEYS = Object.freeze(['skill_name', 'agent_name']);
 // A `files` string longer than a file name can be, or spanning lines, is fixture text someone inlined.
 const MAX_PATH_LENGTH = 255;
-const FOLDER_SAFE_ID = /^[A-Za-z0-9._-]+$/;
+const LEGACY_FIXTURE_ROOT = 'evals/fixtures/';
+// Files SkillEvaluator reads to run the evaluation itself; it refuses to stage them as task input.
+const EVALUATOR_CONTROL_ROOTS = new Set(['environment', 'harbor', 'results', 'tests']);
+const EVALUATOR_CONTROL_FILES = new Set([
+  'evals.json', 'evals.jsonl', 'evals.yaml', 'evals.yml', 'config.yml', 'config.yaml', 'eval.md', 'grader.py', 'grader.sh',
+]);
 // CI also checks the repository out on Windows, where one such name fails the whole checkout.
 // eslint-disable-next-line no-control-regex
-const WINDOWS_FORBIDDEN_CHARACTERS = /[<>:"|?*\u0000-\u001f]/;
+const WINDOWS_FORBIDDEN_CHARACTERS = /[<>:"|?*\\\u0000-\u001f]/;
 const WINDOWS_RESERVED_NAME = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$/i;
 // install/run-tests.mjs runs every *.test.mjs under skills/, fixtures included.
 const REPO_TEST_FILE = /\.test\.mjs$/;
@@ -48,6 +55,12 @@ const baseName = (path) => path.slice(path.lastIndexOf('/') + 1);
 const isPortableName = (segment) => (
   !WINDOWS_FORBIDDEN_CHARACTERS.test(segment) && !WINDOWS_RESERVED_NAME.test(segment) && !/[. ]$/.test(segment)
 );
+const isFolderId = (id) => Number.isInteger(id) && id >= 0;
+const isEvaluatorControl = (pathUnderEvals) => {
+  const parts = pathUnderEvals.split('/');
+  return EVALUATOR_CONTROL_ROOTS.has(parts[0].toLowerCase())
+    || (parts.length === 1 && EVALUATOR_CONTROL_FILES.has(parts[0].toLowerCase()));
+};
 const caseLabel = (evaluation, index) => (
   isObject(evaluation) && evaluation.id !== undefined && evaluation.id !== null
     ? `eval ${evaluation.id}`
@@ -58,6 +71,55 @@ const isNegativeCase = (evaluation) => (
 );
 
 export const serializeEvalDocument = (doc) => `${JSON.stringify(doc, null, 2)}\n`;
+
+/**
+ * Keys that appear twice in one JSON object, anywhere in the text. JSON.parse keeps the last
+ * one silently, so a rewrite would drop the other: a merge that left both must be resolved by hand.
+ */
+export function duplicateKeys(text) {
+  const found = [];
+  const objects = [];
+  let index = 0;
+  const readString = () => {
+    let value = '';
+    index++;
+    while (index < text.length && text[index] !== '"') {
+      if (text[index] === '\\') index++;
+      value += text[index];
+      index++;
+    }
+    index++;
+    return value;
+  };
+  while (index < text.length) {
+    const char = text[index];
+    if (char === '{') {
+      objects.push({ keys: new Set(), expectKey: true });
+      index++;
+    } else if (char === '[') {
+      objects.push(null);
+      index++;
+    } else if (char === '}' || char === ']') {
+      objects.pop();
+      index++;
+    } else if (char === ',') {
+      const top = objects[objects.length - 1];
+      if (top) top.expectKey = true;
+      index++;
+    } else if (char === '"') {
+      const top = objects[objects.length - 1];
+      const value = readString();
+      if (top && top.expectKey) {
+        if (top.keys.has(value) && !found.includes(value)) found.push(value);
+        top.keys.add(value);
+        top.expectKey = false;
+      }
+    } else {
+      index++;
+    }
+  }
+  return found;
+}
 
 const orderKeys = (source, firstKeys) => {
   const ordered = {};
@@ -84,19 +146,29 @@ function planFileEntry(entry, entryIndex, lookup) {
   }
   if (entry.startsWith(`${FIXTURE_ROOT}/`)) return { step: 'keep', path: entry };
 
-  const parts = entry.split('/');
   const existsFromSkill = lookup(entry).kind === 'file';
-  if (parts[0] === 'evals' && existsFromSkill) {
-    return { step: 'move', from: entry, source: entry, rest: parts.slice(2).join('/') || baseName(entry) };
-  }
+  if (entry.startsWith('evals/') && existsFromSkill) return planUnderEvals(entry, where);
   const fromEvals = `evals/${entry}`;
   if (lookup(fromEvals).kind === 'file') {
-    return parts[0] === 'files'
-      ? { step: 'keep', path: fromEvals }
-      : { step: 'move', from: fromEvals, source: fromEvals, rest: parts.slice(1).join('/') || baseName(entry) };
+    return fromEvals.startsWith(`${FIXTURE_ROOT}/`) ? { step: 'keep', path: fromEvals } : planUnderEvals(fromEvals, where);
   }
   if (existsFromSkill) return { step: 'copy', from: entry, source: entry, rest: baseName(entry) };
   return { step: 'problem', message: `${where} ${JSON.stringify(entry)} does not name a file in the skill` };
+}
+
+/**
+ * A file elsewhere under evals/: a legacy fixture moves into evals/files/, an evaluator control
+ * file is refused, and anything else is copied so whatever else reads it keeps finding it.
+ */
+function planUnderEvals(path, where) {
+  const underEvals = path.slice('evals/'.length);
+  if (isEvaluatorControl(underEvals)) {
+    return { step: 'problem', message: `${where} ${JSON.stringify(path)} is an evaluator control file; list a copy under ${FIXTURE_ROOT}/ instead` };
+  }
+  if (path.startsWith(LEGACY_FIXTURE_ROOT)) {
+    return { step: 'move', from: path, source: path, rest: path.slice(LEGACY_FIXTURE_ROOT.length) };
+  }
+  return { step: 'copy', from: path, source: path, rest: baseName(path) };
 }
 
 function planCaseFiles(evaluation, lookup, kind) {
@@ -109,11 +181,42 @@ function planCaseFiles(evaluation, lookup, kind) {
   }
   const plans = entries.map((entry, index) => planFileEntry(entry, index, lookup));
   const needsFolder = plans.some((plan) => plan.step !== 'keep' && plan.step !== 'problem');
-  if (needsFolder && !FOLDER_SAFE_ID.test(String(evaluation.id))) {
-    return { entries: raw, plans: null, message: 'id cannot name a fixture folder; give the case an integer id first' };
+  if (needsFolder && !isFolderId(evaluation.id)) {
+    return { entries: raw, plans: null, message: 'id cannot name a fixture folder; give the case a non-negative integer id first' };
   }
   return { entries, plans };
 }
+
+/** Paths that a case left unrepaired still names: a move would pull the file out from under it. */
+function pathsStillNamed(casePlans, evals) {
+  const named = new Set();
+  const add = (entry) => {
+    if (typeof entry !== 'string') return;
+    named.add(entry);
+    named.add(`evals/${entry}`);
+  };
+  casePlans.forEach((casePlan, caseIndex) => {
+    if (casePlan === null) {
+      const files = evals[caseIndex]?.files;
+      (Array.isArray(files) ? files : [files]).forEach(add);
+      return;
+    }
+    if (casePlan.plans === null) {
+      (Array.isArray(casePlan.entries) ? casePlan.entries : [casePlan.entries]).forEach(add);
+      return;
+    }
+    casePlan.plans.forEach((plan, entryIndex) => {
+      if (plan.step === 'problem') add(casePlan.entries[entryIndex]);
+    });
+  });
+  return named;
+}
+
+const keepSourcesNamed = (casePlans, named) => casePlans.map((casePlan) => (
+  casePlan?.plans
+    ? { ...casePlan, plans: casePlan.plans.map((plan) => (plan.step === 'move' && named.has(plan.from) ? { ...plan, step: 'copy' } : plan)) }
+    : casePlan
+));
 
 /** Sources that more than one case moves: those go to the shared folder instead of a case folder. */
 function sharedMoveSources(casePlans) {
@@ -152,13 +255,18 @@ function syncAssertions(evaluation, label, problems) {
  * Returns a new document, the fixture actions it depends on, and what could not be repaired.
  * Unrepairable parts are left exactly as written so nothing is lost.
  */
-export function normalizeEvalDocument(doc, lookup = nothingExists, { kind = 'skill' } = {}) {
+export function normalizeEvalDocument(doc, lookup = nothingExists, { kind = 'skill', raw } = {}) {
+  const duplicated = typeof raw === 'string' ? duplicateKeys(raw) : [];
+  if (duplicated.length > 0) {
+    const problems = duplicated.map((key) => `duplicate key ${JSON.stringify(key)} in one object; JSON keeps only the last, so resolve it by hand`);
+    return { doc: null, actions: [], problems };
+  }
   if (!isObject(doc) || !Array.isArray(doc.evals)) {
     return { doc, actions: [], problems: ['evals must be a list of cases'] };
   }
 
   const problems = [];
-  const casePlans = doc.evals.map((evaluation, index) => {
+  const plannedCases = doc.evals.map((evaluation, index) => {
     if (!isObject(evaluation)) {
       problems.push(`${caseLabel(evaluation, index)} is not an object`);
       return null;
@@ -170,6 +278,7 @@ export function normalizeEvalDocument(doc, lookup = nothingExists, { kind = 'ski
     }
     return plan;
   });
+  const casePlans = keepSourcesNamed(plannedCases, pathsStillNamed(plannedCases, doc.evals));
 
   const shared = sharedMoveSources(casePlans);
   const sourcesByTarget = new Map();
@@ -264,6 +373,12 @@ export function checkEvalDocument(doc, lookup = nothingExists, { kind = 'skill' 
 
   const warnings = [];
   if (kind === 'skill') {
+    doc.evals.forEach((evaluation, index) => {
+      const count = isObject(evaluation) && Array.isArray(evaluation.assertions) ? evaluation.assertions.length : 0;
+      if (count > 0 && (count < MIN_ASSERTIONS || count > MAX_ASSERTIONS)) {
+        warnings.push(`${caseLabel(evaluation, index)}: ${count} ${count === 1 ? 'assertion' : 'assertions'}; the standard asks for ${MIN_ASSERTIONS} to ${MAX_ASSERTIONS}`);
+      }
+    });
     const count = doc.evals.length;
     if (count < MIN_CASES) {
       warnings.push(`${count} ${count === 1 ? 'case' : 'cases'}; the standard asks for at least ${MIN_CASES}`);

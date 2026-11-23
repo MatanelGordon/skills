@@ -5,6 +5,7 @@ import {
   CASE_KEY_ORDER,
   MIN_CASES,
   checkEvalDocument,
+  duplicateKeys,
   normalizeEvalDocument,
   serializeEvalDocument,
 } from './eval-format.mjs';
@@ -28,8 +29,8 @@ const standardCase = (overrides = {}) => ({
   prompt: 'Do it',
   expected_output: 'Done',
   files: [],
-  assertions: ['The reply says it is done.'],
-  expectations: ['The reply says it is done.'],
+  assertions: ['The reply says it is done.', 'The reply names the result.'],
+  expectations: ['The reply says it is done.', 'The reply names the result.'],
   ...overrides,
 });
 
@@ -225,6 +226,63 @@ test('a document without an evals list is reported and returned as it was', () =
   assert.equal(withBadCase.doc.evals[1], 'not a case');
 });
 
+test('only legacy fixtures under evals/fixtures move; other files under evals/ are copied or refused', () => {
+  const lookup = lookupOf({
+    'evals/live-smoke.json': textFile(),
+    'evals/environment/Dockerfile': textFile(),
+    'evals/config.yml': textFile(),
+    'evals/fixtures/a.md': textFile(),
+  });
+  const copied = normalizedCase(standardCase({ id: 1, files: ['evals/live-smoke.json'] }), lookup);
+  assert.deepEqual(copied.actions, [{ type: 'copy', from: 'evals/live-smoke.json', to: 'evals/files/1/live-smoke.json' }]);
+  assert.deepEqual(copied.problems, []);
+
+  for (const controlFile of ['evals/environment/Dockerfile', 'evals/config.yml']) {
+    const refused = normalizedCase(standardCase({ id: 1, files: [controlFile] }), lookup);
+    assert.deepEqual(refused.actions, [], controlFile);
+    assert.equal(refused.problems.length, 1, controlFile);
+    assert.match(refused.problems[0], /evaluator control file/, controlFile);
+  }
+
+  const moved = normalizedCase(standardCase({ id: 1, files: ['evals/fixtures/a.md'] }), lookup);
+  assert.deepEqual(moved.actions, [{ type: 'move', from: 'evals/fixtures/a.md', to: 'evals/files/1/a.md' }]);
+});
+
+test('no fixture action is planned for a case whose id is not a non-negative integer', () => {
+  for (const id of ['..', '.', 'x y', '3', -1, 1.5]) {
+    const result = normalizedCase(standardCase({ id, files: [{ path: 'environment/Dockerfile', content: 'FROM x' }] }));
+    assert.deepEqual(result.actions, [], String(id));
+    assert.equal(result.problems.length, 1, String(id));
+  }
+});
+
+test('a legacy fixture that a case left unrepaired still names is copied, not moved away from it', () => {
+  const lookup = lookupOf({ 'evals/fixtures/a.md': textFile() });
+  const result = normalizeEvalDocument(skillDoc([
+    standardCase({ id: 1, files: ['evals/fixtures/a.md'] }),
+    standardCase({ id: 'x y', files: ['evals/fixtures/a.md'] }),
+  ]), lookup);
+  assert.deepEqual(result.actions, [{ type: 'copy', from: 'evals/fixtures/a.md', to: 'evals/files/1/a.md' }]);
+  assert.equal(result.problems.length, 1);
+});
+
+test('duplicate keys in one JSON object are found at any depth, and keys in separate objects are not', () => {
+  assert.deepEqual(duplicateKeys('{"evals":[{"id":1,"expectations":["a"],"expectations":["b"]}]}'), ['expectations']);
+  assert.deepEqual(duplicateKeys('{"a":1,"b":{"a":2},"c":[{"a":3},{"a":4}]}'), []);
+  assert.deepEqual(duplicateKeys('{"a":"x\\"a\\":","a":2}'), ['a']);
+  assert.deepEqual(duplicateKeys('{"k":{"z":1,"z":2},"k2":{"y":1,"y":1}}'), ['z', 'y']);
+  assert.deepEqual(duplicateKeys('[1, "{\\"a\\":1,\\"a\\":2}"]'), []);
+});
+
+test('a document with a duplicate key is reported and not rewritten', () => {
+  const raw = '{"skill_name":"demo","evals":[{"id":1,"prompt":"p","expected_output":"e","files":[],"expectations":["ours"],"expectations":["theirs"]}]}';
+  const result = normalizeEvalDocument(JSON.parse(raw), lookupOf(), { raw });
+  assert.equal(result.problems.length, 1);
+  assert.match(result.problems[0], /duplicate key "expectations"/);
+  assert.deepEqual(result.actions, []);
+  assert.equal(result.doc, null, 'no rewritten document is offered');
+});
+
 test('normalising twice equals normalising once, for every input shape', () => {
   const lookup = lookupOf({
     'evals/fixtures/a.diff': textFile(),
@@ -352,6 +410,22 @@ test('a fixture name must be usable on every platform CI runs on, and must not b
   const fine = ['evals/files/1/cart.test.mjs.txt', 'evals/files/1/console.txt', 'evals/files/1/src/a b.ts', 'evals/files/1/.env.example'];
   const fineLookup = lookupOf(Object.fromEntries(fine.map((name) => [name, textFile()])));
   for (const name of fine) assert.deepEqual(errorsFor({ files: [name] }, fineLookup), [], name);
+});
+
+test('a backslash anywhere in a fixture path is refused, as Git for Windows refuses it', () => {
+  const lookup = lookupOf({ 'evals/files/1\\a.txt': textFile() });
+  const errors = errorsFor({ files: ['evals/files/1\\a.txt'] }, lookup);
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /is not a valid file name on Windows/);
+});
+
+test('fewer than two or more than five assertions is a warning', () => {
+  const tooFew = checked([...sixCases().slice(1), standardCase({ id: 1, assertions: ['One.'], expectations: ['One.'] })]);
+  assert.deepEqual(tooFew.errors, []);
+  assert.ok(tooFew.warnings.some((line) => /eval 1: 1 assertion; the standard asks for 2 to 5/.test(line)), tooFew.warnings.join('\n'));
+  const six = ['a', 'b', 'c', 'd', 'e', 'f'];
+  const tooMany = checked([...sixCases().slice(1), standardCase({ id: 1, assertions: six, expectations: six })]);
+  assert.ok(tooMany.warnings.some((line) => /eval 1: 6 assertions; the standard asks for 2 to 5/.test(line)), tooMany.warnings.join('\n'));
 });
 
 test('agent evals must have an empty files list', () => {

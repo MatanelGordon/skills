@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdtemp, mkdir, readFile, readdir, symlink, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import test from 'node:test';
@@ -137,6 +137,99 @@ test('a fixture that already exists with the same content is accepted, and a mov
   assert.equal(existsSync(join(root, 'skills', 'messy', 'evals', 'fixtures', 'discount.diff')), false);
 });
 
+test('a failure while placing fixtures leaves the dataset and its sources as they were, and a rerun repairs it', async () => {
+  const root = await makeTemp();
+  await put(root, 'skills/half/SKILL.md', '---\nname: half\ndescription: A fixture.\n---\n');
+  await put(root, 'skills/half/evals/evals.json', JSON.stringify({
+    skill_name: 'half',
+    evals: [
+      { id: 1, prompt: 'p', expected_output: 'e', files: ['evals/fixtures/a.md'], expectations: ['One.'] },
+      { id: 2, prompt: 'p', expected_output: 'e', files: ['evals/fixtures/b.md'], expectations: ['Two.'] },
+    ],
+  }));
+  await put(root, 'skills/half/evals/fixtures/a.md', 'a\n');
+  await put(root, 'skills/half/evals/fixtures/b.md', 'b\n');
+  await put(root, 'skills/half/evals/files/2', 'a file where a folder must go\n');
+  const datasetBefore = await read(root, 'skills/half/evals/evals.json');
+
+  const [first] = await normalizeRepository(root);
+  assert.equal(first.written, false);
+  assert.ok(first.problems.some((problem) => /could not place fixtures/.test(problem)), first.problems.join('\n'));
+  assert.equal(await read(root, 'skills/half/evals/evals.json'), datasetBefore);
+  assert.equal(await read(root, 'skills/half/evals/fixtures/a.md'), 'a\n', 'a source is never removed before the dataset points away from it');
+
+  await rm(join(root, 'skills', 'half', 'evals', 'files', '2'));
+  const [second] = await normalizeRepository(root);
+  assert.deepEqual(second.problems, []);
+  assert.equal(second.written, true);
+  const doc = await readJson(root, 'skills/half/evals/evals.json');
+  assert.deepEqual(doc.evals.map((evaluation) => evaluation.files), [['evals/files/1/a.md'], ['evals/files/2/b.md']]);
+  assert.equal(await read(root, 'skills/half/evals/files/1/a.md'), 'a\n');
+  assert.equal(existsSync(join(root, 'skills', 'half', 'evals', 'fixtures')), false);
+});
+
+test('fixtures are compared as bytes, so two texts that decode alike are still told apart', async () => {
+  const root = await makeTemp();
+  await put(root, 'skills/bytes/SKILL.md', '---\nname: bytes\ndescription: A fixture.\n---\n');
+  await put(root, 'skills/bytes/evals/evals.json', JSON.stringify({
+    skill_name: 'bytes',
+    evals: [{ id: 1, prompt: 'p', expected_output: 'e', files: ['evals/fixtures/a.txt'], expectations: ['One.'] }],
+  }));
+  await put(root, 'skills/bytes/evals/fixtures/a.txt', Buffer.from([0x63, 0x61, 0x66, 0xe9]));
+  await put(root, 'skills/bytes/evals/files/1/a.txt', Buffer.from([0x63, 0x61, 0x66, 0xe8]));
+
+  const [result] = await normalizeRepository(root);
+  assert.ok(result.problems.some((problem) => /already exists with different content/.test(problem)), result.problems.join('\n'));
+  assert.deepEqual([...await readFile(join(root, 'skills', 'bytes', 'evals', 'fixtures', 'a.txt'))], [0x63, 0x61, 0x66, 0xe9]);
+});
+
+test('a blocked file is reported as not rewritten, and --check reports the same blocker', async () => {
+  const root = await writeMessyRepo();
+  await put(root, 'skills/messy/evals/files/2/package.json', '{"someone":"else"}');
+
+  const checkRun = runCli('--check', '--root', root);
+  assert.equal(checkRun.status, 1, checkRun.stdout + checkRun.stderr);
+  assert.match(checkRun.stderr, /already exists with different content/);
+
+  const writeRun = runCli('--root', root);
+  assert.equal(writeRun.status, 1, writeRun.stdout + writeRun.stderr);
+  assert.doesNotMatch(writeRun.stdout, /rewrote skills\/messy/);
+  assert.match(writeRun.stdout, /not rewritten skills\/messy/);
+});
+
+test('a duplicate key stops the rewrite of that file', async () => {
+  const root = await writeMessyRepo();
+  const raw = '{"skill_name":"messy","evals":[{"id":1,"prompt":"p","expected_output":"e","files":[],"expectations":["ours"],"expectations":["theirs"]}]}';
+  await put(root, 'skills/messy/evals/evals.json', raw);
+  const [messy] = await normalizeRepository(root);
+  assert.ok(messy.problems.some((problem) => /duplicate key "expectations"/.test(problem)), messy.problems.join('\n'));
+  assert.equal(await read(root, 'skills/messy/evals/evals.json'), raw);
+  const checked = await checkRepositoryEvals(root);
+  assert.ok(checked.errors.some(({ scope, message }) => scope === 'messy' && /duplicate key "expectations"/.test(message)));
+});
+
+test('a fixture reached through a symlinked folder is rejected by the check', { skip: process.platform === 'win32' }, async () => {
+  const root = await writeMessyRepo();
+  await normalizeRepository(root);
+  const outside = join(root, 'outside');
+  await put(root, 'outside/secret.txt', 'secret\n');
+  await mkdir(join(root, 'skills', 'messy', 'evals', 'files'), { recursive: true });
+  await symlink(outside, join(root, 'skills', 'messy', 'evals', 'files', '9'), 'dir');
+  const evalsPath = 'skills/messy/evals/evals.json';
+  const doc = await readJson(root, evalsPath);
+  const linked = { ...doc, evals: doc.evals.map((evaluation) => (evaluation.id === 1 ? { ...evaluation, files: ['evals/files/9/secret.txt'] } : evaluation)) };
+  await put(root, evalsPath, `${JSON.stringify(linked, null, 2)}\n`);
+  const result = await checkRepositoryEvals(root);
+  assert.equal(result.errors.length, 1, JSON.stringify(result.errors));
+  assert.match(result.errors[0].message, /is not a regular file/);
+});
+
+test('--root without a value is a usage error', () => {
+  const result = runCli('--root');
+  assert.equal(result.status, 2, result.stdout + result.stderr);
+  assert.match(result.stderr, /--root requires a folder/);
+});
+
 test('what the normaliser cannot repair is reported and the rest is still normalised', async () => {
   const root = await makeTemp();
   await put(root, 'skills/half/SKILL.md', '---\nname: half\ndescription: A fixture.\n---\n');
@@ -185,6 +278,10 @@ test('the repository check reports format errors per file and count shortfalls a
   const after = await checkRepositoryEvals(root);
   assert.deepEqual(after.errors, []);
   assert.deepEqual(after.warnings.map(({ scope, message }) => [scope, message.split(';')[0].split(' (')[0]]), [
+    ['messy', 'eval 1: 1 assertion'],
+    ['messy', 'eval 2: 1 assertion'],
+    ['messy', 'eval 3: 1 assertion'],
+    ['messy', 'eval 4: 1 assertion'],
     ['messy', '4 cases'],
     ['messy', 'no negative case'],
   ]);

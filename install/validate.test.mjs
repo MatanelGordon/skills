@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, mkdir, symlink, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, mkdir, readFile, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import test from 'node:test';
@@ -102,69 +102,100 @@ test('validator checks README coverage and changelog/package version agreement',
   assert(changelogResult.failures.some((line) => line.includes('CHANGELOG.md') && line.includes('1.0.0')));
 });
 
+// Description tests look only at description failures, so checks added
+// elsewhere in the validator cannot turn them red.
 const descriptionOf = (length) => 'Use when '.padEnd(length, 'x');
+const folded = (...lines) => ['description: >', ...lines.map((line) => `  ${line}`)];
+const descriptionFailures = async (root) => (await validateRepository(root)).failures
+  .filter((line) => /description/.test(line));
 
-async function writeSkill(root, name, descriptionLines) {
-  await mkdir(join(root, 'skills', name, 'evals'), { recursive: true });
-  await writeFile(join(root, 'skills', name, 'SKILL.md'), [
-    '---',
-    `name: ${name}`,
-    'description: >',
-    ...descriptionLines.map((line) => `  ${line}`),
-    'license: MIT',
-    '---',
-    `# ${name}`,
-    '',
-  ].join('\n'));
-  await writeFile(join(root, 'skills', name, 'evals', 'evals.json'), JSON.stringify({
-    skill_name: name,
-    evals: [{ id: 1, prompt: 'Do it', expected_output: 'Done', files: [], expectations: ['It is done'] }],
-  }));
-  await writeFile(join(root, 'README.md'), `[${name}](skills/${name}/SKILL.md)\n`, { flag: 'a' });
+// A further skill is a copy of the fixture's valid-skill with a new name and
+// description, so it follows whatever the fixture has to contain.
+async function writeSkill(root, name, descriptionYaml) {
+  const fixture = join(root, 'skills', 'valid-skill');
+  const target = join(root, 'skills', name);
+  if (name !== 'valid-skill') {
+    await cp(fixture, target, { recursive: true });
+    const evalsPath = join(target, 'evals', 'evals.json');
+    const evals = JSON.parse(await readFile(evalsPath, 'utf8'));
+    await writeFile(evalsPath, JSON.stringify({ ...evals, skill_name: name }));
+    await writeFile(join(root, 'README.md'), `[${name}](skills/${name}/SKILL.md)\n`, { flag: 'a' });
+  }
+  const skillPath = join(target, 'SKILL.md');
+  const [, frontmatter, body] = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/.exec(await readFile(skillPath, 'utf8'));
+  const kept = frontmatter.replace(/^description:.*\n(?:[ \t]+.*\n)*/m, '').replace(/^name:.*$/m, `name: ${name}`);
+  await writeFile(skillPath, `---\n${[...descriptionYaml, kept].join('\n')}\n---\n${body}`);
 }
 
 test('validator allows a description of 300 characters and rejects 301', async () => {
   const atLimit = await writeValidRepo();
-  await writeSkill(atLimit, 'valid-skill', [descriptionOf(300)]);
-  const accepted = await validateRepository(atLimit);
-  assert.equal(accepted.failures.length, 0, accepted.failures.join('\n'));
+  await writeSkill(atLimit, 'valid-skill', folded(descriptionOf(300)));
+  assert.deepEqual(await descriptionFailures(atLimit), []);
 
   const overLimit = await writeValidRepo();
-  await writeSkill(overLimit, 'valid-skill', [descriptionOf(301)]);
-  const rejected = await validateRepository(overLimit);
-  assert.equal(rejected.failures.length, 1, rejected.failures.join('\n'));
-  assert.match(rejected.failures[0], /^valid-skill: description 301 chars \(max 300\)/);
+  await writeSkill(overLimit, 'valid-skill', folded(descriptionOf(301)));
+  const rejected = await descriptionFailures(overLimit);
+  assert.equal(rejected.length, 1, rejected.join('\n'));
+  assert.match(rejected[0], /^valid-skill: description 301 chars \(max 300\)/);
 });
 
 test('validator measures a folded description after joining its lines', async () => {
   // Two folded lines become one line with a single space between them.
   const atLimit = await writeValidRepo();
-  await writeSkill(atLimit, 'valid-skill', [descriptionOf(150), 'y'.repeat(149)]);
-  const accepted = await validateRepository(atLimit);
-  assert.equal(accepted.failures.length, 0, accepted.failures.join('\n'));
+  await writeSkill(atLimit, 'valid-skill', folded(descriptionOf(150), 'y'.repeat(149)));
+  assert.deepEqual(await descriptionFailures(atLimit), []);
 
   const overLimit = await writeValidRepo();
-  await writeSkill(overLimit, 'valid-skill', [descriptionOf(150), 'y'.repeat(150)]);
-  const rejected = await validateRepository(overLimit);
-  assert(rejected.failures.some((line) => line.startsWith('valid-skill: description 301 chars (max 300)')), rejected.failures.join('\n'));
+  await writeSkill(overLimit, 'valid-skill', folded(descriptionOf(150), 'y'.repeat(150)));
+  assert.match((await descriptionFailures(overLimit)).join('\n'), /^valid-skill: description 301 chars \(max 300\)/m);
+});
+
+test('validator measures every YAML form a description can take', async () => {
+  const forms = {
+    'one-line value': [`description: ${descriptionOf(301)}`],
+    'quoted value': [`description: "${descriptionOf(301)}"`],
+    'literal block': ['description: |', `  ${descriptionOf(301)}`],
+    'block with chomping indicator': ['description: >-', `  ${descriptionOf(301)}`],
+    'block with keep indicator': ['description: >+', `  ${descriptionOf(301)}`],
+    'block with a comment': ['description: > # trigger first', `  ${descriptionOf(301)}`],
+    'plain multi-line value': ['description:', `  ${descriptionOf(150)}`, `  ${'y'.repeat(150)}`],
+    'value continued on the next line': [`description: ${descriptionOf(150)}`, `  ${'y'.repeat(150)}`],
+  };
+  for (const [form, yaml] of Object.entries(forms)) {
+    const root = await writeValidRepo();
+    await writeSkill(root, 'valid-skill', yaml);
+    const failures = await descriptionFailures(root);
+    assert.equal(failures.length, 1, `${form}:\n${failures.join('\n')}`);
+    assert.match(failures[0], /^valid-skill: description 301 chars \(max 300\)/, form);
+  }
+});
+
+test('validator reports an empty description as missing, not as the next key', async () => {
+  const root = await writeValidRepo();
+  await writeSkill(root, 'valid-skill', ['description:']);
+  assert.deepEqual(await descriptionFailures(root), ['valid-skill: missing description']);
 });
 
 test('validator keeps all descriptions together under 7,500 characters', async () => {
   const writeSkills = async (lastLength) => {
     const root = await writeValidRepo();
-    await writeSkill(root, 'valid-skill', [descriptionOf(lastLength)]);
+    await writeSkill(root, 'valid-skill', folded(descriptionOf(lastLength)));
     for (let index = 1; index <= 24; index++) {
-      await writeSkill(root, `skill-${String(index).padStart(2, '0')}`, [descriptionOf(300)]);
+      await writeSkill(root, `skill-${String(index).padStart(2, '0')}`, folded(descriptionOf(300)));
     }
     return root;
   };
 
-  const underBudget = await validateRepository(await writeSkills(299));
-  assert.equal(underBudget.failures.length, 0, underBudget.failures.join('\n'));
+  assert.deepEqual(await descriptionFailures(await writeSkills(299)), []);
 
-  const atBudget = await validateRepository(await writeSkills(300));
-  assert.equal(atBudget.failures.length, 1, atBudget.failures.join('\n'));
-  assert.match(atBudget.failures[0], /^skills: descriptions total 7500 chars \(must stay under 7500\)/);
+  const atBudget = await descriptionFailures(await writeSkills(300));
+  assert.equal(atBudget.length, 1, atBudget.join('\n'));
+  assert.match(atBudget[0], /^skills: descriptions total 7500 chars \(must stay under 7500\)/);
+
+  // A description over its own limit still counts toward the total.
+  const overLimit = await descriptionFailures(await writeSkills(301));
+  assert.equal(overLimit.length, 2, overLimit.join('\n'));
+  assert.match(overLimit.join('\n'), /^skills: descriptions total 7501 chars/m);
 });
 
 test('validator detects duplicate id keys hidden by JSON.parse', async () => {

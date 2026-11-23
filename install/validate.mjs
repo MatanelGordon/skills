@@ -37,6 +37,22 @@ const extractFrontmatter = (text) => (
   /^---\r?\n([\s\S]*?)\r?\n---\r?\n/.exec(text)?.[1]?.replace(/\r\n?/g, '\n')
 );
 
+/**
+ * The description as one line, the way it is measured: a block scalar (`>`, `|`,
+ * with or without chomping or a comment) or a plain value continued on indented
+ * lines is joined with single spaces, and surrounding quotes are dropped.
+ */
+function readDescription(frontmatter) {
+  const match = /^description:[ \t]*(.*)\n?((?:[ \t]+.*(?:\n|$)|[ \t]*\n)*)/m.exec(frontmatter);
+  if (!match) return undefined;
+  const head = match[1].trim();
+  const continued = match[2].split('\n').map((line) => line.trim()).filter(Boolean);
+  const isBlock = /^[>|][-+0-9]*(?:[ \t]+#.*)?$/.test(head);
+  const text = (isBlock ? continued : [head, ...continued]).filter(Boolean).join(' ');
+  const quoted = /^(["'])([\s\S]*)\1$/.exec(text);
+  return (quoted ? quoted[2] : text) || undefined;
+}
+
 export async function validateRepository(root = DEFAULT_ROOT) {
   root = resolve(root);
   const skillsRoot = join(root, 'skills');
@@ -112,10 +128,7 @@ export async function validateRepository(root = DEFAULT_ROOT) {
       }
     }
 
-    const descBlock = /description:\s*>-?\s*\n((?:\s{2,}.*\n?)+)/.exec(fm)?.[1];
-    const desc = descBlock
-      ? descBlock.split('\n').map((line) => line.trim()).filter(Boolean).join(' ')
-      : /^description:\s*(.+)$/m.exec(fm)?.[1]?.trim();
+    const desc = readDescription(fm);
     if (!desc) fail(dir, 'missing description');
     else {
       descriptionChars += desc.length;

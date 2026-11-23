@@ -83,9 +83,12 @@ Constraints found in the code:
 4. **Draft first, ready at the end.** The PR opens as a draft and is marked
    ready after stage 6 verification. A four-pass escalation leaves it a draft.
    This matches the interim process the other five jobs follow.
-5. **Merge rule.** Never merge without the user's explicit permission for that
-   pull request. Agreeing to the mode, green checks and a clean review are not
-   permission. Auto-merge and pushing to the base branch count as merging.
+5. **Merge rule, with the mode on or off.** Never merge a pull request, enable
+   auto-merge, or push to the base branch without the user's explicit
+   permission for that change. Agreeing to the mode, green checks and a clean
+   review are not permission. The rule is not limited to the mode because the
+   30B model, told only what the mode forbids, planned to commit on the base
+   branch and push at the end of an unattended run with the mode off.
 6. **Failure to push or open the PR:** report the error and wait. The user
    chose the mode to read the change on GitHub, so reviewing without the PR
    would silently drop what they asked for.
@@ -163,8 +166,8 @@ git diff --check origin/codex/review-convergence-loop...HEAD
 ### What the contract test checks
 
 Each check matches a whole clause, not a keyword, so that inverting or
-removing the rule fails the test. Sixteen such rewordings were tried on a
-scratch copy and all sixteen failed it.
+removing the rule fails the test. Twenty such rewordings were tried on a
+scratch copy and all twenty failed it.
 
 - The description is 300 characters or fewer and starts with "Use when".
 - The mode section exists, sits between stage 4 and stage 5, and stage 1 says
@@ -179,9 +182,10 @@ scratch copy and all sixteen failed it.
   rebase or force-push.
 - The PR is marked ready only after stage 6; a four-pass escalation leaves it
   a draft.
-- The pull request is never merged without explicit permission for that pull
-  request; auto-merge and pushing to the base branch are ruled out; agreeing
-  to the mode, green checks and a clean review are named as not permission.
+- With the mode on or off, no pull request is merged, no auto-merge enabled
+  and nothing pushed to the base branch without explicit permission for that
+  change; agreeing to the mode, green checks and a clean review are named as
+  not permission.
 - The README mentions the mode, its timing, its merge rule and its default.
 - The graded assertions of cases 11 to 14 cover asking, opening before review
   and after hardening, the draft, new commits, the unanswered default, not
@@ -323,3 +327,15 @@ GitHub remote to push to, so the mode's actions cannot complete there.
   do when the base branch moves.
 - 2026-11-23: the preliminary evaluation (four new cases, one attempt per
   arm) cost about $0.011, so six full runs fit the share and nothing is cut.
+- 2026-11-23: a second one-attempt run of the four rewritten cases (before
+  2 of 13 assertions, after 9 of 13) showed three places where the 30B model
+  misread the text, all fixed before review pass 2: with the mode off it took
+  "push nothing" to mean "not yet" and planned a push after verification, and
+  read the branch rule as applying only with the mode on, so it planned to
+  commit on the base branch; it described the opening point as "after stage 4
+  (implement)"; and it ended with the pull request waiting for the user to
+  mark it ready. The text now says "push nothing at any stage", states the
+  merge and base-branch rule for the mode on or off, names the stage (test
+  hardening) instead of only numbering it, and ends step 4 with "stop there,
+  unmerged". Two case-12 assertions no longer require the opening point to be
+  inside the numbered list.

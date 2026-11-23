@@ -132,15 +132,15 @@
       "expected_output": "The reply opens a draft pull request after test hardening and before the first review pass, and pushes each review fix as a new commit without amending or force-pushing. It stops with the pull request marked ready and not merged.",
       "files": [],
       "assertions": [
-        "The reply's ordered list places the opening of the pull request before the first review pass.",
-        "The reply's ordered list places the opening of the pull request after test hardening.",
+        "The reply places the opening of the pull request before the first review pass.",
+        "The reply places the opening of the pull request after test hardening.",
         "The reply says the pull request is opened as a draft.",
         "The reply says review fixes are never amended or force-pushed into the branch.",
         "The reply says the pull request stays unmerged until the user gives explicit permission."
       ],
       "expectations": [
-        "The reply's ordered list places the opening of the pull request before the first review pass.",
-        "The reply's ordered list places the opening of the pull request after test hardening.",
+        "The reply places the opening of the pull request before the first review pass.",
+        "The reply places the opening of the pull request after test hardening.",
         "The reply says the pull request is opened as a draft.",
         "The reply says review fixes are never amended or force-pushed into the branch.",
         "The reply says the pull request stays unmerged until the user gives explicit permission."

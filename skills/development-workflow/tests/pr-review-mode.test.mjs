@@ -65,6 +65,7 @@ test('description leads with its trigger and stays within the length limit', asy
 
 test('the mode sits between hardening and review, and planning points to it', async () => {
   const { skill, mode } = await readContract();
+  const overview = flatten(skill.slice(0, skill.indexOf('## Mandatory core')));
   const hardening = skill.indexOf('## 4. Test hardening');
   const modeStart = skill.indexOf(MODE_HEADING);
   const review = skill.indexOf('## 5. Review convergence');
@@ -75,6 +76,11 @@ test('the mode sits between hardening and review, and planning points to it', as
     flatten(sectionOf(skill, '## 1. Plan')),
     /settle \*\*pull-request review mode\*\* \(below\) with the plan: ask once/i,
     'stage 1',
+  );
+  assertPhrase(
+    overview,
+    /a draft pull request goes up after test hardening and before review, and nothing merges without the user's explicit permission/i,
+    'the pipeline overview',
   );
 });
 
@@ -98,7 +104,7 @@ test('with nobody to answer the mode is off and nothing is pushed', async () => 
   assertPhrase(mode, /\*\*no answer means no\.\*\*/i, where);
   assertPhrase(
     mode,
-    /nobody can answer \(an unattended or non-interactive run\), do not wait: push nothing, review locally as stage 5 describes, and report that the mode was off/i,
+    /nobody can answer \(an unattended or non-interactive run\), do not wait: the mode is off\. push nothing at any stage, review locally as stage 5 describes, and report that the mode was off/i,
     where,
   );
   assertPhrase(mode, /visible to others and cannot be unsent/i, where);
@@ -110,7 +116,11 @@ test('the pull request opens as a draft after stage 4 and before the first revie
 
   assertPhrase(mode, /a yes puts commits in scope/i, where);
   assertPhrase(mode, /work on a branch, never on the base branch/i, where);
-  assertPhrase(mode, /open after stage 4 \(stage 3 when hardening is skipped\), before the first review pass/i, where);
+  assertPhrase(
+    mode,
+    /open after test hardening and before the first review pass\*\* \(after implementation when hardening is skipped\)/i,
+    where,
+  );
   assertPhrase(
     mode,
     /check the diff for secrets, push the branch, and open a draft pull request \(`gh pr create --draft`\)/i,
@@ -133,7 +143,7 @@ test('the pull request is marked ready only after verification', async () => {
   const where = 'the mode section';
 
   assertPhrase(mode, /stage 7's rules apply to every commit pushed here/i, where);
-  assertPhrase(mode, /only after stage 6 passes, .{0,80}mark it ready \(`gh pr ready`\), and stop/i, where);
+  assertPhrase(mode, /only after stage 6 passes, .{0,80}mark it ready \(`gh pr ready`\), and stop there, unmerged/i, where);
   assertPhrase(mode, /a four-pass escalation leaves it a draft/i, where);
 });
 
@@ -143,14 +153,13 @@ test('nothing merges without explicit permission', async () => {
 
   assertPhrase(
     mode,
-    /never merge the pull request without the user's explicit permission for that pull request/i,
+    /\*\*mode on or off, never merge a pull request, enable auto-merge, or push to the base branch without the user's explicit permission for that change\.\*\*/i,
     where,
   );
-  assertPhrase(mode, /and never enable auto-merge or push to the base branch/i, where);
   assertPhrase(mode, /agreeing to the mode, green checks, and a clean review are not permission/i, where);
   assertPhrase(
     flatten(sectionOf(skill, '## Anti-patterns')),
-    /\| merge a pull request, or push to its base branch, without the user's explicit permission \|/i,
+    /\| merge a pull request, or push to the base branch, without the user's explicit permission \|/i,
     'the anti-pattern table',
   );
 });

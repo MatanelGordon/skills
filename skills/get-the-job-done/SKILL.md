@@ -203,7 +203,7 @@ So the sweep is a gate, written before the removal like any other:
 - [ ] Nothing outside history files names `old-name`
       CHECK: git grep --untracked -nIw -e 'old-name' -- . ':!*CHANGELOG.md' ':!.plan/' ':!.adr/' ':!GATES.md' ':!gates/'; test $? -eq 1
 - [ ] No installed link into this repo points at nothing
-      CHECK: ! find -H ~/.claude/skills ~/.codex/skills ~/.copilot/skills ~/.agents/skills ~/.tabnine/agent/skills ~/.claude/agents -maxdepth 1 -type l -lname "$PWD/*" ! -exec test -e {} \; -print 2>/dev/null | grep .
+      CHECK: ! find -H ~/.claude/skills ~/.codex/skills ~/.copilot/skills ~/.agents/skills ~/.tabnine/agent/skills ~/.claude/agents -maxdepth 1 -type l -lname "$(pwd -P)/*" ! -exec test -e {} \; -print 2>/dev/null | grep .
 ```
 
 Search every spelling (the name, its path, its slash command, its title) in

@@ -113,15 +113,16 @@ look for links into the repo left pointing at nothing:
 
 ```
 CHECK: git grep --untracked -nIw -e 'old-name' -e 'old_name' -- . ':!*CHANGELOG.md' ':!.plan/' ':!.adr/' ':!GATES.md' ':!gates/'; test $? -eq 1
-CHECK: ! find -H ~/.claude/skills ~/.codex/skills ~/.copilot/skills ~/.agents/skills ~/.tabnine/agent/skills ~/.claude/agents -maxdepth 1 -type l -lname "$PWD/*" ! -exec test -e {} \; -print 2>/dev/null | grep .
+CHECK: ! find -H ~/.claude/skills ~/.codex/skills ~/.copilot/skills ~/.agents/skills ~/.tabnine/agent/skills ~/.claude/agents -maxdepth 1 -type l -lname "$(pwd -P)/*" ! -exec test -e {} \; -print 2>/dev/null | grep .
 ```
 
 `git grep` exits 1 for no match and 128 for an error, so `test $? -eq 1` passes
 only on a clean search; a leading `!` would turn "not a git repository" into a
 pass. `-w` treats `-` as a word boundary, so `old-name-two` is a hit too.
-`find -H` follows an agent folder that is itself a link, and `-lname "$PWD/*"`
-keeps links that point somewhere else out of the gate (run it from the repo
-root, as the checker is). A repo search does not reach installed copies or the
+`find -H` follows an agent folder that is itself a link, and `-lname "$(pwd -P)/*"`
+keeps links that point somewhere else out of the gate. It compares with the
+repo's real path, which is what an installer writes, so it holds when the repo
+is reached through a symlink; run it from the repo root, as the checker is. A repo search does not reach installed copies or the
 user's own rules and memory files. Search those too; a hit you may not edit
 goes in the report with its path, not into a gate that can never pass.
 

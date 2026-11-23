@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Billing · Ledgerly</title>
+<style>
+  @font-face { font-family: "Ledgerly Sans"; src: url("fonts/ledgerly-sans.woff2") format("woff2"); }
+  :root { --brand: #0F5C4A; --ink: #1D2321; --muted: #5E6966; --line: #D8DEDB; --bg: #F4F6F5; }
+  body { margin: 0; font-family: "Ledgerly Sans", Arial, sans-serif; color: var(--ink); background: var(--bg); }
+  header { background: var(--brand); color: #fff; padding: 12px 24px; }
+  .logo { font-weight: 700; }
+  main { max-width: 900px; margin: 24px auto; padding: 0 24px; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  .card h2 { font-size: 16px; margin: 0 0 8px; }
+  .row { display: flex; gap: 16px; }
+  .row .card { flex: 1; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .btn { background: var(--brand); color: #fff; border: 0; border-radius: 4px; padding: 8px 12px; font: inherit; }
+  .link { color: var(--brand); }
+</style>
+</head>
+<body>
+<header><span class="logo">Ledgerly</span></header>
+<main>
+  <h1>Billing</h1>
+  <div class="row">
+    <section class="card">
+      <h2>Plan</h2>
+      <p>Team plan · $240.00 per month · 12 seats</p>
+      <p>Next invoice on 1 December 2026</p>
+      <button class="btn" type="button" id="change-plan">Change plan</button>
+    </section>
+    <section class="card">
+      <h2>Payment method</h2>
+      <p>Bank debit, account ending 17</p>
+      <a class="link" href="/billing/payment-method">Update payment method</a>
+    </section>
+  </div>
+  <section class="card">
+    <h2>Invoices</h2>
+    <table>
+      <thead><tr><th>Invoice</th><th>Date</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        <tr><td>INV-2041</td><td>1 Nov 2026</td><td>$240.00</td><td>Overdue</td>
+          <td><button class="btn" type="button" data-pay="INV-2041">Pay now</button> <a class="link" href="/invoices/INV-2041.pdf">Download PDF</a></td></tr>
+        <tr><td>INV-2032</td><td>1 Oct 2026</td><td>$240.00</td><td>Paid</td>
+          <td><a class="link" href="/invoices/INV-2032.pdf">Download PDF</a></td></tr>
+        <tr><td>INV-2019</td><td>1 Sep 2026</td><td>$180.00</td><td>Paid</td>
+          <td><a class="link" href="/invoices/INV-2019.pdf">Download PDF</a></td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

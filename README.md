@@ -1,6 +1,6 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/readme/hero-dark.svg">
-  <img src="assets/readme/hero-light.svg" width="100%" alt="Skills: one source of truth for 27 Agent Skills and 2 subagents, linked into Claude Code, OpenAI Codex, GitHub Copilot and Tabnine.">
+  <img src="assets/readme/hero-light.svg" width="100%" alt="Skills: one source of truth for 26 Agent Skills and 2 subagents, linked into Claude Code, OpenAI Codex, GitHub Copilot and Tabnine.">
 </picture>
 
 One repository for the skills I want every coding agent to share. A skill is an
@@ -11,7 +11,7 @@ Three things make the setup work:
 
 - **One source of truth.** Update a skill here once; every symlinked agent sees
   the change immediately.
-- **Native everywhere.** The same 27 skills serve Claude Code, OpenAI Codex,
+- **Native everywhere.** The same 26 skills serve Claude Code, OpenAI Codex,
   GitHub Copilot, Tabnine, and tools that follow the shared `.agents` convention.
 - **Safe to own.** The installer detects conflicts before replacing anything,
   validation runs across operating systems, and external work stays attributed.
@@ -91,7 +91,7 @@ Claude Code and Codex pick skills up on the next session.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/readme/install-flow-dark.svg">
-  <img src="assets/readme/install-flow-light.svg" width="880" alt="Diagram: one clone of this repository, with 27 skills and 2 agents, feeds install/index.mjs, which symlinks or copies them into five skill directories: Claude Code (~/.claude/skills/), OpenAI Codex (~/.codex/skills/), GitHub Copilot (~/.copilot/skills/), Tabnine (~/.tabnine/agent/skills/) and the shared ~/.agents/skills/.">
+  <img src="assets/readme/install-flow-light.svg" width="880" alt="Diagram: one clone of this repository, with 26 skills and 2 agents, feeds install/index.mjs, which symlinks or copies them into five skill directories: Claude Code (~/.claude/skills/), OpenAI Codex (~/.codex/skills/), GitHub Copilot (~/.copilot/skills/), Tabnine (~/.tabnine/agent/skills/) and the shared ~/.agents/skills/.">
 </picture>
 
 | Agent | Where the installer puts skills |
@@ -213,12 +213,11 @@ others when you install it.
 | [council](skills/council/SKILL.md) | Pressure-tests consequential architecture choices with isolated, contrast-written personas, anonymized cross-review, and a chairman verdict that preserves dissent. Weights falsifiers over confidence theatre. Built for weak single-model harnesses on closed networks. |
 | [prototype](skills/prototype/SKILL.md) | Throwaway code that answers a design question before real work burns tokens on the wrong thing. Greenfield: hardcode everything, delete it after. Brownfield: deliberately bad code behind exactly one seam, so the real thing lands as a one-line swap. |
 | [get-the-job-done](skills/get-the-job-done/SKILL.md) | Guards against work that only *looks* finished. Completion claims become `GATES.md` entries, each with a runnable `CHECK`, and a bundled checker re-runs them. Read-only and hook-free on purpose, so it survives six concurrent agents. |
-| [parallel-build](skills/parallel-build/SKILL.md) | Executes a plan across parallel subagents in three phases (foundation → implementation → review). Its `PROGRESS.md` lets a fresh session resume after a crash. → `cli-coding-subagents`, `deep-plan` |
-| [cli-coding-subagents](skills/cli-coding-subagents/SKILL.md) | The machinery underneath: runs codex and copilot as autonomous workers in git worktrees. Includes quota pre-flight (it asks before spending paid overage), strict prompt contracts, and merge and cleanup that never leave a worktree behind. |
-| [openrouter-cli-subagent](skills/openrouter-cli-subagent/SKILL.md) | The same workflow routed through OpenRouter via the `ori` CLI, so subagent work costs cents. Finds models that can actually call tools, under a price ceiling (default $0.50 per 1M output tokens). Checks the wallet before recommending anything paid. → `cli-coding-subagents` |
+| [parallel-build](skills/parallel-build/SKILL.md) | Decides how a job is split between workers: which pieces are independent, who owns which files, what has to land first, and how many run at once. Parallel by default. Independent pieces get a quick split; a build with a shared surface runs in three phases (foundation → implementation → review) from a `deep-plan` plan, and its `PROGRESS.md` lets a fresh session resume after a crash. → `cli-coding-subagents`, `deep-plan` |
+| [cli-coding-subagents](skills/cli-coding-subagents/SKILL.md) | Runs one coding worker through the codex, copilot or OpenRouter (`ori`) CLI, in its own git worktree whenever the project is a git repository. Includes quota pre-flight (it asks before spending paid overage), strict prompt contracts, and merge and cleanup that never leave a worktree behind. In OpenRouter mode it finds models that can actually call tools under a price ceiling (default $0.50 per 1M output tokens) and checks the wallet before recommending anything paid. |
 
 <details>
-<summary>Why get-the-job-done is hook-free, and why openrouter isn't free-only</summary>
+<summary>Why get-the-job-done is hook-free, and why OpenRouter mode isn't free-only</summary>
 
 <br>
 
@@ -228,9 +227,9 @@ since become false gets caught instead of believed. It deliberately ships no
 blocking hook: a blocker you can't cleanly remove is worse than the premature
 "done" it prevents.
 
-**openrouter-cli-subagent** sets a price ceiling instead of insisting on free
-models, because free-only leaves one model family and a 20 req/min cap, and a
-few cents gets you out of both. It discovers which models can really call
+**cli-coding-subagents**, in its OpenRouter mode, sets a price ceiling instead
+of insisting on free models, because free-only leaves one model family and a
+20 req/min cap, and a few cents gets you out of both. It discovers which models can really call
 tools (a free million-token model that turns out to be a *music* model is not a
 coding agent). It also splits author and reviewer context floors, so
 cross-model review is actually possible.
@@ -293,9 +292,8 @@ and skips platform-locked skills on the wrong OS.
 |---|---|
 | `impeccable-lite` | Node ≥ 18 for its optional local workflow/audit and an installed Chrome, Chromium, or Edge browser for screenshots; registry checkouts may use the pre-provisioned Puppeteer companion, while copied and npx installs retain a built-ins-only fallback. |
 | `mutation-testing` | Node ≥ 18 + git for protocol gates; a compatible native engine for execution. Worktree-free hosts need a disposable clone/copy. |
-| `cli-coding-subagents` | codex + copilot CLIs, installed and authenticated |
+| `cli-coding-subagents` | codex + copilot CLIs, installed and authenticated; for OpenRouter mode, the `ori` CLI on PATH and an OpenRouter credential |
 | `parallel-build` | the above, plus git worktrees |
-| `openrouter-cli-subagent` | the `ori` CLI on PATH and an OpenRouter credential |
 | `terminal-ux` / `tui-builder` | Node ≥ 22 (Ink) |
 
 ### Optional local browser capture

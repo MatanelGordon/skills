@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 320" width="880" height="320" role="img" aria-labelledby="title desc">
   <title id="title">How the installer works</title>
-  <desc id="desc">One clone of this repository, holding 27 skills and 2 agents, feeds install/index.mjs, which symlinks or copies them into five skill directories: Claude Code at ~/.claude/skills/, OpenAI Codex at ~/.codex/skills/, GitHub Copilot at ~/.copilot/skills/, Tabnine at ~/.tabnine/agent/skills/, and the shared ~/.agents/skills/.</desc>
+  <desc id="desc">One clone of this repository, holding 26 skills and 2 agents, feeds install/index.mjs, which symlinks or copies them into five skill directories: Claude Code at ~/.claude/skills/, OpenAI Codex at ~/.codex/skills/, GitHub Copilot at ~/.copilot/skills/, Tabnine at ~/.tabnine/agent/skills/, and the shared ~/.agents/skills/.</desc>
   <defs>
     <pattern id="grid" width="16" height="16" patternUnits="userSpaceOnUse">
       <circle cx="1" cy="1" r="1" fill="#d8dee4"/>
@@ -69,7 +69,7 @@
     <rect class="card" x="24" y="96" width="200" height="128" rx="12"/>
     <text class="label" x="44" y="124">ONE CLONE</text>
     <text class="mono" x="44" y="152" font-size="17" font-weight="600">skills/</text>
-    <text class="muted" x="44" y="176">27 skills · 2 agents</text>
+    <text class="muted" x="44" y="176">26 skills · 2 agents</text>
     <text class="muted" x="44" y="198">one source of truth</text>
   </g>
 

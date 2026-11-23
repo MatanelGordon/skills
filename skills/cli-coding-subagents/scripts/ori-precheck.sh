@@ -6,13 +6,13 @@
 # Usage:
 #   ori-precheck.sh [--json]
 #
-# Exit codes (same contract as cli-coding-subagents/scripts/precheck.sh):
+# Exit codes (same contract as precheck.sh beside this script):
 #
 #   0   OK              — a credential resolves; safe to dispatch
 #   10  NOT_LOGGED_IN   — no credential; STOP and ask the user to run `ori login`
 #   40  UNAVAILABLE     — ori not on PATH, or python3 missing to parse its output
 #
-# This script NEVER prints an API key, the contents of credentials.json, or the
+# This script NEVER prints an API key, the contents of the credential file, or the
 # account identifier. It reports only whether auth resolved and which SOURCE it
 # came from (kind + file path), because "workspace or global?" is the thing that
 # changes what you should do next.

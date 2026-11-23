@@ -1,18 +1,13 @@
----
-name: tui-builder
-description: >
-  Use when wiring full-screen TUI lifecycle or fixing resize artifacts: alternate-screen
-  entry and exit, clear-handler ordering, width state, ghosted content, blank redraws,
-  or stale layouts. Especially for Ink and React; for general UI design and
-  visualization, use terminal-ux.
-license: MIT
-metadata:
-  author: Matanel Gordon
-  source: https://github.com/MatanelGordon/skills
-  requires: Ink + React on Node; carries terminal-resize rules for full-screen TUIs.
----
+# Full-screen lifecycle and resize (Ink)
 
-# Building Terminal UIs (TUIs)
+Read this when a TUI takes over the whole screen, or when resizing the terminal
+misdraws it: entering and leaving the alternate screen, hiding and restoring the
+cursor, putting the terminal back on exit or crash, the order of resize
+handlers, width kept as state, ghosted or repeated content, a blank screen
+after resize, or a layout or divider stuck at its old width.
+
+This was the separate `tui-builder` skill until it was folded into
+`terminal-ux`. Nothing below changed except this introduction.
 
 Battle-tested rules from shipping Ink + React TUIs. The deep stack documented here is Ink/React on Node; the underlying principles — render into the alternate screen, control resize-handler ordering, treat size as state — transfer to other TUI frameworks even when the exact escape codes differ.
 

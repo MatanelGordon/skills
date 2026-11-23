@@ -1,6 +1,6 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/readme/hero-dark.svg">
-  <img src="assets/readme/hero-light.svg" width="100%" alt="Skills: one source of truth for 26 Agent Skills and 2 subagents, linked into Claude Code, OpenAI Codex, GitHub Copilot and Tabnine.">
+  <img src="assets/readme/hero-light.svg" width="100%" alt="Skills: one source of truth for 25 Agent Skills and 2 subagents, linked into Claude Code, OpenAI Codex, GitHub Copilot and Tabnine.">
 </picture>
 
 One repository for the skills I want every coding agent to share. A skill is an
@@ -11,7 +11,7 @@ Three things make the setup work:
 
 - **One source of truth.** Update a skill here once; every symlinked agent sees
   the change immediately.
-- **Native everywhere.** The same 26 skills serve Claude Code, OpenAI Codex,
+- **Native everywhere.** The same 25 skills serve Claude Code, OpenAI Codex,
   GitHub Copilot, Tabnine, and tools that follow the shared `.agents` convention.
 - **Safe to own.** The installer detects conflicts before replacing anything,
   validation runs across operating systems, and external work stays attributed.
@@ -91,7 +91,7 @@ Claude Code and Codex pick skills up on the next session.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/readme/install-flow-dark.svg">
-  <img src="assets/readme/install-flow-light.svg" width="880" alt="Diagram: one clone of this repository, with 26 skills and 2 agents, feeds install/index.mjs, which symlinks or copies them into five skill directories: Claude Code (~/.claude/skills/), OpenAI Codex (~/.codex/skills/), GitHub Copilot (~/.copilot/skills/), Tabnine (~/.tabnine/agent/skills/) and the shared ~/.agents/skills/.">
+  <img src="assets/readme/install-flow-light.svg" width="880" alt="Diagram: one clone of this repository, with 25 skills and 2 agents, feeds install/index.mjs, which symlinks or copies them into five skill directories: Claude Code (~/.claude/skills/), OpenAI Codex (~/.codex/skills/), GitHub Copilot (~/.copilot/skills/), Tabnine (~/.tabnine/agent/skills/) and the shared ~/.agents/skills/.">
 </picture>
 
 | Agent | Where the installer puts skills |
@@ -263,8 +263,7 @@ This registry deliberately installs **`impeccable-lite`**, not the upstream
 |---|---|
 | [impeccable-lite](skills/impeccable-lite/SKILL.md) | Compact interface direction and finish with an optional perception-first diagnostic, a built-ins-only workflow/audit, and deterministic local screenshots through the repository's narrow Puppeteer capture companion. |
 | [ux](skills/ux/SKILL.md) | A style-agnostic way to answer "is this good UX?" with a rubric instead of an opinion: severity-rated heuristics plus metrics with published thresholds. |
-| [terminal-ux](skills/terminal-ux/SKILL.md) | Terminal dashboards and visualisations with Ink, including the testing traps I hit so you don't have to. |
-| [tui-builder](skills/tui-builder/SKILL.md) | Full-screen TUI work, with hard-won terminal-resize rules. |
+| [terminal-ux](skills/terminal-ux/SKILL.md) | Terminal dashboards and visualisations with Ink, including the testing traps I hit so you don't have to, and the hard-won full-screen and terminal-resize rules (formerly `tui-builder`). |
 
 ### Driving and observing
 
@@ -294,7 +293,7 @@ and skips platform-locked skills on the wrong OS.
 | `mutation-testing` | Node ≥ 18 + git for protocol gates; a compatible native engine for execution. Worktree-free hosts need a disposable clone/copy. |
 | `cli-coding-subagents` | codex + copilot CLIs, installed and authenticated; for OpenRouter mode, the `ori` CLI on PATH and an OpenRouter credential |
 | `parallel-build` | the above, plus git worktrees |
-| `terminal-ux` / `tui-builder` | Node ≥ 22 (Ink) |
+| `terminal-ux` | Node ≥ 22 (Ink) |
 
 ### Optional local browser capture
 

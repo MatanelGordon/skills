@@ -1,10 +1,10 @@
 ---
 name: terminal-ux
 description: >
-  Use when building, reviewing, or testing a React and Ink terminal UI, CLI output, or
-  text data visualization: layout, charts, input, width, color, redraw performance,
-  accessibility, and ink-testing-library. For full-screen lifecycle and resize
-  artifacts, use tui-builder.
+  Use for any Ink (React for the terminal) code or CLI output: dashboards, charts,
+  sparklines, tables, layout, keys, color, width, pure render functions,
+  ink-testing-library, full-screen setup (alternate screen, cursor, restore on exit) and
+  resize bugs: ghost, repeated or blank frames, handler order.
 license: MIT
 metadata:
   author: Matanel Gordon
@@ -100,6 +100,21 @@ message — never let content wrap into garbage.
 `truncate-start`, `truncate-middle`, `truncate-end`. Choose deliberately for every
 piece of variable-length text; unbounded content in a fixed box is the most common
 TUI layout bug.
+
+## Full-screen apps and resize
+
+A TUI that takes over the whole terminal, the way `htop` or `less` does, has
+three rules that are easy to get wrong. Read `references/full-screen-and-resize.md`
+before you write its entry point, and whenever a resize leaves ghost or repeated
+frames, a blank screen, or a divider stuck at its old width. It has the reasons,
+the code and the exact order the resize handlers must run in.
+
+1. **Render into the alternate screen:** write `\x1B[?1049h` (and hide the cursor)
+   before `render()`, and restore both from a `process.once('exit', ...)` handler.
+2. **Clear on resize from the entry point, before `render()`:** a `resize`
+   listener writing `\x1B[2J\x1B[H`, registered first so Ink draws onto a clean
+   screen. Never in a `useEffect`, and never `\x1Bc`.
+3. **Keep the width in React state,** set by a resize handler that does nothing else.
 
 ## Width: the wide-character trap
 
@@ -310,5 +325,6 @@ values, negatives, NaN, huge numbers, very long labels, emoji and CJK text.
 - [ ] Current-view hotkeys visible; `?` help; `Ctrl-C` always exits
 - [ ] `<Static>` used for append-only history
 - [ ] High-frequency updates throttled
+- [ ] Full-screen apps follow the three rules in `references/full-screen-and-resize.md`
 - [ ] Tests await a tick after `stdin.write()`
 - [ ] Tested with empty, single, flat, negative, and wide-character data

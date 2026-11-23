@@ -1,0 +1,5 @@
+tmux new-session -d -s inst -x 80 -y 24
+tmux send-keys -t inst 'bash install.sh' Enter
+sleep 120
+tmux capture-pane -t inst -p > pane-capture.txt
+tmux kill-session -t inst

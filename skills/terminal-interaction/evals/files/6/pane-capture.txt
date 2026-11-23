@@ -1,0 +1,24 @@
+[40/60] plugins/metrics-exporter: unpack ... ok
+[41/60] plugins/metrics-exporter: register ... ok
+[42/60] plugins/log-shipper: unpack ... ok
+[43/60] plugins/log-shipper: register ... ok
+[44/60] plugins/health-probe: unpack ... ok
+[45/60] plugins/health-probe: register ... ok
+[46/60] config: write /opt/acme-agent/etc/agent.toml ... ok
+[47/60] config: write /opt/acme-agent/etc/plugins.toml ... ok
+[48/60] config: validate ... ok
+[49/60] certs: generate node key ... ok
+[50/60] certs: request node certificate ... ok
+[51/60] certs: install trust bundle ... ok
+[52/60] service: write unit file ... ok
+[53/60] service: reload unit files ... ok
+[54/60] service: enable acme-agent ... ok
+[55/60] service: start acme-agent ... ok
+[56/60] verify: agent answers on 127.0.0.1:9311 ... ok
+[57/60] verify: plugins loaded (3) ... ok
+[58/60] cleanup: remove unpacked archives ... ok
+[59/60] cleanup: remove build cache ... ok
+[60/60] cleanup: write install receipt ... ok
+acme-agent 4.2.0 installed in /opt/acme-agent
+Installation complete.
+deploy@tb-04:~$

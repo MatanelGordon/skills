@@ -1,0 +1,86 @@
+srvtop poking, Thursday morning. Build 2.3, started with --demo so the numbers do not move.
+
+--- run 1, 80x24
+$ tmux new-session -d -s probe -x 80 -y 24 './srvtop --demo'
+(waited until the footer with "q quit" was on screen, about a second)
+$ tmux send-keys -t probe j j Enter
+$ tmux capture-pane -t probe -p
+ srvtop 2.3 (demo data)                                   8 servers  refresh 2s
++- Servers --------------------+- Detail --------------------------------------+
+|   web-01     up     12%      | web-01                                        |
+|   web-02     up     15%      | cpu 12%   mem 340M   uptime 14d               |
+| > db-01      up     71%      | region eu-west-1   restarts 0                 |
+|   db-02      up     64%      |                                               |
+|   cache-01   up      8%      |                                               |
+|   cache-02   down     -      |                                               |
+|   queue-01   up     33%      |                                               |
+|   queue-02   up     35%      |                                               |
++------------------------------+-----------------------------------------------+
+ j/k move   Enter details   q quit
+?? cursor is on db-01 but the detail pane is web-01
+$ tmux kill-session -t probe
+
+--- run 2, 80x24, same four commands
+ srvtop 2.3 (demo data)                                   8 servers  refresh 2s
++- Servers --------------------+- Detail --------------------------------------+
+|   web-01     up     12%      | web-01                                        |
+|   web-02     up     15%      | cpu 12%   mem 340M   uptime 14d               |
+| > db-01      up     71%      | region eu-west-1   restarts 0                 |
+|   db-02      up     64%      |                                               |
+|   cache-01   up      8%      |                                               |
+|   cache-02   down     -      |                                               |
+|   queue-01   up     33%      |                                               |
+|   queue-02   up     35%      |                                               |
++------------------------------+-----------------------------------------------+
+ j/k move   Enter details   q quit
+same thing
+
+--- run 3, 80x24, same commands, but this time I also captured before pressing Enter
+before Enter:
+ srvtop 2.3 (demo data)                                   8 servers  refresh 2s
++- Servers --------------------+- Detail --------------------------------------+
+|   web-01     up     12%      | (press Enter for details)                     |
+|   web-02     up     15%      |                                               |
+| > db-01      up     71%      |                                               |
+|   db-02      up     64%      |                                               |
+|   cache-01   up      8%      |                                               |
+|   cache-02   down     -      |                                               |
+|   queue-01   up     33%      |                                               |
+|   queue-02   up     35%      |                                               |
++------------------------------+-----------------------------------------------+
+ j/k move   Enter details   q quit
+after Enter:
+ srvtop 2.3 (demo data)                                   8 servers  refresh 2s
++- Servers --------------------+- Detail --------------------------------------+
+|   web-01     up     12%      | web-01                                        |
+|   web-02     up     15%      | cpu 12%   mem 340M   uptime 14d               |
+| > db-01      up     71%      | region eu-west-1   restarts 0                 |
+|   db-02      up     64%      |                                               |
+|   cache-01   up      8%      |                                               |
+|   cache-02   down     -      |                                               |
+|   queue-01   up     33%      |                                               |
+|   queue-02   up     35%      |                                               |
++------------------------------+-----------------------------------------------+
+ j/k move   Enter details   q quit
+wrong again
+
+--- is it the size? run 4, 200x50
+$ tmux new-session -d -s probe -x 200 -y 50 './srvtop --demo'
+(waited for the footer again)
+$ tmux send-keys -t probe j j Enter
+$ tmux capture-pane -t probe -p | cut -c1-100
+(only pasting the four rows that matter)
+|   web-01     up     12%      | db-01
+|   web-02     up     15%      | cpu 71%   mem 5.2G   uptime 41d
+| > db-01      up     71%      | region eu-west-1   restarts 2
+|   db-02      up     64%      |
+detail pane is db-01 here, which is right
+$ tmux kill-session -t probe
+
+--- run 5, 200x50, same commands as run 4
+same as run 4: cursor on db-01, detail pane headed db-01
+
+other things I noticed, probably not worth a ticket
+- with capture-pane -e the cursor row comes out in reverse video, as it should
+- q quits every time and the shell gets exit status 0
+- did not try any size between 80 and 200

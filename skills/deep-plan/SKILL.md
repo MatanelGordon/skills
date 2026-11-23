@@ -16,9 +16,19 @@ subagent, a teammate, you in three weeks — do the work without re-deriving you
 reasoning. Every rule below serves that one test.
 
 **This skill owns `.plan/`.** It creates the directory, defines the layout, and
-writes `plan.md` for whoever builds it, then `review.md` and `diagrams/` for the
-user who approves it (§6). `parallel-build` executes a plan; it does not invent
-one.
+writes `parallel-build`'s input. `parallel-build` executes a plan; it does not
+invent one.
+
+**Every plan is delivered as two files** in `.plan/<name>/`:
+
+1. `plan.md`, complete, for whoever builds it (§1–§5, template in
+   `references/plan-template.md`);
+2. `review.md` with `diagrams/`, short, for the user who approves it (§6).
+
+A question only the user can settle is not answered by you: it becomes a
+`Q<n>` line in `plan.md` and appears in `review.md` under the same id. When you
+cannot write files, give both in your reply, `plan.md` first, then
+`review.md`.
 
 **Model requirement.** This skill requires xhigh reasoning effort on a frontier
 model. If the current model does not meet that bar, do not plan silently — ask

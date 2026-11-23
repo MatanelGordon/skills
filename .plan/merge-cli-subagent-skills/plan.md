@@ -414,3 +414,13 @@ None that needs an ADR. The merge is reversible from git.
   hang detection to `references/invocation.md`, and parallel-build's filled
   ownership table to its `templates.md`. Both `SKILL.md` files are now under
   16,000 characters. Nothing was dropped; the text moved.
+- 2026-11-24 — Second round of measurement, after the user accepted the
+  OpenRouter dip and kept the unsandboxed codex flags. The final text
+  (`579df77`) on the cases its commits touch, with "before" and `39b9009` in
+  the same window: merged 0.73 / 0.80 / 0.72; all eight `parallel-build`
+  cases 0.60 → 0.67. Tier 3 on the paid Nemotron 30B with the description
+  kept in the listing: the agent loaded the merged skill in 1 of 14 cases;
+  forced to load it, it met 0.36 of the assertions against 0.19 without.
+  Both skills' `evals/config.yml` now set the listing budget so later Tier 3
+  runs show the description.
+

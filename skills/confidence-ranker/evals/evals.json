@@ -142,8 +142,8 @@
       ],
       "trajectory_checks": [
         {
-          "name": "opened config/jobs.json or searched the whole repository for the name",
-          "pattern": "(?i)jobs\\.json|(grep|rg)\\b.*legacyCsv"
+          "name": "opened config/jobs.json or listed config/",
+          "pattern": "(?i)jobs\\.json|(^|[\\s\"'/=])config(/|[\"'\\s,}]|$)"
         }
       ]
     },

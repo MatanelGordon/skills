@@ -114,7 +114,7 @@
       "trajectory_checks": [
         {
           "name": "read the git history",
-          "pattern": "git\\s+(-C\\s+\\S+\\s+)?(log|blame|show)\\b"
+          "pattern": "\\bgit\\b[^|;&\\n]*\\b(log|blame|show)\\b"
         }
       ]
     },

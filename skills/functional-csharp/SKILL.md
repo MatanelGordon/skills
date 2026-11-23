@@ -58,6 +58,8 @@ var repriced = order with { Total = newTotal };   // original untouched
   (`Money`, `Quantity`, ids) to avoid allocation.
 - Every property init-only. If you type `set;` in a domain model, stop and ask why.
 - `with` is a shallow copy, so nested records need nested `with`.
+- Records give structural equality for free, which is what values need and
+  what hand-written `Equals` rarely gets right.
 
 ### Collections
 
@@ -66,24 +68,25 @@ the contents are not.
 
 | Use | For |
 |---|---|
-| `ImmutableArray<T>` | **default** for domain collections — compact, fast to read, supports list patterns; `Add` copies the array, O(n) |
-| `ImmutableList<T>` | frequently rebuilt collections (structural sharing, O(log n) `Add`); no list-pattern support |
+| `ImmutableArray<T>` | **default** for domain collections — compact, fast to read, full list patterns; `Add` copies the array, O(n) |
+| `ImmutableList<T>` | frequently rebuilt collections (structural sharing, O(log n) `Add`); list patterns cannot capture a slice (`.. var rest`) |
 | `FrozenDictionary<K,V>` / `FrozenSet<T>` | built once, read many — lookup tables, config |
 | `IReadOnlyList<T>` | parameters, when you only need to promise you won't mutate |
 
 Avoid `IEnumerable<T>` in domain models: deferred execution means the value can
-change between enumerations. Materialize at the boundary.
+change between enumerations, or cost twice. Materialize at the boundary with
+`.ToImmutableArray()`.
 
 ## Discriminated unions
 
-C# has no native union **in a released version**: the `union` keyword is a
-.NET 11 preview feature, so don't write it in production today, and verify
-current availability before relying on it. The stable encoding:
+**Check the target framework first.** C# 15 on .NET 11 (released November
+2026) checks unions itself; .NET 10 (LTS, supported to November 2028) and
+earlier need the encoding below.
 
 ```csharp
 public abstract record OrderState
 {
-    private OrderState() { }                      // closes the hierarchy
+    private OrderState() { }                      // .NET 10 and earlier: closes the hierarchy
 
     public sealed record Unpaid(DateTimeOffset CreatedAt)                : OrderState;
     public sealed record Paid(DateTimeOffset PaidAt, Money Amount)       : OrderState;
@@ -93,21 +96,30 @@ public abstract record OrderState
 
 - **This replaces enum-plus-nullable-fields,** where `Status = Shipped` with
   `Tracking = null` is representable and someone will eventually construct it.
-- **A switch will not tell you a case is missing.** The compiler raises CS8509
-  on every switch over a record hierarchy, even when all cases are handled, so
-  the warning carries no information. Write the default arm
-  `_ => throw new UnreachableException()`: it catches a missed case at run
-  time only.
-- **To be told at compile time, give the union a `Match` method** with one
-  delegate per case: adding a case then breaks every caller. Hand-write it, or
-  let **Dunet** or **OneOf** generate it. Use `Match` at boundaries where a
+- **On .NET 10 and earlier, a switch will not tell you a case is missing.** A
+  switch *expression* over a record hierarchy warns CS8509 whenever it has no
+  `_` arm, even when every case is handled, so the warning carries no
+  information. Write `_ => throw new UnreachableException()`: it catches a
+  missed case at run time only.
+- **To be told at compile time there, give the union a `Match` method** with
+  one delegate per case: adding a case then breaks every caller. Hand-write it,
+  or let **Dunet** or **OneOf** generate it. Use `Match` at boundaries where a
   missed case would be a real bug, and switch expressions for local branching.
+- **On .NET 11, mark the base `closed` instead:** `public closed record class
+  OrderState { … }`, no private constructor. The compiler then knows every
+  case: a switch expression that handles them all needs no `_` arm, and a new
+  case warns at every switch that misses it. Keep the cases `sealed`, and add
+  a `null` arm when the value can be null.
+- **For "one of several existing types"** (an `Order` or a `NotFound`), C# 15's
+  `public union Lookup(Order, NotFound);` does the same without a base type. It
+  is a struct that boxes value-type cases, and its default value holds null, so
+  add a `null` arm wherever a default can reach the switch.
 - Prefer switch *expressions* over switch statements: they return a value and
   cannot fall through.
 
 Read `references/unions.md` before writing a `Match` method, a property or list
-pattern, a state machine, or JSON for a union, and when choosing between the
-record hierarchy, OneOf and LanguageExt.
+pattern, a state machine, or JSON for a union, and when choosing between
+`closed`, `union`, the record hierarchy, OneOf and LanguageExt.
 
 ## Errors as values
 
@@ -180,6 +192,7 @@ away from a production incident.
 For command-driven or event-sourced state, split deciding from storing:
 
 ```csharp
+// Signatures only; references/patterns.md has the bodies.
 static ImmutableList<OrderEvent> Decide(OrderState state, Command cmd);  // every business rule lives here
 static OrderState Evolve(OrderState state, OrderEvent e);                // applies one event; never decides
 ```
@@ -223,12 +236,12 @@ Also the review checklist: each row is a finding and its fix.
 | `throw` on validation failure | `Result<T>` / `ErrorOr<T>` with typed errors |
 | `List<T>` on a domain type | `ImmutableArray<T>` (default) / `ImmutableList<T>` if rebuilt often |
 | `Dictionary` lookup table | `FrozenDictionary` |
-| `string`/`Guid` identifiers | `readonly record struct` value objects |
+| `string`/`Guid` identifiers, validated strings | `readonly record struct` value objects |
 | stateful service with private fields | static pure functions taking explicit inputs |
 | `DateTime.UtcNow`, DB, HTTP or logging inside logic | `TimeProvider` and I/O in the shell; pass values in |
 | EF entity used as a domain type | map to a domain record at the repository/shell edge |
 | switch statement | switch expression |
-| switch over a union without a `Match` method | add a `Match`; default arm `_ => throw new UnreachableException()`; don't trust CS8509 |
+| switch over a record union | .NET 11: `closed` base, no `_` arm. Earlier: a `Match` method, and `_ => throw new UnreachableException()` in switches |
 | null checks everywhere | `Option`/`Maybe`, or a union case |
 | Strategy / Template Method | pass a `Func<,>` |
 | nullable reference types off | `<Nullable>enable</Nullable>` + warnings as errors |

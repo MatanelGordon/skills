@@ -47,7 +47,7 @@ public static Result<T> Tap<T>(this Result<T> r, Action<T> act)
 | `Bind` | `T -> Result<U>` | chain a step that can itself fail |
 | `Tap` | `T -> void` | side effect (log, metric) without changing the value |
 | `MapError` | `E -> F` | translate the error |
-| `Else`/`Compensate` | `E -> Result<T>` | recover back onto the success track |
+| `Else`/`Compensate` | `E -> Result<T>` | recover onto the success track, or replace the errors |
 | `Match` | both tracks → one value | collapse at the boundary |
 
 The rule: if the function you're applying returns a `Result`, use `Bind`. If it
@@ -63,7 +63,8 @@ public Result<Order> Place(CartDto dto) =>
         .Tap(o => _logger.LogInformation("Placed {OrderId}", o.Id));
 ```
 
-ErrorOr spells `Bind` as `Then` and recovery as `Else`:
+ErrorOr spells `Bind` as `Then`; `Else` handles the error track (here it
+replaces the errors with one summary):
 
 ```csharp
 public static ErrorOr<Order> Place(Cart cart, Customer c) =>

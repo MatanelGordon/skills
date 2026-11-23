@@ -22,7 +22,7 @@ const isHistoryFile = (path) => (
   HISTORY_DIRS.some((dir) => path.startsWith(dir)) || /(^|\/)CHANGELOG\.md$/i.test(path)
 );
 const NAME_CHAR = '[A-Za-z0-9_-]';
-// In code, `x`, [x] and **x** are template strings, indexing and arithmetic, not names.
+// In code, [x](...) is a call on an indexed value, not a link.
 const CODE_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts', '.tsx', '.jsx', '.py', '.sh', '.bash', '.zsh',
   '.ps1', '.rb', '.go', '.rs', '.cs', '.java', '.kt', '.swift', '.c', '.h', '.cpp', '.php', '.lua', '.pl']);
 const isCode = (path) => CODE_EXTENSIONS.has(extname(path).toLowerCase());
@@ -44,16 +44,18 @@ export function retiredSkillNames(root, currentSkills) {
 }
 
 /**
- * How a skill is named: by path (skills/name, ../name/SKILL.md) anywhere; in
- * prose also as `name`, **name**, a [name](...) link and a /name command. A
- * hyphenated name is distinctive enough to count bare as well; a single word
- * such as "rank" is not, so it counts only in those forms.
+ * How a skill is named. Anywhere: a path (skills/name, ../name/SKILL.md). A
+ * hyphenated name is distinctive enough to count bare as well, which covers
+ * `name`, **name** and /name. A single word such as "rank" is not: `rank`,
+ * **rank** and GET /rank are ordinary in docs, so it counts only as a path or,
+ * in docs, as a [rank](...) link. A single-word name written only as `rank` is
+ * the one form this check misses.
  */
 function namePattern(name, prose) {
   const n = escapeRegex(name);
   const forms = [`(?<!${NAME_CHAR})skills[\\\\/]${n}(?!${NAME_CHAR})`, `(?<!${NAME_CHAR})${n}/SKILL\\.md`];
-  if (prose) forms.push(`\`${n}\``, `\\*\\*${n}\\*\\*`, `\\[${n}\\][(:[]`, `(?<![^\\s(\`'"])/${n}(?!${NAME_CHAR})`);
   if (name.includes('-')) forms.push(`(?<!${NAME_CHAR})${n}(?!${NAME_CHAR})`);
+  else if (prose) forms.push(`\\[${n}\\][(:]`);
   return new RegExp(forms.join('|'));
 }
 

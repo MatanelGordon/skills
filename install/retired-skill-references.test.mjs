@@ -42,7 +42,7 @@ async function repoWithHistory({ current = ['keep-me'], retired = ['old-thing'] 
 
 const hitsOf = (refs) => refs.map(({ file, line, name }) => `${file}:${line}:${name}`).sort();
 
-test('scanText finds a single-word retired name only where it is formatted as a name', () => {
+test('scanText finds a single-word retired name only as a path or a link', () => {
   const text = [
     'Use `oldword` for that.',
     'Rank them, then oldword each claim.',
@@ -55,7 +55,17 @@ test('scanText finds a single-word retired name only where it is formatted as a 
     'Type /oldword to start; https://example.com/oldword is a URL.',
     'An array index: best = sorted[oldword];',
   ].join('\n');
-  assert.deepEqual(scanText(text, ['oldword']).map((hit) => hit.line), [1, 3, 4, 5, 8, 9]);
+  assert.deepEqual(scanText(text, ['oldword']).map((hit) => hit.line), [3, 5, 8]);
+});
+
+test('scanText leaves a single-word name alone where it is an ordinary word in docs', () => {
+  const docs = [
+    'Each claim row carries a `oldword` and a status.',
+    'The **oldword** column is required.',
+    'Read grid[oldword][0] first.',
+    'Call GET /oldword for the list.',
+  ].join('\n');
+  assert.deepEqual(scanText(docs, ['oldword']), []);
 });
 
 test('scanText in code counts only paths for a single-word name, since `x` and [x] are code there', () => {
@@ -64,6 +74,7 @@ test('scanText in code counts only paths for a single-word name, since `x` and [
     'sortBy(`oldword`);',
     'const total = a **oldword** b;',
     "const dir = join(root, 'skills/oldword/SKILL.md');",
+    'handlers[oldword](event);',
   ].join('\n');
   assert.deepEqual(scanText(code, ['oldword'], { prose: false }).map((hit) => hit.line), [4]);
   assert.deepEqual(scanText("const name = 'old-thing';", ['old-thing'], { prose: false }), [{ line: 1, name: 'old-thing' }]);
@@ -137,7 +148,7 @@ test('a rename retires the old name, including inside the moved skill, and leave
 test('code files are scanned in code mode', async () => {
   const root = await repoWithHistory({ current: ['keep-me'], retired: ['oldword'] });
   await put(root, 'install/tool.mjs', 'const best = sorted[oldword];\nconst path = "skills/oldword/x";\n');
-  await put(root, 'docs/guide.md', 'Use `oldword`.\n');
+  await put(root, 'docs/guide.md', 'See [oldword](../skills/oldword/SKILL.md).\n');
   assert.deepEqual(hitsOf(await findRetiredSkillReferences(root, ['keep-me'])), [
     'docs/guide.md:1:oldword',
     'install/tool.mjs:2:oldword',

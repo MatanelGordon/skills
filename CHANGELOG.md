@@ -13,11 +13,12 @@
   with dangling leftovers, and a negative case.
 - `npm run validate` now fails when a current file names a skill that used to
   be under `skills/` and is not any more: by path (`skills/name`,
-  `../name/SKILL.md`) anywhere; in docs also as `` `name` ``, `**name**`, a
-  `[name](…)` link or a `/name` command; and, for a hyphenated name, in plain
-  text. Retired names come from git history, so committed and uncommitted
-  removals and the old side of a rename are all caught with no list to
-  maintain. `CHANGELOG.md` files, `.plan/` and `.adr/` are exempt. CI now checks
+  `../name/SKILL.md`) anywhere, and a hyphenated name in any form. A
+  single-word name (the retired `rank`) counts only as a path or, in docs, a
+  `[rank](…)` link, because `` `rank` `` and **rank** are ordinary words there;
+  that is the one form the check misses. Retired names come from git
+  history, so committed and uncommitted removals and the old side of a rename
+  are all caught with no list to maintain. `CHANGELOG.md` files, `.plan/` and `.adr/` are exempt. CI now checks
   out with full history, which the check needs, and a shallow clone under CI is
   reported instead of passing silently.
 - `npm run install-skills` (and `uninstall`) prune links in the chosen agent

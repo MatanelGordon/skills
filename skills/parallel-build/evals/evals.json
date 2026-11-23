@@ -3,10 +3,10 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "The approved plan for adding multi-tenant support is attached as `plan.md` (in a workspace it is at `input/1/plan.md`). Split the work across agents. Reply with one table: a row per agent with its phase, the paths it owns and the paths that are off-limits to it, and say which agents start at the same time. Do not implement anything.",
+      "prompt": "We are about to plan multi-tenant support for this API. The files it touches, and which areas need each, are attached as `files.md` (in a workspace it is at `input/1/files.md`). Before the plan is written, propose how to split the work across agents. Reply with one table: a row per agent with its phase, the paths it owns and the paths that are off-limits to it, and say which agents start at the same time. Do not implement anything.",
       "expected_output": "One first-phase agent that owns every file more than one area needs, then one agent per area on paths no other agent owns, started together.",
       "files": [
-        "evals/files/1/plan.md"
+        "evals/files/1/files.md"
       ],
       "assertions": [
         "The reply has exactly one agent in the first phase.",
@@ -26,7 +26,7 @@
     {
       "id": 2,
       "prompt": "continue where you left off. The terminal running this build died. What it left behind is attached: `PROGRESS.md`, the status files `agents/p2-invoices.md` and `agents/p2-webhooks.md`, and `worktrees.txt`, which is the current listing of live worktrees (in a workspace they are under `input/2/`). No agent process survived. Reply with what you do for each of the three worktrees, in order, and what comes after. Do not run anything.",
-      "expected_output": "The worktree listing is believed over the progress file: p2-invoices is verified and merged, the uncommitted work in p2-webhooks is inspected, p2-dunning is dropped and dispatched again, and PROGRESS.md is brought up to date first.",
+      "expected_output": "The worktree listing is believed over the progress file: p2-invoices is verified and merged, the uncommitted work in p2-webhooks is inspected, p2-dunning is dropped and dispatched again, and PROGRESS.md is brought up to date before the build continues.",
       "files": [
         "evals/files/2/PROGRESS.md",
         "evals/files/2/agents/p2-invoices.md",
@@ -55,14 +55,14 @@
       "files": [],
       "assertions": [
         "The reply assigns at least one code review agent.",
-        "The reply names `CR.md` as the file the code review is written to.",
+        "The reply names `CR.md`, or `CR.part1.md` and `CR.part2.md`, as where the code review is written.",
         "The reply assigns no security review agent.",
         "The reply gives the repository's location under `Desktop/Playgrounds` as the reason for skipping the security review.",
         "The reply says the skipped security review is recorded in `PROGRESS.md`."
       ],
       "expectations": [
         "The reply assigns at least one code review agent.",
-        "The reply names `CR.md` as the file the code review is written to.",
+        "The reply names `CR.md`, or `CR.part1.md` and `CR.part2.md`, as where the code review is written.",
         "The reply assigns no security review agent.",
         "The reply gives the repository's location under `Desktop/Playgrounds` as the reason for skipping the security review.",
         "The reply says the skipped security review is recorded in `PROGRESS.md`."

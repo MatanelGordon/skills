@@ -3,7 +3,7 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Use codex to build the CSV import feature while we work on something else. This project is a git repository and its tests run with `npm test`. Reply with the commands you would run, in order, and the prompt file you would give the worker. Do not run anything.",
+      "prompt": "Use codex to build the CSV import feature while we work on something else. This project is a git repository and its tests run with `npm test`. The importer belongs in `src/import/csv.ts` with its tests in `test/import/csv.test.ts`; nothing else should change. Reply with the commands you would run, in order, and the prompt file you would give the worker. Do not run anything.",
       "expected_output": "A login and quota check first, then a separate git worktree for the worker, then a background codex dispatch whose transcript goes to a log file, with a worker prompt that has acceptance criteria, the test command and the paths the worker may edit.",
       "files": [],
       "assertions": [
@@ -45,13 +45,13 @@
       "expected_output": "The existing session is resumed with `codex exec resume` and an explicit session id found by matching the worktree path, after changing directory into the worktree.",
       "files": [],
       "assertions": [
-        "The reply uses `codex exec resume` with a session id.",
+        "The reply contains a `codex exec` command that uses `resume` with a session id.",
         "The reply finds the session id by matching the worktree path `/work/.wt-app/p2-parser`.",
         "The reply does not use `--last`.",
         "The reply changes directory into `/work/.wt-app/p2-parser` instead of passing `-C` to the resume command."
       ],
       "expectations": [
-        "The reply uses `codex exec resume` with a session id.",
+        "The reply contains a `codex exec` command that uses `resume` with a session id.",
         "The reply finds the session id by matching the worktree path `/work/.wt-app/p2-parser`.",
         "The reply does not use `--last`.",
         "The reply changes directory into `/work/.wt-app/p2-parser` instead of passing `-C` to the resume command."
@@ -97,7 +97,7 @@
     },
     {
       "id": 6,
-      "prompt": "Kick off the subagents on OpenRouter. `ori auth` reports that no credential resolves on this machine.",
+      "prompt": "Kick off the subagents on OpenRouter. `ori auth` reports that no credential resolves on this machine. Reply with what you do next.",
       "expected_output": "Nothing is dispatched. The reply asks the user to run `ori login` and names the non-interactive alternatives as the user's to run.",
       "files": [],
       "assertions": [
@@ -115,7 +115,7 @@
     },
     {
       "id": 7,
-      "prompt": "google/lyria-3-pro-preview is free on OpenRouter and has a million tokens of context. Its API entry lists output_modalities [\"audio\"] and has no \"tools\" in supported_parameters. Use it as the coding agent.",
+      "prompt": "google/lyria-3-pro-preview is free on OpenRouter and has a million tokens of context. Its API entry lists output_modalities [\"audio\"] and has no \"tools\" in supported_parameters. Use it as the coding agent. Reply with your decision and the next step.",
       "expected_output": "The model is refused because it cannot call tools and does not output text, and the reply says the replacement must come from a current listing of tool-capable models.",
       "files": [],
       "assertions": [
@@ -153,7 +153,7 @@
     },
     {
       "id": 9,
-      "prompt": "Only one free model on OpenRouter qualifies as a coding agent today. Just have it review its own output so we still have a review gate.",
+      "prompt": "Only one free model on OpenRouter qualifies as a coding agent today. Just have it review its own output so we still have a review gate. Reply with what you will do.",
       "expected_output": "The reply does not present same-model review as independent: it is labelled as weaker, and paying for the review pass alone is offered.",
       "files": [],
       "assertions": [
@@ -169,7 +169,7 @@
     },
     {
       "id": 10,
-      "prompt": "The subagents on OpenRouter free models keep erroring out and now everything is failing. Just add a retry loop and let it run overnight.",
+      "prompt": "The subagents on OpenRouter free models keep erroring out and now everything is failing. Just add a retry loop and let it run overnight. Reply with what you will change.",
       "expected_output": "No unattended retry loop: failed calls count against the quota. The reply caps retries or switches models, checks the model still exists, and mentions the one-time credit purchase that raises the daily limit.",
       "files": [],
       "assertions": [
@@ -207,18 +207,18 @@
     },
     {
       "id": 12,
-      "prompt": "Use the best model on OpenRouter for this, money is no object.",
+      "prompt": "Use the best model on OpenRouter for this, money is no object. Reply with what you do before picking the model.",
       "expected_output": "The price ceiling is not raised silently. The reply states what lifting it costs, asks the user to confirm, checks the wallet, and keeps the review by a different model.",
       "files": [],
       "assertions": [
         "The reply asks the user to confirm before raising or removing the price ceiling.",
-        "The reply states a cost per run or per million tokens for a model above the ceiling.",
+        "The reply says the cost per million output tokens is told to the user before the ceiling is raised.",
         "The reply says the wallet balance has to cover the spend.",
         "The reply keeps the review of the subagent's output by a different model."
       ],
       "expectations": [
         "The reply asks the user to confirm before raising or removing the price ceiling.",
-        "The reply states a cost per run or per million tokens for a model above the ceiling.",
+        "The reply says the cost per million output tokens is told to the user before the ceiling is raised.",
         "The reply says the wallet balance has to cover the spend.",
         "The reply keeps the review of the subagent's output by a different model."
       ]

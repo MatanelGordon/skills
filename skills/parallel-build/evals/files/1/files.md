@@ -1,11 +1,6 @@
-# Plan: multi-tenant-api
+# Multi-tenant support: files and who needs them
 
-**Status:** approved
-**Base branch:** main
-
-## Goal
-
-Add multi-tenant support to the API: tenant-scoped auth, per-tenant rate
+Goal: add multi-tenant support to the API: tenant-scoped auth, per-tenant rate
 limiting, tenant-aware database queries and an admin UI for managing tenants.
 
 ## Files to change

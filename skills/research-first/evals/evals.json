@@ -108,7 +108,7 @@
       "checks": [
         {
           "type": "output_matches",
-          "pattern": "(?i)INC-482|NV-20931|re-?issu|rebook|locks? the account"
+          "pattern": "(?i)INC-482|NV-20931|re-?issu|locks? the account|re-read each label before purging|pause 250 ?ms between purge calls"
         }
       ],
       "trajectory_checks": [

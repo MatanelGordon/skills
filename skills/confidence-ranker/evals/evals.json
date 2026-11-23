@@ -42,7 +42,7 @@
         },
         {
           "type": "output_matches",
-          "pattern": "(?i)jobs\\.json|runner\\.js|hartwell"
+          "pattern": "(?i)jobs\\.json|hartwell"
         }
       ]
     },
@@ -137,13 +137,13 @@
       "checks": [
         {
           "type": "output_matches",
-          "pattern": "(?i)jobs\\.json|runner\\.js|hartwell"
+          "pattern": "(?i)jobs\\.json|hartwell"
         }
       ],
       "trajectory_checks": [
         {
-          "name": "searched beyond require() for the name",
-          "pattern": "(?i)legacyCsv|jobs\\.json|runner\\.js"
+          "name": "opened config/jobs.json or searched the whole repository for the name",
+          "pattern": "(?i)jobs\\.json|(grep|rg)\\b.*legacyCsv"
         }
       ]
     },
@@ -165,7 +165,7 @@
       "checks": [
         {
           "type": "output_matches",
-          "pattern": "(?i)4\\.19|express\\s*(v|@|version)?\\s*4\\b"
+          "pattern": "4\\.19"
         }
       ],
       "trajectory_checks": [

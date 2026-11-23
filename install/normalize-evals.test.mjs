@@ -54,6 +54,45 @@ async function writeMessyRepo() {
   return root;
 }
 
+// J4's and J5's skills carry SkillEvaluator files beside evals.json and a per-case key that only
+// tools/planning-eval reads. The normaliser must leave all of it as it is, and report nothing.
+async function writeEvaluatorExtrasRepo() {
+  const root = await makeTemp();
+  await put(root, 'skills/extras/SKILL.md', '---\nname: extras\ndescription: A fixture.\n---\n# Extras\n');
+  const evals = {
+    skill_name: 'extras',
+    evals: [
+      {
+        id: 1, prompt: 'p1', expected_output: 'e1', files: [], assertions: ['One.', 'Two.'], expectations: ['One.', 'Two.'],
+        trajectory_checks: [{ name: 'opened the record', pattern: '\\.adr/0005' }],
+      },
+      {
+        id: 2, prompt: 'p2', expected_output: 'e2', files: ['evals/files/shared/plan/plan.md'],
+        assertions: ['Three.', 'Four.'], expectations: ['Three.', 'Four.'],
+      },
+    ],
+  };
+  await put(root, 'skills/extras/evals/evals.json', `${JSON.stringify(evals, null, 2)}\n`);
+  await put(root, 'skills/extras/evals/config.yml', 'harbor:\n  agent_workdir: /srv/project\n  runtime_env:\n    SLASH_COMMAND_TOOL_CHAR_BUDGET: "30000"\ngrading:\n  mode: default_plus_custom\n');
+  await put(root, 'skills/extras/evals/grader.py', 'print("graded")\n');
+  await put(root, 'skills/extras/evals/environment/Dockerfile', 'FROM node:22\nCOPY fixture /opt/fixture\n');
+  await put(root, 'skills/extras/evals/environment/fixture/build.sh', '#!/bin/sh\necho build\n');
+  await put(root, 'skills/extras/evals/environment/fixture/project/src/index.js', 'export const answer = 42;\n');
+  await put(root, 'skills/extras/evals/files/shared/plan/plan.md', '# Plan\n');
+  return root;
+}
+
+test('SkillEvaluator files and trajectory_checks are accepted and left untouched', async () => {
+  const root = await writeEvaluatorExtrasRepo();
+  const before = await snapshot(root);
+  const results = await normalizeRepository(root);
+  assert.deepEqual(results.map((result) => [result.scope, result.changed, result.problems]), [['extras', false, []]]);
+  assert.deepEqual(await snapshot(root), before);
+  const checked = await checkRepositoryEvals(root);
+  assert.deepEqual(checked.errors, []);
+  assert.equal((await readJson(root, 'skills/extras/evals/evals.json')).evals[0].trajectory_checks[0].name, 'opened the record');
+});
+
 test('normalising a repository rewrites every eval file and creates its fixtures', async () => {
   const root = await writeMessyRepo();
   const results = await normalizeRepository(root);

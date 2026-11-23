@@ -292,6 +292,23 @@ WORKDIR /workspace
 Keep the base image and the first package line as they are: the grader is
 installed on top with `pip`, and the agent's setup expects `procps`.
 
+## Files beside evals.json
+
+Some skills need more than the case list. These are allowed, and
+`npm run normalize-evals` and `npm run validate` leave them as they are:
+
+| File | Read by | What it is for |
+| --- | --- | --- |
+| `evals/config.yml` | SkillEvaluator | Run settings for every case of the skill: `harbor.agent_workdir`, `harbor.custom_dockerfile_mode`, `harbor.runtime_env` (for example `SLASH_COMMAND_TOOL_CHAR_BUDGET`, so the agent sees skill descriptions), and `grading.mode`. |
+| `evals/grader.py` | SkillEvaluator | A custom grader. What it prints reaches the run's `verifier/test-stdout.txt`, which is how to see the files an agent wrote. |
+| `evals/environment/Dockerfile` | SkillEvaluator | The image for both arms (see Dependencies). |
+| `evals/environment/fixture/**` | the Dockerfile | A project or git checkout built into the image, for a case that must start inside a repository. `evals/files/` cannot give a working directory or history. |
+| `evals/files/shared/**` | both runners | A fixture several cases list. |
+| `trajectory_checks` (a key in a case) | `tools/planning-eval/score.mjs` | A list of `{name, pattern}` that the scorer matches against the arguments of the agent's tool calls, for cases whose point is what the agent looked at. A diagnostic only: no grader reads it. See [tools/planning-eval/README.md](tools/planning-eval/README.md). |
+
+A file under `evals/environment/` or a control file such as `config.yml` is
+never listed in a case's `files`: SkillEvaluator refuses to stage it as input.
+
 ## Assertions
 
 An assertion is one sentence a grader marks pass or fail. Two of the three

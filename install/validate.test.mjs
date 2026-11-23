@@ -222,6 +222,28 @@ test('validator fails an eval file the external runners cannot grade or stage', 
   assert(result.failures.some((line) => line.includes('valid-skill: eval 2: files[0] "evals/files/2/gone.txt" does not exist')), result.failures.join('\n'));
 });
 
+test('validator accepts SkillEvaluator files beside evals.json and a per-case trajectory_checks list', async () => {
+  const root = await writeValidRepo();
+  const evals = join(root, 'skills', 'valid-skill', 'evals');
+  await mkdir(join(evals, 'environment', 'fixture', 'project'), { recursive: true });
+  await mkdir(join(evals, 'files', 'shared'), { recursive: true });
+  await writeFile(join(evals, 'evals.json'), JSON.stringify({
+    skill_name: 'valid-skill',
+    evals: [{
+      id: 1, prompt: 'Do it', expected_output: 'Done', files: ['evals/files/shared/notes.md'],
+      assertions: ['It is done', 'It says so'], expectations: ['It is done', 'It says so'],
+      trajectory_checks: [{ name: 'read the notes', pattern: 'notes\\.md' }],
+    }],
+  }));
+  await writeFile(join(evals, 'files', 'shared', 'notes.md'), '# Notes\n');
+  await writeFile(join(evals, 'config.yml'), 'harbor:\n  agent_workdir: /srv/project\n');
+  await writeFile(join(evals, 'grader.py'), 'print("graded")\n');
+  await writeFile(join(evals, 'environment', 'Dockerfile'), 'FROM node:22\n');
+  await writeFile(join(evals, 'environment', 'fixture', 'project', 'index.js'), 'const answer = 42;\n');
+  const result = await validateRepository(root);
+  assert.equal(result.failures.length, 0, result.failures.join('\n'));
+});
+
 test('validator reports eval-set shortfalls as warnings without failing', async () => {
   const root = await writeValidRepo();
   const result = await validateRepository(root);

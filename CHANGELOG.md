@@ -20,7 +20,9 @@
   repository. `wt.sh` exits 4 outside one, and the skill says what to do then.
 - Added `wt.sh rundir <name>`: a place for the prompts, logs and status files
   of a run that has no plan directory, beside the worktrees and outside the
-  repository.
+  repository (in the project's `.sa-runs/` when there is no git).
+- `codex-session.py` reads the sessions of `$CODEX_HOME`, so a worker that ran
+  under `ori codex` can be resumed.
 - Fixed the documented `codex exec resume` command. codex-cli 0.170.0 rejects
   `--color never` after `resume`; it now comes before.
 - Fixed `ori-codex-home.sh` replacing all three links on every run instead of
@@ -28,12 +30,12 @@
 - The installed skill is located by one resolver block that accepts a copy
   only when all six helpers are executable. The shorter form used by two of the
   three skills took the first directory that existed.
-- Added `skills/cli-coding-subagents/tests/scripts.test.mjs`: 15 tests over the
+- Added `skills/cli-coding-subagents/tests/scripts.test.mjs`: 17 tests over the
   helpers' exit codes and the resolver block.
 - Rewrote both eval sets in the eval standard. `parallel-build`'s cases were
   whole builds that no agent finished; each is now one step with its inputs
   supplied as fixtures.
-- Both descriptions are under 300 characters (267 and 281, from 497, 827 and
+- Both descriptions are under 300 characters (288 and 297, from 497, 827 and
   712) and start with their trigger.
 
 ## 1.22.1 — 2026-11-21

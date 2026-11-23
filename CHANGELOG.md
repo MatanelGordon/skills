@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.23.0 — 2026-11-24
+
+- **Removing or renaming something now includes sweeping for what still names
+  it.** `get-the-job-done` gains a rule: a removal or rename is not done until
+  a sweep gate passes (a search that must come back empty outside history
+  files) and every hit is fixed or listed for the user with its path. The sweep
+  covers the repo (README tables, SVG text, eval cases, tests, other skills,
+  CI, the installer), installed copies and links in every agent folder, and the
+  user's own rules and memory. "It will dangle" is named as an anti-pattern.
+  Four new eval cases (16 to 19): a removal, a flag rename, an agent report
+  with dangling leftovers, and a negative case.
+- `npm run validate` now fails when a current file names a skill that used to
+  be under `skills/` and is not any more: as `` `name` ``, `skills/name`,
+  `**name**`, `[name]`, or, for a hyphenated name, in plain prose. Retired
+  names come from git history, so committed and uncommitted removals and the
+  old side of a rename are all caught with no list to maintain.
+  `CHANGELOG.md`, `.plan/` and `.adr/` are exempt. CI now checks out with full
+  history, which the check needs.
+- `npm run install-skills` (and `uninstall`) prune links in the agent folders
+  that point into this repo's `skills/` or `agents/` and whose target is gone,
+  printing each one. A real file or folder, a live link, and a link elsewhere
+  are never touched. `doctor` now says so for such links.
+
 ## 1.22.1 — 2026-11-21
 
 - Redesigned the README opening around an original light/dark hero, a concise

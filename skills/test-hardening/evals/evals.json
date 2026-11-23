@@ -121,18 +121,19 @@
     },
     {
       "id": 7,
-      "prompt": "Hardening pass on the `ms` suffix I added to `parse_duration` in our Rust CLI; `cargo test` is green on my machine. The final diff is `duration-final.diff` and the whole file is `src/duration.rs` (in a workspace both are under `input/7/`). Like every module in this crate, its tests live in the `#[cfg(test)] mod tests` block at the bottom of the source file, and there is no `tests/` folder. Our CI rejects a hardening PR whose diff touches any file under `src/`. Give me the hardening tests to add to that block, in full. Cargo is not installed where you are, so do not try to build.",
+      "prompt": "Hardening pass on the `ms` suffix I added to `parse_duration` in our Rust CLI; `cargo test` is green on my machine. The final diff is `duration-final.diff` and the whole file is `src/duration.rs` (in a workspace both are under `input/7/`). Like every module in this crate, its tests live in the `#[cfg(test)] mod tests` block at the bottom of the source file, and there is no `tests/` folder. The CI workflow that guards hardening PRs is attached as `hardening-guard.yml` (also under `input/7/`). Give me the hardening tests to add to that block, in full. Cargo is not installed where you are, so do not try to build.",
       "expected_output": "The reply says that putting the tests in `src/duration.rs` would get the hardening PR rejected, because that file is under `src/`, and offers another route, such as handing the in-file tests to the implementer as a separate change.",
       "files": [
         "evals/files/7/duration-final.diff",
-        "evals/files/7/src/duration.rs"
+        "evals/files/7/src/duration.rs",
+        "evals/files/7/hardening-guard.yml"
       ],
       "assertions": [
-        "The reply says that adding the tests to `src/duration.rs` would make CI reject the hardening PR, because that file is under `src/`.",
+        "The reply says that adding the tests to `src/duration.rs` would make the hardening-guard workflow fail the PR, because that file is under `src/`.",
         "The reply offers a route that keeps `src/duration.rs` out of the hardening PR (such as a separate change by the implementer, or a test file outside `src/`), or asks the user to choose one."
       ],
       "expectations": [
-        "The reply says that adding the tests to `src/duration.rs` would make CI reject the hardening PR, because that file is under `src/`.",
+        "The reply says that adding the tests to `src/duration.rs` would make the hardening-guard workflow fail the PR, because that file is under `src/`.",
         "The reply offers a route that keeps `src/duration.rs` out of the hardening PR (such as a separate change by the implementer, or a test file outside `src/`), or asks the user to choose one."
       ]
     },

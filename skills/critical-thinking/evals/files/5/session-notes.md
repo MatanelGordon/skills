@@ -13,8 +13,6 @@
 4. Retries on `POST /charges`. `withRetry` now retries every gateway call, `POST /charges` included. The gateway only recognises a repeated charge when the request carries an `Idempotency-Key` header, and we do not send one. About 0.4% of charge calls time out today.
    - Send an `Idempotency-Key` on charge calls: about 3 hours of work plus a regression pass on refunds, about 2 hours. Timed-out charges then go through on the retry.
    - Switch retries off for `POST /charges` only: about 20 minutes. The 0.4% keep failing the way they do today.
-   - If #731 is merged as it stands: a charge that timed out but did reach the gateway is sent again, and the customer is charged twice.
 5. CI sandbox key. The gateway sandbox key that CI uses expires on 30 November.
    - Renew the shared key by hand in the gateway dashboard: about 10 minutes. It expires again after 90 days.
    - Have CI fetch a short-lived key for each run from the gateway's token endpoint: about 1 day of work. Nothing expires any more, but CI cannot run while the token endpoint is down (2 outages last year, about 1 hour each).
-   - If neither is done: from 1 December every CI run on every branch fails at the gateway tests.

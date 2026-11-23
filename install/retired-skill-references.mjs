@@ -7,9 +7,10 @@
  * "Retired" comes from git: every skills/<name>/SKILL.md in HEAD's history,
  * minus the skills present now. That covers committed and uncommitted removals
  * and the old side of a rename, with no list to keep up to date. Without git
- * history (not a repository, or a shallow clone) the set is empty and nothing
- * is reported. CI checks out with full history, and a shallow clone under CI is
- * reported as a problem so the check cannot pass by having nothing to compare.
+ * history (an export or tarball with no .git, a repository with no commits, no
+ * git) the check cannot run, and validate warns that it was skipped and why.
+ * A shallow clone gets a warning too; under CI it is a failure, since CI checks
+ * out with full history and must not pass by having nothing to compare.
  */
 import { readFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
@@ -28,19 +29,31 @@ const CODE_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts', '.tsx', '.jsx', '
 const isCode = (path) => CODE_EXTENSIONS.has(extname(path).toLowerCase());
 const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-function gitLines(root, args) {
+/** Run git in `root`: { lines } on success, { error } with git's first line of complaint otherwise. */
+function runGit(root, args) {
   const result = spawnSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
-  if (result.error || result.status !== 0) return null;
-  return result.stdout.split(/\0|\r?\n/).filter(Boolean);
+  if (result.error) return { error: result.error.code === 'ENOENT' ? 'git is not installed' : result.error.message };
+  if (result.status !== 0) {
+    const complaint = result.stderr.split(/\r?\n/).map((line) => line.trim()).find(Boolean);
+    return { error: complaint ?? `git exited with ${result.status}` };
+  }
+  return { lines: result.stdout.split(/\0|\r?\n/).filter(Boolean) };
+}
+
+const gitLines = (root, args) => runGit(root, args).lines ?? null;
+
+/** { names } of skills ever in HEAD's history and not among `currentSkills`, or { error }. */
+function readRetiredSkills(root, currentSkills) {
+  const log = runGit(root, ['log', '--no-renames', '--format=', '--name-only', '-z', 'HEAD', '--', 'skills/']);
+  if (log.error) return { error: log.error };
+  const current = new Set(currentSkills);
+  const ever = new Set(log.lines.map((path) => SKILL_FILE.exec(path)?.[1]).filter(Boolean));
+  return { names: [...ever].filter((name) => !current.has(name)).sort() };
 }
 
 /** Skill names that were ever in HEAD's history and are not among `currentSkills`. */
 export function retiredSkillNames(root, currentSkills) {
-  const paths = gitLines(root, ['log', '--no-renames', '--format=', '--name-only', '-z', 'HEAD', '--', 'skills/']);
-  if (!paths) return [];
-  const current = new Set(currentSkills);
-  const ever = new Set(paths.map((path) => SKILL_FILE.exec(path)?.[1]).filter(Boolean));
-  return [...ever].filter((name) => !current.has(name)).sort();
+  return readRetiredSkills(root, currentSkills).names ?? [];
 }
 
 /**
@@ -78,8 +91,7 @@ function currentFiles(root) {
 }
 
 /** References to retired skills in current files, as { file, line, name }. */
-export async function findRetiredSkillReferences(root, currentSkills) {
-  const retired = retiredSkillNames(root, currentSkills);
+export async function findRetiredSkillReferences(root, currentSkills, retired = retiredSkillNames(root, currentSkills)) {
   if (!retired.length) return [];
   const references = [];
   for (const file of currentFiles(root)) {
@@ -100,19 +112,29 @@ export async function findRetiredSkillReferences(root, currentSkills) {
 const isShallow = (root) => gitLines(root, ['rev-parse', '--is-shallow-repository'])?.[0] === 'true';
 
 /**
- * What `npm run validate` reports, as { scope, message }: each reference to a
- * retired skill, and, in CI, a shallow clone, where the check could not work.
+ * What `npm run validate` reports: { problems: [{ scope, message }], notice }.
+ * Problems are each reference to a retired skill and, under CI, a shallow
+ * clone. The notice, when set, says the check was skipped or incomplete, so a
+ * green run without git history does not look like a checked one.
  */
-export async function retiredSkillProblems(root, currentSkills, env = process.env) {
-  const problems = [];
-  if (env.CI && isShallow(root)) {
-    problems.push({
-      scope: 'repository',
-      message: 'git history is shallow, so removed skills cannot be found; check out with fetch-depth: 0',
-    });
+export async function checkRetiredSkills(root, currentSkills, env = process.env) {
+  const history = readRetiredSkills(root, currentSkills);
+  if (history.error) {
+    return {
+      problems: [],
+      notice: `retired-skill check skipped: git history could not be read (${history.error}), `
+        + 'so a file that still names a removed skill would not be caught',
+    };
   }
-  for (const { file, line, name } of await findRetiredSkillReferences(root, currentSkills)) {
+  const problems = [];
+  let notice = null;
+  if (isShallow(root)) {
+    const message = 'git history is shallow, so removed skills cannot be found; check out with fetch-depth: 0';
+    if (env.CI) problems.push({ scope: 'repository', message });
+    else notice = `retired-skill check incomplete: ${message}`;
+  }
+  for (const { file, line, name } of await findRetiredSkillReferences(root, currentSkills, history.names)) {
     problems.push({ scope: file, message: `line ${line} names '${name}', which is no longer a skill under skills/` });
   }
-  return problems;
+  return { problems, notice };
 }

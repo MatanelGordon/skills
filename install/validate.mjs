@@ -5,7 +5,7 @@ import { existsSync } from 'node:fs';
 import { extname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { retiredSkillProblems } from './retired-skill-references.mjs';
+import { checkRetiredSkills } from './retired-skill-references.mjs';
 import { isEntryPoint } from './entry-point.mjs';
 
 const DEFAULT_ROOT = fileURLToPath(new URL('..', import.meta.url));
@@ -231,7 +231,11 @@ export async function validateRepository(root = DEFAULT_ROOT) {
   }
 
   // A skill removed or renamed under skills/ must not still be named by a current file.
-  for (const { scope, message } of await retiredSkillProblems(root, dirs)) fail(scope, message);
+  const retired = await checkRetiredSkills(root, dirs);
+  for (const { scope, message } of retired.problems) fail(scope, message);
+  // Printed by the CLI only (`invokedDirectly` is set below, before any call), so a
+  // run without git history says the check did not happen instead of passing quietly.
+  if (retired.notice && invokedDirectly) console.error(`  ⚠ ${retired.notice}`);
 
   const installRoot = join(root, 'install');
   if (existsSync(installRoot)) {

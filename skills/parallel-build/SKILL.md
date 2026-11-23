@@ -1,7 +1,7 @@
 ---
 name: parallel-build
 description: >
-  Use when a job has two or more independent pieces, or the user asks to parallelize, split work across agents, or resume an interrupted build. Decides the seams, file ownership, phases and how many workers run at once; parallel by default. Each worker runs via cli-coding-subagents.
+  Use when a job (feature, migration, refactor) splits into parts for several workers, or the user asks to parallelize, split work across agents, or resume an interrupted build. Decides seams, file ownership, order and how many run at once; parallel by default. Workers run via cli-coding-subagents.
 license: MIT
 metadata:
   author: Matanel Gordon
@@ -26,9 +26,10 @@ same time unless step 1 gives a reason not to.
 
 **Read `cli-coding-subagents` first.** It owns pre-flight, dispatch flags,
 worktrees and the prompt contract; this skill is the orchestration layer on
-top. `$SK` in the commands below is that skill's directory, found with its
-Setup block. Shell variables do not survive between Bash calls, so set `SK` in
-each call that needs it.
+top. Run its Setup block first: every command block below that needs a helper
+starts with `SK=/path/printed/by/setup`, which you replace with the path it
+printed. Shell variables do not survive between Bash calls, so set `SK` in each
+call that needs it.
 
 Worktrees need git. A phased build needs an approved plan from `deep-plan`.
 Every file this skill writes has its shape in
@@ -40,9 +41,9 @@ Every file this skill writes has its shape in
 
 | Shape | Route |
 |---|---|
-| One piece, or pieces that share files | Use one worker, or do it yourself. Do not split it. |
-| Pieces share no file and need no shared groundwork | Use a **quick split**: write the ownership table and dispatch every worker at once. It has no plan directory and no phases; prompts and logs go in the run directory that `cli-coding-subagents` Setup defines. |
-| A shared surface must be built first, the work is more than about half a day, or the run must survive a crash | Use a **phased build**. It requires an approved plan from `deep-plan`. |
+| One piece, or pieces that all keep editing the same files (a rename, one feature spread across three files) | Use one worker, or do it yourself. Do not split it. |
+| Pieces that share no file and need no shared groundwork | Use a **quick split**: write the ownership table and dispatch every worker at once. It has no plan directory and no phases. One run directory serves the whole split (`cli-coding-subagents` Setup); write the table to `ownership.md` in it. |
+| Pieces that are independent apart from a shared surface that can be built first (types, config, a route registry), or more than about half a day of work, or a run that must survive a crash | Use a **phased build**. It requires an approved plan from `deep-plan`. |
 
 The default is parallel. Every piece that shares no file with another runs at
 the same time. Run pieces one after another only when they share a file, one
@@ -57,7 +58,9 @@ A piece is independent when it can be merged alone and pass its own tests. Split
 by feature, not by technical layer.
 
 Write an ownership table with one row per worker: slug, paths owned, paths
-off-limits, and test command.
+off-limits, test command, and tool (template in `references/templates.md`).
+Every worker has a test command; for a change with no test suite, it is the
+check that proves the acceptance criteria (a build, a lint, a link check).
 
 Every path a worker running at the same time owns is off-limits to the others.
 Shared files are where workers collide: `package.json`, lockfiles, shared types,
@@ -81,9 +84,12 @@ ls -t .plan/*/plan.md 2>/dev/null
 
 - **No plan**: run `deep-plan` first. It owns `.plan/`, produces `plan.md` with
   the file map and test strategy, and hands back here.
-- **Plan exists but `Status: draft`**: do not execute it; take it through
+- **Plan exists but `**Status:** draft`**: do not execute it; take it through
   `deep-plan`'s review and get the user's approval.
-- **Plan exists and `Status: approved`**: set it to `executing` and continue.
+- **Plan exists and `**Status:** approved`**: set it to `executing` and continue.
+
+If `deep-plan` is not installed, ask the user before writing the plan yourself;
+the plan still needs a file map with one owner per path.
 
 `plan.md` supplies the file map, shared surface, phase split, and critical-path
 tests. If any is missing or vague, send that planning defect to `deep-plan`
@@ -95,7 +101,9 @@ PLAN="$(git rev-parse --show-toplevel)/.plan/<plan-name>"
 mkdir -p "$PLAN"/{prompts,agents,logs}
 ```
 
-`.plan/` is committed.
+`plan.md` and `PROGRESS.md` are committed. `prompts/`, `agents/` and `logs/`
+are never added to git: workers rewrite their status files while they run, and
+a tracked file changing in the main tree makes `wt.sh merge` refuse with exit 3.
 
 **Phase 1 — foundation. Usually 1 agent. 2 only in a monorepo spanning separate
 projects.** It builds the shared files listed in step 2. Its real job is to make
@@ -113,6 +121,11 @@ phase 1.
   `Agent`.
 - **1 to 2 security agents** write `SECURITY.md`, or `SECURITY.part1.md` and
   `SECURITY.part2.md`. Prefer codex, or a Claude `Agent`.
+
+Review workers are dispatched like any other: own worktree of the merged
+branch, the same prompt template. Their Scope is their findings file in the
+plan directory (absolute path) and their status file; the code is off-limits.
+Their acceptance criteria are the `CR.md` shape in `references/templates.md`.
 
 Skip security agents for throwaway projects under `Desktop/Playgrounds`: they
 will never ship and auditing them is noise. Code review still runs. Check:
@@ -154,7 +167,7 @@ Never start a phase before the previous one is merged and green. For each phase:
 3. Start all workers together in the background with `cli-coding-subagents`
    step 5 (Dispatch), which also owns hang handling. Sequential dispatch is not
    parallel work.
-4. Fold each report into `PROGRESS.md` the moment it lands.
+4. In a phased build, fold each report into `PROGRESS.md` the moment it lands.
 5. Use `cli-coding-subagents` step 6 (Collect, verify, merge) per worker,
    including cleanup. Merge one at a time and resolve main-tree conflicts.
 6. Rerun critical-path tests on the merged branch before the next phase.
@@ -201,14 +214,19 @@ refuse with exit 3, and the commits give the run a history worth having.
 
 ### 7. Finish
 
-1. All phases are merged and `"$SK/scripts/wt.sh" list` is empty.
-   `"$SK/scripts/wt.sh" gc` sweeps merged stragglers and reports uncommitted ones
-   it skipped.
+1. All phases are merged and `wt.sh list` is empty. `wt.sh gc` sweeps merged
+   stragglers and reports uncommitted ones it skipped:
+   ```bash
+   SK=/path/printed/by/setup
+   "$SK/scripts/wt.sh" list
+   "$SK/scripts/wt.sh" gc
+   ```
 2. Run critical-path tests yourself on the merged branch; a worker's `DONE` is
    a claim, not evidence.
-3. `PROGRESS.md` final: status complete, what shipped, what was deliberately
-   left. Set `plan.md`'s `**Status:**` to `complete`, and record any late
-   amendments.
+3. `PROGRESS.md` final: its status line reads exactly `**Status:** complete`
+   (resume discovery greps for that string), plus what shipped and what was
+   deliberately left. Set `plan.md`'s `**Status:**` to `complete`, and record
+   any late amendments.
 4. Report to the user: what was built, the CR/SECURITY findings and what was
    done about each, the test results as they actually are, and anything left
    undone.
@@ -231,7 +249,8 @@ and say which you chose. Then read what was intended, where execution got to,
 and what git says actually happened:
 
 ```bash
-PLAN="$(git rev-parse --show-toplevel)/.plan/<plan-name>"
+SK=/path/printed/by/setup
+PLAN="$(git rev-parse --show-toplevel)/.plan/billing"   # example: the plan name you chose
 cat "$PLAN/plan.md"
 cat "$PLAN/PROGRESS.md"
 cat "$PLAN"/agents/*.md
@@ -255,6 +274,11 @@ A worktree in the list means a worker never got merged. Decide per worktree:
   re-dispatch.
 - **clean + 0 ahead**: it never started. Run
   `"$SK/scripts/wt.sh" drop <slug>` and re-dispatch.
+- **MISSING**: the directory was deleted outside `wt.sh`, but its commits are
+  still on the branch `sa/<slug>`. Run `git worktree prune`, look at
+  `git log HEAD..sa/<slug>`, then merge the branch with `git merge --no-ff` if
+  the work is complete and its tests pass, or `"$SK/scripts/wt.sh" drop <slug>`
+  and re-dispatch.
 
 Assume no subagent processes survived; nothing resumes on its own. Old logs
 are in `$PLAN/logs/`.
@@ -270,11 +294,11 @@ Then rewrite `PROGRESS.md` to match reality, rerun the pre-flight
 README." No file is shared and nothing has to exist first, so this is a quick
 split. All three workers start at the same time, each in its own worktree:
 
-| Worker | Owns | Off-limits | Test command |
-|---|---|---|---|
-| `fix-dates` | `lib/dates.py`, `tests/test_dates.py` | `tools/**`, `tests/test_sync.py`, `README.md` | `pytest tests/test_dates.py` |
-| `sync-dry-run` | `tools/sync.py`, `tests/test_sync.py` | `lib/**`, `tests/test_dates.py`, `README.md` | `pytest tests/test_sync.py` |
-| `readme-troubleshooting` | `README.md` | `lib/**`, `tools/**`, `tests/**` | none |
+| Worker | Owns | Off-limits | Test command | Tool |
+|---|---|---|---|---|
+| `fix-dates` | `lib/dates.py`, `tests/test_dates.py` | `tools/**`, `tests/test_sync.py`, `README.md` | `pytest tests/test_dates.py` | codex, `high` |
+| `sync-dry-run` | `tools/sync.py`, `tests/test_sync.py` | `lib/**`, `tests/test_dates.py`, `README.md` | `pytest tests/test_sync.py` | codex, `high` |
+| `readme-troubleshooting` | `README.md` | `lib/**`, `tools/**`, `tests/**` | `npx markdown-link-check README.md` | copilot |
 
 **A build with a shared surface.** "Add email, SMS and push notifications."
 All three need `types/notification.ts` and a line in the route registry, so

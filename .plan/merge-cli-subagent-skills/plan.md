@@ -207,7 +207,7 @@ If Tier 2 puts the pair at 0.85 or above, reword and measure again.
 
 Prompts, logs and status files need a place that survives a reboot and is
 outside every worktree. With a plan it is the plan directory. Without one it is
-`<worktree-root>/_runs/<name>/`, created by `wt.sh rundir <name>` (outside the
+`<worktree-root>/.runs/<name>/`, created by `wt.sh rundir <name>` (outside the
 repository, and not under `.plan/`, which `deep-plan` owns). With no git it is
 `.sa-runs/<name>/` in the project. See the amendment of 23 November for why it
 is not under the git directory.
@@ -399,7 +399,7 @@ None that needs an ADR. The merge is reversible from git.
   the lead committed for them.
 - 2026-11-23 — That same refusal ruled out `<git common dir>/sa-runs/` as the
   run directory: a sandboxed worker could not write its status file there. It
-  is `<worktree-root>/_runs/<name>/` instead, created by a new
+  is `<worktree-root>/.runs/<name>/` instead, created by a new
   `wt.sh rundir <name>` so the path is not left to the agent to compute.
 - 2026-11-23 — The character caps given to the workers (12,000 and 11,500)
   were wrong. Both workers hit them by shortening sentences that carried a

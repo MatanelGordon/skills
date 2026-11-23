@@ -168,7 +168,7 @@ test('wt.sh drop discards an unmerged worktree and its branch', options, (t) => 
 
 test('wt.sh rundir creates a run directory beside the worktrees, outside the repository', options, (t) => {
   const { repo, env, worktree } = repository(t);
-  const runDirectory = join(dirname(worktree('any')), '_runs', 'quick-fixes');
+  const runDirectory = join(dirname(worktree('any')), '.runs', 'quick-fixes');
 
   const created = script('wt.sh', ['rundir', 'quick-fixes'], { cwd: repo, env });
   assert.equal(created.status, EXIT.ok, created.stderr);
@@ -177,6 +177,8 @@ test('wt.sh rundir creates a run directory beside the worktrees, outside the rep
   assert.ok(!runDirectory.startsWith(repo));
   assert.equal(script('wt.sh', ['rundir', 'quick-fixes'], { cwd: repo, env }).stdout.trim(), runDirectory);
   assert.equal(script('wt.sh', ['rundir', 'a/b'], { cwd: repo, env }).status, EXIT.error);
+  // No worktree slug can name the run-directory root.
+  assert.equal(script('wt.sh', ['new', '.runs'], { cwd: repo, env }).status, EXIT.error);
 
   // A run directory must not get in the way of the worktree lifecycle or be swept by gc.
   script('wt.sh', ['new', 'p2-a'], { cwd: repo, env });

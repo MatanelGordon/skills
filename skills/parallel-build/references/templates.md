@@ -2,8 +2,9 @@
 
 ## Ownership table
 
-Use this for a quick split. Write one row per worker, then start every row at
-once unless the concurrency cap delays it.
+Use this for a quick split, written to `ownership.md` in the run directory.
+Write one row per worker, then start every row at once unless the concurrency
+cap delays it.
 
 | Worker | Owns | Off-limits | Test command | Tool |
 |---|---|---|---|---|
@@ -29,9 +30,11 @@ once unless the concurrency cap delays it.
 they survive a reboot — after a crash they are often the only record of what an
 agent did.
 
-`.plan/` is **committed to git**: that is what lets other sessions and teammates
-share the plan and architecture. For `PROGRESS.md` commits, main-working-tree
-location, and absolute-path rules, see `parallel-build` step 6 (Track progress).
+`plan.md`, `PROGRESS.md` and the review outputs are **committed to git**: that
+is what lets other sessions and teammates share the plan and architecture.
+`prompts/`, `agents/` and `logs/` are not (see `parallel-build` step 3). For
+`PROGRESS.md` commits, main-working-tree location, and absolute-path rules, see
+`parallel-build` step 6 (Track progress).
 
 `<plan-name>` is concise and indicative: `oauth-device-flow`, `tui-memory`,
 `split-billing-service`. Not `plan1`, not `implement-the-new-feature-we-discussed`.

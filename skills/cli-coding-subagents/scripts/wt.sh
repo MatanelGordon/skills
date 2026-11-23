@@ -15,9 +15,9 @@
 #   wt.sh rundir <name>           create a run directory (prompts/ agents/ logs/) and print its path
 #
 # Branch naming: sa/<slug>.   Worktree root: <repo-parent>/.wt-<repo-name>/<slug>
-# Run directories: <worktree-root>/_runs/<name>. A slug cannot contain "_", so
-# the two never collide, and gc leaves _runs alone. Outside a git repository
-# rundir still works and uses ./.sa-runs/<name> in the current directory.
+# Run directories: <worktree-root>/.runs/<name>. A slug may not start with a
+# dot, so no worktree can be named .runs, and gc's glob skips dot entries.
+# Outside a git repository rundir uses ./.sa-runs/<name> in the current directory.
 # Override the root with PARALLEL_WT_ROOT.
 #
 # Exit codes: 0 ok · 1 error (see message) · 2 merge conflict, needs resolution
@@ -230,7 +230,7 @@ case "$cmd" in
     # Prompts, logs and status files need a home that outlives a reboot and is
     # outside every worktree, so no worker's branch ever carries them.
     name="${1:-}"; slug_check "$name"
-    dir="$WT_ROOT/_runs/$name"
+    dir="$WT_ROOT/.runs/$name"
     mkdir -p "$dir/prompts" "$dir/agents" "$dir/logs" || die "cannot create $dir"
     echo "$dir"
     ;;

@@ -9,7 +9,7 @@ multi-hundred-line string.
 
 ```bash
 PROMPT_FILE="$RUN_DIR/prompts/<slug>.md"
-codex exec ... "$(cat "$PROMPT_FILE")" > "$LOG" 2>&1
+codex exec ... "$(cat "$PROMPT_FILE")" < /dev/null > "$LOG" 2>&1
 ```
 
 ---
@@ -19,7 +19,8 @@ codex exec ... "$(cat "$PROMPT_FILE")" > "$LOG" 2>&1
 ````markdown
 # Task: <one-line goal>
 
-You are an autonomous coding subagent working in an isolated git worktree.
+You are an autonomous coding subagent working in <an isolated git worktree |
+the project directory itself, which has no git: your edits land directly>.
 Implement this end to end. Do not ask questions — if something is ambiguous,
 pick the most conventional option, proceed, and note the choice in your report.
 
@@ -37,6 +38,7 @@ This is an allowlist. You may create/modify/delete ONLY these paths:
 - `path/one/**`
 - `path/two/file.ts`
 - `<absolute run directory>/agents/<slug>.md`   (your status file — see below)
+- `<absolute run directory>/CR.md`   (review workers only: your findings file)
 
 ## Off-limits — other agents own these RIGHT NOW
 Do NOT modify (not even imports, formatting, or "small fixes"):
@@ -69,6 +71,7 @@ delete the test — report it under "Blocked".
 - Validate input at boundaries; never swallow errors silently.
 
 ## Commit
+<Leave this section out when the project has no git.>
 Commit on the current branch (you are already on it):
 ```bash
 git add -A && git commit -m "<type>: <description>"
@@ -98,7 +101,8 @@ BLOCKED: <what stopped you and what you need — omit unless blocked>
 ```
 
 Use those exact status words. When the run directory is a plan directory, this
-file is the ONLY thing under `.plan/` you may write. In every run it is the only
+file is the ONLY thing under `.plan/` you may write (a review worker may also
+write the one findings file its Scope names). In every run it is the only
 coordination file you may change, and it must be written at the absolute path
 above — never to a copy inside your worktree, never to `PROGRESS.md` or
 `plan.md`, and never to another worker's file. Concurrent writes there corrupt

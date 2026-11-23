@@ -10,11 +10,11 @@ permissions. Effort depends on the task.
 ```bash
 SLUG=p2-parser
 WT=/abs/path/to/worktree              # from: wt.sh new "$SLUG"
-RUN_DIR=/abs/path/to/run-directory
+RUN_DIR=/abs/path/to/run-directory    # from: wt.sh rundir <name>, or the plan directory
 PROMPT_FILE="$RUN_DIR/prompts/$SLUG.md"
 LOG="$RUN_DIR/logs/$SLUG.log"
 OUT="$RUN_DIR/logs/$SLUG.out.md"
-mkdir -p "$RUN_DIR/logs"
+mkdir -p "${RUN_DIR:?run directory not set}/logs"
 
 codex exec \
   -m gpt-5.6-sol \
@@ -82,11 +82,11 @@ Use copilot for the more straightforward tasks. Always pass `--effort high`.
 
 ```bash
 SLUG=p2-scaffold
-WT=/abs/path/to/worktree
-RUN_DIR=/abs/path/to/run-directory
+WT=/abs/path/to/worktree              # from: wt.sh new "$SLUG"
+RUN_DIR=/abs/path/to/run-directory    # from: wt.sh rundir <name>, or the plan directory
 PROMPT_FILE="$RUN_DIR/prompts/$SLUG.md"
 LOG="$RUN_DIR/logs/$SLUG.log"
-mkdir -p "$RUN_DIR/logs"
+mkdir -p "${RUN_DIR:?run directory not set}/logs"
 # Take both paths from precheck's "launch: <node> <copilot-js>" line. They are
 # machine-specific; this example is an nvm v24 node plus the copilot JS entry.
 NODE24="/path/to/node24/bin/node"
@@ -120,7 +120,9 @@ needed.
 | `-s` / `--silent` | Print only the worker response, without the statistics banner. |
 | `--log-level none` | Suppress CLI logging noise. |
 
-Copilot has no `-o` equivalent. Its final message lands at the end of `$LOG`.
+Copilot has no `-o` equivalent, so `-s` plus the redirect is what keeps it
+quiet. Its final message lands at the end of `$LOG`: read it with
+`tail -40 "$LOG"`.
 
 **Which copilot model:** default to `claude-sonnet-5`; it follows the strict
 output contract and scope rules more reliably. Use `gpt-5.6-sol` for mostly
@@ -148,6 +150,9 @@ dispatch and avoids re-reading the codebase.
 
 `--session-id` sets the UUID for a new session, so it never needs scraping:
 
+Set `SLUG`, `WT`, `RUN_DIR`, `PROMPT_FILE`, `LOG`, `NODE24` and `COPILOT` as in
+the dispatch block above, in the same Bash call.
+
 ```bash
 SID=$(uuidgen)
 "$NODE24" "$COPILOT" -p "$(cat "$PROMPT_FILE")" --session-id "$SID" \
@@ -155,7 +160,8 @@ SID=$(uuidgen)
   --no-ask-user -C "$WT" --no-color --log-level none -s < /dev/null > "$LOG" 2>&1
 
 # Follow-up in the same session, with context retained.
-"$NODE24" "$COPILOT" -p "Yes - use the existing Result type, do not add a new one." \
+ANSWER="Yes - use the existing Result type, do not add a new one."   # example answer
+"$NODE24" "$COPILOT" -p "$ANSWER" \
   --resume="$SID" --allow-all-tools --allow-all-paths --no-ask-user \
   -C "$WT" --no-color --log-level none -s < /dev/null >> "$LOG" 2>&1
 ```
@@ -169,14 +175,23 @@ contains `session_id` and `cwd`. Matching `cwd` is parallel-safe; choosing the
 newest file is not, because concurrent workers race.
 
 ```bash
-# codex-session.py <worktree> prints the matching session id.
-SID=$(python3 "$SK/scripts/codex-session.py" "$WT")
+SK=/path/printed/by/setup
+SLUG=p2-parser                         # example slug
+WT=$("$SK/scripts/wt.sh" path "$SLUG") || exit 1
+RUN_DIR=/abs/path/to/run-directory
+LOG="$RUN_DIR/logs/$SLUG.log"
+OUT="$RUN_DIR/logs/$SLUG.followup-1.out.md"   # a new file per follow-up keeps the first report
+ANSWER="Yes - use the existing Result type, do not add a new one."   # example answer
+SID=$(python3 "$SK/scripts/codex-session.py" "$WT") || exit 1   # matches the worktree path
 cd "$WT" && codex exec --color never resume "$SID" \
   -m gpt-5.6-sol -c model_reasoning_effort="high" \
   --dangerously-bypass-approvals-and-sandbox -o "$OUT" \
-  "Yes - use the existing Result type, do not add a new one." \
-  < /dev/null >> "$LOG" 2>&1
+  "$ANSWER" < /dev/null >> "$LOG" 2>&1
 ```
+
+For a worker that ran under OpenRouter, run `codex-session.py` with the same
+`CODEX_HOME` the worker had (`CODEX_HOME="$HOME/.ori-codex"`); it reads that
+home's sessions. Resuming through `ori codex` was not verified.
 
 `-C/--cd` is rejected by `codex exec resume`; change into the worktree instead.
 `--color never` goes before the word `resume`: codex-cli 0.170.0 rejects it

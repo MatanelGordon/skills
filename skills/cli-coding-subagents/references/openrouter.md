@@ -115,26 +115,27 @@ SK=/path/printed/by/setup
 "$SK/scripts/ori-codex-home.sh"   # idempotent; links AGENTS.md, rules/, and skills/
 ```
 
-Launch every OpenRouter codex worker through that home:
+Launch every OpenRouter codex worker through that home. Set `SLUG`, `WT`,
+`RUN_DIR`, `PROMPT_FILE`, `LOG` and `OUT` as in the codex block of
+[invocation.md](invocation.md), in the same Bash call:
 
 ```bash
-CODEX_HOME="$HOME/.ori-codex" ori codex --model <openrouter-model-id> -- \
+MODEL=vendor/model-id-from-ori-models   # replace with an id ori-models.sh printed this run
+CODEX_HOME="$HOME/.ori-codex" ori codex --model "$MODEL" -- \
   exec --dangerously-bypass-approvals-and-sandbox -C "$WT" -o "$OUT" "$(cat "$PROMPT_FILE")" < /dev/null > "$LOG" 2>&1
 ```
+
+Because stdout is redirected, `ori` writes JSON into `$LOG`; read `$OUT`.
 
 Unsandboxed execution is required. Without
 `--dangerously-bypass-approvals-and-sandbox`, the worker hangs on an approval
 prompt nobody will answer.
 
-The model is an **`ori` flag**, before the `--`:
-
-```bash
-ori claude --model nvidia/nemotron-3-ultra-550b-a55b:free -- -p "$(cat "$PROMPT_FILE")"
-```
-
-Do not use `ori claude -- --model <id>`. Everything after `--` is passed to the
-harness untouched, so the id reaches Claude Code's own `--model`, which does not
-understand OpenRouter IDs. `ori` also owns `--reasoning-effort`.
+The model is an **`ori` flag**, before the `--`, as in the block above. Do not
+write `ori codex -- --model "$MODEL"` (or the same with `ori claude`).
+Everything after `--` is passed to the harness untouched, so the id reaches the
+harness's own `--model`, which does not understand OpenRouter IDs. `ori` also
+owns `--reasoning-effort`.
 
 *Verified by execution: `ori claude --model z-ai/glm-5.2:free -- -p "…"` and the
 same command with `nvidia/nemotron-3.5-lightning:free` both returned the
@@ -164,20 +165,27 @@ These models are not trusted, so nothing they produce merges unreviewed.
 | Gate | When | Who | Output |
 |---|---|---|---|
 | **CR: code review** | After every code generation | A different model from the author, ideally a different family | Findings on correctness and scope. **Does not rewrite.** |
-| **PR: plan review** | After every plan | A different model from the planner | `VERDICT`, `BLOCKERS`, and `NON-BLOCKING`, following this repository's `plan-reviewer` contract. |
+| **PR: plan review** | After every plan | A different model from the planner | Three headings: `VERDICT` (approve, approve with changes, or reject), `BLOCKERS`, `NON-BLOCKING`. |
 
-Reuse the `plan-reviewer` contract instead of inventing one, so reviews keep
-the same three headings and meaning whichever model produced the plan.
+These are the headings the `plan-reviewer` agent uses where it is installed.
+Keep them instead of inventing new ones, so plan reviews read the same
+whichever model produced them.
+
+A review is one more dispatch: the same `ori codex` command, a model from the
+REVIEWER tier of a different family from the author's where one exists, and a
+prompt whose Scope is its findings file only.
 
 When only one usable free model exists, there are exactly two honest options:
 
-1. Accept same-model review and **label it as weaker**. A model reviewing its
-   own output shares its blind spots and will wave through its characteristic
-   mistakes. This is a smoke test, not independent review.
+1. Accept same-model review and **label it as weaker**. Say so in the report:
+   a model reviewing its own output shares its blind spots and will wave
+   through its characteristic mistakes. This is a smoke test, not independent
+   review.
 2. **Spend money on the review pass only.** Reviews read a diff, so they are
    cheap. This is usually the better trade.
 
-Never describe same-model review as independent. A code-review worker reports
+Never describe same-model review as independent. The two tiers in section 2
+exist so you rarely have to fall back on it. A code-review worker reports
 findings only; if it rewrites the code, nobody has reviewed the rewrite.
 
 ## 6. Limitations and workarounds
@@ -213,9 +221,15 @@ To see the real limit for a credential, query
 `https://openrouter.ai/api/v1/key` with the key. An account holding credits
 reports `is_free_tier: false` and receives the higher daily allowance.
 
-## 7. Budget: 750K per worker, enforced by structure
+## 7. Budget: 750K per subagent, enforced by structure
 
-Use **750K tokens per worker**, sliced into roughly **150K iterations**.
+Use **750K tokens per subagent**, sliced into roughly **150K iterations**.
+
+You launch each iteration: one dispatch of the command in section 3, in the same
+worktree, whose prompt carries the objective and says to read `HANDOFF.md` at
+the worktree root first. Between iterations, read the report and `HANDOFF.md`;
+that is the checkpoint. `HANDOFF.md` is committed on the worker's branch; the
+last iteration deletes it before you merge.
 
 Each iteration rewrites `HANDOFF.md`; it never appends:
 
@@ -253,8 +267,8 @@ OpenRouter activity dashboard may provide real accounting, but neither was
 tested here. The harness view means Claude Code's cost view when that harness is
 usable. Do not claim precise token spend for this loop.
 
-**Relationship to `parallel-build`'s `PROGRESS.md`.** They deliberately use the
-same shape for different purposes. `PROGRESS.md` lets a fresh session resume
-after an unplanned crash. `HANDOFF.md` schedules termination on purpose: every
+**Relationship to `parallel-build`'s `PROGRESS.md`.** Both are a file a fresh
+session reads to carry on, but they serve different purposes and have different
+headings. `PROGRESS.md` lets a fresh session resume after an unplanned crash. `HANDOFF.md` schedules termination on purpose: every
 iteration is expected to end and hand over. One is recovery; the other is
 planned succession.

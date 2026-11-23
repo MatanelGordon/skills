@@ -1,7 +1,7 @@
 ---
 name: cli-coding-subagents
 description: >
-  Use when handing a coding task to a codex, copilot or OpenRouter (ori) CLI worker: login and quota pre-flight, model choice, exact flags, prompt contract, automatic git worktree, verify, merge, cleanup. To split a job across several workers, use parallel-build first.
+  Use when handing a coding task to a codex, copilot or OpenRouter (ori) CLI worker, on free or cheap models too, or answering a worker's question. Covers quota pre-flight, model, flags, prompt, automatic git worktree, verify, merge. To split a job across workers, use parallel-build first.
 license: MIT
 metadata:
   author: Matanel Gordon
@@ -40,11 +40,13 @@ each worker.
 
 ## Setup
 
-The helpers are installed with this skill, not with the project. Run the
-resolver below once. It prints the directory of the first complete copy of this
-skill. Every later command block starts with `SK=/path/printed/by/setup`:
-replace that with the path the resolver printed, in each Bash call, because
-shell variables do not survive between calls. Never run `./scripts/...` from
+The helpers are installed with this skill, not with the project. If you know
+the directory this `SKILL.md` was read from and its `scripts/` holds all six
+helpers, that directory is `SK`. Otherwise run the resolver below once. It
+prints the directory of the first complete copy of this skill. Every later command block starts with `SK=/path/printed/by/setup`:
+replace that with the path the resolver printed. Shell variables do not survive
+between Bash calls, so set `SK`, `WT`, `SLUG`, `RUN_DIR`, `LOG` and `OUT` in the
+same call that uses them, or use absolute paths, and copy each block whole. Never run `./scripts/...` from
 the project directory.
 
 ```bash
@@ -63,16 +65,20 @@ echo "$SK"
 Prompts, logs, and status files go in a **run directory** that survives a
 reboot and sits outside every worktree. Never use `/tmp`: macOS purges it, and
 the log must remain available after a crash. In a phased build the run
-directory is the plan directory. For anything else, create one:
+directory is the plan directory. For anything else, create one per run (one for
+a whole split, not one per worker), from the project directory:
 
 ```bash
 SK=/path/printed/by/setup
-RUN_DIR=$("$SK/scripts/wt.sh" rundir upload-retries)   # prints the path; has prompts/ agents/ logs/
+RUN_DIR=$("$SK/scripts/wt.sh" rundir upload-retries) || exit 1   # example name; prints the path
+echo "$RUN_DIR"                                                  # has prompts/ agents/ logs/
 ```
 
-It lives beside the worktrees, outside the repository and outside `.plan/`,
-which `deep-plan` owns. With no git repository, use `.sa-runs/<name>/` in the
-project.
+In a git repository it lives beside the worktrees, outside the repository and
+outside `.plan/`, which `deep-plan` owns. With no git repository it is
+`.sa-runs/<name>/` in the project. Never `git add` the run directory: a worker
+rewriting a tracked status file leaves the main tree dirty, and `wt.sh merge`
+then refuses with exit 3.
 
 ## Available scripts
 
@@ -104,11 +110,13 @@ cannot be expressed by the code alone. Use `--json` for per-tool codes.
 |---|---|---|
 | `0` | Logged in, quota healthy | Dispatch. |
 | `10` | **Not logged in** | **Stop and ask the user to log in** with `codex login` or `copilot login`. You cannot complete the browser OAuth flow for them. Re-run pre-flight after they confirm. |
-| `20` | **Paid overage, or quota unreadable** | **Stop and ask the user before using the flagged tool.** For copilot, the entitlement is spent and further work bills the paid overage budget, or quota could not be read. Codex can also report 20 when quota is unreadable. Quote the printed numbers and offer the other tool. Proceed only after a yes. |
+| `20` | **Paid overage, or quota unreadable** | **Stop and ask the user before using the flagged tool.** For copilot, the entitlement is spent and further work bills the paid overage budget, or quota could not be read; spending blind is not your call. Codex can also report 20 when quota is unreadable. Quote the printed numbers and offer the other tool. Proceed only after a yes. |
 | `30` | Quota exhausted | Stop. Report the tool and reset time; offer the other tool if healthy. |
 | `40` | Binary missing, Node below 24, or no Python 3 | Stop and report it. |
 
-Exit 20 is not a warning to note in passing: it can cost real money. Approval
+Exit 20 is not a warning to note in passing: it costs the user real money. Ask in a
+plain sentence and wait. A general instruction given before the pre-flight ran
+("just dispatch") is not that yes: the user had not seen the figures. Approval
 is session-scoped. After a yes, dispatch freely for the rest of this session,
 but ask again in a new one.
 
@@ -119,13 +127,13 @@ but ask again in a new one.
 | Multi-file feature, subtle design, refactor across seams | **codex**, effort `high` |
 | Hardest: concurrency, tricky algorithms, architecture, wide blast radius | **codex**, effort `xhigh` |
 | Straightforward: scaffolding, mechanical edits, filling in tests, docs, wiring | **copilot**, `--effort high`, `claude-sonnet-5` by default or `gpt-5.6-sol` |
-| Code review or security audit | **codex** or a Claude `Agent` |
+| Code review or security audit | **codex** or a Claude `Agent`: it needs judgment |
 
 Native codex always runs `gpt-5.6-sol`, without a sandbox and with full
 permissions. In OpenRouter mode the model comes from a listing made at run
 time, as that section describes, never from this table.
-When copilot is in paid overage, route work to codex unless the user approves
-copilot.
+When copilot is in paid overage, the work goes to codex; copilot is used only
+after the user says yes to the overage (step 1, code 20).
 
 ### 3. Worktree
 
@@ -136,23 +144,25 @@ the worker needs to see.
 
 ```bash
 SK=/path/printed/by/setup
-SLUG=p2-parser
+SLUG=p2-parser                              # example slug: [a-zA-Z0-9._-]
 WT=$("$SK/scripts/wt.sh" new "$SLUG")
 echo "$WT"
 ```
 
 If `wt.sh new` exits 4, the project is not a git repository. Do not run
-`git init` unless the user agrees. Dispatch with the project directory as the working
-directory, leave the Commit section out of the prompt, and tell the user the
-run is not isolated. There is nothing to merge. Run workers at the same time
-only on paths that do not overlap.
+`git init` unless the user agrees. Dispatch with the project directory as the
+working directory (codex then also needs `--skip-git-repo-check`), leave the
+Commit section out of the prompt, and tell the user the run is not isolated:
+the worker edits their files directly. There is nothing to merge. Run workers
+at the same time only on paths that do not overlap.
 
 ### 4. Prompt
 
 Use [references/prompt-template.md](references/prompt-template.md) in full. A
 prompt is not ready without objectively checkable acceptance criteria, exact
-critical-path test commands, and file ownership. The Scope and Off-limits lists
-come from the split decided by `parallel-build`.
+critical-path test commands, and file ownership. For a single worker, Scope is
+the paths the task needs. When several workers run at once, Scope and
+Off-limits come from the split that `parallel-build` decides.
 
 Require incremental commits after each green step. Long processes are
 sometimes SIGKILLed, and committed work survives while uncommitted work may be
@@ -164,35 +174,49 @@ Read [references/invocation.md](references/invocation.md) and copy the command
 for the chosen native CLI with all flags intact. For OpenRouter, use its
 reference instead.
 
-When there are several independent pieces, dispatch them at the same time;
-that is the default. The `parallel-build` skill decides how to split them.
-Launch simultaneous CLI calls with `run_in_background: true` so they actually
-overlap; serial `&&`-chained dispatches defeat the purpose.
+Dispatch in the background (`run_in_background: true`), even a single worker,
+so you can keep working while it runs. When there are several independent
+pieces, dispatch them at the same time; that is the default, and the
+`parallel-build` skill decides how to split them. Serial `&&`-chained
+dispatches defeat the purpose.
 
 Redirect the transcript to the log and read only the report: `$OUT` for codex,
 or `tail -40 "$LOG"` for copilot. Open a full transcript only to diagnose
 a failure. On a measured dispatch, a 1001-line transcript went to the log while
 the report was 174 bytes.
 
-Watch for hangs. If a worker has not touched its status file or log in about 15
-minutes and has made no commits, inspect `tail -5 "$LOG"`. Kill and
-re-dispatch with the missing flag rather than waiting on an unattended prompt.
+Watch for hangs. A worker is probably stuck when its log and status file are
+both older than about 15 minutes and it has made no commits:
+
+```bash
+find "$LOG" "$RUN_DIR/agents/$SLUG.md" -mmin -15   # prints nothing when both are stale
+git -C "$WT" log -1 --format=%cr                   # time of its last commit
+tail -5 "$LOG"
+```
+
+A hung worker is waiting on a prompt because a flag is missing: stop it (stop
+its background task, or `pkill -f "$WT"`) and dispatch again with the flag. A
+worker whose process was killed partway is different: resume it rather than
+starting over (invocation.md, "Long runs get killed").
 
 ### 6. Collect, verify, merge
 
-Run this sequence in order for a git worktree:
+Verify **inside the worktree** first: the work is not in your tree yet, so a
+test run in the main tree before the merge passes on the old code and proves
+nothing. Then merge, then test again. In order:
 
 ```bash
 SK=/path/printed/by/setup
-SLUG=p2-parser
-WT=$("$SK/scripts/wt.sh" path "$SLUG")
-(cd "$WT" && npm test)                       # the worker's critical-path tests
+SLUG=p2-parser                               # example slug
+WT=$("$SK/scripts/wt.sh" path "$SLUG") || exit 1
+(cd "$WT" && npm test)                       # npm test stands for the worker's critical-path tests
 "$SK/scripts/wt.sh" merge "$SLUG"            # merges, then removes the worktree and branch
-npm test                                      # the same tests on the merged branch
+npm test                                     # the same tests on the merged branch
 ```
 
 Report the work as finished only after the last run passes. A worker's
-`STATUS: DONE` is a claim, not evidence.
+`STATUS: DONE` is a claim, not evidence. If a run fails, say so and show the
+output; never report success you have not confirmed.
 
 Read the worker's report before merging:
 
@@ -203,9 +227,10 @@ Read the worker's report before merging:
 **Questions come back in the report, not as prompts.** `QUESTION:` means the
 worker proceeded on an assumption and wants it confirmed; `BLOCKED:` means it
 could not proceed. Answer either by resuming that session, not by
-re-dispatching: see "Follow-ups" in
-[references/invocation.md](references/invocation.md). Batch questions from
-concurrent workers and ask the user once.
+re-dispatching. For codex, `codex-session.py <worktree>` finds the session id
+by matching the worktree path (never `--last`); the commands are under
+"Follow-ups" in [references/invocation.md](references/invocation.md). Batch
+questions from concurrent workers and ask the user once.
 
 Merge one worker at a time and resolve conflicts as they appear. `wt.sh` exit
 codes are `0` ok, `1` error, `2` merge conflict, `3` merge not attempted, `4`
@@ -214,8 +239,11 @@ not a git repository, and `64` bad usage.
 - Exit 2 leaves the conflict in the main working tree and keeps the worktree.
   Fix the files there, run `git add` and `git commit`, then retry `merge`; or
   use `git merge --abort` to back out.
-- Exit 3 means the main tree is dirty or a merge is already in progress.
-  Commit or stash the changes, or finish or abort the active merge, then retry.
+- Exit 3 means nothing was merged: the main tree has uncommitted changes, a
+  merge is already in progress, or an untracked file in the main tree would be
+  overwritten (`wt.sh` prints which). Commit or stash the changes (if they are
+  the user's, ask first), finish or abort the merge, or move the untracked
+  file, then retry.
 - Exit 4 means no worktree is possible; follow step 3's no-git fallback.
 
 `merge` refuses a worktree with uncommitted changes because removal would
@@ -233,23 +261,28 @@ under a price ceiling, to cut subagent cost, or to route work to a specific
 OpenRouter model. Also use it when free-model work stalls on rate limits,
 dropped tool calls, or a model that vanished mid-run.
 
-> **TEMPORARY: DO NOT USE CLAUDE WITH THIS SKILL.** `ori claude` is not working
-> currently. Use `ori codex` only until this warning is removed.
+> **TEMPORARY: do not dispatch workers with `ori claude`.** It is not working
+> currently. Use `ori codex` only until this warning is removed. (This is about
+> the `ori claude` harness, not about which agent reads this skill.)
 
 Read [references/openrouter.md](references/openrouter.md) before dispatch. Differences:
 
 - Pre-flight is `ori-precheck.sh`. On exit 10 stop and ask the user to run
   `ori login`; never attempt the browser login yourself.
 - The model comes from `ori-models.sh` at the start of every run, never from
-  memory. The default ceiling is 0.50 USD per 1M output tokens; raising it is
-  the user's decision.
+  memory. Its default is a price ceiling of 0.50 USD per 1M output tokens, not
+  free-only, and it checks the wallet before listing paid models. Free models
+  share a 20 requests/minute cap that applies to the free tier only; a model at
+  a few cents per million tokens escapes it. Use `--free-only` only when
+  spending nothing is a hard requirement. Raising the ceiling is the user's
+  decision.
 - Codex launches with the isolated `CODEX_HOME` that `ori-codex-home.sh` prepares.
 - `--model` is an `ori` flag and goes before the `--`.
 - These models are not trusted. A different model reviews every code change
   and every plan before anything merges.
 - Free models share a rate limit, so run two or three workers at once, not eight.
-- Each worker has a 750K-token ceiling, kept by handing off through
-  `HANDOFF.md` in iterations.
+- Each subagent has a 750K-token ceiling, in iterations of about 150K that
+  hand off through `HANDOFF.md`.
 
 ## Examples
 

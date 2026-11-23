@@ -219,11 +219,16 @@ three places:
   scripts, aliases and scheduled jobs that call it.
 - **The user's own files:** rules, `CLAUDE.md` and `AGENTS.md`, memory folders.
 
-Every hit gets an outcome. A hit in the repo is fixed in the same change. A hit
-you may not edit is listed for the user with its path and what to do
-("`~/.claude/rules/x.md:12` names it: delete the line"). "The links will
-dangle" is not an outcome. It is a hit nobody dealt with, and so is a report of
-a removal that shows no sweep.
+Every hit gets one of two outcomes, and the report says which, hit by hit:
+
+- **Fixed in this change**, when it is in the repo: the row deleted, the
+  reference renamed, the CI step removed.
+- **Handed to the user**, when you may not edit it: its path and the one action
+  that clears it ("`~/.claude/rules/x.md:12` names it: delete the line").
+
+"Will dangle" and "will fail" are not outcomes. They are hits nobody dealt
+with, in your own report or in someone else's, and so is a removal reported
+with no sweep at all.
 
 ## Drift: when you have stopped working
 

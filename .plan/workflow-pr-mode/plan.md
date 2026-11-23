@@ -62,8 +62,9 @@ Constraints found in the code:
    the skill is entered after that point, the question is asked before the
    first review pass at the latest. An answer the user already gave, in the
    conversation, the task brief or standing instructions to the agent, counts
-   and is not asked again. Approving the plan is not a yes, a contribution
-   policy is not an answer, and the answer covers this change only. Changes
+   and is not asked again. Approving the plan is not a yes, a repository's
+   contribution policy is not an answer, and an answer covers only the changes
+   it was given for. Changes
    that skip review convergence (typo, rename) are not asked, and neither is
    work in a repository with no GitHub remote.
 2. **No answer means the mode is off.** In a live session the skill asks with
@@ -175,10 +176,11 @@ git diff --check origin/codex/review-convergence-loop...HEAD
 
 Each check matches a whole clause, not a keyword, so that inverting or
 removing the rule, or adding a qualifier after it that reverses it, fails the
-test: each pattern runs to the end of its sentence. Forty-five such rewordings,
-including those review pass 3 found surviving, were tried on a scratch copy and
-all forty-five failed it (`$RUN/data/j6/tools/mutation-check.py <worktree>
-<scratch-dir>`). What a phrase test cannot catch is a contradicting sentence
+test: each pattern runs to the end of its sentence (review pass 4 found seven
+that did not, now anchored). Fifty-five such rewordings, including those
+review passes 3 and 4 found surviving and two of the README, were tried on a
+scratch copy and all fifty-five failed it
+(`$RUN/data/j6/tools/mutation-check.py <worktree> <scratch-dir>`). What a phrase test cannot catch is a contradicting sentence
 added somewhere else in the file; the one such addition it does refuse is a
 `gh pr merge` command anywhere in the skill. Review covers the rest.
 
@@ -261,35 +263,32 @@ wrappers in `$RUN/bin/` hold the model settings and the spend guard.
    $RUN/bin/se.sh tier1 $RUN/data/j6/after/skills/development-workflow --no-llm -r cli,json,html -o $RUN/data/j6/after-tier1
    ```
 
-2. agent-skills-eval at the 30B size, on the free pair: model under test
-   `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free`, grader
-   `nvidia/nemotron-3-ultra-550b-a55b:free` (see amendment "budget"). The
-   wrapper has no attempts flag, so three attempts are three runs per arm, at
-   temperature 0.7 in both arms (at 0 the attempts would repeat each other).
-   Free runs go through the shared lock:
+2. agent-skills-eval on `qwen/qwen3-coder-30b-a3b-instruct`, graded by
+   `qwen/qwen3.8-flash`, temperature 0.7, three attempts per arm (three runs,
+   since the wrapper has no attempts flag). Both arms run together, so
+   provider drift hits both alike (a control showed drift: PR #4's text scored
+   8/9 on case 10 in one run and 6/9 hours later). Cost is logged per batch by
+   `$RUN/data/j6/tools/paid-batch.sh`:
 
    ```bash
-   export ASE_TARGET=nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-   export ASE_JUDGE=nvidia/nemotron-3-ultra-550b-a55b:free
-   export ASE_TEMPERATURE=0.7 ASE_CONCURRENCY=4
-   for arm in before after; do for n in 1 2 3; do
-     $RUN/bin/with-lock.sh free 3 $RUN/bin/ase.sh $RUN/data/j6/$arm/skills $RUN/data/j6/ase-free/$arm/run$n
-   done; done
+   zsh $RUN/data/j6/tools/prepare-arms.sh
+   zsh $RUN/data/j6/tools/paid-batch.sh before "final before" $RUN/data/j6/ase-final/before 1 2 3 4 5 6 7 8 9 10 11 12 13 14
+   zsh $RUN/data/j6/tools/paid-batch.sh after "final after" $RUN/data/j6/ase-final/after 1 2 3 4 5 6 7 8 9 10 11 12 13 14
+   python3 -I $RUN/data/j6/tools/ase-summary.py $RUN/data/j6/ase-final/before $RUN/data/j6/ase-final/after
    ```
 
-   Both arms are built first by `zsh $RUN/data/j6/tools/prepare-arms.sh`,
-   which exports the skill from each commit into `$RUN/data/j6/before/` and
-   `$RUN/data/j6/after/` and gives both the same `evals/`. For the ten older
-   cases it copies `expectations` into `assertions`, because this evaluator
-   grades only `assertions`; the repository file is not changed.
-   `python3 -I $RUN/data/j6/tools/ase-summary.py $RUN/data/j6/ase-free/before $RUN/data/j6/ase-free/after`
-   prints the tables. An empty reply (the reasoning model spent its allowance)
-   is invalid and its case is rerun.
+   `prepare-arms.sh` exports the skill from each commit into
+   `$RUN/data/j6/before/` and `$RUN/data/j6/after/` and gives both the same
+   `evals/`; for the ten older cases it copies `expectations` into
+   `assertions`, because this evaluator grades only `assertions`. The
+   repository file is not changed. An empty reply is invalid and rerun.
 
-3. The earlier paid measurement on `qwen/qwen3-coder-30b-a3b-instruct`, graded
-   by `qwen/qwen3.8-flash`, is kept in `$RUN/data/j6/ase/` and reported beside
-   the free pair. It is not mixed with it: different model and grader, and the
-   four new cases were reworded after it ran.
+3. Model pair. The run moved to the free Nemotron pair when the key passed
+   its first limit, then back to this pair under "Budget update 2", before any
+   free run started: "before" had already been measured on this pair, and
+   the README says to stay on the pair that saves a rerun. The earlier
+   three-attempt run at `7eebf22` (`$RUN/data/j6/ase/`) is kept, not mixed in:
+   cases 11 to 14 were reworded after it.
 
 **Gates**, on the with-skill replies. Pass rate means assertions passed over
 assertions graded, pooled over the cases and attempts named, not a mean of
@@ -322,9 +321,8 @@ what the agent would do at each point.
 
 ## Risks and unknowns
 
-- The eval format standard (`$RUN/eval-format.md`) is not published yet. The
-  cases are written last; if it is still missing, the fallback in the run
-  README applies and the status file says so.
+- The eval format standard (`$RUN/eval-format.md`) was published at 20:07,
+  before the cases were written, and they follow it.
 - A one-reply evaluator cannot see a push or a PR. The cases ask for the next
   steps in words, so they measure what the model says it will do.
 - The existing ten cases may shift by noise. Three attempts per arm; gate G3
@@ -439,3 +437,38 @@ what the agent would do at each point.
   rewording ("Agreeing to the mode is not permission to merge, and passing
   checks are not either"; step 4 named "After stage 6") is kept because it is
   shorter and no worse, not because it helped.
+- 2026-11-23: final measurement at `4239ea2` against `8e6e4fc` (PR #4), both
+  arms together, all 14 cases, three attempts; with-skill pass rates: new
+  cases 0.06 (2/36) to 0.61 (22/36), so G2 holds and G1 is missed; older
+  cases 0.56 (52/93) to 0.47 (44/93), so G3 holds by 0.01. Case 10 0.78 to
+  0.22, as the probes predicted. Per new case: 11 asking 0/6 both arms; 12
+  timing and draft 0.00 to 0.83; 13 not merging 0.11 to 0.89; 14 unattended
+  0.11 to 0.44.
+- 2026-11-23: case 14's "nothing will be pushed" failed 3 of 3 at `4239ea2`;
+  two replies push straight to the base branch. Probes of cases 11 and 14 on
+  each commit's text, three attempts, same prompts: the no-push assertion
+  passed 3/3 at `7eebf22`, 1/3 at `22301a6`, 0/3 at `4239ea2`, 0/3 on PR #4.
+  Pass 2's change from "push nothing at any stage" to "push nothing the user
+  has not asked for", with base-branch pushes deferred to "the user's
+  instructions", let the model read the task as a request to push. A
+  candidate wording ("push nothing at any stage unless the user explicitly
+  asked for a push: a standing "commit and push" instruction counts, the task
+  itself does not", and "unless the user explicitly said to push there")
+  scored 2/3 on a scratch copy (`$RUN/data/j6/exp-h/`). It is a skill-text
+  change after the fourth pass, so it is not applied: it goes to the user
+  as a decision, which would also need a fifth review pass. Asking (case 11)
+  passed 0 to 1 of 3 on every text today, 2 of 3 earlier: weak on this model
+  throughout, not a regression of one commit.
+- 2026-11-23: review pass 4 (a fourth fresh reviewer, complete diff at
+  `4239ea2`): gate open, no CRITICAL or HIGH, three MEDIUM, one LOW, none
+  requiring a skill-text change. Fixed in tests: seven patterns anchored at
+  their full stop, README pins made whole sentences (55 of 55 rewordings now
+  fail). Fixed in evals: case 12's timing assertion passed without the skill
+  on every attempt ("test locally, then open a PR" satisfied "between test
+  hardening and the first review pass"), so it now asks for a step that adds
+  edge-case tests to an implementation whose tests already pass; case 14's
+  prompt presupposed a push ("each point where something is pushed") and now
+  asks what the run does with git. Fixed in the plan: decision 1, the stale
+  risk line, this evaluation section. Deferred to the user: the no-push
+  wording above (F3), with the residual risk that an unattended 30B-class run
+  pushes to the base branch.

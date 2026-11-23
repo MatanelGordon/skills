@@ -75,7 +75,7 @@ test('the mode sits between hardening and review, and planning points to it', as
   assert(hardening < modeStart && modeStart < review, 'the mode belongs between stage 4 and stage 5');
   assertPhrase(
     flatten(sectionOf(skill, '## 1. Plan')),
-    /if the change will enter review convergence, settle pull-request review mode \(below\) with the plan: ask once/i,
+    /if the change will enter review convergence, settle pull-request review mode \(below\) with the plan: ask once, "review this through a pull request\?", unless the answer was already given\./i,
     'stage 1',
   );
   assertPhrase(
@@ -92,12 +92,12 @@ test('the mode is opt-in and only a direct answer turns it on', async () => {
   assertPhrase(mode, /pull-request review mode — opt-in/i, where);
   assertPhrase(
     mode,
-    /the mode applies to any change that enters review convergence in a repository with a github remote/i,
+    /the mode applies to any change that enters review convergence in a repository with a github remote\./i,
     where,
   );
   assertPhrase(
     mode,
-    /ask once, with the plan: "review this through a pull request\?" ask before implementation starts, or before the first review pass if that moment has passed/i,
+    /ask once, with the plan: "review this through a pull request\?" ask before implementation starts, or before the first review pass if that moment has passed\./i,
     where,
   );
   assertPhrase(
@@ -138,15 +138,15 @@ test('the pull request opens as a draft after stage 4 and before the first revie
   const { mode } = await readContract();
   const where = 'the mode section';
 
-  assertPhrase(mode, /when the mode is on: 1\. branch first\. a yes puts commits in scope/i, where);
+  assertPhrase(mode, /when the mode is on: 1\. branch first\. a yes puts commits in scope\./i, where);
   assertPhrase(
     mode,
-    /work on a branch, never on the base branch; work already on the base branch moves to a new branch, and only that branch is pushed/i,
+    /work on a branch, never on the base branch; work already on the base branch moves to a new branch, and only that branch is pushed\./i,
     where,
   );
   assertPhrase(
     mode,
-    /open after test hardening and before the first review pass \(after implementation when hardening is skipped\)/i,
+    /open after test hardening and before the first review pass \(after implementation when hardening is skipped\)\./i,
     where,
   );
   assertPhrase(
@@ -155,14 +155,14 @@ test('the pull request opens as a draft after stage 4 and before the first revie
     where,
   );
   assertPhrase(mode, /give the user the url\./i, where);
-  assertPhrase(mode, /fails, report the error and wait; do not review as if it existed\./i, where);
+  assertPhrase(mode, /if the push or the pull request fails, report the error and wait; do not review as if it existed\./i, where);
 });
 
 test('review fixes are new commits and stage 5 still governs the review', async () => {
   const { skill, mode } = await readContract();
   const where = 'the mode section';
 
-  assertPhrase(mode, /stage 5 applies unchanged: its complete cumulative diff is the pull request diff/i, where);
+  assertPhrase(mode, /stage 5 applies unchanged: its complete cumulative diff is the pull request diff\./i, where);
   assertPhrase(mode, /each review fix is a new pushed commit, with no amend, rebase, or force-push, so the user can follow it\./i, where);
   assertPhrase(flatten(sectionOf(skill, '## 5. Review convergence')), /at least two review passes/i, 'stage 5');
 });
@@ -203,12 +203,18 @@ test('README mirrors the mode, its timing, its merge rule and its default', asyn
   const { readmeWorkflow } = await readContract();
   const where = 'the README workflow section';
 
-  assertPhrase(readmeWorkflow, /pull-request review mode/i, where);
-  assertPhrase(readmeWorkflow, /it asks once, with the plan/i, where);
-  assertPhrase(readmeWorkflow, /draft pull request after test hardening and before the first review pass/i, where);
-  assertPhrase(readmeWorkflow, /pushes every review fix as a new commit/i, where);
-  assertPhrase(readmeWorkflow, /marks the pull request ready after verification/i, where);
-  assertPhrase(readmeWorkflow, /never merges without your explicit permission/i, where);
+  assertPhrase(
+    readmeWorkflow,
+    /pull-request review mode\. if you want to read a change on github while it is reviewed, say yes when the workflow asks\./i,
+    where,
+  );
+  assertPhrase(readmeWorkflow, /it asks once, with the plan\./i, where);
+  assertPhrase(
+    readmeWorkflow,
+    /it then works on a branch, opens a draft pull request after test hardening and before the first review pass, pushes every review fix as a new commit, and marks the pull request ready after verification\./i,
+    where,
+  );
+  assertPhrase(readmeWorkflow, /it never merges without your explicit permission\./i, where);
   assertPhrase(
     readmeWorkflow,
     /if nobody answers, the mode stays off, nothing is pushed that you have not asked for, and review runs locally\./i,
@@ -224,7 +230,7 @@ test('evals assert asking, timing, new commits, the unanswered default, and not 
   const required = {
     'asking about the mode': /asks the user whether the change should be reviewed through a pull request/i,
     'asking now, not later': /puts the question to the user now, rather than listing it as a later step of the plan/i,
-    'opening between hardening and review': /opening of the pull request between test hardening and the first review pass/i,
+    'opening after hardening': /opening of the pull request after a step that adds edge-case tests to an implementation whose tests already pass/i,
     'opening as a draft': /pull request is opened as a draft/i,
     'fixes as new commits': /rules out force-pushing review fixes/i,
     'staying unmerged': /stays unmerged until the user gives explicit permission/i,

@@ -132,13 +132,13 @@
       "expected_output": "The reply says a draft pull request is opened between test hardening and the first review pass, and that review fixes arrive as new commits with no force-push. It says the pull request ends marked ready and unmerged.",
       "files": [],
       "assertions": [
-        "The reply places the opening of the pull request between test hardening and the first review pass.",
+        "The reply places the opening of the pull request after a step that adds edge-case tests to an implementation whose tests already pass.",
         "The reply says the pull request is opened as a draft.",
         "The reply rules out force-pushing review fixes.",
         "The reply says the pull request stays unmerged until the user gives explicit permission."
       ],
       "expectations": [
-        "The reply places the opening of the pull request between test hardening and the first review pass.",
+        "The reply places the opening of the pull request after a step that adds edge-case tests to an implementation whose tests already pass.",
         "The reply says the pull request is opened as a draft.",
         "The reply rules out force-pushing review fixes.",
         "The reply says the pull request stays unmerged until the user gives explicit permission."
@@ -162,7 +162,7 @@
     },
     {
       "id": 14,
-      "prompt": "This is an unattended overnight run: nobody will answer questions until morning. The brief says nothing about pull requests. The repository is on GitHub and `gh` is signed in. Task: add retry with backoff to the webhook sender in `src/webhooks/send.ts`. Reply with the steps this run takes from start to finish, including each point where something is pushed to GitHub. Describe the run; do not write the code in this reply.",
+      "prompt": "This is an unattended overnight run: nobody will answer questions until morning. The brief says nothing about pull requests. The repository is on GitHub and `gh` is signed in. Task: add retry with backoff to the webhook sender in `src/webhooks/send.ts`. Reply with the steps this run takes from start to finish, including what it does with git. Describe the run; do not write the code in this reply.",
       "expected_output": "The reply says the run does not wait for an answer, pushes nothing, opens no pull request and reviews locally. It says it will tell the user that review through a pull request was off.",
       "files": [],
       "assertions": [

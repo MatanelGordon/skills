@@ -34,8 +34,10 @@ enough) and when the user wants a few sentences in chat, not a file.
 
 ## Steps
 
-1. **Get `plan.md`.** If `.plan/<name>/plan.md` exists, read it and leave its
-   structure alone. If not, write it with `deep-plan`. Where that skill is not
+1. **Get `plan.md`.** If `.plan/<name>/plan.md` exists, or the user points at
+   a plan elsewhere, read it and leave its structure alone; the review and
+   `diagrams/` go in the same folder as that plan, which you neither move nor
+   copy. If there is no plan, write it with `deep-plan`. Where that skill is not
    installed, write a `**Status:** draft` line and these headings, in this
    order: Goal, Out of scope, Background, Approach, Architecture, File map,
    Shared surface, Phases, Test strategy, Definition of done, Risks and

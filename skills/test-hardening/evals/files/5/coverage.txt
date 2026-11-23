@@ -1,0 +1,12 @@
+$ coverage run --source=src -m unittest discover -s tests
+...
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+$ coverage report -m
+Name              Stmts   Miss  Cover   Missing
+-----------------------------------------------
+src/shipping.py      17      3    82%   18, 28-29
+-----------------------------------------------
+TOTAL                17      3    82%

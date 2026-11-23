@@ -248,12 +248,17 @@ below, one section each, in merge order.
   `functional-typescript` and `functional-python` now open with their
   language ("writing or changing TypeScript or JavaScript modules, domain
   models or error handling") and the code smells they address, instead of
-  generic verbs ("new modules", "handlers") that matched TypeScript trivia,
-  Python files and Ink charts. `get-the-job-done` opens with the user's pushback ("you said it was
-  done, but..."), not with "define runnable completion gates". `bookkeeper`
-  opens with facts to keep for next time and no longer names today-only
-  state, which pulled such requests in. `terminal-ux` names the resize and
-  full-screen symptoms itself. None points at a sibling skill.
+  the generic verbs ("new modules", "handlers") that matched TypeScript
+  trivia, a Python file and an Ink chart in an earlier routing test.
+  `get-the-job-done` opens with the user's pushback ("you said it was done,
+  but..."), not with "define runnable completion gates"; to fit 300
+  characters it no longer names lowering a threshold. `bookkeeper` opens with
+  facts to keep for next time and no longer names today-only state, which
+  pulled such requests in. `terminal-ux` names the resize and full-screen
+  symptoms itself. None points at a sibling skill. On a held-out routing set
+  (a 30B model, 125 requests, 5 attempts) the four problem areas went:
+  functional 0.34 to 0.52, done 0.26 to 0.29, memory 0.65 to 0.80, and
+  terminal 0.52 to 0.46, down.
 
 ### Integration
 

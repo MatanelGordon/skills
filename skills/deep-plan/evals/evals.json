@@ -3,7 +3,7 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "We need to add multi-tenant support to the invoice API in the attached project (in a workspace: the folder `input/shared/invoice-api/`): tenant-scoped auth, per-tenant rate limits and tenant-aware queries. A tenant is what the code calls an organisation. The requirement is settled: it is done when a user of organisation A gets a 404 for organisation B's invoice, and A using up its rate limit leaves B unaffected. Onboarding organisations, billing and a shared rate-limit store are out of scope. Tests go in `test/` and run with `npm test`.\n\nThree agents will build it at the same time: one for auth, one for rate limits, one for queries. I'm away until tomorrow, so don't stop to ask me anything; put what you had to assume in a line under the table.\n\nGive me only the file map of the plan: a table of every file that gets created or changed, with the columns path, change, phase and owner. No other plan sections and no code.",
+      "prompt": "We need to add multi-tenant support to the invoice API in the attached project (in a workspace: the folder `input/shared/invoice-api/`): tenant-scoped auth, per-tenant rate limits and tenant-aware queries. A tenant is what the code calls an organisation. The requirement is settled: it is done when a user of organisation A gets a 404 for organisation B's invoice, and A using up its rate limit leaves B unaffected. Onboarding organisations, billing and a shared rate-limit store are out of scope. Tests go in `test/` and run with `npm test`.\n\nThree agents will build it at the same time: one for auth, one for rate limits, one for queries. I'm away until tomorrow, so don't stop to ask me anything. Under the table, add a few lines on what you had to assume and anything else the three agents must know before they start.\n\nGive me only the file map of the plan: a table of every file that gets created or changed, with the columns path, change, phase and owner. No other plan sections and no code.",
       "expected_output": "A file map table for the multi-tenant work in which every path has one owner and the piece all three agents depend on (how the organisation gets onto the request) lands in a phase before the parallel work. It moves the rate limiter behind `requireAuth` in `src/app.js` and cites ADR-0002 for taking the organisation from the token.",
       "files": [
         "evals/files/shared/invoice-api/src/app.js",
@@ -14,13 +14,13 @@
       ],
       "assertions": [
         "The reply contains a file map in which every path has exactly one owner (`src/middleware.js` and `src/app.js` are the paths most likely to have two).",
-        "The file map has a row, in a phase before the parallel work, that fixes how the organisation is carried on the request (for example `requireAuth` setting `req.user.orgId`, or a shared helper for it).",
+        "In the file map, the row that puts the organisation on the request (in `requireAuth` or in a shared helper) is in an earlier phase than every row for rate limiting and every row for queries.",
         "The reply says `rateLimit` has to be mounted after `requireAuth` in `src/app.js` (today it is mounted before it).",
         "The reply cites `ADR-0002`."
       ],
       "expectations": [
         "The reply contains a file map in which every path has exactly one owner (`src/middleware.js` and `src/app.js` are the paths most likely to have two).",
-        "The file map has a row, in a phase before the parallel work, that fixes how the organisation is carried on the request (for example `requireAuth` setting `req.user.orgId`, or a shared helper for it).",
+        "In the file map, the row that puts the organisation on the request (in `requireAuth` or in a shared helper) is in an earlier phase than every row for rate limiting and every row for queries.",
         "The reply says `rateLimit` has to be mounted after `requireAuth` in `src/app.js` (today it is mounted before it).",
         "The reply cites `ADR-0002`."
       ]
@@ -33,12 +33,12 @@
         "evals/files/2/README.md"
       ],
       "assertions": [
-        "The corrected line reads `You will receive a confirmation email within a minute.`, in the edited `README.md` or in the reply.",
+        "The reply, or the edited `README.md`, contains the confirmation email line with the word spelled `receive`, not `recieve`; whether the line starts with a capital letter does not matter.",
         "The reply contains no file map and no edge-case table.",
         "The reply proposes no plan document and no phases for this change."
       ],
       "expectations": [
-        "The corrected line reads `You will receive a confirmation email within a minute.`, in the edited `README.md` or in the reply.",
+        "The reply, or the edited `README.md`, contains the confirmation email line with the word spelled `receive`, not `recieve`; whether the line starts with a capital letter does not matter.",
         "The reply contains no file map and no edge-case table.",
         "The reply proposes no plan document and no phases for this change."
       ],
@@ -114,14 +114,14 @@
       ],
       "assertions": [
         "The new `GET /` handler, in the edited `src/routes/invoices.js` or in the reply, reads `req.query.limit`.",
-        "The handler caps the limit at 200.",
-        "The handler answers 400 when `limit` is not a positive whole number.",
+        "The handler code, in the edited `src/routes/invoices.js` or in the reply, caps the limit at 200; a description of the change without code does not count.",
+        "The handler code, in the edited `src/routes/invoices.js` or in the reply, answers 400 when `limit` is not a positive whole number; a description of the change without code does not count.",
         "The reply contains no file map, no edge-case table and no `Status:` line."
       ],
       "expectations": [
         "The new `GET /` handler, in the edited `src/routes/invoices.js` or in the reply, reads `req.query.limit`.",
-        "The handler caps the limit at 200.",
-        "The handler answers 400 when `limit` is not a positive whole number.",
+        "The handler code, in the edited `src/routes/invoices.js` or in the reply, caps the limit at 200; a description of the change without code does not count.",
+        "The handler code, in the edited `src/routes/invoices.js` or in the reply, answers 400 when `limit` is not a positive whole number; a description of the change without code does not count.",
         "The reply contains no file map, no edge-case table and no `Status:` line."
       ],
       "expected_skill": null
@@ -137,13 +137,13 @@
       "assertions": [
         "The reply flags that `src/checkout/totals.js` has two owners, `p2-cart` and `p2-payment`.",
         "The reply says the `package.json` change belongs in phase 1 instead of with `p2-payment`.",
-        "The reply flags that `npm run test:integration` is not a script in the supplied `package.json`.",
+        "The reply states that the supplied `package.json` has no `test:integration` script; saying only that it may not exist does not count.",
         "The reply flags that the edge case `coupon applied twice` has no status."
       ],
       "expectations": [
         "The reply flags that `src/checkout/totals.js` has two owners, `p2-cart` and `p2-payment`.",
         "The reply says the `package.json` change belongs in phase 1 instead of with `p2-payment`.",
-        "The reply flags that `npm run test:integration` is not a script in the supplied `package.json`.",
+        "The reply states that the supplied `package.json` has no `test:integration` script; saying only that it may not exist does not count.",
         "The reply flags that the edge case `coupon applied twice` has no status."
       ]
     },
@@ -157,12 +157,12 @@
       "assertions": [
         "The updated plan contains a section that records changes made to the plan (headed `Amendments`, `Change log` or similar).",
         "That section has an entry dated 2026-11-22 or 2026-11-23.",
-        "The entry gives the reason for the change: `p2-payment` also had to change `src/checkout/totals.js`."
+        "The amendment entry names the card surcharge or `p2-payment` as the reason for the change."
       ],
       "expectations": [
         "The updated plan contains a section that records changes made to the plan (headed `Amendments`, `Change log` or similar).",
         "That section has an entry dated 2026-11-22 or 2026-11-23.",
-        "The entry gives the reason for the change: `p2-payment` also had to change `src/checkout/totals.js`."
+        "The amendment entry names the card surcharge or `p2-payment` as the reason for the change."
       ]
     },
     {
@@ -176,12 +176,12 @@
       ],
       "assertions": [
         "The reply recommends that one agent (or one session) does the whole job.",
-        "The reply contains no assignment of files to four different agents.",
+        "The reply contains no file map or list that gives different files to two or more agents working in parallel.",
         "The reply gives a reason tied to this job: the small number of files it touches, or that the route change depends on the `src/db/query.js` change."
       ],
       "expectations": [
         "The reply recommends that one agent (or one session) does the whole job.",
-        "The reply contains no assignment of files to four different agents.",
+        "The reply contains no file map or list that gives different files to two or more agents working in parallel.",
         "The reply gives a reason tied to this job: the small number of files it touches, or that the route change depends on the `src/db/query.js` change."
       ]
     },

@@ -392,6 +392,14 @@ node install/run-evals.mjs --skill research-first --id 4 \
   --judge codex --judge-arg exec --judge-arg=-
 ```
 
+Every `evals/evals.json` follows [EVALS.md](EVALS.md): one format that this
+runner, [agent-skills-eval](https://github.com/darkrishabh/agent-skills-eval)
+and NVIDIA SkillEvaluator all load as committed, with rules for how many
+cases a skill needs, how big a case may be, where fixtures live and how to
+word an assertion a grader can check. `npm run normalize-evals` rewrites a
+file into that format and is safe to run twice; `npm run validate` fails on
+anything a runner could not load.
+
 ## Good skills that live elsewhere
 
 These are deliberately not vendored. They belong to their authors and install

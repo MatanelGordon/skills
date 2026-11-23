@@ -32,7 +32,7 @@ async function writeValidRepo({ malformed = false, changelogVersion = '1.0.0', r
   ].join('\n'));
   await writeFile(join(root, 'skills', 'valid-skill', 'evals', 'evals.json'), JSON.stringify({
     skill_name: 'valid-skill',
-    evals: [{ id: 1, prompt: 'Do it', expected_output: 'Done', files: [], expectations: ['It is done'] }],
+    evals: [{ id: 1, prompt: 'Do it', expected_output: 'Done', files: [], assertions: ['It is done'], expectations: ['It is done'] }],
   }));
   if (malformed) await mkdir(join(root, 'skills', 'broken-skill'));
   return root;
@@ -69,7 +69,7 @@ test('validator accepts CRLF frontmatter for skills and agents', async () => {
     '',
   ].join('\r\n'));
   await writeFile(join(root, 'agents', 'valid-agent.evals.json'), JSON.stringify({
-    evals: [{ id: 1, prompt: 'Do it', expected_output: 'Done', expectations: ['It is done'] }],
+    evals: [{ id: 1, prompt: 'Do it', expected_output: 'Done', files: [], assertions: ['It is done'], expectations: ['It is done'] }],
   }));
   const result = await validateRepository(root);
   assert.equal(result.failures.length, 0, result.failures.join('\n'));
@@ -110,6 +110,28 @@ test('validator detects duplicate id keys hidden by JSON.parse', async () => {
   }`);
   const result = await validateRepository(root);
   assert(result.failures.some((line) => line.includes('duplicate id key')));
+});
+
+test('validator fails an eval file the external runners cannot grade or stage', async () => {
+  const root = await writeValidRepo();
+  await writeFile(join(root, 'skills', 'valid-skill', 'evals', 'evals.json'), JSON.stringify({
+    skill_name: 'valid-skill',
+    evals: [
+      { id: 1, prompt: 'Do it', expected_output: 'Done', files: [], expectations: ['It is done'] },
+      { id: 2, prompt: 'Do it', expected_output: 'Done', files: ['evals/files/2/gone.txt'], assertions: ['Done'], expectations: ['Done'] },
+    ],
+  }));
+  const result = await validateRepository(root);
+  assert(result.failures.some((line) => line === 'valid-skill: eval 1: assertions must be a non-empty list of sentences'), result.failures.join('\n'));
+  assert(result.failures.some((line) => line.includes('valid-skill: eval 2: files[0] "evals/files/2/gone.txt" does not exist')), result.failures.join('\n'));
+});
+
+test('validator reports eval-set shortfalls as warnings without failing', async () => {
+  const root = await writeValidRepo();
+  const result = await validateRepository(root);
+  assert.equal(result.failures.length, 0, result.failures.join('\n'));
+  assert(result.warnings.some((line) => line.startsWith('valid-skill: 1 case;')), result.warnings.join('\n'));
+  assert(result.warnings.some((line) => line.startsWith('valid-skill: no negative case')), result.warnings.join('\n'));
 });
 
 test('validator syntax-checks repository tools without entering node_modules', async () => {

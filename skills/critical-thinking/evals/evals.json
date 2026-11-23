@@ -70,12 +70,12 @@
         "evals/files/4/platform-facts.md"
       ],
       "assertions": [
-        "The reply describes moving everything to gRPC as `one-way`.",
-        "The reply offers, as a next step before committing, a pre-mortem, a weighted scoring of the options, or a deeper analysis of the decision."
+        "The reply uses the term `one-way` (any capitalisation, with or without the hyphen) for moving everything to gRPC; wording such as \"no easy rollback\" without that term does not count.",
+        "The reply offers a pre-mortem, a weighted scoring of the options, or a deeper analysis of the decision as a step before committing; an offer to make the answer more specific if given more details does not count."
       ],
       "expectations": [
-        "The reply describes moving everything to gRPC as `one-way`.",
-        "The reply offers, as a next step before committing, a pre-mortem, a weighted scoring of the options, or a deeper analysis of the decision."
+        "The reply uses the term `one-way` (any capitalisation, with or without the hyphen) for moving everything to gRPC; wording such as \"no easy rollback\" without that term does not count.",
+        "The reply offers a pre-mortem, a weighted scoring of the options, or a deeper analysis of the decision as a step before committing; an offer to make the answer more specific if given more details does not count."
       ]
     },
     {

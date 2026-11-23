@@ -24,5 +24,5 @@ def run(steps):
 
 
 run([("cancel", "s1"), ("join", "ana"), ("cancel", "s2"), ("cancel", "s1")])
-run([("join", "dee"), ("cancel", "s1")])
+run([("join", "dee"), ("cancel", "s1"), ("cancel", "s2")])
 print("all scenarios ran, no errors")

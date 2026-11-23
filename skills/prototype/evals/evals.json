@@ -4,19 +4,17 @@
     {
       "id": 1,
       "prompt": "Before we build this, I'm not sure the booking state machine actually holds up once events arrive late or more than once. The draft is attached as `booking-states.md` (in a workspace it is at `input/1/booking-states.md`). Can you try a quick version so we can see? Python 3, one short script of about 60 lines. Give me the script in full in your reply, and write it to a file too if you can write files. If you are able to run it, run it and tell me what it showed; if you are not, I will run it myself.",
-      "expected_output": "One throwaway Python script whose opening comment states the question in one sentence and a prediction of the answer, and which replays late and repeated events from hardcoded scenarios, printing the booking state after every event. No tests.",
+      "expected_output": "One throwaway Python script whose opening comment states the question in one sentence and a prediction of the answer, and which replays late and repeated events from hardcoded scenarios. No tests.",
       "files": [
         "evals/files/1/booking-states.md"
       ],
       "assertions": [
         "The script, in the reply or in a file the agent wrote, has in its opening comment or docstring a line labelled `Question:` that states in one sentence what the script is meant to find out.",
-        "A prediction of what the run will show, labelled as a prediction, guess or expectation, appears in the script's opening comment, or in the text addressed to the user before any output of the script.",
-        "The script prints the booking's state after every event it applies, not only a final state or one pass/fail line per scenario."
+        "A prediction of what the run will show, labelled as a prediction, guess or expectation, appears in the script's opening comment, or in the text addressed to the user before any output of the script."
       ],
       "expectations": [
         "The script, in the reply or in a file the agent wrote, has in its opening comment or docstring a line labelled `Question:` that states in one sentence what the script is meant to find out.",
-        "A prediction of what the run will show, labelled as a prediction, guess or expectation, appears in the script's opening comment, or in the text addressed to the user before any output of the script.",
-        "The script prints the booking's state after every event it applies, not only a final state or one pass/fail line per scenario."
+        "A prediction of what the run will show, labelled as a prediction, guess or expectation, appears in the script's opening comment, or in the text addressed to the user before any output of the script."
       ]
     },
     {
@@ -32,13 +30,13 @@
         "The class, function or file that holds the engagement ordering has `prototype`, `proto`, `spike` or `throwaway` in its name (any letter case).",
         "The engagement numbers the trial code sorts by are literals written in that code (for example a hardcoded dict of post ids to scores), not values fetched from the warehouse, an HTTP call or a new client class.",
         "A comment inside the engagement-ordering code says what happens to that code if the trial's answer is no (for example that the file is deleted).",
-        "The reply points to one line (a binding, constructor argument, factory return or flag check) as the only line that changes when a production ranker replaces the trial one."
+        "Which ranker the feed uses is decided at one place in the trial code (for example the `FeedService(...)` construction in `feed/app.py`, or one flag check), not by a ranking argument or flag added to each call of `home_feed`."
       ],
       "expectations": [
         "The class, function or file that holds the engagement ordering has `prototype`, `proto`, `spike` or `throwaway` in its name (any letter case).",
         "The engagement numbers the trial code sorts by are literals written in that code (for example a hardcoded dict of post ids to scores), not values fetched from the warehouse, an HTTP call or a new client class.",
         "A comment inside the engagement-ordering code says what happens to that code if the trial's answer is no (for example that the file is deleted).",
-        "The reply points to one line (a binding, constructor argument, factory return or flag check) as the only line that changes when a production ranker replaces the trial one."
+        "Which ranker the feed uses is decided at one place in the trial code (for example the `FeedService(...)` construction in `feed/app.py`, or one flag check), not by a ranking argument or flag added to each call of `home_feed`."
       ]
     },
     {
@@ -130,7 +128,7 @@
     {
       "id": 7,
       "prompt": "I wrote a quick spike to check that our waitlist promotion idea works. It is attached as `waitlist_spike.py`, and what it printed is in `run-output.txt` (in a workspace both are under `input/7/`). It ran with no errors, so I think we're fine to build it for real. Agree? If not, show me the smallest change to the spike that would let it settle the matter: the changed or added lines only.",
-      "expected_output": "Disagrees, because the output shows nothing about the seats or the waitlist. The change is a one-sentence question at the top, a prediction written down before the next run, and a print of the seats and the waitlist after every step. No assert statements or tests.",
+      "expected_output": "Disagrees, because the output shows nothing about the seats or the waitlist. The change is a one-sentence question at the top and a print of the seats and the waitlist after every step, which shows `dee` holding both seats before the last cancel.",
       "files": [
         "evals/files/7/waitlist_spike.py",
         "evals/files/7/run-output.txt"
@@ -138,33 +136,31 @@
       "assertions": [
         "The changed lines print the seats and the waitlist after each step inside `run`, not only once at the end of a scenario or of the script.",
         "The reply adds a `Question:` line to the top of the spike, or asks the user to write down in one sentence the question the spike is meant to answer.",
-        "The reply writes, or asks the user for, a prediction of what the run will show, to be fixed before the spike is run again; `assert` statements do not count as a prediction.",
-        "The changed lines add no `assert` statements and no test functions."
+        "The reply says the run output (`all scenarios ran, no errors`) cannot show whether the promotion logic works, because it prints nothing about the seats or the waitlist."
       ],
       "expectations": [
         "The changed lines print the seats and the waitlist after each step inside `run`, not only once at the end of a scenario or of the script.",
         "The reply adds a `Question:` line to the top of the spike, or asks the user to write down in one sentence the question the spike is meant to answer.",
-        "The reply writes, or asks the user for, a prediction of what the run will show, to be fixed before the spike is run again; `assert` statements do not count as a prediction.",
-        "The changed lines add no `assert` statements and no test functions."
+        "The reply says the run output (`all scenarios ran, no errors`) cannot show whether the promotion logic works, because it prints nothing about the seats or the waitlist."
       ]
     },
     {
       "id": 8,
       "prompt": "Before we commit to the retry rules for refund webhooks, I want to see whether they can refund a customer twice. The rules are in the attached `retry-rules.md` (in a workspace it is at `input/8/retry-rules.md`). Can you spike it in Python 3? I was thinking of a small worker that pulls jobs from the Redis on my laptop and calls the payment provider's sandbox, so it's realistic. Give me the code in full in your reply, and write it to a file too if you can write files. Redis and the sandbox key exist only on my laptop, so I will be the one to run that part.",
-      "expected_output": "One Python file that replays the retry rules against an in-memory queue and a fake provider, with no Redis, HTTP or provider library and no sleeping, plus the reason Redis and the sandbox were left out.",
+      "expected_output": "One Python file that replays the retry rules as a fixed series of events against an in-memory queue and a fake provider, with no Redis, HTTP or provider library and no sleeping, plus the reason Redis and the sandbox were left out.",
       "files": [
         "evals/files/8/retry-rules.md"
       ],
       "assertions": [
         "The code imports no Redis, HTTP or payment-provider library (for example `redis`, `requests`, `httpx`, `stripe`).",
         "The reply gives the user a reason for leaving Redis and the provider sandbox out of the code.",
-        "Exactly one code file is delivered, in the reply or on disk: no second module, requirements file, Dockerfile or config file.",
+        "The code ends after replaying a fixed, hardcoded series of events: it has no endless worker loop such as `while True`, no thread and no wait for Ctrl+C.",
         "The code does not wait out the retry delays: it contains no `sleep` call."
       ],
       "expectations": [
         "The code imports no Redis, HTTP or payment-provider library (for example `redis`, `requests`, `httpx`, `stripe`).",
         "The reply gives the user a reason for leaving Redis and the provider sandbox out of the code.",
-        "Exactly one code file is delivered, in the reply or on disk: no second module, requirements file, Dockerfile or config file.",
+        "The code ends after replaying a fixed, hardcoded series of events: it has no endless worker loop such as `while True`, no thread and no wait for Ctrl+C.",
         "The code does not wait out the retry delays: it contains no `sleep` call."
       ]
     }

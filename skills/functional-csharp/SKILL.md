@@ -68,8 +68,8 @@ the contents are not.
 
 | Use | For |
 |---|---|
-| `ImmutableArray<T>` | **default** for domain collections — compact, fast to read, full list patterns; `Add` copies the array, O(n) |
-| `ImmutableList<T>` | frequently rebuilt collections (structural sharing, O(log n) `Add`); list patterns cannot capture a slice (`.. var rest`) |
+| `ImmutableArray<T>` | **default** for domain collections — compact, fast to read; the one to use with slice patterns such as `[var first, .. var rest]`; `Add` copies the array, O(n) |
+| `ImmutableList<T>` | frequently rebuilt collections (structural sharing, O(log n) `Add`); **not** with `.. var rest`: it has no slice support (error CS1503) |
 | `FrozenDictionary<K,V>` / `FrozenSet<T>` | built once, read many — lookup tables, config |
 | `IReadOnlyList<T>` | parameters, when you only need to promise you won't mutate |
 
@@ -79,14 +79,14 @@ change between enumerations, or cost twice. Materialize at the boundary with
 
 ## Discriminated unions
 
-**Check the target framework first.** C# 15 on .NET 11 (released November
-2026) checks unions itself; .NET 10 (LTS, supported to November 2028) and
-earlier need the encoding below.
+**Check the target framework first.** The compiler checks unions only from
+C# 15 on .NET 11 (released November 2026). .NET 10 (LTS, supported to November
+2028) and earlier need the encoding below.
 
 ```csharp
 public abstract record OrderState
 {
-    private OrderState() { }                      // .NET 10 and earlier: closes the hierarchy
+    private OrderState() { }                      // closes the hierarchy
 
     public sealed record Unpaid(DateTimeOffset CreatedAt)                : OrderState;
     public sealed record Paid(DateTimeOffset PaidAt, Money Amount)       : OrderState;
@@ -96,26 +96,32 @@ public abstract record OrderState
 
 - **This replaces enum-plus-nullable-fields,** where `Status = Shipped` with
   `Tracking = null` is representable and someone will eventually construct it.
-- **On .NET 10 and earlier, a switch will not tell you a case is missing.** A
-  switch *expression* over a record hierarchy warns CS8509 whenever it has no
-  `_` arm, even when every case is handled, so the warning carries no
-  information. Write `_ => throw new UnreachableException()`: it catches a
-  missed case at run time only.
-- **To be told at compile time there, give the union a `Match` method** with
-  one delegate per case: adding a case then breaks every caller. Hand-write it,
-  or let **Dunet** or **OneOf** generate it. Use `Match` at boundaries where a
-  missed case would be a real bug, and switch expressions for local branching.
-- **On .NET 11, mark the base `closed` instead:** `public closed record class
-  OrderState { … }`, no private constructor. The compiler then knows every
-  case: a switch expression that handles them all needs no `_` arm, and a new
-  case warns at every switch that misses it. Keep the cases `sealed`, and add
-  a `null` arm when the value can be null.
-- **For "one of several existing types"** (an `Order` or a `NotFound`), C# 15's
-  `public union Lookup(Order, NotFound);` does the same without a base type. It
-  is a struct that boxes value-type cases, and its default value holds null, so
-  add a `null` arm wherever a default can reach the switch.
-- Prefer switch *expressions* over switch statements: they return a value and
-  cannot fall through.
+
+**On .NET 10 and earlier:**
+
+- **The compiler will not tell you a case is missing.** A switch expression
+  over this hierarchy warns CS8509 whenever it has no `_` arm, even when every
+  case is handled, so the warning says nothing about missing cases. Write
+  `_ => throw new UnreachableException()`: it catches a missed case at run
+  time only.
+- **For a compile-time check, give the union a `Match` method** with one
+  delegate parameter per case: adding a case then breaks every caller.
+  Hand-write it, or let **Dunet** or **OneOf** generate it. Use `Match` at
+  boundaries where a missed case would be a real bug.
+
+**On .NET 11 and later:**
+
+- **Mark the base `closed`** (`public closed record class OrderState { … }`)
+  and drop the private constructor. A switch expression that handles every
+  case then needs no `_` arm, and a new case warns at every switch that misses
+  it. Keep the cases `sealed`, and add a `null` arm when the value can be null.
+- **For "one of several existing types"** (an `Order` or a `NotFound`),
+  `public union Lookup(Order, NotFound);` does the same without a base type.
+  It is a struct that boxes value-type cases, and its default value holds
+  null, so add a `null` arm wherever a default can reach the switch.
+
+Prefer switch *expressions* over switch statements on every version: they
+return a value and cannot fall through.
 
 Read `references/unions.md` before writing a `Match` method, a property or list
 pattern, a state machine, or JSON for a union, and when choosing between

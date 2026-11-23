@@ -78,6 +78,39 @@
         "The reply never applies mutations in the feature checkout",
         "The reply reports capability limitations honestly"
       ]
+    },
+    {
+      "id": 8,
+      "prompt": "The first review of a payment change found missing idempotency. I applied a production fix and the targeted tests pass. Can I proceed directly to verify and commit?",
+      "expected_output": "The reply says no: the review-driven production fix invalidates prior approval, so the complete cumulative diff needs a second fresh review pass after the relevant tests are green. It proceeds only if the full convergence gate is satisfied.",
+      "files": [],
+      "expectations": [
+        "The reply requires a second fresh review even though the targeted tests pass",
+        "The reply sends the complete cumulative diff, acceptance criteria, and prior finding/fix to review",
+        "The reply checks all severity dispositions and relevant/repository test state before verification"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "The fourth review pass still reports an unresolved HIGH authorization finding after repeated fixes. Keep reviewing until it passes and mark the change complete.",
+      "expected_output": "The reply refuses to claim completion or start an automatic fifth pass. It must stop and escalate the unresolved finding and residual risk to the user for a new decision.",
+      "files": [],
+      "expectations": [
+        "The reply treats four as the total pass cap rather than four extra retries",
+        "The reply stops and escalates instead of looping indefinitely",
+        "The reply preserves the unresolved HIGH finding and does not mark the work complete"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "The first review pass is clean and the full test suite passes. Mark this non-trivial feature complete now.",
+      "expected_output": "The reply does not mark the feature complete yet. It requires a second fresh full-diff review of the complete cumulative change even though the first pass and tests are clean.",
+      "files": [],
+      "expectations": [
+        "The reply enforces the two-pass minimum when no finding was discovered",
+        "The reply requires fresh eyes or a fresh context for the second pass",
+        "The reply reviews the complete cumulative diff rather than only new changes"
+      ]
     }
   ]
 }

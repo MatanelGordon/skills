@@ -12,14 +12,14 @@
         "The runbook creates a separate working copy of the repository for the run, with `git worktree add`, `git clone` or a copy.",
         "The runbook names commit `749ac1b` as the commit the mutation run is based on.",
         "The runbook installs the Stryker packages with `npm install --no-save`.",
-        "The runbook says the mutation run is not started, or is reported incomplete, if the unmutated test run fails.",
+        "Before the first mutation run, the runbook has a step that runs the unmutated test suite (for example `npm test` or `npx vitest run`) inside the separate working copy.",
         "The reply asks the user to set or approve an overall limit for the run: a total time limit or a maximum number of mutants."
       ],
       "expectations": [
         "The runbook creates a separate working copy of the repository for the run, with `git worktree add`, `git clone` or a copy.",
         "The runbook names commit `749ac1b` as the commit the mutation run is based on.",
         "The runbook installs the Stryker packages with `npm install --no-save`.",
-        "The runbook says the mutation run is not started, or is reported incomplete, if the unmutated test run fails.",
+        "Before the first mutation run, the runbook has a step that runs the unmutated test suite (for example `npm test` or `npx vitest run`) inside the separate working copy.",
         "The reply asks the user to set or approve an overall limit for the run: a total time limit or a maximum number of mutants."
       ]
     },
@@ -33,14 +33,12 @@
       "assertions": [
         "The reply says the `Timeout` mutant keeps the label `Timeout` in the write-up instead of being counted as `Killed`.",
         "The reply says the `Timeout` mutant needs a spot check, a re-run or a manual look.",
-        "The reply says the run cannot be called complete until the two `NoCoverage` mutants are dealt with, for example by adding tests.",
-        "The reply says the run cannot be called complete while the `Pending` mutant (id 16) has not been run."
+        "The reply says the run cannot be called complete until the two `NoCoverage` mutants are dealt with, for example by adding tests."
       ],
       "expectations": [
         "The reply says the `Timeout` mutant keeps the label `Timeout` in the write-up instead of being counted as `Killed`.",
         "The reply says the `Timeout` mutant needs a spot check, a re-run or a manual look.",
-        "The reply says the run cannot be called complete until the two `NoCoverage` mutants are dealt with, for example by adding tests.",
-        "The reply says the run cannot be called complete while the `Pending` mutant (id 16) has not been run."
+        "The reply says the run cannot be called complete until the two `NoCoverage` mutants are dealt with, for example by adding tests."
       ]
     },
     {
@@ -134,14 +132,12 @@
       "assertions": [
         "The report ends with a final status that is not `complete`, such as `incomplete`.",
         "The report says mutant 19 cannot be accepted as equivalent until someone other than Sam has reviewed it.",
-        "The report has a second tally, separate from the native status counts, that groups the mutants by the decision taken on them, with groups such as verified, actionable, excluded and out of scope.",
-        "The report gives the raw report path `.mutation-tmp/discovery.json` together with its SHA-256 value, in full or shortened."
+        "The report has a second tally, separate from the native status counts, that groups the mutants by the decision taken on them, with groups such as verified, actionable, excluded and out of scope."
       ],
       "expectations": [
         "The report ends with a final status that is not `complete`, such as `incomplete`.",
         "The report says mutant 19 cannot be accepted as equivalent until someone other than Sam has reviewed it.",
-        "The report has a second tally, separate from the native status counts, that groups the mutants by the decision taken on them, with groups such as verified, actionable, excluded and out of scope.",
-        "The report gives the raw report path `.mutation-tmp/discovery.json` together with its SHA-256 value, in full or shortened."
+        "The report has a second tally, separate from the native status counts, that groups the mutants by the decision taken on them, with groups such as verified, actionable, excluded and out of scope."
       ]
     },
     {
@@ -154,14 +150,14 @@
         "evals/files/8/tests/shipping.test.js"
       ],
       "assertions": [
-        "The only test case the reply adds is one for a subtotal of exactly 5000 cents; it adds no others, such as 4999 or 5001.",
+        "Before the mutation rerun, the steps include a plain Vitest run of the tests with the new test in place, for example `npx vitest run tests/shipping.test.js`, separate from the Stryker run.",
         "The mutation rerun in the reply is limited to line 10 of `src/shipping.js`, for example with a `mutate` range such as `src/shipping.js:10:1-10:80`, not the whole file or project.",
         "The mutation rerun writes its report to a new file, not to `.mutation-tmp/discovery.json`.",
         "The steps include a review of the new assertion or of the test-only diff, placed before the commit.",
         "The reply says the new test goes back as a single commit made directly on top of the frozen commit `6b1f9d4`."
       ],
       "expectations": [
-        "The only test case the reply adds is one for a subtotal of exactly 5000 cents; it adds no others, such as 4999 or 5001.",
+        "Before the mutation rerun, the steps include a plain Vitest run of the tests with the new test in place, for example `npx vitest run tests/shipping.test.js`, separate from the Stryker run.",
         "The mutation rerun in the reply is limited to line 10 of `src/shipping.js`, for example with a `mutate` range such as `src/shipping.js:10:1-10:80`, not the whole file or project.",
         "The mutation rerun writes its report to a new file, not to `.mutation-tmp/discovery.json`.",
         "The steps include a review of the new assertion or of the test-only diff, placed before the commit.",

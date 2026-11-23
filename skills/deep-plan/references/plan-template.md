@@ -4,7 +4,9 @@ Lives at `<repo>/.plan/<name>/plan.md`, committed to git.
 
 `parallel-build` writes its execution artifacts into the same directory —
 `PROGRESS.md`, `prompts/`, `agents/`, `logs/`, `CR.md`, `SECURITY.md`. Those are
-its templates, not this skill's. This file owns `plan.md` only.
+its templates, not this skill's. Beside `plan.md` go `review.md` and
+`diagrams/` for the user; their shape is the `visual-plan` skill's. This file
+owns `plan.md` only.
 
 ````markdown
 # Plan: <name>
@@ -84,6 +86,7 @@ demonstrated working. What makes this plan closeable.>
 ## Risks and unknowns
 - <risk> -> <mitigation, or "accepted">
 - <unknown> -> <how and when it gets resolved>
+- Q1: <question only the user can settle>: <option> or <option> -> your call; recommend <option>; default <option>
 
 ## Decisions
 - `ADR-NNNN` — <title> — <one line on why it was needed>

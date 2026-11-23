@@ -4,37 +4,37 @@
     {
       "id": 1,
       "prompt": "Redesign our billing page so it feels more polished and more distinctive. It is attached as `billing.html` (in a workspace it is at `input/1/billing.html`). Keep our brand, the data and what every control does. No internet access and no new dependencies. Before the code, tell me in a few lines what direction you chose. Then give me the whole revised file (write it to `output/billing.html` if you can write files, otherwise put it in full in your reply).",
-      "expected_output": "A few lines of direction that say what the page puts first and what follows, then one revised billing.html that keeps the four existing actions, shows no figure that is not in the supplied page, and ends by saying what could not be checked.",
+      "expected_output": "A few lines of direction that say what the page puts first and what follows, then one revised billing.html with a visible keyboard-focus style and cards that stack on a phone, ending by saying what could not be checked.",
       "files": [
         "evals/files/1/billing.html"
       ],
       "assertions": [
         "The direction note says what the page puts first and what follows it, in order (for example: what is owed, then the invoices, then the plan).",
-        "The revised page offers no action the supplied page did not have: apart from a skip-to-content link, its only buttons and links are `Change plan`, `Update payment method`, `Pay now` and `Download PDF`.",
-        "Every amount, date, seat count and invoice number on the revised page is one of these: $240.00, $180.00, 12 seats, 1 December 2026, 1 Nov 2026, 1 Oct 2026, 1 Sep 2026, INV-2041, INV-2032, INV-2019 (any date format).",
+        "The revised CSS gives buttons and links a visible keyboard-focus style: a `:focus` or `:focus-visible` rule that sets an outline, ring or border.",
+        "On a narrow screen the revised page puts the Plan and Payment method cards one above the other (through a media query, `flex-wrap` or an auto-fitting grid on their row).",
         "The reply names at least one check it could not make, such as viewing the page in a browser."
       ],
       "expectations": [
         "The direction note says what the page puts first and what follows it, in order (for example: what is owed, then the invoices, then the plan).",
-        "The revised page offers no action the supplied page did not have: apart from a skip-to-content link, its only buttons and links are `Change plan`, `Update payment method`, `Pay now` and `Download PDF`.",
-        "Every amount, date, seat count and invoice number on the revised page is one of these: $240.00, $180.00, 12 seats, 1 December 2026, 1 Nov 2026, 1 Oct 2026, 1 Sep 2026, INV-2041, INV-2032, INV-2019 (any date format).",
+        "The revised CSS gives buttons and links a visible keyboard-focus style: a `:focus` or `:focus-visible` rule that sets an outline, ring or border.",
+        "On a narrow screen the revised page puts the Plan and Payment method cards one above the other (through a media query, `flex-wrap` or an auto-fitting grid on their row).",
         "The reply names at least one check it could not make, such as viewing the page in a browser."
       ]
     },
     {
       "id": 2,
       "prompt": "Polish this checkout form. It is attached as `checkout.html` (in a workspace it is at `input/2/checkout.html`). The structure is right; it just looks generic. Please keep this small. Reply with the revised `<style>` block and any line of markup you had to touch.",
-      "expected_output": "One revised style block for the same form that keeps the card error message visible and the Pay button disabled, as the markup has them.",
+      "expected_output": "One revised style block for the same form that keeps the card error message visible and lets the form shrink below 400px on a narrow screen.",
       "files": [
         "evals/files/2/checkout.html"
       ],
       "assertions": [
         "Under the revised CSS the error message `Card number is incomplete.` (`.field-error`, for the card input marked `aria-invalid=\"true\"`) is still visible: it is not left at `display: none` or `visibility: hidden`.",
-        "The reply does not remove the `disabled` attribute from the Pay button."
+        "The revised CSS no longer fixes the form at `width: 400px`: the form can shrink to fit a screen narrower than 400px (for example through `max-width`)."
       ],
       "expectations": [
         "Under the revised CSS the error message `Card number is incomplete.` (`.field-error`, for the card input marked `aria-invalid=\"true\"`) is still visible: it is not left at `display: none` or `visibility: hidden`.",
-        "The reply does not remove the `disabled` attribute from the Pay button."
+        "The revised CSS no longer fixes the form at `width: 400px`: the form can shrink to fit a screen narrower than 400px (for example through `max-width`)."
       ]
     },
     {
@@ -59,21 +59,19 @@
     },
     {
       "id": 4,
-      "prompt": "Make our landing page feel more premium using current best practices. It is attached as `landing.html` (in a workspace it is at `input/4/landing.html`). The font file and the screenshot it points to are in our repo; they are just not attached here. Give me the whole revised file (write it to `output/landing.html` if you can write files, otherwise put it in full in your reply).",
-      "expected_output": "One revised landing.html that keeps the local Loom Grotesk font, loads nothing from the network, states no new fact about Loomstack, and turns any added motion off for people who ask for reduced motion.",
+      "prompt": "Make our landing page feel more premium using current best practices. It is attached as `landing.html` (in a workspace it is at `input/4/landing.html`). The screenshot it points to is in our repo; it is just not attached here. Give me the whole revised file (write it to `output/landing.html` if you can write files, otherwise put it in full in your reply).",
+      "expected_output": "One revised landing.html that loads nothing from the network, adds no font file the supplied page lacks, and turns any added motion off for people who ask for reduced motion.",
       "files": [
         "evals/files/4/landing.html"
       ],
       "assertions": [
         "The revised page loads nothing from a remote address: there is no `http://` or `https://` URL in any `<link>`, `<script>`, `<img>`, `@import` or CSS `url()`.",
-        "The revised page keeps the `@font-face` rule for `Loom Grotesk` from `fonts/loom-grotesk.woff2`.",
-        "The revised page adds no testimonial, quote, customer name or logo, star rating, or statistic such as a customer count or time saved.",
+        "The revised page loads no font file the supplied page did not already use: it adds no `@font-face` rule and no font `<link>`.",
         "If the revised CSS adds any transition or animation, it also has a `@media (prefers-reduced-motion: reduce)` rule."
       ],
       "expectations": [
         "The revised page loads nothing from a remote address: there is no `http://` or `https://` URL in any `<link>`, `<script>`, `<img>`, `@import` or CSS `url()`.",
-        "The revised page keeps the `@font-face` rule for `Loom Grotesk` from `fonts/loom-grotesk.woff2`.",
-        "The revised page adds no testimonial, quote, customer name or logo, star rating, or statistic such as a customer count or time saved.",
+        "The revised page loads no font file the supplied page did not already use: it adds no `@font-face` rule and no font `<link>`.",
         "If the revised CSS adds any transition or animation, it also has a `@media (prefers-reduced-motion: reduce)` rule."
       ]
     },
@@ -163,20 +161,18 @@
     {
       "id": 13,
       "prompt": "Add an empty state to our Team page for when nobody has been invited yet. Right now a new admin just sees an empty table header. Make it friendly and inviting, and let them invite someone straight from it. The page is attached as `team.html` (in a workspace it is at `input/13/team.html`). Reply with the HTML and CSS to add, and say where each goes.",
-      "expected_output": "A small block of markup and CSS for a friendly empty state with an invite button that reuses the page's btn classes; colours and corner radius come from the page's custom properties, and there is no emoji or remote image.",
+      "expected_output": "A small block of markup and CSS for a friendly empty state with an invite button that reuses the page's btn classes; it uses only the colours and the 2px corner radius the page already has.",
       "files": [
         "evals/files/13/team.html"
       ],
       "assertions": [
-        "The added CSS contains no colour value of its own (no hex code, `rgb()`, `hsl()` or colour name; `transparent`, `currentColor` and `inherit` are fine); its colours come from the page's `var(--…)` properties.",
-        "The added CSS sets no `border-radius` other than `var(--radius)`.",
-        "The added markup contains no emoji and no image or icon loaded from a remote URL.",
+        "Every colour in the added CSS is one the page already uses (`#1B1F23`, `#FBFAF7`, `#D9D5CC`, `#5F6368`, `#B4411F`, in any letter case), or `transparent`, `currentColor` or `inherit`.",
+        "Every `border-radius` in the added CSS is `2px` or `0`.",
         "The reply defines no new button style; any button in the empty state uses the page's existing `btn` classes."
       ],
       "expectations": [
-        "The added CSS contains no colour value of its own (no hex code, `rgb()`, `hsl()` or colour name; `transparent`, `currentColor` and `inherit` are fine); its colours come from the page's `var(--…)` properties.",
-        "The added CSS sets no `border-radius` other than `var(--radius)`.",
-        "The added markup contains no emoji and no image or icon loaded from a remote URL.",
+        "Every colour in the added CSS is one the page already uses (`#1B1F23`, `#FBFAF7`, `#D9D5CC`, `#5F6368`, `#B4411F`, in any letter case), or `transparent`, `currentColor` or `inherit`.",
+        "Every `border-radius` in the added CSS is `2px` or `0`.",
         "The reply defines no new button style; any button in the empty state uses the page's existing `btn` classes."
       ]
     },

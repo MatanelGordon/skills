@@ -129,24 +129,24 @@
     },
     {
       "id": 7,
-      "prompt": "Our order service is attached as app/main.py, app/shared/event_bus.py, app/shared/mailer.py, app/shared/order_store.py and app/features/orders/create_order/handler.py (in a workspace they are under input/7/app/). When an order is created, the customer should get an email with the subject \"Order <id> confirmed\". List the files you would create and the existing files you would edit, then give each of those files in full.",
-      "expected_output": "create_order publishes an order-created event, and the email is sent by a subscriber in a new file that app/main.py already imports; handler.py never calls send_email.",
+      "prompt": "Our order service is attached as app/main.py, app/shared/event_bus.py, app/shared/mailer.py, app/features/orders/create_order/handler.py and app/features/orders/subscribers.py (in a workspace they are under input/7/app/; app/shared/order_store.py is left out, it only stores orders). When an order is created, the customer should also get an email with the subject \"Order <id> confirmed\". List the files you would create and the existing files you would edit, then give each of those files in full.",
+      "expected_output": "The confirmation email is sent by a subscriber to OrderCreated in a new file of its own, which app/main.py's import scan already picks up; subscribers.py, create_order/handler.py and main.py are left unchanged.",
       "files": [
         "evals/files/7/app/main.py",
         "evals/files/7/app/shared/event_bus.py",
         "evals/files/7/app/shared/mailer.py",
-        "evals/files/7/app/shared/order_store.py",
-        "evals/files/7/app/features/orders/create_order/handler.py"
+        "evals/files/7/app/features/orders/create_order/handler.py",
+        "evals/files/7/app/features/orders/subscribers.py"
       ],
       "assertions": [
-        "`create_order/handler.py`, as given in the reply or as edited, contains no call to `send_email`.",
-        "The `send_email` call is inside a function decorated with `@subscribe(`.",
-        "`handle_create_order` calls `publish(`."
+        "`subscribers.py` is not among the existing files listed for editing or edited.",
+        "The `send_email` call is in a new file, not in `subscribers.py` or `create_order/handler.py`.",
+        "No existing file is listed for editing or edited."
       ],
       "expectations": [
-        "`create_order/handler.py`, as given in the reply or as edited, contains no call to `send_email`.",
-        "The `send_email` call is inside a function decorated with `@subscribe(`.",
-        "`handle_create_order` calls `publish(`."
+        "`subscribers.py` is not among the existing files listed for editing or edited.",
+        "The `send_email` call is in a new file, not in `subscribers.py` or `create_order/handler.py`.",
+        "No existing file is listed for editing or edited."
       ]
     },
     {

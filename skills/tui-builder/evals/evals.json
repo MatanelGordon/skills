@@ -11,16 +11,14 @@
         "evals/files/1/src/App.tsx"
       ],
       "assertions": [
-        "The reply attributes the leftover frames to Ink drawing in the normal (main) screen buffer, the one with scrollback, instead of the alternate screen.",
+        "The reply attributes the leftover frames to the app drawing in the normal (main) screen buffer instead of the alternate screen buffer.",
         "The corrected `src/index.tsx` writes a string containing `[?1049h` to stdout (or calls `ansiEscapes.enterAlternativeScreen`) before it calls `render(`.",
-        "The corrected `src/index.tsx` registers a handler on the process `exit` event, `process.once('exit', ...)` or `process.on('exit', ...)`, that writes a string containing `[?1049l`.",
-        "No `resize` listener in the reply's files that wipes the screen (for example by writing `\\x1Bc` or `[2J`) is registered after the `render(` call; a listener added inside a component or a `useEffect` counts as after."
+        "The corrected `src/index.tsx` registers a handler on the process `exit` event, `process.once('exit', ...)` or `process.on('exit', ...)`, that writes a string containing `[?1049l`."
       ],
       "expectations": [
-        "The reply attributes the leftover frames to Ink drawing in the normal (main) screen buffer, the one with scrollback, instead of the alternate screen.",
+        "The reply attributes the leftover frames to the app drawing in the normal (main) screen buffer instead of the alternate screen buffer.",
         "The corrected `src/index.tsx` writes a string containing `[?1049h` to stdout (or calls `ansiEscapes.enterAlternativeScreen`) before it calls `render(`.",
-        "The corrected `src/index.tsx` registers a handler on the process `exit` event, `process.once('exit', ...)` or `process.on('exit', ...)`, that writes a string containing `[?1049l`.",
-        "No `resize` listener in the reply's files that wipes the screen (for example by writing `\\x1Bc` or `[2J`) is registered after the `render(` call; a listener added inside a component or a `useEffect` counts as after."
+        "The corrected `src/index.tsx` registers a handler on the process `exit` event, `process.once('exit', ...)` or `process.on('exit', ...)`, that writes a string containing `[?1049l`."
       ]
     },
     {
@@ -112,12 +110,10 @@
         "evals/files/6/src/App.tsx"
       ],
       "assertions": [
-        "A finding replaces the terminal reset that the `resize` handler in `src/index.tsx` writes (the escape character followed by `c`) with a string containing both `[2J` and `[H`.",
         "A finding moves the `process.stdout.write('\\x1B[?1049h')` call in `src/index.tsx` so that it runs before the `render(` call.",
         "The finding about the terminal reset (`\\x1Bc`) says it also resets the terminal's colours, font or cursor settings, not only what is on the screen."
       ],
       "expectations": [
-        "A finding replaces the terminal reset that the `resize` handler in `src/index.tsx` writes (the escape character followed by `c`) with a string containing both `[2J` and `[H`.",
         "A finding moves the `process.stdout.write('\\x1B[?1049h')` call in `src/index.tsx` so that it runs before the `render(` call.",
         "The finding about the terminal reset (`\\x1Bc`) says it also resets the terminal's colours, font or cursor settings, not only what is on the screen."
       ]

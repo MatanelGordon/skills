@@ -30,12 +30,12 @@
       "assertions": [
         "The reply says that connecting through the debugging port reaches only the window (the renderer), not the main process.",
         "The reply says the greyed-out `File > Export` menu item cannot be inspected through that connection.",
-        "The reply does not tell the user to quit, kill or relaunch Acme Notes as part of inspecting it now."
+        "The reply's commands connect to the running app on port 9333 (for example `http://127.0.0.1:9333`), the debugging port it was started with in `ps-output.txt`."
       ],
       "expectations": [
         "The reply says that connecting through the debugging port reaches only the window (the renderer), not the main process.",
         "The reply says the greyed-out `File > Export` menu item cannot be inspected through that connection.",
-        "The reply does not tell the user to quit, kill or relaunch Acme Notes as part of inspecting it now."
+        "The reply's commands connect to the running app on port 9333 (for example `http://127.0.0.1:9333`), the debugging port it was started with in `ps-output.txt`."
       ]
     },
     {
@@ -48,13 +48,11 @@
       ],
       "assertions": [
         "The reply says `tauri-driver` does not work on macOS.",
-        "The reply's install commands do not install `tauri-driver`.",
         "The reply says an in-app WebDriver plugin (for example `tauri-plugin-webdriver` or `tauri-webdriver`) works only in debug builds.",
         "The reply recommends WebdriverIO with `@wdio/tauri-service` as the setup to use on this Mac."
       ],
       "expectations": [
         "The reply says `tauri-driver` does not work on macOS.",
-        "The reply's install commands do not install `tauri-driver`.",
         "The reply says an in-app WebDriver plugin (for example `tauri-plugin-webdriver` or `tauri-webdriver`) works only in debug builds.",
         "The reply recommends WebdriverIO with `@wdio/tauri-service` as the setup to use on this Mac."
       ]

@@ -29,12 +29,12 @@
         "evals/files/2/src/Counter.tsx"
       ],
       "assertions": [
-        "In the test file every `stdin.write(` call is followed by an `await` (a tick, a timer or a `waitFor`) before the next `expect` on a frame.",
+        "The test file has an `await` (a tick, a timer or a `waitFor`) between a `stdin.write('+')` call and the `expect` that checks the incremented count; a file with no `stdin.write(` call fails this.",
         "The test file calls `cleanup()` from `ink-testing-library` inside `afterEach`.",
         "No `expect` in the test file compares a whole frame (`lastFrame()` or an entry of `frames`) using `toBe`, `toEqual` or a snapshot matcher."
       ],
       "expectations": [
-        "In the test file every `stdin.write(` call is followed by an `await` (a tick, a timer or a `waitFor`) before the next `expect` on a frame.",
+        "The test file has an `await` (a tick, a timer or a `waitFor`) between a `stdin.write('+')` call and the `expect` that checks the incremented count; a file with no `stdin.write(` call fails this.",
         "The test file calls `cleanup()` from `ink-testing-library` inside `afterEach`.",
         "No `expect` in the test file compares a whole frame (`lastFrame()` or an entry of `frames`) using `toBe`, `toEqual` or a snapshot matcher."
       ]

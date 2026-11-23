@@ -52,14 +52,14 @@
         "The reply compares at most 4 hosting options; a candidate it only mentions as ruled out is not counted.",
         "The $38-a-month big-cloud instance is not one of the options the reply compares; mentioning it as ruled out is allowed.",
         "The reply says, for every hosting option it compares, how hard it would be to move away from that option later.",
-        "The reply says that, if no option is chosen, the site keeps going down whenever the laptop is closed or off."
+        "The reply says that, if no option is chosen, the site keeps going down when the laptop is closed, off or asleep; naming any one of these is enough."
       ],
       "expectations": [
         "The reply contains a table in which each hosting option it compares has its own column or its own row.",
         "The reply compares at most 4 hosting options; a candidate it only mentions as ruled out is not counted.",
         "The $38-a-month big-cloud instance is not one of the options the reply compares; mentioning it as ruled out is allowed.",
         "The reply says, for every hosting option it compares, how hard it would be to move away from that option later.",
-        "The reply says that, if no option is chosen, the site keeps going down whenever the laptop is closed or off."
+        "The reply says that, if no option is chosen, the site keeps going down when the laptop is closed, off or asleep; naming any one of these is enough."
       ]
     },
     {

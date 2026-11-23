@@ -139,18 +139,18 @@
     {
       "id": 9,
       "prompt": "I need to know whether clicking `Pay now` on http://localhost:3000/checkout changes the status text from `idle` to `paid`, and I need the answer from our build box. What is on that box is in the attached box-inventory.txt (in a workspace it is at input/9/box-inventory.txt). Nothing can be installed on it today; IT takes about a day. You are not on that box, so do not probe your own machine. Tell me whether the check can be done today with what is there and what you would do; if something has to be set up first, say what.",
-      "expected_output": "Says the click cannot be driven and observed today with what is on the box, does not improvise a hand-written DevTools Protocol client, and recommends one tool to have installed, stating that the status change stays unverified until then.",
+      "expected_output": "Says the click cannot be driven and observed today with what is on the box, says what a check done today (a click by hand, a curl fetch) would not prove, and recommends one tool to have installed.",
       "files": [
         "evals/files/9/box-inventory.txt"
       ],
       "assertions": [
         "The reply says the effect of clicking `Pay now` cannot be checked today with what is installed on the box.",
-        "The reply does not propose driving Chrome through a hand-written DevTools Protocol (CDP) client over a remote-debugging port; naming that idea only to rule it out is fine.",
+        "The reply says what a check done today with only what is on the box would not prove, for example that clicking `Pay now` by hand leaves no repeatable record, or that curl does not run the page's JavaScript.",
         "The reply recommends having one named tool installed for this check (for example Playwright), not a list of tools to choose between."
       ],
       "expectations": [
         "The reply says the effect of clicking `Pay now` cannot be checked today with what is installed on the box.",
-        "The reply does not propose driving Chrome through a hand-written DevTools Protocol (CDP) client over a remote-debugging port; naming that idea only to rule it out is fine.",
+        "The reply says what a check done today with only what is on the box would not prove, for example that clicking `Pay now` by hand leaves no repeatable record, or that curl does not run the page's JavaScript.",
         "The reply recommends having one named tool installed for this check (for example Playwright), not a list of tools to choose between."
       ]
     },

@@ -3,64 +3,210 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Build a live dashboard showing requests/sec and p99 as charts in the terminal.",
-      "expected_output": "Pure render functions (sparkline/bars) separate from thin Ink components, Box flexbox layout, width measured with string-width, Static for history, throttled updates.",
-      "files": [],
+      "prompt": "Our live terminal dashboard shows requests/sec and p99 latency as charts, with a list of events underneath. It is one Ink component, attached as `Dashboard.tsx` (in a workspace it is at `input/1/src/Dashboard.tsx`). Under production traffic it flickers and pins a CPU core, and after an hour of events it slows to a crawl. Every event has to stay visible in the terminal so people can scroll back through them. Rewrite the file to fix this. Reply with the complete rewritten file in one code block, at most 120 lines. Do not install or run anything, and do not write tests.",
+      "expected_output": "A rewritten Dashboard.tsx that moves samples into state on a timer or throttle 10 to 20 times a second, renders the event history through `<Static>`, and builds both charts with one function outside the component that copes with a flat series.",
+      "files": [
+        "evals/files/1/src/Dashboard.tsx"
+      ],
       "assertions": [
-        "Chart logic is pure functions tested without React",
-        "Layout via Box, no manual space-padding arithmetic",
-        "No .length for terminal width; string-width or Box sizing",
-        "Static used for append-only regions",
-        "High-frequency updates throttled before they reach state"
+        "The rewritten file renders the event lines inside Ink's `<Static>` component.",
+        "State is updated from the samples by a timer or throttle that runs every 50 to 100 ms (10 to 20 times per second), not once per `sample` event.",
+        "The block-character chart string is built by a function declared outside the `Dashboard` component, not by loops inside it.",
+        "The chart-building code guards against a series whose values are all equal (for example `max - min || 1` or a `max === min` branch)."
       ],
       "expectations": [
-        "Chart logic is pure functions tested without React",
-        "Layout via Box, no manual space-padding arithmetic",
-        "No .length for terminal width; string-width or Box sizing",
-        "Static used for append-only regions",
-        "High-frequency updates throttled before they reach state"
+        "The rewritten file renders the event lines inside Ink's `<Static>` component.",
+        "State is updated from the samples by a timer or throttle that runs every 50 to 100 ms (10 to 20 times per second), not once per `sample` event.",
+        "The block-character chart string is built by a function declared outside the `Dashboard` component, not by loops inside it.",
+        "The chart-building code guards against a series whose values are all equal (for example `max - min || 1` or a `max === min` branch)."
       ]
     },
     {
       "id": 2,
-      "prompt": "Write tests for the counter component - it increments on '+'.",
-      "expected_output": "ink-testing-library with the async gotcha handled: await a tick after stdin.write before asserting lastFrame.",
-      "files": [],
+      "prompt": "Write tests for the counter component - it increments on '+'. The component is attached as `Counter.tsx` (in a workspace it is at `input/2/src/Counter.tsx`). We use vitest and ink-testing-library. Reply with the complete test file, `Counter.test.tsx`, in one code block. Do not install or run anything.",
+      "expected_output": "A vitest file using ink-testing-library that awaits after each `stdin.write` before reading the frame, calls `cleanup()` after each test, and checks frames by substring.",
+      "files": [
+        "evals/files/2/src/Counter.tsx"
+      ],
       "assertions": [
-        "stdin.write followed by awaited tick before assertions",
-        "cleanup() in afterEach",
-        "Layout-invariant or toContain assertions over full-frame snapshots"
+        "In the test file every `stdin.write(` call is followed by an `await` (a tick, a timer or a `waitFor`) before the next `expect` on a frame.",
+        "The test file calls `cleanup()` from `ink-testing-library` inside `afterEach`.",
+        "No `expect` in the test file compares a whole frame (`lastFrame()` or an entry of `frames`) using `toBe`, `toEqual` or a snapshot matcher."
       ],
       "expectations": [
-        "stdin.write followed by awaited tick before assertions",
-        "cleanup() in afterEach",
-        "Layout-invariant or toContain assertions over full-frame snapshots"
+        "In the test file every `stdin.write(` call is followed by an `await` (a tick, a timer or a `waitFor`) before the next `expect` on a frame.",
+        "The test file calls `cleanup()` from `ink-testing-library` inside `afterEach`.",
+        "No `expect` in the test file compares a whole frame (`lastFrame()` or an entry of `frames`) using `toBe`, `toEqual` or a snapshot matcher."
       ]
     },
     {
       "id": 3,
-      "prompt": "Make errors red in the output.",
-      "expected_output": "Color paired with a symbol/label (never color alone), NO_COLOR and non-TTY honored.",
-      "files": [],
+      "prompt": "Make errors red in the output. The output is the Ink component attached as `DeploySteps.tsx` (in a workspace it is at `input/3/src/DeploySteps.tsx`), which lists the steps of a deploy; the errors are the steps whose status is `failed`. Reply with the complete updated file in one code block. Do not install or run anything.",
+      "expected_output": "The updated component shows failed steps in red and also marks them with a symbol or word, and it turns color off when `NO_COLOR` is set, `TERM` is `dumb`, or output is not a TTY.",
+      "files": [
+        "evals/files/3/src/DeploySteps.tsx"
+      ],
       "assertions": [
-        "Meaning never carried by color alone",
-        "NO_COLOR / TERM=dumb / non-TTY respected"
+        "In the updated file a failed step's row shows a symbol or word that marks it as failed (for example `✗`, `x`, `!`, `FAIL` or `failed`), in addition to the red color.",
+        "The updated file reads the `NO_COLOR` environment variable.",
+        "The updated file compares `TERM` with `dumb`.",
+        "The updated file checks an `isTTY` property before applying color."
       ],
       "expectations": [
-        "Meaning never carried by color alone",
-        "NO_COLOR / TERM=dumb / non-TTY respected"
+        "In the updated file a failed step's row shows a symbol or word that marks it as failed (for example `✗`, `x`, `!`, `FAIL` or `failed`), in addition to the red color.",
+        "The updated file reads the `NO_COLOR` environment variable.",
+        "The updated file compares `TERM` with `dumb`.",
+        "The updated file checks an `isTTY` property before applying color."
       ]
     },
     {
       "id": 4,
-      "prompt": "Parse these CLI flags with commander.",
-      "expected_output": "Not a TUI concern - plain CLI work proceeds without this skill's machinery.",
+      "prompt": "Parse these CLI flags with commander: `--port <number>` (default 8080), `--host <name>` (default 127.0.0.1), `-v, --verbose`, and `--format <json|text>` (default text; anything else is an error). It is a plain batch tool: it reads the flags, does its work, prints a result and exits, with no interactive screen. Reply with the complete `cli.mjs` in one code block. Do not install or run anything.",
+      "expected_output": "A short commander script that defines the four options with their defaults and restricts `--format` to json or text. No Ink, React or terminal-UI code.",
       "files": [],
       "assertions": [
-        "No Ink/TUI ceremony for non-interactive flag parsing"
+        "The `cli.mjs` code defines all four options with commander: `--port`, `--host`, `--verbose` and `--format`.",
+        "The `cli.mjs` code rejects a `--format` value other than `json` or `text` (for example with `.choices([...])` or an explicit check).",
+        "Neither the reply nor any file the run wrote contains an `ink` or `react` import, JSX or a `useInput` call."
       ],
       "expectations": [
-        "No Ink/TUI ceremony for non-interactive flag parsing"
+        "The `cli.mjs` code defines all four options with commander: `--port`, `--host`, `--verbose` and `--format`.",
+        "The `cli.mjs` code rejects a `--format` value other than `json` or `text` (for example with `.choices([...])` or an explicit check).",
+        "Neither the reply nor any file the run wrote contains an `ink` or `react` import, JSX or a `useInput` call."
+      ],
+      "expected_skill": null
+    },
+    {
+      "id": 5,
+      "prompt": "Review this Ink component before I merge it. It is attached as `QueuePanel.tsx`, with a sample of the data it renders in `queues.sample.json` (in a workspace: `input/5/src/QueuePanel.tsx` and `input/5/queues.sample.json`). Reply with a numbered list of at most 8 problems, most serious first; for each, quote the line or expression it is about and name the fix. Do not rewrite the file, and do not install or run anything.",
+      "expected_output": "A numbered list of findings that includes: `.length` padding misaligns wide-character names (fix: `string-width` or a fixed-width `<Box>`), the growing log belongs in `<Static>`, over-limit is signalled by color alone, `lastError` has no truncation mode, and the spinner animates even when output is not a TTY.",
+      "files": [
+        "evals/files/5/src/QueuePanel.tsx",
+        "evals/files/5/queues.sample.json"
+      ],
+      "assertions": [
+        "The review names `string-width` (or `stringWidth`) or a fixed-width `<Box>` as the replacement for the `.length`-based `pad` helper.",
+        "The review names Ink's `<Static>` component as the place for the `log` lines.",
+        "The review asks for a symbol or text label, not only red or green, to mark a queue that is over its limit.",
+        "The review asks for a truncation mode on the `lastError` text (for example `wrap=\"truncate\"`).",
+        "The review says the spinner should not animate when output is not a TTY."
+      ],
+      "expectations": [
+        "The review names `string-width` (or `stringWidth`) or a fixed-width `<Box>` as the replacement for the `.length`-based `pad` helper.",
+        "The review names Ink's `<Static>` component as the place for the `log` lines.",
+        "The review asks for a symbol or text label, not only red or green, to mark a queue that is over its limit.",
+        "The review asks for a truncation mode on the `lastError` text (for example `wrap=\"truncate\"`).",
+        "The review says the spinner should not animate when output is not a TTY."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "I need `formatRows.ts`: one exported function that takes rows like the ones in the attached `services.sample.json` (in a workspace it is at `input/6/services.sample.json`) and returns one string per row with three aligned columns: name 20 wide (cut with `…` when it is longer), region 10 wide, and p99 right-aligned 6 wide. The same lines go into a single `<Text>` in our Ink UI and into the `--plain` output, so return plain strings, not components. Reply with the complete file in one code block. Do not install or run anything.",
+      "expected_output": "A TypeScript function with no React in it that pads and truncates by display width (string-width or an equivalent), so rows with CJK and emoji names line up; the name is never measured with `.length` or cut with `slice`.",
+      "files": [
+        "evals/files/6/services.sample.json"
+      ],
+      "assertions": [
+        "The amount of padding after the name is computed from a display-width measurement (a `stringWidth(` call from `string-width`, or another function that counts terminal columns), not from the name's `.length` or a plain `padEnd(20)`.",
+        "The name is cut to its 20-wide column by counting display width, character by character or with a truncation library, not by `slice`, `substring` or `substr` with a fixed character count."
+      ],
+      "expectations": [
+        "The amount of padding after the name is computed from a display-width measurement (a `stringWidth(` call from `string-width`, or another function that counts terminal columns), not from the name's `.length` or a plain `padEnd(20)`.",
+        "The name is cut to its 20-wide column by counting display width, character by character or with a truncation library, not by `slice`, `substring` or `substr` with a fixed character count."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Write the tests for our gauge. The two source files are attached as `bar.ts` and `Gauge.tsx` (in a workspace: `input/7/src/bar.ts` and `input/7/src/Gauge.tsx`). We use vitest and ink-testing-library. Reply with one complete test file, `gauge.test.tsx`, in one code block, at most 100 lines. Do not install or run anything.",
+      "expected_output": "One vitest file that tests `hbar` and `percent` directly with edge-case inputs and checks the bar's width, renders `Gauge` with a wide-character label, asserts a line-width invariant on the rendered frame, and uses no snapshots.",
+      "files": [
+        "evals/files/7/src/bar.ts",
+        "evals/files/7/src/Gauge.tsx"
+      ],
+      "assertions": [
+        "The test file asserts on the width of `hbar`'s result (with `.length`, `toHaveLength` or `stringWidth`) for at least two different inputs.",
+        "The test file renders `Gauge` with a label that contains CJK or emoji characters.",
+        "The test file has a test that splits a rendered frame into lines and asserts that every line has the same width, or that no line is wider than a stated limit.",
+        "The test file contains no snapshot matcher (`toMatchSnapshot` or `toMatchInlineSnapshot`)."
+      ],
+      "expectations": [
+        "The test file asserts on the width of `hbar`'s result (with `.length`, `toHaveLength` or `stringWidth`) for at least two different inputs.",
+        "The test file renders `Gauge` with a label that contains CJK or emoji characters.",
+        "The test file has a test that splits a rendered frame into lines and asserts that every line has the same width, or that no line is wider than a stated limit.",
+        "The test file contains no snapshot matcher (`toMatchSnapshot` or `toMatchInlineSnapshot`)."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Add keyboard control to this Ink branch picker, attached as `BranchList.tsx` (in a workspace it is at `input/8/src/BranchList.tsx`): move the selection up and down, check out the selected branch, delete the selected branch, and quit. Choose the keys yourself. Reply with the complete updated file in one code block. Do not install or run anything.",
+      "expected_output": "The updated component handles the arrow keys plus `j`/`k`, a key to check out and a key to quit, shows the available keys in a footer line, and does not delete a branch on a single keypress.",
+      "files": [
+        "evals/files/8/src/BranchList.tsx"
+      ],
+      "assertions": [
+        "The updated component moves the selection with `j` and `k` as well as with the arrow keys.",
+        "The updated component renders a line of text listing its keys and what each does (a footer or hint line).",
+        "The updated component does not call `onDelete` on a single plain keypress: it asks for confirmation first, or requires a modifier such as Shift or Ctrl."
+      ],
+      "expectations": [
+        "The updated component moves the selection with `j` and `k` as well as with the arrow keys.",
+        "The updated component renders a line of text listing its keys and what each does (a footer or hint line).",
+        "The updated component does not call `onDelete` on a single plain keypress: it asks for confirmation first, or requires a modifier such as Shift or Ctrl."
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "This is a Python Textual app, attached as `app.py` (in a workspace it is at `input/9/app.py`). Add an `r` key that reloads the table rows from `load_rows()`, and make it show up in the footer next to Quit. Reply with the complete updated `app.py` in one code block. Do not install or run anything.",
+      "expected_output": "The same Textual app in Python with an `r` binding in `BINDINGS` and an action method that clears and refills the table from `load_rows()`. No Ink, React or JavaScript.",
+      "files": [
+        "evals/files/9/app.py"
+      ],
+      "assertions": [
+        "The updated `app.py` adds an entry for the `r` key to `BINDINGS`.",
+        "The updated `app.py` defines an action method for that binding (for example `action_reload`) that calls `load_rows()`.",
+        "Neither the reply nor any file the run wrote contains JavaScript or TypeScript: no `ink` or `react` import, no JSX and no `useInput` call."
+      ],
+      "expectations": [
+        "The updated `app.py` adds an entry for the `r` key to `BINDINGS`.",
+        "The updated `app.py` defines an action method for that binding (for example `action_reload`) that calls `load_rows()`.",
+        "Neither the reply nor any file the run wrote contains JavaScript or TypeScript: no `ink` or `react` import, no JSX and no `useInput` call."
+      ],
+      "expected_skill": null
+    },
+    {
+      "id": 10,
+      "prompt": "This Ink layout, attached as `Layout.tsx` (in a workspace it is at `input/10/src/Layout.tsx`), was built on a 100-column terminal. Most of the team runs it in an 80-column window or in a narrow tmux split, where the right pane wraps underneath the left one and long job titles run over the border. Fix the file. We are on ink 7.1 and React 19. Reply with the complete updated file in one code block. Do not install or run anything.",
+      "expected_output": "The updated layout takes its width from the terminal and follows resizes (`useWindowSize()` or a resize listener), truncates job titles with a `wrap` mode on `<Text>`, and does something deliberate below a minimum width.",
+      "files": [
+        "evals/files/10/src/Layout.tsx"
+      ],
+      "assertions": [
+        "The updated file reads the terminal width through something that follows resizes: `useWindowSize()`, or `stdout.columns` together with a `resize` listener.",
+        "The job titles in the sidebar have a truncation mode set on `<Text>` (`wrap=\"truncate\"` or another `truncate-*` value).",
+        "Below a stated minimum width the updated file renders something different on purpose: it drops the sidebar, stacks the panes, or shows a message that the terminal is too small."
+      ],
+      "expectations": [
+        "The updated file reads the terminal width through something that follows resizes: `useWindowSize()`, or `stdout.columns` together with a `resize` listener.",
+        "The job titles in the sidebar have a truncation mode set on `<Text>` (`wrap=\"truncate\"` or another `truncate-*` value).",
+        "Below a stated minimum width the updated file renders something different on purpose: it drops the sidebar, stacks the panes, or shows a message that the terminal is too small."
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "A colleague who uses a screen reader says this Ink status screen, attached as `StatusScreen.tsx` (in a workspace it is at `input/11/src/StatusScreen.tsx`), is unusable: the reader keeps re-reading the box, and he cannot tell which checks failed. Change the file so it works for him, and keep the current look for everyone else. We are on ink 7.1 and React 19. Reply with the complete updated file in one code block. Do not install or run anything.",
+      "expected_output": "The updated component detects a screen reader with `useIsScreenReaderEnabled()` and in that mode prints plain lines, each check with its state as a word, with no border and no spinner animation; otherwise it looks as before.",
+      "files": [
+        "evals/files/11/src/StatusScreen.tsx"
+      ],
+      "assertions": [
+        "The updated file detects the screen reader with Ink's `useIsScreenReaderEnabled()` hook, not only through a prop, flag or environment variable.",
+        "In its screen-reader (or plain) mode the updated file starts no spinner timer: no `setInterval` runs, or the spinner frames are not rendered.",
+        "In its screen-reader (or plain) mode the updated file renders no border (no `borderStyle` on the outer `<Box>`)."
+      ],
+      "expectations": [
+        "The updated file detects the screen reader with Ink's `useIsScreenReaderEnabled()` hook, not only through a prop, flag or environment variable.",
+        "In its screen-reader (or plain) mode the updated file starts no spinner timer: no `setInterval` runs, or the spinner frames are not rendered.",
+        "In its screen-reader (or plain) mode the updated file renders no border (no `borderStyle` on the outer `<Box>`)."
       ]
     }
   ]

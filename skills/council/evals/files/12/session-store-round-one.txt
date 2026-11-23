@@ -1,0 +1,43 @@
+COUNCIL RUN: session store
+State after round 1. Nothing else has been run yet.
+
+DECISION BRIEF (validated; pasted verbatim into every member's prompt)
+DECISION: Where should the web tier keep user session state?
+OPTIONS: A) keep sessions in the existing Postgres table B) move sessions to a dedicated Redis cluster
+CONSTRAINTS: no forced logouts during the change; the two-person platform team, not the authors, runs whatever is chosen.
+EVIDENCE: session reads are 38% of primary database queries (measured: pg_stat_statements, last 30 days); session schema and access code (code-read); vendor sizing guide for Redis (unverified-docs)
+STAKES: losing the session store logs out every active user at once.
+
+ROUND 1 ROSTER (selected from the brief): Skeptic, Pragmatist, Migrator, Maintainer
+
+ROUND 1 RAW RESPONSES (each member answered alone, in its own fresh session)
+
+Skeptic
+VOTE: A
+POSITION: Keep sessions in Postgres until the read load is shown to hurt something.
+ARGUMENT: Session reads are 38% of primary queries (measured: pg_stat_statements, last 30 days), but no incident ties that share to a user-facing failure. A second store adds a failure mode in which Redis is down while Postgres is healthy.
+STRONGEST OBJECTION TO MY OWN POSITION: The read share can keep growing until the primary saturates.
+CONFIDENCE: 4/5
+WOULD CHANGE MY MIND: A primary CPU alert that fires during a traffic peak and is traced to session reads.
+PREMISE CHALLENGE: NONE
+
+Pragmatist
+VOTE: B
+POSITION: Move sessions to Redis now, while the change is still small.
+ARGUMENT: Taking 38% of queries (measured: pg_stat_statements, last 30 days) off the primary buys time for every other workload, and the move is one table and one access module.
+STRONGEST OBJECTION TO MY OWN POSITION: Two stores mean two on-call runbooks.
+CONFIDENCE: 4/5
+WOULD CHANGE MY MIND: A staging cutover rehearsal that logs users out.
+PREMISE CHALLENGE: NONE
+
+Migrator
+VOTE: C
+POSITION: Write sessions to both stores for one quarter before choosing.
+ARGUMENT: Neither option says how live sessions move. Dual writes let the cutover be rehearsed and reversed.
+STRONGEST OBJECTION TO MY OWN POSITION: Dual writes double the write path for a quarter.
+CONFIDENCE: 5/5
+WOULD CHANGE MY MIND: A rehearsed staging cutover that forces no logout.
+PREMISE CHALLENGE: The brief offers two destinations and no migration path between them.
+
+Maintainer
+Both options are workable. I would go with whichever the platform team finds easier to debug at night, and I do not feel strongly either way.

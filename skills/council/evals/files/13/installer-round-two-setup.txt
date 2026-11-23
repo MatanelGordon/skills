@@ -1,0 +1,51 @@
+COUNCIL RUN: installer plugin host
+State before round 2. Round 2 has not been sent.
+
+DECISION BRIEF (validated; pasted verbatim into every member's prompt)
+DECISION: Should install/index.mjs stay one file or become a plugin host that loads one module per agent?
+OPTIONS: A) keep the single installer file B) turn it into a plugin host with one module per agent
+CONSTRAINTS: the command line and the installed file layout must not change; future agents attach only through whichever structure is chosen.
+EVIDENCE: installer control flow in install/index.mjs (code-read); integration effort claimed for a plugin layout (unverified-docs)
+STAKES: the structure chosen now is the one every future agent integration is written against.
+
+ROUND 1 ROSTER (selected from the brief): Skeptic, Pragmatist, Hupert-Graph
+
+ROUND 1 RAW RESPONSES (each member answered alone, in its own fresh session)
+
+Skeptic
+VOTE: A
+POSITION: Keep the current file until its first production failure is named.
+ARGUMENT: Splitting can create compatibility gaps at module boundaries.
+STRONGEST OBJECTION TO MY OWN POSITION: The file may already be too coupled.
+CONFIDENCE: 3/5
+WOULD CHANGE MY MIND: A reproduced cross-agent state leak.
+PREMISE CHALLENGE: NONE
+
+Pragmatist
+VOTE: B
+POSITION: Split only the agent branches that block the next shipped integration.
+ARGUMENT: A narrow extraction can unblock delivery without a full redesign.
+STRONGEST OBJECTION TO MY OWN POSITION: Partial extraction can leave two control paths.
+CONFIDENCE: 4/5
+WOULD CHANGE MY MIND: The next integration lands in one day without extraction.
+PREMISE CHALLENGE: NONE
+
+Hupert-Graph
+VOTE: A
+POSITION: Keep the smallest biggest mission and remove local coupling in-stack.
+ARGUMENT: A module split without standalone value creates one mission with extra boundaries.
+STRONGEST OBJECTION TO MY OWN POSITION: A real plugin boundary could carry standalone value.
+CONFIDENCE: 4/5
+WOULD CHANGE MY MIND: One extracted agent module can install and test independently.
+PREMISE CHALLENGE: The options assume file count is the same thing as architectural coupling.
+
+ROUND 1 RESULT
+NOT_CONVERGED
+
+LABEL ASSIGNMENT ALREADY USED (for the anonymous round-1 packet shown to the missing-role check)
+Skeptic = R2
+Pragmatist = R3
+Hupert-Graph = R1
+
+MISSING-ROLE CHECK RAW OUTPUT (casting director, run once over the brief and that packet)
+MISSING ROLE: Migrator

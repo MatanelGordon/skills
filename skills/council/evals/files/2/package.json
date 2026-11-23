@@ -1,0 +1,17 @@
+{
+  "name": "orders-sync",
+  "version": "2.4.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "pino": "^9.4.0",
+    "undici": "^6.19.8"
+  },
+  "devDependencies": {
+    "c8": "^10.1.2"
+  }
+}

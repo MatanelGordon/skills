@@ -1,4 +1,16 @@
-CONTESTED ROUND-1 FIXTURE
+COUNCIL RUN: installer plugin host
+State after round 1 and the missing-role check.
+
+DECISION BRIEF (validated; pasted verbatim into every member's prompt)
+DECISION: Should install/index.mjs stay one file or become a plugin host that loads one module per agent?
+OPTIONS: A) keep the single installer file B) turn it into a plugin host with one module per agent
+CONSTRAINTS: the command line and the installed file layout must not change; future agents attach only through whichever structure is chosen.
+EVIDENCE: installer control flow in install/index.mjs (code-read); integration effort claimed for a plugin layout (unverified-docs)
+STAKES: the structure chosen now is the one every future agent integration is written against.
+
+ROUND 1 ROSTER (selected from the brief): Skeptic, Pragmatist, Hupert-Graph
+
+ROUND 1 RAW RESPONSES (each member answered alone, in its own fresh session)
 
 Skeptic
 VOTE: A
@@ -27,8 +39,5 @@ CONFIDENCE: 4/5
 WOULD CHANGE MY MIND: One extracted agent module can install and test independently.
 PREMISE CHALLENGE: The options assume file count is the same thing as architectural coupling.
 
-CASTING-DIRECTOR CANDIDATE 1
-maybe a security person could help?
-
-CASTING-DIRECTOR CANDIDATE 2
+MISSING-ROLE CHECK RAW OUTPUT (casting director, run once over the brief and the anonymous round-1 packet)
 MISSING ROLE: security-expert

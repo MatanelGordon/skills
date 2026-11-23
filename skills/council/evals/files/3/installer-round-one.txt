@@ -1,4 +1,16 @@
-ROUND-1 FIXTURE
+COUNCIL RUN: installer file layout
+State after round 1 and the Devil's Advocate gate.
+
+DECISION BRIEF (validated; pasted verbatim into every member's prompt)
+DECISION: Should the installer's agent detection and install steps stay in install/index.mjs or be split into one module per agent inside the same package?
+OPTIONS: A) keep the single installer file B) split it into one module per agent
+CONSTRAINTS: the command line and the files written to disk stay identical, so nothing changes for existing installations; contributors other than the author add future agents.
+EVIDENCE: installer control flow in install/index.mjs (code-read); contributor speed-up claimed for a split layout (unverified-docs)
+STAKES: a regression in the installer breaks every new installation until it is fixed.
+
+ROUND 1 ROSTER (selected from the brief): Skeptic, Pragmatist, Maintainer
+
+ROUND 1 RAW RESPONSES (each member answered alone, in its own fresh session)
 
 Skeptic
 VOTE: A
@@ -27,5 +39,5 @@ CONFIDENCE: 4/5
 WOULD CHANGE MY MIND: A code-read trace that requires jumping across more than three unrelated branches (estimate).
 PREMISE CHALLENGE: NONE
 
-DEVIL'S ADVOCATE FIXTURE
+DEVIL'S ADVOCATE RAW RESPONSE (spawned once, after round 1, with the anonymous packet)
 NO MATERIAL OBJECTION

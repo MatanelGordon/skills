@@ -1,0 +1,2 @@
+# build.sh runs inside a Linux image: keep LF line endings on every checkout.
+* text=auto eol=lf

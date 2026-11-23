@@ -3,68 +3,142 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Write me a rate limiter utility for our Express API.",
-      "expected_output": "Sweeps npm/GitHub before writing code, surfaces existing packages with health signals (stars, last push, license, fit), and suggests adopting one if it covers ~80%+, naming the gap. Only offers to build after presenting the choice.",
+      "prompt": "Write me a rate limiter for this Express API: 100 requests per minute per client. Before any code, tell me what you would use or build, and why.",
+      "expected_output": "The reply names an existing rate-limiting package for Express with what makes it a fit or not, and recommends adopting it or building, before any limiter code is written into the project.",
       "files": [],
       "assertions": [
-        "Searches a registry and GitHub before designing anything",
-        "Top candidate presented with stars/recency/license and fit assessment",
-        "Suggests the existing product when it covers most of the need",
-        "A negative result names the searches performed"
+        "The reply names at least one existing rate-limiting package for Express, such as `express-rate-limit`.",
+        "The reply gives at least one fact about that package's health: its licence, its last release, or how widely it is used.",
+        "The reply recommends adopting a package or building one, with the reason.",
+        "No rate limiter source file is added under `src/` before that recommendation is given."
       ],
       "expectations": [
-        "Searches a registry and GitHub before designing anything",
-        "Top candidate presented with stars/recency/license and fit assessment",
-        "Suggests the existing product when it covers most of the need",
-        "A negative result names the searches performed"
-      ]
-    },
-    {
-      "id": 2,
-      "prompt": "This retry wrapper in http.ts looks redundant now that axios has retries. Remove it?",
-      "expected_output": "Checks both legs before the verdict: the code graph (callers, tests, dynamic refs) AND history (git log -S / blame / ADRs) to learn why it was created. Verdict is one of: reason never existed, reason still applies (cites the commit), or world changed so removable because X.",
-      "files": [],
-      "assertions": [
-        "Runs git log -S or blame before judging",
-        "Checks for dynamic/config references, not just text search",
-        "Verdict cites the originating commit or ADR, or states none exists",
-        "Does not recommend deletion while unable to explain why the code exists"
+        "The reply names at least one existing rate-limiting package for Express, such as `express-rate-limit`.",
+        "The reply gives at least one fact about that package's health: its licence, its last release, or how widely it is used.",
+        "The reply recommends adopting a package or building one, with the reason.",
+        "No rate limiter source file is added under `src/` before that recommendation is given."
       ],
-      "expectations": [
-        "Runs git log -S or blame before judging",
-        "Checks for dynamic/config references, not just text search",
-        "Verdict cites the originating commit or ADR, or states none exists",
-        "Does not recommend deletion while unable to explain why the code exists"
+      "checks": [
+        {
+          "type": "output_matches",
+          "pattern": "(?i)express-rate-limit|rate-limiter-flexible|express-slow-down"
+        }
       ]
     },
     {
       "id": 3,
-      "prompt": "Search the internet: what's the current pricing model for Vercel's build minutes?",
-      "expected_output": "At least two independent resources (different origins), cited next to the claims; dates checked because pricing is volatile; any single-sourced detail labeled as such; conflicts reported rather than averaged.",
+      "prompt": "Search the internet: what is the current pricing model for Vercel's build minutes? Put the source next to each figure.",
+      "expected_output": "The pricing model as published now, with each figure tied to a named source, at least two sources from different sites, and any figure that rests on one source marked as such.",
       "files": [],
       "assertions": [
-        "Two or more sources from different origins, cited inline",
-        "Does not answer from memory for volatile pricing",
-        "Conflicting numbers surfaced as a finding, not averaged"
+        "The reply cites at least two sources from different sites.",
+        "Each price or allowance in the reply has a source named next to it.",
+        "The reply gives the date or the recency of at least one source.",
+        "The reply does not state a price without a source."
       ],
       "expectations": [
-        "Two or more sources from different origins, cited inline",
-        "Does not answer from memory for volatile pricing",
-        "Conflicting numbers surfaced as a finding, not averaged"
+        "The reply cites at least two sources from different sites.",
+        "Each price or allowance in the reply has a source named next to it.",
+        "The reply gives the date or the recency of at least one source.",
+        "The reply does not state a price without a source."
       ]
     },
     {
       "id": 4,
-      "prompt": "Should this helper be called formatUser or renderUser?",
-      "expected_output": "No research ceremony. Subjective naming question gets a direct answer with reasoning.",
+      "prompt": "I have a helper that takes a user object and returns the string `Ada Lovelace <ada@example.com>`. Should it be called formatUser or renderUser? One line.",
+      "expected_output": "A direct answer with a one-line reason. No search for packages or sources.",
       "files": [],
       "assertions": [
-        "No registry sweep or multi-source hunt for a subjective trivial choice",
-        "Direct answer"
+        "The reply picks one of the two names.",
+        "The reply contains no list of packages or sources."
       ],
       "expectations": [
-        "No registry sweep or multi-source hunt for a subjective trivial choice",
-        "Direct answer"
+        "The reply picks one of the two names.",
+        "The reply contains no list of packages or sources."
+      ],
+      "expected_skill": null
+    },
+    {
+      "id": 5,
+      "prompt": "Calls to the carrier fail a few times a day with a 502 or a timeout, and the booking just errors out. Plan how to make `src/carriers/client.js` cope with that. Reply with the plan, naming the files in this repository that it touches; do not write code and do not change any file.",
+      "expected_output": "A plan that wraps the carrier calls in the retry helper the project already has, `retryWithBackoff` in `src/lib/backoff.js`, as `src/webhooks/dispatcher.js` does, and adds neither a new retry utility nor a new dependency.",
+      "files": [],
+      "assertions": [
+        "The plan uses `retryWithBackoff` from `src/lib/backoff.js`.",
+        "The plan adds no new retry or backoff dependency to `package.json`.",
+        "The plan does not write a second retry helper.",
+        "The plan says which carrier calls are safe to repeat, or how a repeated booking is kept from creating two shipments."
+      ],
+      "expectations": [
+        "The plan uses `retryWithBackoff` from `src/lib/backoff.js`.",
+        "The plan adds no new retry or backoff dependency to `package.json`.",
+        "The plan does not write a second retry helper.",
+        "The plan says which carrier calls are safe to repeat, or how a repeated booking is kept from creating two shipments."
+      ],
+      "checks": [
+        {
+          "type": "output_matches",
+          "pattern": "retryWithBackoff|lib/backoff"
+        }
+      ],
+      "trajectory_checks": [
+        {
+          "name": "searched for or opened the existing helper",
+          "pattern": "(?i)backoff|retry"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "The nightly label purge now takes over an hour. In `src/labels/purge.js` it sleeps after every delete, and it fetches each label from the carrier again even though the query already picked the ones to purge. Plan the cleanup that makes it fast. Reply with the plan, naming the files in this repository that it touches; do not write code and do not change any file.",
+      "expected_output": "A plan that keeps both guards and says why, from the commits that added them: the pause holds the job at the carrier's limit of four label deletions per second (ticket NV-20931), and the second read stops the job deleting a label the carrier re-issued to a live shipment (INC-482). Any speed-up stays inside those two limits.",
+      "files": [],
+      "assertions": [
+        "The plan keeps the second read of each label, or replaces it with another check made at delete time.",
+        "The plan gives the reason for the second read: the carrier can re-issue a label under the same id to a live shipment.",
+        "The plan keeps deletions at or under four per second.",
+        "The plan names the commit, the incident `INC-482` or the ticket `NV-20931` as its source."
+      ],
+      "expectations": [
+        "The plan keeps the second read of each label, or replaces it with another check made at delete time.",
+        "The plan gives the reason for the second read: the carrier can re-issue a label under the same id to a live shipment.",
+        "The plan keeps deletions at or under four per second.",
+        "The plan names the commit, the incident `INC-482` or the ticket `NV-20931` as its source."
+      ],
+      "checks": [
+        {
+          "type": "output_matches",
+          "pattern": "(?i)INC-482|NV-20931|re-?issu|locks? the account|re-read each label before purging|pause 250 ?ms between purge calls"
+        }
+      ],
+      "trajectory_checks": [
+        {
+          "name": "read the git history",
+          "pattern": "\\bgit\\b[^|;&\\n]*\\b(log|blame|show)\\b"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "In `src/labels/purge.js`, rename the constant `PAUSE_MS` to `PAUSE_BETWEEN_DELETES_MS`. Show me the changed lines.",
+      "expected_output": "The two lines that change, with the new name. No package search and no source hunt for a rename.",
+      "files": [],
+      "assertions": [
+        "The reply shows the declaration with the name `PAUSE_BETWEEN_DELETES_MS`.",
+        "The reply shows the `pause(...)` call using `PAUSE_BETWEEN_DELETES_MS`.",
+        "The reply contains no list of packages or sources."
+      ],
+      "expectations": [
+        "The reply shows the declaration with the name `PAUSE_BETWEEN_DELETES_MS`.",
+        "The reply shows the `pause(...)` call using `PAUSE_BETWEEN_DELETES_MS`.",
+        "The reply contains no list of packages or sources."
+      ],
+      "expected_skill": null,
+      "checks": [
+        {
+          "type": "output_matches",
+          "pattern": "PAUSE_BETWEEN_DELETES_MS"
+        }
       ]
     }
   ]

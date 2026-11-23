@@ -91,7 +91,14 @@ const describeCheck = (check) => (check.type === 'output_contains' ? check.text 
 const replyChecksOf = (evalCase) => (Array.isArray(evalCase.checks) ? evalCase.checks : [])
   .filter((check) => REPLY_CHECK_TYPES.includes(check.type));
 
-function replyCheckPasses(check, reply) {
+// Models typeset tokens: "win‑build‑03" with U+2011, "ADR 0005" with U+202F. A
+// reply check asks whether the token is there, so these count as their ASCII form.
+const TYPOGRAPHIC_DASHES = /[‐-―−﹘﹣－]/g;
+const TYPOGRAPHIC_SPACES = /[   ]/g;
+const plainText = (text) => text.replace(TYPOGRAPHIC_DASHES, '-').replace(TYPOGRAPHIC_SPACES, ' ');
+
+function replyCheckPasses(check, rawReply) {
+  const reply = plainText(rawReply);
   if (check.type === 'output_contains') return reply.includes(check.text);
   return compilePattern(check.pattern).test(reply);
 }

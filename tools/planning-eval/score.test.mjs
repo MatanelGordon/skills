@@ -453,3 +453,20 @@ test('an invalid attempt stays out of the loaded-only row even when the skill wa
     { scored: 1, invalid: 0 },
   );
 });
+
+test('a reply check ignores typographic dashes and spaces the model put in the token', () => {
+  // Nemotron writes "win‑build‑03" with U+2011 non-breaking hyphens and "ADR 0005" with U+202F.
+  const typeset = trajectoryOf(agentStep('Run it on win‑build‑03 and follow ADR‑0003 via DocGen render_jobs.'));
+  const runnerCase = {
+    ...planningCase,
+    checks: [
+      { type: 'output_matches', pattern: 'win-build-03' },
+      { type: 'output_contains', text: 'ADR-0003' },
+      { type: 'output_matches', pattern: '(?i)docgen render_jobs' },
+    ],
+  };
+
+  const scored = scoreTrial({ trajectory: typeset, evalCase: runnerCase, skillName: 'adr', arm: 'without-skill' });
+
+  assert.deepEqual(scored.facts.map((fact) => fact.passed), [true, true, true]);
+});

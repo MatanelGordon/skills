@@ -21,7 +21,7 @@ public static string Describe(OrderState s) => s switch
 {
     OrderState.Unpaid   => "Awaiting payment",
     OrderState.Paid p   => $"Paid {p.Amount}",
-    // no `_` arm and no warning: every direct case is handled
+    // no `_` arm needed, and the compiler stays silent: every direct case is handled
 };
 ```
 

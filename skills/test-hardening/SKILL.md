@@ -1,10 +1,10 @@
 ---
 name: test-hardening
 description: >
-  Use when green implementation needs a bounded test-hardening pass, when asked to
-  harden tests, or at development-workflow's hardening stage. Add focused behavioral
-  edge-case tests from the final diff, changing tests and fixtures only. Not for initial
-  TDD or mutation survivors.
+  Use when a green implementation's final diff needs behavioral edge-case tests: asked
+  to harden tests or find missing cases, or at development-workflow's hardening stage.
+  Changes tests and fixtures only. Not for initial TDD or mutation survivors (use
+  mutation-testing).
 license: MIT
 metadata:
   author: Matanel Gordon

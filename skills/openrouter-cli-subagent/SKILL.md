@@ -2,9 +2,9 @@
 name: openrouter-cli-subagent
 description: >
   Use when coding subagents must run through OpenRouter with the ori CLI: free or
-  low-cost models, a price ceiling, a specific model, or recovery from rate limits,
-  dropped tool calls, or vanished models. Adds model discovery and required cross-model
-  review atop cli-coding-subagents.
+  low-cost models, a price ceiling, or a specific model; or when free-model runs stall
+  from rate limits, dropped tool calls, or vanished models. Includes model discovery and
+  cross-model review.
 license: MIT
 metadata:
   author: Matanel Gordon

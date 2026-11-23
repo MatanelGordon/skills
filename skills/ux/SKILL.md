@@ -1,10 +1,10 @@
 ---
 name: ux
 description: >
-  Use when judging or improving interface usability, flows, or task success across web,
-  mobile, CLI, TUI, API, or docs. Applies severity-rated heuristics and outcome metrics
-  to errors, empty states, confirmations, and what to cut. For visual styling and
-  polish, use impeccable-lite.
+  Use when asked whether this is good UX, a flow feels confusing, or user experience and
+  task success need review or redesign on web, mobile, CLI, TUI, API, or docs. Covers
+  risky interactions, error-message wording, empty states, confirmations, and what to
+  cut. For visual polish, use impeccable-lite.
 license: MIT
 metadata:
   author: Matanel Gordon

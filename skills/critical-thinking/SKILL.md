@@ -1,9 +1,9 @@
 ---
 name: critical-thinking
 description: >
-  Use when a genuine user decision needs a 2-4-option table: the user asks for options
-  or a summary defers a tool, design, scope, sign-off, or trade-off. Compare pros, cons,
-  cost, and reversibility; recommend one and state the do-nothing default. Not for FYIs.
+  Use when a decision needs a 2-4-option table: the user asks what are my options, you
+  choose among viable approaches, or a summary would say consider, your call, or worth
+  flagging. Not for FYIs, trivia, or one sane path.
 license: MIT
 metadata:
   author: Matanel Gordon

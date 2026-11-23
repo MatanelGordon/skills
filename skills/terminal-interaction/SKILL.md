@@ -1,9 +1,9 @@
 ---
 name: terminal-interaction
 description: >
-  Use when manually driving a CLI, TUI, REPL, installer, wizard, prompt, or SSH session
-  through a real terminal or PTY: send keys, reproduce hangs, redraws, or pipe-vs-TTY
-  bugs, capture the screen, and report evidence. Not for building UIs, test suites, or
+  Use when manually testing a CLI, TUI, REPL, installer, wizard, prompt, or SSH session
+  in a real terminal or PTY, including requests to try, poke at, or see what happens.
+  Reproduce hangs, misdraws, or pipe-vs-TTY bugs. Not for building UIs, test suites, or
   CI.
 license: MIT
 metadata:

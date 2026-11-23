@@ -1,9 +1,10 @@
 ---
 name: adr
 description: >
-  Use when an architectural decision may constrain a plan, refactor, integration,
-  redesign, library, or datastore choice, or when asked to record or reverse one.
-  Consult and maintain .adr/ rationale; supersede decisions rather than erase them.
+  Use to check .adr/ before any plan, refactor, integration, redesign, dependency, or
+  module-boundary change, even when ADRs are not mentioned; also when asked to record or
+  remember a decision, or when making or reversing a hard-to-reverse architectural
+  choice.
 license: MIT
 metadata:
   author: Matanel Gordon

@@ -2,9 +2,9 @@
 name: vertical-slice
 description: >
   Use for vertical slice architecture when adding a feature, endpoint, command, query,
-  or use case; choosing new files versus edits; or designing CQRS, mediator, plugins,
-  domain events, or auto-discovery. Organizes code in additive feature folders; refactor
-  working code only when asked.
+  or use case; deciding where new feature code belongs; or about to add a method to an
+  existing controller or service. Also for CQRS, mediators, plugins, domain events, or
+  auto-discovery.
 license: MIT
 metadata:
   author: Matanel Gordon

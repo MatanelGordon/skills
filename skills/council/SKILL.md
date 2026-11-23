@@ -1,10 +1,10 @@
 ---
 name: council
 description: >
-  Use when isolated subagents should pressure-test a consequential, hard-to-reverse
-  architecture choice with 2-5 real options and a trade-off. Broader technical strategy
-  requires an explicit Council request. Not for option tables (use critical-thinking) or
-  plans (use deep-plan).
+  Use to pressure-test architecture choices through isolated subagents: consequential,
+  hard to reverse, and 2-5 real options with a trade-off. Automatic when those gates
+  hold; broader strategy needs an explicit Council request. Not for option tables (use
+  critical-thinking) or plans (use deep-plan).
 license: MIT
 metadata:
   author: Matanel Gordon

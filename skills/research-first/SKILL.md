@@ -1,10 +1,10 @@
 ---
 name: research-first
 description: >
-  Use when asked to write or build software: search existing solutions first. Includes
-  create, implement, or add requests for a utility, feature, service, or tool.
-  Consequential answers need two independent sources unless conclusive; check code and
-  history before calling code safe to delete.
+  Use when asked to write, build, create, implement, or add a utility, feature, service,
+  or tool: search existing solutions first. Also for consequential web research or
+  answers about versions, prices, APIs, or model names, and before calling code
+  redundant or safe to delete. Skip trivial asks.
 license: MIT
 metadata:
   author: Matanel Gordon

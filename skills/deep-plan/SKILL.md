@@ -2,9 +2,9 @@
 name: deep-plan
 description: >
   Use when an execution-ready plan is needed for a non-trivial multi-file feature,
-  refactor, or migration, or when asked to plan, design, scope, split agents, or resume
-  a plan. Writes .plan/NAME/plan.md with investigated file ownership and tests. It
-  plans; parallel-build executes.
+  refactor, or migration, or when asked to plan, design, scope, split agents, or amend a
+  plan. Owns .plan/NAME/plan.md. It plans and amends; parallel-build executes and
+  resumes.
 license: MIT
 metadata:
   author: Matanel Gordon

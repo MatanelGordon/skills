@@ -1,10 +1,10 @@
 ---
 name: confidence-ranker
 description: >
-  Use when evidence must justify confidence in a claim or action: asked are you sure,
-  verify this, can I rely on that, or /confidence; or consequential action rests on
-  uncertain code or current facts. Rank critical claims and give a readiness verdict.
-  Not for task completion.
+  Use to verify evidence behind a deciding claim: are you sure, how solid is this, can I
+  rely on that, /confidence, or audit the previous answer; also before a consequential
+  change, deletion, deployment, purchase, or message. Not for completion (use
+  get-the-job-done).
 license: MIT
 metadata:
   author: Matanel Gordon

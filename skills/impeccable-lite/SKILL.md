@@ -1,10 +1,9 @@
 ---
 name: impeccable-lite
 description: >
-  Use when visual judgment is central to designing, redesigning, critiquing, or
-  polishing a user-facing interface: hierarchy, typography, layout, color, motion,
-  responsiveness, accessibility, and finish. For behavior and measurable usability, use
-  ux.
+  Use when a user-facing interface needs visual design, redesign, critique, or polish:
+  hierarchy, typography, layout, color, motion, responsiveness, accessibility, and
+  finish. For behavior and measurable usability, use ux.
 license: "MIT; references/perception-first-lens.md is CC BY-SA 4.0"
 metadata:
   author: Matanel Gordon

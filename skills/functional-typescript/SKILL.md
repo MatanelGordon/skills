@@ -1,10 +1,10 @@
 ---
 name: functional-typescript
 description: >
-  Use when writing, reviewing, or refactoring TypeScript or JavaScript domain code or
-  new modules, especially with classes, mutation, inheritance, invalid optional states,
-  throws on expected failures, or unparsed external data. Applies functional conventions
-  at domain boundaries.
+  Use when writing, reviewing, or refactoring TypeScript or JavaScript handlers, API
+  boundaries, state machines, or new modules, especially with classes, mutation,
+  inheritance, invalid optional states, exceptions for expected failures, or unparsed
+  external data.
 license: MIT
 metadata:
   author: Matanel Gordon

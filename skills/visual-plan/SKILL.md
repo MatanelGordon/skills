@@ -1,10 +1,10 @@
 ---
 name: visual-plan
 description: >
-  Use when a coding plan needs a reviewable visual artifact: structured blocks,
-  diagrams, file maps, open questions, and optional UI wireframes or a live prototype.
-  Can enrich an existing text plan. Not the committed .plan record (use deep-plan) or
-  disposable code (use prototype).
+  Use when /visual-plan is requested or a coding plan needs a reviewable visual surface
+  before code: diagrams, file maps, wireframes, or a live prototype for comments and
+  sign-off. Also to read feedback on a shared plan and update it. When deep-plan
+  applies, run it first, then layer this on top.
 license: MIT
 metadata:
   author: Matanel Gordon

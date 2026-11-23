@@ -1,10 +1,10 @@
 ---
 name: functional-python
 description: >
-  Use when writing, reviewing, or refactoring Python domain code or new modules,
-  especially with mutable classes, argument mutation, inheritance, invalid optional
-  states, None failures, or expected-failure exceptions. Applies functional conventions
-  at domain boundaries.
+  Use when writing, reviewing, or refactoring Python handlers, state machines, domain
+  boundaries, or new modules, especially with mutable classes, argument mutation,
+  inheritance, invalid optional states, None as failure, exceptions for expected
+  failures, or unparsed input.
 license: MIT
 metadata:
   author: Matanel Gordon

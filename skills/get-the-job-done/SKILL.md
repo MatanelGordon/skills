@@ -1,10 +1,10 @@
 ---
 name: get-the-job-done
 description: >
-  Use when task completion needs proof against the original ask: before reporting done,
-  when asked is it done or did you test it, when work drifted, scope narrowed, or a
-  failing requirement may be skipped. Creates and re-runs GATES.md checks; failures mean
-  not done.
+  Use to define runnable completion gates before work that may stop early. Also before
+  reporting done; when asked is it done or tested; when criteria were not re-run; when
+  work drifted or scope narrowed; when picking up work called finished; or when a
+  failing requirement may be skipped or downgraded.
 license: MIT
 metadata:
   author: Matanel Gordon

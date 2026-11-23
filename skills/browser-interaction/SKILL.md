@@ -1,9 +1,9 @@
 ---
 name: browser-interaction
 description: >
-  Use when manually testing or clicking through a web page in a real browser: reproduce
-  UI bugs; verify forms, logins, layouts, or cross-browser behavior; and report DOM,
-  console, network, or screenshot evidence. Not for factual lookups, test suites, or CI.
+  Use when manually testing or clicking through a web page in a real browser, or
+  choosing a tool to drive one: reproduce UI bugs; verify forms, logins, layouts,
+  Safari, or cross-browser behavior. Not for factual lookups, test suites, or CI.
 license: MIT
 metadata:
   author: Matanel Gordon

@@ -1,10 +1,10 @@
 ---
 name: terminal-ux
 description: >
-  Use when building, reviewing, or testing a React and Ink terminal UI, CLI output, or
-  text data visualization: layout, charts, input, width, color, redraw performance,
-  accessibility, and ink-testing-library. For full-screen lifecycle and resize
-  artifacts, use tui-builder.
+  Use when building, reviewing, or testing Ink and React terminal output: interactive
+  TUIs, CLI text, charts, layout, input, width, color, redraw performance,
+  accessibility, or ink-testing-library. For full-screen setup or resize bugs, also use
+  tui-builder.
 license: MIT
 metadata:
   author: Matanel Gordon

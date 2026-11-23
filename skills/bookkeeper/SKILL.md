@@ -1,10 +1,10 @@
 ---
 name: bookkeeper
 description: >
-  Use when durable project facts the repository cannot reveal affect work: environments,
-  hosts, credential locations, vocabulary, conventions, quirks, or learned constraints.
-  Consult or update .memory/. Not for architectural decisions (use adr) or temporary
-  state.
+  Use to consult or update .memory/ for durable facts the repo cannot reveal: before
+  answering or planning about hosts, credential locations, vocabulary, naming,
+  environment quirks, or learned constraints, and when one surfaces. Not for decisions
+  (use adr) or temporary state.
 license: MIT
 metadata:
   author: Matanel Gordon

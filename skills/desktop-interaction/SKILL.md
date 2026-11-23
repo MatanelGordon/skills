@@ -1,10 +1,10 @@
 ---
 name: desktop-interaction
 description: >
-  Use when manually testing a packaged webview desktop app such as Electron, Tauri,
-  pywebview, or Neutralino: launch or attach, inspect windows, menus, dialogs, and
-  packaged-only behavior, then report evidence. Not for native Swift, Qt, WinUI, or GTK
-  apps, test suites, or CI.
+  Use when manually testing a webview desktop app in dev or packaged form, such as
+  Electron, Tauri, pywebview, or Neutralino: launch or attach; inspect windows, menus,
+  dialogs, and packaged-only behavior. Not for native Swift, Qt, WinUI, or GTK apps,
+  test suites, or CI.
 license: MIT
 metadata:
   author: Matanel Gordon

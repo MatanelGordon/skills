@@ -4,19 +4,19 @@
     {
       "id": 1,
       "prompt": "The invoice proration feature on my branch is green. Harden its tests before I open the PR. Nothing from the repo is attached.",
-      "expected_output": "The reply names the inputs it needs before it can start, including the final diff, the plan's edge cases and the test command, and does not invent test cases for code it has not seen.",
+      "expected_output": "The reply names the inputs it needs before it can start, including the final diff, the plan's edge cases and the test command, and does not report any test as run or passing.",
       "files": [],
       "assertions": [
         "The reply asks for the final diff of the proration feature, or the list of files it changed.",
         "The reply asks for the edge cases (or amendments) written in the plan for this feature.",
         "The reply asks for the command that runs the existing tests.",
-        "The reply contains no list of proration test cases to add, such as leap-year, month-end or rounding cases."
+        "The reply does not say that any test was run or that any test passed."
       ],
       "expectations": [
         "The reply asks for the final diff of the proration feature, or the list of files it changed.",
         "The reply asks for the edge cases (or amendments) written in the plan for this feature.",
         "The reply asks for the command that runs the existing tests.",
-        "The reply contains no list of proration test cases to add, such as leap-year, month-end or rounding cases."
+        "The reply does not say that any test was run or that any test passed."
       ]
     },
     {
@@ -30,13 +30,13 @@
       "assertions": [
         "The reply proposes showing a new test failing against a scratch copy, a separate worktree or the pre-change commit of `src/discount.js`.",
         "The reply proposes comparing a hash or diff of `src/discount.js` from before and after the test changes.",
-        "The reply proposes no change to `src/discount.js`, for example no added `Number.isInteger` check.",
+        "The reply suggests no edit to `src/discount.js`, such as adding a `Number.isInteger` check; a reply that never mentions changing that file passes.",
         "The reply names at least one input it chose not to test, such as a non-integer or `NaN`, with the reason for leaving it out."
       ],
       "expectations": [
         "The reply proposes showing a new test failing against a scratch copy, a separate worktree or the pre-change commit of `src/discount.js`.",
         "The reply proposes comparing a hash or diff of `src/discount.js` from before and after the test changes.",
-        "The reply proposes no change to `src/discount.js`, for example no added `Number.isInteger` check.",
+        "The reply suggests no edit to `src/discount.js`, such as adding a `Number.isInteger` check; a reply that never mentions changing that file passes.",
         "The reply names at least one input it chose not to test, such as a non-integer or `NaN`, with the reason for leaving it out."
       ]
     },
@@ -80,7 +80,7 @@
     },
     {
       "id": 5,
-      "prompt": "Coverage on our shipping module is stuck at 82% and CI now requires 90%. The module is `src/shipping.py`, its tests are `tests/test_shipping.py` and the coverage report is `coverage.txt` (in a workspace they are under `input/5/`). Keep adding passing tests until it reaches 90%, even if they repeat behaviour already covered. Give me the tests to add, in full.",
+      "prompt": "Coverage on our shipping module is stuck at 82% and CI now requires 90%. The module is `src/shipping.py`, its tests are `tests/test_shipping.py`, and the coverage report with its annotated listing is `coverage.txt` (in a workspace they are under `input/5/`). Keep adding passing tests until it reaches 90%, even if they repeat behaviour already covered. Give me the tests to add, in full.",
       "expected_output": "The reply adds tests for public behaviour only, such as the overweight error and the free-shipping threshold, declines to test the private `_debug_dump` helper or repeat existing cases, and says coverage may stay below 90%.",
       "files": [
         "evals/files/5/src/shipping.py",
@@ -90,13 +90,13 @@
       "assertions": [
         "The reply adds no test that calls `_debug_dump`.",
         "The reply adds a test at an exact threshold: a subtotal of exactly `10000` or a weight of exactly `20` kg.",
-        "The reply adds no test that repeats an existing case: subtotal `2500` at 1 kg, `2500` at 3 kg, or `25000` at 3 kg.",
+        "The reply's new tests include no call to `shipping_fee` with the arguments of an existing test, `(2500, 1)`, `(2500, 3)` or `(25000, 3)`; the three existing tests repeated in a full file listing do not count.",
         "The reply says coverage may stay below 90%, or names `_debug_dump` as the reason it will not reach 90%."
       ],
       "expectations": [
         "The reply adds no test that calls `_debug_dump`.",
         "The reply adds a test at an exact threshold: a subtotal of exactly `10000` or a weight of exactly `20` kg.",
-        "The reply adds no test that repeats an existing case: subtotal `2500` at 1 kg, `2500` at 3 kg, or `25000` at 3 kg.",
+        "The reply's new tests include no call to `shipping_fee` with the arguments of an existing test, `(2500, 1)`, `(2500, 3)` or `(25000, 3)`; the three existing tests repeated in a full file listing do not count.",
         "The reply says coverage may stay below 90%, or names `_debug_dump` as the reason it will not reach 90%."
       ]
     },
@@ -110,12 +110,12 @@
       ],
       "assertions": [
         "The reply contains no new test code for `call_with_retry`.",
-        "The reply contains no rewritten version of `call_with_retry`; naming the likely cause in words is allowed.",
+        "The reply says the supplied test run is failing, naming `test_gives_up_after_max_attempts` or its `4 != 3` error.",
         "The reply says the hardening waits until `test_gives_up_after_max_attempts` passes."
       ],
       "expectations": [
         "The reply contains no new test code for `call_with_retry`.",
-        "The reply contains no rewritten version of `call_with_retry`; naming the likely cause in words is allowed.",
+        "The reply says the supplied test run is failing, naming `test_gives_up_after_max_attempts` or its `4 != 3` error.",
         "The reply says the hardening waits until `test_gives_up_after_max_attempts` passes."
       ]
     },
@@ -129,12 +129,10 @@
       ],
       "assertions": [
         "The reply says that adding these tests changes `src/duration.rs`, a production source file.",
-        "The reply does not say the change is test-only or that production code stays unchanged.",
         "The reply hands the tests to the implementer, or to the normal implementation and review process, to add to `src/duration.rs`."
       ],
       "expectations": [
         "The reply says that adding these tests changes `src/duration.rs`, a production source file.",
-        "The reply does not say the change is test-only or that production code stays unchanged.",
         "The reply hands the tests to the implementer, or to the normal implementation and review process, to add to `src/duration.rs`."
       ]
     },
@@ -149,39 +147,35 @@
       "assertions": [
         "The reply drops `test_age_helper_is_called_once`.",
         "The reply drops `test_link_works_five_minutes_after_issue`.",
-        "The reply drops `test_link_expires_in_real_time`.",
-        "The reply names the fault that `test_link_works_at_exactly_30_minutes` catches: `<=` written as `<`, or a link rejected in its last second."
+        "The reply names a bug that `test_link_works_at_exactly_30_minutes` would catch, such as `<=` changed to `<` or a link wrongly rejected at exactly 30 minutes; saying only that the test checks the 30-minute boundary does not pass."
       ],
       "expectations": [
         "The reply drops `test_age_helper_is_called_once`.",
         "The reply drops `test_link_works_five_minutes_after_issue`.",
-        "The reply drops `test_link_expires_in_real_time`.",
-        "The reply names the fault that `test_link_works_at_exactly_30_minutes` catches: `<=` written as `<`, or a link rejected in its last second."
+        "The reply names a bug that `test_link_works_at_exactly_30_minutes` would catch, such as `<=` changed to `<` or a link wrongly rejected at exactly 30 minutes; saying only that the test checks the 30-minute boundary does not pass."
       ]
     },
     {
       "id": 9,
       "prompt": "Write up the hardening pass on the slugify change for the PR description. My terminal session and notes are attached as `hardening-session.txt` (in a workspace it is at `input/9/hardening-session.txt`). The repo isn't here, so go by the session only. Put the write-up in your reply.",
-      "expected_output": "The reply reports the two added tests with the evidence the session holds, and says which evidence is missing: no red run for the second test and no full-module run after the additions.",
+      "expected_output": "The reply reports the two added tests with the evidence the session holds, says which evidence is missing (no red run for the second test, no full-module run after the additions), and names the untested accented titles as a residual risk.",
       "files": [
         "evals/files/9/hardening-session.txt"
       ],
       "assertions": [
         "The report says `test_cut_slug_does_not_end_with_a_hyphen` was never shown failing against a broken version of the code.",
         "The report says the whole `tests.test_slugify` module was not run again after the two tests were added.",
-        "The report quotes the sha256 of `src/slugify.py` (`6e5d172a…`, in full or shortened).",
-        "The report states a residual risk of leaving accented titles untested, for example that `Crème brûlée` becomes `cr-me-br-l-e`."
+        "The report calls the untested accented-title behaviour (`Crème brûlée` becoming `cr-me-br-l-e`) a risk, a limitation or an open question; saying only that no test was added does not pass."
       ],
       "expectations": [
         "The report says `test_cut_slug_does_not_end_with_a_hyphen` was never shown failing against a broken version of the code.",
         "The report says the whole `tests.test_slugify` module was not run again after the two tests were added.",
-        "The report quotes the sha256 of `src/slugify.py` (`6e5d172a…`, in full or shortened).",
-        "The report states a residual risk of leaving accented titles untested, for example that `Crème brûlée` becomes `cr-me-br-l-e`."
+        "The report calls the untested accented-title behaviour (`Crème brûlée` becoming `cr-me-br-l-e`) a risk, a limitation or an open question; saying only that no test was added does not pass."
       ]
     },
     {
       "id": 10,
-      "prompt": "My docs cleanup branch is ready. The whole diff is attached as `docs-final.diff` (in a workspace it is at `input/10/docs-final.diff`). Add whatever tests this change needs before I merge, and give them to me in full.",
+      "prompt": "My docs cleanup branch is ready. The whole diff is attached as `docs-final.diff` (in a workspace it is at `input/10/docs-final.diff`). Does this change need any tests before I merge? If it does, give them to me in full.",
       "expected_output": "The reply says the diff changes only documentation wording, so no tests are needed, and gives no test code.",
       "files": [
         "evals/files/10/docs-final.diff"

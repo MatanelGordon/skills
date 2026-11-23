@@ -188,6 +188,43 @@ at once.
 Neither skill is required. This one works standalone on any task big enough that
 you might otherwise stop early.
 
+## Removing or renaming something
+
+Deleting or renaming a skill, file, script, flag, command or name is half a
+change. The other half is everything that still names it, and the diff does not
+show it: a README row, a line in another skill, the text inside an SVG, an eval
+case, a test, a CI step, the installer, a link installed months ago, a line in
+the user's own rules. None of it fails when you remove the thing. It fails
+later, for someone else.
+
+So the sweep is a gate, written before the removal like any other:
+
+```md
+- [ ] Nothing outside history files names `old-name`
+      CHECK: ! git grep --untracked -nIw -e 'old-name' -- . ':!CHANGELOG.md' ':!.plan/' ':!.adr/' ':!GATES.md'
+- [ ] No installed link points at nothing
+      CHECK: ! find ~/.claude/skills ~/.codex/skills ~/.copilot/skills ~/.agents/skills -maxdepth 1 -type l ! -exec test -e {} \; -print 2>/dev/null | grep .
+```
+
+Search every spelling (the name, its path, its slash command, its title) in
+three places:
+
+- **The repo:** code, docs, README tables, text in SVG and other images, eval
+  cases, tests, other skills and agents, CI, the installer. History files (a
+  changelog, plans, decision records) record what was true then and keep the
+  old name.
+- **Installed copies, links and callers:** every folder the installer writes
+  (for skills `~/.claude/skills`, `~/.codex/skills`, `~/.copilot/skills`,
+  `~/.agents/skills`, `~/.tabnine/agent/skills`, `~/.claude/agents`), and the
+  scripts, aliases and scheduled jobs that call it.
+- **The user's own files:** rules, `CLAUDE.md` and `AGENTS.md`, memory folders.
+
+Every hit gets an outcome. A hit in the repo is fixed in the same change. A hit
+you may not edit is listed for the user with its path and what to do
+("`~/.claude/rules/x.md:12` names it: delete the line"). "The links will
+dangle" is not an outcome. It is a hit nobody dealt with, and so is a report of
+a removal that shows no sweep.
+
 ## Drift: when you have stopped working
 
 Long runs fail by turning into narration. Signals, in rough order of severity:
@@ -209,6 +246,8 @@ The recovery is mechanical: name the single next unchecked gate, and do only tha
    it. Paraphrase drift is how scope quietly shrinks.
 4. State what you deliberately left out and why. Omission stated is a decision;
    omission unstated is a defect.
+5. If anything was removed or renamed, the sweep gate passes, and every hit you
+   could not fix is in the report with its path.
 
 ## Anti-patterns
 
@@ -225,3 +264,5 @@ The recovery is mechanical: name the single next unchecked gate, and do only tha
 | Splitting deeper to force more effort | Measured not to work. Split for checkability instead. |
 | Deciding a failing gate was "not really required" | Renegotiating the bar at the moment it binds is how eighty percent becomes done. |
 | Reporting pass rates instead of failures | "9 of 11 gates pass" buries which two, and the two are the message. |
+| Removing something and reporting that its references "will dangle" | Naming the damage is not dealing with it. Sweep, fix, and list what you could not fix. |
+| A grep of the repo as the whole sweep | Installed links and the user's own rules name it too, and a repo grep reaches neither. |

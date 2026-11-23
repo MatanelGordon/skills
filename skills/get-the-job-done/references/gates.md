@@ -107,6 +107,19 @@ CHECK: ./scripts/import.sh f.csv && ./scripts/import.sh f.csv && [ "$(psql -tAc 
 CHECK: ! ./cli import --file /nonexistent 2>/dev/null
 ```
 
+**Nothing still names what was removed or renamed** — search every spelling,
+leave out history files and the gates file (it names the old name too), and
+look for links left pointing at nothing:
+
+```
+CHECK: ! git grep --untracked -nIw -e 'old-name' -e 'old_name' -- . ':!CHANGELOG.md' ':!.plan/' ':!.adr/' ':!GATES.md'
+CHECK: ! find ~/.claude/skills ~/.codex/skills ~/.copilot/skills ~/.agents/skills -maxdepth 1 -type l ! -exec test -e {} \; -print 2>/dev/null | grep .
+```
+
+A repo search does not reach installed copies or the user's own rules and
+memory files. Search those too; a hit you may not edit goes in the report with
+its path, not into a gate that can never pass.
+
 **Nothing regressed elsewhere** — the blunt one, and often the right one:
 
 ```

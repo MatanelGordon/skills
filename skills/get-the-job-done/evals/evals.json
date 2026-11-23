@@ -175,6 +175,92 @@
         "Notes that a self-ticking checker destroys the STALE signal it exists to produce",
         "Offers the read-only alternatives - run it, read the result, record evidence deliberately"
       ]
+    },
+    {
+      "id": 16,
+      "prompt": "I merged our `pdf-export` skill into `doc-tools` and deleted `skills/pdf-export/`. Tests pass. The done report I'm about to post in the team channel is attached as `report-draft.md` (in a workspace: `input/16/report-draft.md`). Is it ready to post? If not, say exactly what is missing. Do not rewrite the code.",
+      "expected_output": "Says the report is not ready: the reference search covered only skills/, the two dangling installed links are a leftover to remove or hand over by path, and the user's own rules and memory files were not searched.",
+      "files": [
+        "evals/files/16/report-draft.md"
+      ],
+      "assertions": [
+        "The reply says the report is not ready to post as it stands.",
+        "The reply says the search for `pdf-export` covered only `skills/`.",
+        "The reply names at least one place outside `skills/` to search for `pdf-export`, such as `README.md`, an SVG or other image, CI configuration, or the installer.",
+        "The reply says the two links that point at nothing must be removed now, or handed to the user as named paths to delete.",
+        "The reply names the user's own rules, instructions or memory files as a place that may still name `pdf-export`."
+      ],
+      "expectations": [
+        "The reply says the report is not ready to post as it stands.",
+        "The reply says the search for `pdf-export` covered only `skills/`.",
+        "The reply names at least one place outside `skills/` to search for `pdf-export`, such as `README.md`, an SVG or other image, CI configuration, or the installer.",
+        "The reply says the two links that point at nothing must be removed now, or handed to the user as named paths to delete.",
+        "The reply names the user's own rules, instructions or memory files as a place that may still name `pdf-export`."
+      ]
+    },
+    {
+      "id": 17,
+      "prompt": "I renamed the `--dry` flag of our `shipit` CLI to `--preview`. The diff is attached as `rename.diff` and the repository's file list as `files.txt` (in a workspace: `input/17/rename.diff` and `input/17/files.txt`). Tests pass. Is the rename finished? Reply with what is left, if anything, as a list. Do not edit any file.",
+      "expected_output": "Not finished: names the shell completions, the release workflow or smoke script, and the docs as places that may still say --dry, gives a repository-wide search for --dry, and mentions uses outside the repository.",
+      "files": [
+        "evals/files/17/rename.diff",
+        "evals/files/17/files.txt"
+      ],
+      "assertions": [
+        "The reply does not say the rename is finished.",
+        "The reply names at least one file under `completions/` as a place that may still offer `--dry`.",
+        "The reply names `.github/workflows/release.yml` or `scripts/smoke.sh` as a place that may still pass `--dry`.",
+        "The reply gives a command that searches the whole repository for `--dry`.",
+        "The reply mentions uses of `--dry` outside the repository, such as users' scripts, shell aliases or installed copies."
+      ],
+      "expectations": [
+        "The reply does not say the rename is finished.",
+        "The reply names at least one file under `completions/` as a place that may still offer `--dry`.",
+        "The reply names `.github/workflows/release.yml` or `scripts/smoke.sh` as a place that may still pass `--dry`.",
+        "The reply gives a command that searches the whole repository for `--dry`.",
+        "The reply mentions uses of `--dry` outside the repository, such as users' scripts, shell aliases or installed copies."
+      ]
+    },
+    {
+      "id": 18,
+      "prompt": "A coding agent removed our old `legacy-sync` script and says it is finished. Its report is attached as `agent-report.md` (in a workspace: `input/18/agent-report.md`). Can I merge the branch? Answer yes or no first, then give the reasons in at most five bullets.",
+      "expected_output": "No: the deploy/crontab entry is in the repository and must be fixed in this branch, and the ~/.zshrc alias must be reported to the user by path or removed rather than accepted as a leftover.",
+      "files": [
+        "evals/files/18/agent-report.md"
+      ],
+      "assertions": [
+        "The reply answers no to merging.",
+        "The reply says the `deploy/crontab` entry must be removed or changed in this branch before merging.",
+        "The reply says the `lsync` alias in `~/.zshrc` must be removed or reported to the user with its path, not left as a known leftover.",
+        "The reply asks for a search for `legacy-sync` beyond `scripts/` and `package.json`, such as docs, CI or other configuration."
+      ],
+      "expectations": [
+        "The reply answers no to merging.",
+        "The reply says the `deploy/crontab` entry must be removed or changed in this branch before merging.",
+        "The reply says the `lsync` alias in `~/.zshrc` must be removed or reported to the user with its path, not left as a known leftover.",
+        "The reply asks for a search for `legacy-sync` beyond `scripts/` and `package.json`, such as docs, CI or other configuration."
+      ]
+    },
+    {
+      "id": 19,
+      "prompt": "In the attached `format.ts` (in a workspace: `input/19/format.ts`), the local variable `tmp` in `formatPrice` is assigned and never read. Remove it and give me the function back in full. Nothing else.",
+      "expected_output": "The formatPrice function in full without the tmp line, and nothing about searching for references, gates or installed links.",
+      "files": [
+        "evals/files/19/format.ts"
+      ],
+      "assertions": [
+        "The reply contains the `formatPrice` function with no `tmp` variable.",
+        "The reply contains no `grep` or `git grep` command.",
+        "The reply contains no gates entry, that is no `- [ ]` line followed by a `CHECK:` line.",
+        "The reply does not mention installed links or skill folders such as `~/.claude/skills`."
+      ],
+      "expectations": [
+        "The reply contains the `formatPrice` function with no `tmp` variable.",
+        "The reply contains no `grep` or `git grep` command.",
+        "The reply contains no gates entry, that is no `- [ ]` line followed by a `CHECK:` line.",
+        "The reply does not mention installed links or skill folders such as `~/.claude/skills`."
+      ],
+      "expected_skill": null
     }
   ]
 }

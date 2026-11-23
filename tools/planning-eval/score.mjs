@@ -58,6 +58,12 @@ export function skillLoad(trajectory, skillName) {
 
   const skillFile = new RegExp(`skills/${skillName}/SKILL\\.md`);
   if (calls.some((call) => skillFile.test(call.text))) return { loaded: true, via: 'read SKILL.md' };
+
+  // A slash command (or a Skill call) makes Claude Code add the skill's text as a
+  // user message that starts with this line; a slash command leaves no tool call.
+  const injected = new RegExp(`^Base directory for this skill: \\S*/skills/${skillName}\\s`);
+  const userTexts = stepsOf(trajectory).filter((step) => step.source === 'user').map((step) => textOf(step.message));
+  if (userTexts.some((text) => injected.test(text))) return { loaded: true, via: 'skill text injected' };
   return { loaded: false, via: null };
 }
 

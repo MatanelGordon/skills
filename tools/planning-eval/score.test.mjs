@@ -68,6 +68,21 @@ test('skillLoad reports how the skill reached the agent', () => {
   assert.deepEqual(skillLoad(otherSkill, 'adr'), { loaded: false, via: null });
 });
 
+test('skillLoad sees a skill loaded by a slash command, which leaves no tool call', () => {
+  const slashCommand = trajectoryOf(
+    userStep('<command-message>adr</command-message>\n<command-name>/adr</command-name>\n<command-args>Plan it.</command-args>'),
+    userStep('Base directory for this skill: /logs/agent/sessions/skills/adr\n\n# Architectural Decision Records'),
+    agentStep('Plan: see ADR-0005.'),
+  );
+  assert.deepEqual(skillLoad(slashCommand, 'adr'), { loaded: true, via: 'skill text injected' });
+
+  const otherSkillText = trajectoryOf(
+    userStep('Base directory for this skill: /logs/agent/sessions/skills/adr-extras\n\n# Something else'),
+    agentStep('done'),
+  );
+  assert.deepEqual(skillLoad(otherSkillText, 'adr'), { loaded: false, via: null }, 'a skill whose name only starts the same');
+});
+
 test('scoreTrial passes a trial whose reply reflects every planted fact', () => {
   const scored = scoreTrial({ trajectory: goodRun, evalCase: planningCase, skillName: 'adr', arm: 'with-skill' });
 

@@ -28,6 +28,7 @@ import {
   copyFile,
   rename,
   realpath,
+  stat,
   unlink,
   writeFile,
 } from 'node:fs/promises';
@@ -384,37 +385,59 @@ const isInside = (path, dir) => {
 };
 
 /**
- * Remove the symlinks in `dir` that point into `sourceRoot` and no longer
- * resolve: what a skill removed or renamed in this repo leaves behind in an
+ * The target of `path` when it is a symlink into one of `roots` whose target is
+ * missing; null for anything else. The OS resolves a relative target against
+ * the folder's real location, so that is what is checked. Only "not found" counts
+ * as missing: a target that exists but cannot be read is left alone.
+ */
+async function missingTargetInside(path, realDir, roots) {
+  const st = await lstat(path).catch(() => null);
+  if (!st?.isSymbolicLink()) return null;
+  const target = await readlink(path);
+  if (!roots.some((root) => isInside(resolve(realDir, target), root))) return null;
+  try {
+    await stat(path);
+    return null;
+  } catch (error) {
+    return ['ENOENT', 'ENOTDIR'].includes(error?.code) ? target : null;
+  }
+}
+
+/**
+ * Remove the symlinks in `dir` that point into `sourceRoot` and whose target is
+ * gone: what a skill removed or renamed in this repo leaves behind in an
  * agent's folder. A real file or folder, a live link, and a link anywhere else
- * are never touched, and `unlink` cannot delete a real folder. Returns what it
- * removed as { name, target }.
+ * are never touched, and `unlink` cannot delete a real folder. Returns
+ * { pruned: [{ name, target }], failed: [{ name, error }] }.
  */
 export async function pruneStaleLinks(dir, sourceRoot) {
   let entries;
   try {
     entries = await readdir(dir);
   } catch (error) {
-    if (error?.code === 'ENOENT') return [];
+    if (error?.code === 'ENOENT') return { pruned: [], failed: [] };
     throw error;
   }
+  const realDir = await realpath(dir);
   const roots = [resolve(sourceRoot)];
   const realRoot = await realpath(sourceRoot).catch(() => null);
   if (realRoot && realRoot !== roots[0]) roots.push(realRoot);
   const pruned = [];
+  const failed = [];
   for (const name of entries.sort()) {
     const path = join(dir, name);
-    const st = await lstat(path).catch(() => null);
-    if (!st?.isSymbolicLink() || existsSync(path)) continue;
-    const target = await readlink(path);
-    const resolvedTarget = resolve(dirname(path), target);
-    if (!roots.some((root) => isInside(resolvedTarget, root))) continue;
-    // Look again right before removing: the entry may have been replaced meanwhile.
-    if (!(await lstat(path).catch(() => null))?.isSymbolicLink()) continue;
-    await unlink(path);
-    pruned.push({ name, target });
+    try {
+      const target = await missingTargetInside(path, realDir, roots);
+      if (target === null) continue;
+      // Check again right before removing: the entry may have been replaced meanwhile.
+      if (await missingTargetInside(path, realDir, roots) !== target) continue;
+      await unlink(path);
+      pruned.push({ name, target });
+    } catch (error) {
+      failed.push({ name, error });
+    }
   }
-  return pruned;
+  return { pruned, failed };
 }
 
 /** Every folder this installer links into, with the repo folder its links point at. */
@@ -428,20 +451,22 @@ async function pruneStaleInstalls(folders) {
   let pruned = 0;
   let failed = 0;
   for (const { label, dir, sourceRoot } of folders) {
-    let removed;
+    let result;
     try {
-      removed = await pruneStaleLinks(dir, sourceRoot);
+      result = await pruneStaleLinks(dir, sourceRoot);
     } catch (error) {
       log.err(`${label}: could not prune stale links in ${dir.replace(HOME, '~')} — ${error.message}`);
       failed++;
       continue;
     }
-    if (!removed.length) continue;
+    if (!result.pruned.length && !result.failed.length) continue;
     log.title(`${label} — links to skills no longer in this repo`);
-    for (const { name, target } of removed) {
+    for (const { name, target } of result.pruned) {
       log.ok(`pruned ${chalk.bold(name)} ${chalk.gray(`→ ${target.replace(HOME, '~')} (target gone)`)}`);
     }
-    pruned += removed.length;
+    for (const { name, error } of result.failed) log.err(`${name} — could not prune: ${error.message}`);
+    pruned += result.pruned.length;
+    failed += result.failed.length;
   }
   return { pruned, failed };
 }
@@ -647,7 +672,7 @@ async function cmdInstall(skills, options) {
   for (const name of added) log.warn(`${name} added — required by something you selected`);
 
   // Links left behind by a skill that was removed or renamed here point at nothing.
-  const stale = await pruneStaleInstalls(linkFolders());
+  const stale = await pruneStaleInstalls(linkFolders().filter((folder) => answers.platforms.includes(folder.id)));
 
   const chosen = skills.filter((s) => selection.includes(s.name));
   let count = 0;

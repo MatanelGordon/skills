@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { cp, copyFile, mkdtemp, mkdir, readdir, readFile, readlink, rm, symlink, writeFile } from 'node:fs/promises';
+import { chmod, cp, copyFile, mkdtemp, mkdir, readdir, readFile, readlink, rm, symlink, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
@@ -287,8 +287,9 @@ test('pruneStaleLinks removes a link into the source root whose target is gone, 
   await symlink(join(sourceRoot, 'live'), join(agentDir, 'live'), dirLink);
   await rm(gone, { recursive: true });
 
-  const pruned = await pruneStaleLinks(agentDir, sourceRoot);
+  const { pruned, failed } = await pruneStaleLinks(agentDir, sourceRoot);
   assert.deepEqual(pruned.map(({ name, target }) => [name, resolve(agentDir, target)]), [['gone', gone]]);
+  assert.deepEqual(failed, []);
   assert.equal(existsSync(join(agentDir, 'live', 'SKILL.md')), true);
   assert.deepEqual((await readdir(agentDir)).sort(), ['live']);
 });
@@ -301,7 +302,7 @@ test('pruneStaleLinks removes a relative link into the source root whose target 
   await symlink(relative(agentDir, gone), join(agentDir, 'gone'), 'dir');
   await rm(gone, { recursive: true });
 
-  assert.deepEqual((await pruneStaleLinks(agentDir, sourceRoot)).map(({ name }) => name), ['gone']);
+  assert.deepEqual((await pruneStaleLinks(agentDir, sourceRoot)).pruned.map(({ name }) => name), ['gone']);
   assert.deepEqual(await readdir(agentDir), []);
 });
 
@@ -318,14 +319,65 @@ test('pruneStaleLinks never touches anything that is not a dangling link into th
   await writeFile(join(agentDir, 'real-file'), 'keep me', 'utf8');
   await symlink(join(sourceRoot, 'live'), join(agentDir, 'live'), dirLink);
 
-  assert.deepEqual(await pruneStaleLinks(agentDir, sourceRoot), []);
+  assert.deepEqual(await pruneStaleLinks(agentDir, sourceRoot), { pruned: [], failed: [] });
   assert.deepEqual((await readdir(agentDir)).sort(), ['foreign', 'live', 'lookalike', 'real-dir', 'real-file']);
   assert.equal(await readFile(join(agentDir, 'real-dir', 'notes.txt'), 'utf8'), 'keep me');
 });
 
 test('pruneStaleLinks returns nothing for a folder that does not exist', async () => {
   const { root, sourceRoot } = await pruneFixture();
-  assert.deepEqual(await pruneStaleLinks(join(root, 'missing'), sourceRoot), []);
+  assert.deepEqual(await pruneStaleLinks(join(root, 'missing'), sourceRoot), { pruned: [], failed: [] });
+});
+
+test('pruneStaleLinks resolves a relative link from the folder\'s real location, as the OS does', {
+  skip: process.platform === 'win32' ? 'needs relative symlinks and POSIX permissions' : false,
+}, async () => {
+  const { root, sourceRoot } = await pruneFixture();
+  // ~/.claude/skills is itself a link into a dotfiles folder; a relative link inside it
+  // that looks, written against the link path, like it points into the repo, really
+  // points at dotfiles/repo/skills/mine, which is not this repo.
+  const realFolder = join(root, 'dotfiles', 'agent', 'skills');
+  await mkdir(realFolder, { recursive: true });
+  const linkedFolder = join(root, 'home', 'skills');
+  await mkdir(dirname(linkedFolder), { recursive: true });
+  await symlink(realFolder, linkedFolder, 'dir');
+  const target = relative(linkedFolder, join(sourceRoot, 'mine'));
+  await symlink(target, join(realFolder, 'mine'), 'dir');
+
+  assert.deepEqual(await pruneStaleLinks(linkedFolder, sourceRoot), { pruned: [], failed: [] });
+  assert.deepEqual(await readdir(realFolder), ['mine']);
+});
+
+test('pruneStaleLinks keeps a link whose target exists but cannot be read', {
+  skip: process.platform === 'win32' ? 'needs relative symlinks and POSIX permissions' : false,
+}, async (t) => {
+  const { sourceRoot, agentDir } = await pruneFixture();
+  const locked = join(sourceRoot, 'locked');
+  await makeSkill(locked, 'inner');
+  await symlink(join(locked, 'inner'), join(agentDir, 'inner'), 'dir');
+  await chmod(locked, 0o000);
+  t.after(() => chmod(locked, 0o755));
+
+  assert.deepEqual(await pruneStaleLinks(agentDir, sourceRoot), { pruned: [], failed: [] });
+  await chmod(locked, 0o755);
+  assert.deepEqual(await readdir(agentDir), ['inner']);
+});
+
+test('pruneStaleLinks reports every link it could not remove and keeps going', {
+  skip: process.platform === 'win32' ? 'needs relative symlinks and POSIX permissions' : false,
+}, async (t) => {
+  const { sourceRoot, agentDir } = await pruneFixture();
+  for (const name of ['a-gone', 'b-gone']) {
+    const skill = await makeSkill(sourceRoot, name);
+    await symlink(skill, join(agentDir, name), 'dir');
+    await rm(skill, { recursive: true });
+  }
+  await chmod(agentDir, 0o555);
+  t.after(() => chmod(agentDir, 0o755));
+
+  const { pruned, failed } = await pruneStaleLinks(agentDir, sourceRoot);
+  assert.deepEqual(pruned, []);
+  assert.deepEqual(failed.map(({ name, error }) => [name, error.code]), [['a-gone', 'EACCES'], ['b-gone', 'EACCES']]);
 });
 
 test('real CLI install prunes dangling links into this repo and keeps foreign ones', async () => {

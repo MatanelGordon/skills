@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.23.0 — 2026-11-23
+
+- **Rewrote `visual-plan` around two Markdown files.** It now writes a plan
+  into `.plan/<name>/` as `plan.md` for the implementing agent, in
+  `deep-plan`'s format and still owned by `deep-plan`, and `review.md` for the
+  user: at most 500 words, with linked SVG diagrams, the questions that need
+  the user's call (`Q1`, `Q2`), the choices already made and the risks. Open
+  questions sit under the plan's existing "Risks and unknowns" heading, so no
+  second plan format exists. `SKILL.md` went from 30,498 to 5,651
+  characters.
+- Removed the hosted Agent-Native Plans workflow from `visual-plan`, with its
+  four reference files and `agent-native-skill.json`. That text came from
+  Builder.io's MIT-licensed `@agent-native/core` skill; the replacement is
+  written from scratch and needs no connector or account. This also clears
+  the two email-address findings and the unexpected-file finding from
+  SkillEvaluator.
+- Added `visual-plan/scripts/check-review.mjs`, a dependency-free checker with
+  35 tests: both files exist, the review links the plan, every linked SVG
+  exists, is well-formed and self-contained, no SVG is pasted inline (GitHub
+  strips it), the review is within its word budget, and every open question
+  and ADR in the plan appears in the review. Diagrams are one adaptive SVG
+  each, checked by rendering in light and dark.
+- **Slimmed `functional-csharp`** from 16,449 to 10,972 characters. The
+  five rules keep their inline examples; the `Match` walkthrough, pattern
+  matching, the ErrorOr chain, pipelines, the parameter-record example and the
+  Decider code moved to `references/`, including a new `patterns.md`. The
+  union section no longer repeats `references/unions.md`. Added one line the
+  evals already tested for: mutation that never leaves a function is fine.
+- Rewrote both skills' eval sets in the shared format: 12 cases for
+  `functional-csharp`, one per rule that moved, and 6 for `visual-plan` with
+  fixtures, a container definition and a grader that keeps each trial's files.
+
 ## 1.22.1 — 2026-11-21
 
 - Redesigned the README opening around an original light/dark hero, a concise

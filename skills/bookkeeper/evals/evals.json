@@ -3,47 +3,137 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "We learned that the production importer only runs correctly on runner win-build-03 because that host has the vendor ODBC driver. Record this for future sessions.",
-      "expected_output": "Writes or updates one small durable-fact entry in the appropriate .memory topic file and updates both the topic table and Entries table in .memory/index.md in the same change.",
+      "prompt": "We learned something today: the staging database is restored from production every Sunday at 03:00 UTC, so anything written to staging before then is gone on Monday. Record this for future sessions and show me, in your reply, each file you wrote or changed with its path.",
+      "expected_output": "One new entry in the repository's .memory/ folder, tagged with words the index already uses, plus a matching row in both tables of .memory/index.md.",
       "files": [],
+      "assertions": [
+        "The reply shows an entry under `.memory/` that states the Sunday 03:00 UTC restore of the staging database.",
+        "The entry starts with an `<!-- entry:<id> -->` marker whose id matches the `id:` line in the entry's frontmatter.",
+        "The entry's `tags:` line includes `staging`.",
+        "The reply shows a new row for that entry in the `## Entries` table of `.memory/index.md`.",
+        "The entry contains no password, token or key value."
+      ],
       "expectations": [
-        "Creates or updates one entry with the required HTML marker, per-entry frontmatter, and an updated timestamp",
-        "Updates the topic row in the first .memory/index.md table",
-        "Updates the exact entry row in the ## Entries table",
-        "Uses 2-4 reusable lowercase tags and records no credential values"
-      ]
-    },
-    {
-      "id": 2,
-      "prompt": "How do I connect to the host matanel-win11? This repository has no .memory/ directory.",
-      "expected_output": "Checks for .memory/index.md, finds nothing, says so honestly rather than guessing connection details, and proceeds normally without inventing memory content.",
-      "files": [],
-      "expectations": [
-        "Checks for .memory/index.md before answering",
-        "States that no memory entry exists rather than inventing one",
-        "Proceeds normally without treating absence as a hidden constraint",
-        "Does not begin with repo-wide grep or fabricate connection details"
+        "The reply shows an entry under `.memory/` that states the Sunday 03:00 UTC restore of the staging database.",
+        "The entry starts with an `<!-- entry:<id> -->` marker whose id matches the `id:` line in the entry's frontmatter.",
+        "The entry's `tags:` line includes `staging`.",
+        "The reply shows a new row for that entry in the `## Entries` table of `.memory/index.md`.",
+        "The entry contains no password, token or key value."
+      ],
+      "checks": [
+        {
+          "type": "output_matches",
+          "pattern": "(?i)<!--\\s*entry:[a-z0-9-]+\\s*-->"
+        }
       ]
     },
     {
       "id": 3,
-      "prompt": "We decided all services must communicate through domain events, never direct HTTP. Record the decision so future agents do not undo it.",
-      "expected_output": "Routes the durable architectural decision to the adr skill instead of writing it to .memory.",
+      "prompt": "We decided that this service never writes to the supplier's database, not even to mark an item as synced: the supplier's support contract is void if anything but their own software writes there. Record the decision so future agents do not undo it, and show me the file you wrote, with its path, in your reply.",
+      "expected_output": "The decision is recorded as a decision record (under .adr/), not as an entry in .memory/, because it is a choice the team made and not a fact about the environment.",
       "files": [],
+      "assertions": [
+        "The reply shows the decision written to a file under `.adr/`, or says it belongs in a decision record.",
+        "No file under `.memory/` is created or changed.",
+        "The recorded text gives the reason: the supplier's support contract is void if other software writes to their database."
+      ],
       "expectations": [
-        "Does not create or update a .memory entry",
-        "Uses the adr skill for the decision record"
+        "The reply shows the decision written to a file under `.adr/`, or says it belongs in a decision record.",
+        "No file under `.memory/` is created or changed.",
+        "The recorded text gives the reason: the supplier's support contract is void if other software writes to their database."
       ]
     },
     {
       "id": 4,
       "prompt": "For this debugging session, remember that my scratch server is on port 4317 until I restart it.",
-      "expected_output": "Keeps the temporary port in session context only and writes no repository memory because it is transient trivia.",
+      "expected_output": "A short acknowledgement that the port is kept for this session only. Nothing is written to the repository.",
       "files": [],
+      "assertions": [
+        "The reply says port 4317 is kept for this session.",
+        "No file under `.memory/` is created or changed.",
+        "The reply does not offer to write a decision record for the port."
+      ],
       "expectations": [
-        "Does not create .memory or change any memory file",
-        "Recognizes the value as temporary session state",
-        "Does not offer an ADR for the trivia"
+        "The reply says port 4317 is kept for this session.",
+        "No file under `.memory/` is created or changed.",
+        "The reply does not offer to write a decision record for the port."
+      ],
+      "expected_skill": null
+    },
+    {
+      "id": 5,
+      "prompt": "The supplier importer keeps breaking and nobody notices for days. Plan a nightly CI job that runs the importer integration tests and tells us when they fail. Reply with the plan, naming the files in this repository that it touches; do not write code and do not change any file.",
+      "expected_output": "A plan whose nightly job runs on the self-hosted runner win-build-03, the only machine with the supplier's ODBC driver, at a time outside its 01:00 to 03:00 UTC backup window, and that names the memory entry it took this from.",
+      "files": [],
+      "assertions": [
+        "The plan runs the job on the runner `win-build-03`.",
+        "The plan gives the reason: only that machine has the supplier's ODBC driver.",
+        "The plan schedules the job outside 01:00 to 03:00 UTC, when that runner is switched off.",
+        "The plan names `.memory/ci.md` as where the runner constraint is recorded."
+      ],
+      "expectations": [
+        "The plan runs the job on the runner `win-build-03`.",
+        "The plan gives the reason: only that machine has the supplier's ODBC driver.",
+        "The plan schedules the job outside 01:00 to 03:00 UTC, when that runner is switched off.",
+        "The plan names `.memory/ci.md` as where the runner constraint is recorded."
+      ],
+      "checks": [
+        {
+          "type": "output_matches",
+          "pattern": "win-build-03"
+        }
+      ],
+      "trajectory_checks": [
+        {
+          "name": "opened a file under .memory/",
+          "pattern": "\\.memory\\b"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Plan a `scripts/deploy-staging.sh` that ships the current build to staging and restarts the service there. Reply with the plan, naming the files in this repository that it touches; do not write code and do not change any file.",
+      "expected_output": "A plan whose script reaches the staging host stg-app-2 through the jump host alias stg-bastion, releases into /srv/catalog-sync/releases and restarts the catalog-sync systemd unit, taking the deploy key from the vault path and not from the repository.",
+      "files": [],
+      "assertions": [
+        "The plan connects through the alias `stg-bastion`.",
+        "The plan names `stg-app-2` as the host it deploys to.",
+        "The plan restarts the systemd service `catalog-sync`.",
+        "The plan takes the deploy key from the vault path `kv/catalog/staging/deploy`."
+      ],
+      "expectations": [
+        "The plan connects through the alias `stg-bastion`.",
+        "The plan names `stg-app-2` as the host it deploys to.",
+        "The plan restarts the systemd service `catalog-sync`.",
+        "The plan takes the deploy key from the vault path `kv/catalog/staging/deploy`."
+      ],
+      "checks": [
+        {
+          "type": "output_matches",
+          "pattern": "stg-bastion"
+        }
+      ],
+      "trajectory_checks": [
+        {
+          "name": "opened a file under .memory/",
+          "pattern": "\\.memory\\b"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "I am writing the availability filter for the storefront. In the supplier data, can I treat an active item as one that is in stock? Answer in two or three sentences.",
+      "expected_output": "No: in this project an active item is one the supplier still sells, and it can have zero stock. The answer points to the glossary entry in .memory/.",
+      "files": [],
+      "assertions": [
+        "The reply says an active item is one the supplier still sells.",
+        "The reply says an active item can have zero stock.",
+        "The reply names `.memory/glossary.md` as its source."
+      ],
+      "expectations": [
+        "The reply says an active item is one the supplier still sells.",
+        "The reply says an active item can have zero stock.",
+        "The reply names `.memory/glossary.md` as its source."
       ]
     }
   ]

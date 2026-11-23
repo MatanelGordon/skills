@@ -1,0 +1,14 @@
+schema_version: 1
+
+harbor:
+  # Every case starts inside the fixture checkout, the way an agent is started
+  # at the root of a real repository.
+  agent_workdir: /srv/catalog-sync
+  custom_dockerfile_mode: preserve
+  runtime_env:
+    # Claude Code drops skill descriptions from its listing once the listing
+    # passes a character budget, and in the evaluation container the bundled
+    # skills use that budget up: the skill under test is then listed by name
+    # alone and the agent has nothing to match a request against. A fixed
+    # budget keeps the description in the listing.
+    SLASH_COMMAND_TOOL_CHAR_BUDGET: "30000"

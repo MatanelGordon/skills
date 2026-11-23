@@ -1,0 +1,33 @@
+State of the shop repo, copied from my terminal a few minutes ago.
+
+$ cd ~/work/shop
+$ git status --short --branch
+## feat/free-shipping...origin/feat/free-shipping
+$ git log --oneline -3
+749ac1b (HEAD -> feat/free-shipping, origin/feat/free-shipping) test: cover the free-shipping threshold
+5c2e8d1 feat: read the free-shipping threshold from config
+0595b03 (origin/main, main) chore: bump vitest to 5.1.1
+$ git merge-base main HEAD
+0595b03c44913d1530894bb96d89fd679cbac027
+$ git diff --stat main...HEAD
+ src/checkout/shipping.js        | 18 ++++++++++++++----
+ tests/checkout/shipping.test.js | 27 +++++++++++++++++++++++++++
+ 2 files changed, 41 insertions(+), 4 deletions(-)
+$ git diff --unified=0 main...HEAD -- src/checkout/shipping.js | grep '^@@'
+@@ -3,0 +4,2 @@
+@@ -11,4 +13,12 @@
+$ node --version
+v22.12.0
+$ npm test
+
+> shop@2.8.0 test
+> vitest run
+
+ ✓ tests/checkout/cart.test.js (11 tests) 21ms
+ ✓ tests/checkout/shipping.test.js (6 tests) 9ms
+
+ Test Files  2 passed (2)
+      Tests  17 passed (17)
+
+$ npm ls --depth=0 | grep -i -E 'stryker|vitest'
+└── vitest@5.1.1

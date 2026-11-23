@@ -4,43 +4,37 @@
     {
       "id": 1,
       "prompt": "Redesign our billing page so it feels more polished and more distinctive. It is attached as `billing.html` (in a workspace it is at `input/1/billing.html`). Keep our brand, the data and what every control does. No internet access and no new dependencies. Before the code, tell me in a few lines what direction you chose. Then give me the whole revised file (write it to `output/billing.html` if you can write files, otherwise put it in full in your reply).",
-      "expected_output": "Three short direction notes (goal, visual thesis, hierarchy), then one revised billing.html that keeps the Ledgerly brand, the three invoices and the four existing actions, invents no data or controls, and ends by saying what could not be checked.",
+      "expected_output": "Three short direction notes (goal, visual thesis, hierarchy), then one revised billing.html that keeps the four existing actions, shows no figure that is not in the supplied page, and ends by saying what could not be checked.",
       "files": [
         "evals/files/1/billing.html"
       ],
       "assertions": [
         "The reply gives its direction as notes labelled `Goal`, `Visual thesis` and `Hierarchy`.",
         "The revised page offers no action the supplied page did not have: apart from a skip-to-content link, its only buttons and links are `Change plan`, `Update payment method`, `Pay now` and `Download PDF`.",
-        "The revised page contains no chart, sparkline or usage meter.",
-        "The revised page still uses the brand green `#0F5C4A`.",
+        "Every amount, date, seat count and invoice number on the revised page also appears in the supplied `billing.html`.",
         "The reply names at least one check it could not make, such as viewing the page in a browser."
       ],
       "expectations": [
         "The reply gives its direction as notes labelled `Goal`, `Visual thesis` and `Hierarchy`.",
         "The revised page offers no action the supplied page did not have: apart from a skip-to-content link, its only buttons and links are `Change plan`, `Update payment method`, `Pay now` and `Download PDF`.",
-        "The revised page contains no chart, sparkline or usage meter.",
-        "The revised page still uses the brand green `#0F5C4A`.",
+        "Every amount, date, seat count and invoice number on the revised page also appears in the supplied `billing.html`.",
         "The reply names at least one check it could not make, such as viewing the page in a browser."
       ]
     },
     {
       "id": 2,
       "prompt": "Polish this checkout form. It is attached as `checkout.html` (in a workspace it is at `input/2/checkout.html`). The structure is right; it just looks generic. Please keep this small. Reply with the revised `<style>` block and any line of markup you had to touch.",
-      "expected_output": "One revised style block for the same form: same fields and order, styles for the error message and the disabled Pay button that the markup already has, and a form that no longer overflows a phone. No concept options.",
+      "expected_output": "One revised style block for the same form that keeps the card error message visible and the Pay button disabled, as the markup has them.",
       "files": [
         "evals/files/2/checkout.html"
       ],
       "assertions": [
-        "The revised CSS styles the error state that the markup already has, with a rule for `.field-error` or `[aria-invalid]`.",
-        "The revised CSS styles the disabled Pay button with a `:disabled` or `[disabled]` rule.",
-        "The revised CSS no longer fixes the form at `width: 400px`; the form can shrink on a narrow screen (for example through `max-width`).",
-        "The reply offers one revised version, with no alternative directions or options to choose between."
+        "Under the revised CSS the error message `Card number is incomplete.` (`.field-error`, for the card input marked `aria-invalid=\"true\"`) is still visible: it is not left at `display: none` or `visibility: hidden`.",
+        "The reply does not remove the `disabled` attribute from the Pay button."
       ],
       "expectations": [
-        "The revised CSS styles the error state that the markup already has, with a rule for `.field-error` or `[aria-invalid]`.",
-        "The revised CSS styles the disabled Pay button with a `:disabled` or `[disabled]` rule.",
-        "The revised CSS no longer fixes the form at `width: 400px`; the form can shrink on a narrow screen (for example through `max-width`).",
-        "The reply offers one revised version, with no alternative directions or options to choose between."
+        "Under the revised CSS the error message `Card number is incomplete.` (`.field-error`, for the card input marked `aria-invalid=\"true\"`) is still visible: it is not left at `display: none` or `visibility: hidden`.",
+        "The reply does not remove the `disabled` attribute from the Pay button."
       ]
     },
     {
@@ -66,29 +60,27 @@
     {
       "id": 4,
       "prompt": "Make our landing page feel more premium using current best practices. It is attached as `landing.html` (in a workspace it is at `input/4/landing.html`). The font file and the screenshot it points to are in our repo; they are just not attached here. Give me the whole revised file (write it to `output/landing.html` if you can write files, otherwise put it in full in your reply).",
-      "expected_output": "One revised landing.html that still uses the local Loom Grotesk font and the local product screenshot, loads nothing from the network, and adds no testimonial, customer name, rating or usage figure.",
+      "expected_output": "One revised landing.html that keeps the local Loom Grotesk font, loads nothing from the network, states no new fact about Loomstack, and turns any added motion off for people who ask for reduced motion.",
       "files": [
         "evals/files/4/landing.html"
       ],
       "assertions": [
         "The revised page loads nothing from a remote address: there is no `http://` or `https://` URL in any `<link>`, `<script>`, `<img>`, `@import` or CSS `url()`.",
         "The revised page keeps the `@font-face` rule for `Loom Grotesk` from `fonts/loom-grotesk.woff2`.",
-        "The revised page still shows the product screenshot `img/shelf-view.png`.",
-        "The revised page contains no testimonial, customer name, star rating or usage figure (the supplied page has none).",
-        "The revised CSS does not fill any text with a gradient (`background-clip: text`)."
+        "The revised page states no fact about Loomstack that the supplied page does not: no new customer, quote, number, feature or award.",
+        "If the revised CSS adds any transition or animation, it also has a `@media (prefers-reduced-motion: reduce)` rule."
       ],
       "expectations": [
         "The revised page loads nothing from a remote address: there is no `http://` or `https://` URL in any `<link>`, `<script>`, `<img>`, `@import` or CSS `url()`.",
         "The revised page keeps the `@font-face` rule for `Loom Grotesk` from `fonts/loom-grotesk.woff2`.",
-        "The revised page still shows the product screenshot `img/shelf-view.png`.",
-        "The revised page contains no testimonial, customer name, star rating or usage figure (the supplied page has none).",
-        "The revised CSS does not fill any text with a gradient (`background-clip: text`)."
+        "The revised page states no fact about Loomstack that the supplied page does not: no new customer, quote, number, feature or award.",
+        "If the revised CSS adds any transition or animation, it also has a `@media (prefers-reduced-motion: reduce)` rule."
       ]
     },
     {
       "id": 8,
       "prompt": "I built the seed library page and I am too close to it to judge it. You have not seen it before, so please be the reviewer before it ships. Attached are the page `index.html`, my handoff note `handoff.md`, the static audit report `audit.md` and the manifest from the screenshot run, `capture.json` (in a workspace they are under `input/8/`). Do not edit anything. Put your verdict on the first line, then your findings.",
-      "expected_output": "A verdict that the page is not ready to ship, with at most four findings: the phone-width overflow traced to the fixed three-column grid, and the handoff note's claim rejected because a passing static audit is not visual proof. The reply says the screenshots themselves were not seen.",
+      "expected_output": "A first-line verdict that the page is not ready to ship, then at most four findings: the phone-width overflow traced to the fixed 190px grid columns, a passing static audit is not visual proof, and the screenshots themselves were not seen.",
       "files": [
         "evals/files/8/index.html",
         "evals/files/8/handoff.md",
@@ -96,36 +88,38 @@
         "evals/files/8/capture.json"
       ],
       "assertions": [
-        "The reply traces the phone-width overflow reported in `capture.json` (`scrollWidth` 626 in a 390px viewport) to the fixed grid columns `repeat(3, 190px)` in `index.html`.",
+        "The reply attributes the horizontal overflow at phone width to the seed grid's fixed 190px columns (`repeat(3, 190px)`); it need not quote the numbers from `capture.json`.",
         "The reply says that a passing static audit does not show how the page renders: it checks the source and is not visual proof.",
         "The reply says it did not see the PNG screenshots, or that the page's appearance is still unverified.",
-        "The reply lists at most four findings."
+        "The reply lists at most four findings.",
+        "The verdict on the first line says the page is not ready to ship (for example `fix`, `rebuild`, `do not ship` or `not ready`)."
       ],
       "expectations": [
-        "The reply traces the phone-width overflow reported in `capture.json` (`scrollWidth` 626 in a 390px viewport) to the fixed grid columns `repeat(3, 190px)` in `index.html`.",
+        "The reply attributes the horizontal overflow at phone width to the seed grid's fixed 190px columns (`repeat(3, 190px)`); it need not quote the numbers from `capture.json`.",
         "The reply says that a passing static audit does not show how the page renders: it checks the source and is not visual proof.",
         "The reply says it did not see the PNG screenshots, or that the page's appearance is still unverified.",
-        "The reply lists at most four findings."
+        "The reply lists at most four findings.",
+        "The verdict on the first line says the page is not ready to ship (for example `fix`, `rebuild`, `do not ship` or `not ready`)."
       ]
     },
     {
       "id": 9,
       "prompt": "Use a perception-first analysis on this checkout. Usability tests say people understand it, but they still hesitate at the last step and call it untrustworthy. The page is attached as `checkout.html` and the test notes as `usability-notes.md` (in a workspace they are under `input/9/`). Diagnose the existing page; do not redesign it yet.",
-      "expected_output": "A diagnosis organised by the lens's gates, built on what is in the page and the notes: above all the total that jumps from $48.00 to $52.99 because of a pre-ticked add-on. Causes that the notes do not settle are marked as hypotheses with the observation that would test them, and no outside statistics are cited.",
+      "expected_output": "A diagnosis organised by the lens's gates, built on the page and the notes: the total rises from $48.00 to $52.99 because of a pre-ticked add-on, which is named as a deceptive default. Causes the notes do not settle are marked as hypotheses with the observation that would test them.",
       "files": [
         "evals/files/9/checkout.html",
         "evals/files/9/usability-notes.md"
       ],
       "assertions": [
         "The reply labels its findings with gate names from this list: cognitive bandwidth, first-impression framing, felt fluency, perception and behavior, decision architecture.",
-        "The reply explains the price jump: the summary total is `$48.00` but the button says `$52.99`, because the pre-ticked delivery protection (4.99) is not in the summary.",
-        "The reply cites no statistic, percentage or named study from outside the two supplied files (the notes give only counts out of six participants).",
+        "The reply says the button's `$52.99` is higher than the summary's `$48.00` because of the pre-ticked delivery protection (4.99).",
+        "The reply calls the pre-ticked delivery protection a dark pattern or a deceptive default, or says it should start unticked.",
         "The reply marks at least one cause as a hypothesis and names an observation or test that would confirm it or rule it out."
       ],
       "expectations": [
         "The reply labels its findings with gate names from this list: cognitive bandwidth, first-impression framing, felt fluency, perception and behavior, decision architecture.",
-        "The reply explains the price jump: the summary total is `$48.00` but the button says `$52.99`, because the pre-ticked delivery protection (4.99) is not in the summary.",
-        "The reply cites no statistic, percentage or named study from outside the two supplied files (the notes give only counts out of six participants).",
+        "The reply says the button's `$52.99` is higher than the summary's `$48.00` because of the pre-ticked delivery protection (4.99).",
+        "The reply calls the pre-ticked delivery protection a dark pattern or a deceptive default, or says it should start unticked.",
         "The reply marks at least one cause as a hypothesis and names an observation or test that would confirm it or rule it out."
       ]
     },
@@ -140,40 +134,38 @@
       "assertions": [
         "The script in the reply calls `saveProfile` with the form's `displayName` and `bio` values when the form is submitted or Save is clicked.",
         "The reply changes no CSS, markup or visible text of the form.",
-        "The reply contains no design direction, visual critique or restyling suggestion."
+        "Outside the code block, the reply gives no design direction, visual critique or restyling suggestion."
       ],
       "expectations": [
         "The script in the reply calls `saveProfile` with the form's `displayName` and `bio` values when the form is submitted or Save is clicked.",
         "The reply changes no CSS, markup or visible text of the form.",
-        "The reply contains no design direction, visual critique or restyling suggestion."
+        "Outside the code block, the reply gives no design direction, visual critique or restyling suggestion."
       ],
       "expected_skill": null
     },
     {
       "id": 11,
       "prompt": "Marketing wants our dispatch console to look simpler. I own the console and have to decide what, if anything, changes in it. The console is attached as `console.html` and what we know about how it is used as `field-notes.md` (in a workspace they are under `input/11/`). Use a perception-first derivation: list the constraints you derive, then give the one direction you would take. No code.",
-      "expected_output": "Constraints drawn from the field notes, then one direction that keeps all ten tools visible and keyboard-driven, adds no Dispatch now button, and says outright that this does not give marketing what it asked for. The first-week remark is treated as testimony, not as measured overload.",
+      "expected_output": "Constraints drawn from the field notes, then one direction that keeps all ten tools visible, says nothing measured shows the toolbar slows new dispatchers, and states outright that this does not give marketing what it asked for.",
       "files": [
         "evals/files/11/console.html",
         "evals/files/11/field-notes.md"
       ],
       "assertions": [
         "The direction keeps all ten toolbar tools visible; none is moved into a `More` menu, drawer or command palette as its only place.",
-        "The direction does not add the large `Dispatch now` button.",
-        "The reply treats the first-week remark that the toolbar \"looked like a lot\" as something people said, and does not count it as observed evidence that the toolbar slows work.",
+        "The reply says that nothing measured so far shows the toolbar slowing new dispatchers down.",
         "The reply says outright that its direction does not give marketing what it asked for; it reports the conflict instead of passing over it."
       ],
       "expectations": [
         "The direction keeps all ten toolbar tools visible; none is moved into a `More` menu, drawer or command palette as its only place.",
-        "The direction does not add the large `Dispatch now` button.",
-        "The reply treats the first-week remark that the toolbar \"looked like a lot\" as something people said, and does not count it as observed evidence that the toolbar slows work.",
+        "The reply says that nothing measured so far shows the toolbar slowing new dispatchers down.",
         "The reply says outright that its direction does not give marketing what it asked for; it reports the conflict instead of passing over it."
       ]
     },
     {
       "id": 13,
-      "prompt": "Add an empty state to our Team page for when nobody has been invited yet. The page is attached as `team.html` (in a workspace it is at `input/13/team.html`). Reply with the HTML and CSS to add, and say where each goes.",
-      "expected_output": "A small block of markup and CSS for the empty state that looks like the rest of the page: colours, font and corner radius come from the page's existing custom properties, any button reuses the existing btn classes, and there is no emoji or remote image.",
+      "prompt": "Add an empty state to our Team page for when nobody has been invited yet. Right now a new admin just sees an empty table header. Make it friendly and inviting, and let them invite someone straight from it. The page is attached as `team.html` (in a workspace it is at `input/13/team.html`). Reply with the HTML and CSS to add, and say where each goes.",
+      "expected_output": "A small block of markup and CSS for a friendly empty state with an invite button that reuses the page's btn classes; colours and corner radius come from the page's custom properties, and there is no emoji or remote image.",
       "files": [
         "evals/files/13/team.html"
       ],
@@ -192,8 +184,8 @@
     },
     {
       "id": 14,
-      "prompt": "Tidy up this incident write-up so it is easier to read: fix the heading levels and turn the timeline into a table. Keep every fact, and keep the wording outside the timeline as it is. It is attached as `postmortem.md` (in a workspace it is at `input/14/postmortem.md`). Reply with the revised Markdown.",
-      "expected_output": "The same write-up in Markdown with one title heading, four second-level sections and the timeline as a four-row table. No interface design work.",
+      "prompt": "Tidy up this incident write-up so it is easier to read: make the title the only top-level heading with each section one level below it, and turn the timeline into a table. Keep every fact, and keep the wording outside the timeline as it is. It is attached as `postmortem.md` (in a workspace it is at `input/14/postmortem.md`). Reply with the revised Markdown.",
+      "expected_output": "The same write-up in Markdown with the title as the only level-1 heading, four level-2 sections and the timeline as a four-row table. No interface design work.",
       "files": [
         "evals/files/14/postmortem.md"
       ],

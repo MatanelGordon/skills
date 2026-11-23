@@ -1,0 +1,29 @@
+$ pytest -v                                   # run at 11:05 on 2026-11-17
+collected 15 items
+
+tests/test_parse.py::test_reads_header_row PASSED
+tests/test_parse.py::test_quoted_field_with_comma PASSED
+tests/test_parse.py::test_empty_file_gives_no_rows PASSED
+tests/test_parse.py::test_trailing_newline_ignored PASSED
+tests/test_parse.py::test_crlf_line_endings PASSED
+tests/test_import.py::test_imports_well_formed_csv PASSED
+tests/test_import.py::test_amount_parsed_as_decimal PASSED
+tests/test_import.py::test_unknown_column_is_ignored PASSED
+tests/test_import.py::test_malformed_row_reports_row_number FAILED
+tests/test_import.py::test_rest_of_file_imports_after_bad_row PASSED
+tests/test_import.py::test_missing_file_exits_2 PASSED
+tests/test_cli.py::test_help_lists_import PASSED
+tests/test_cli.py::test_import_prints_row_count PASSED
+tests/test_cli.py::test_exit_code_1_when_rows_rejected PASSED
+tests/test_cli.py::test_exit_code_0_on_success PASSED
+
+=================================== FAILURES ===================================
+____________________ test_malformed_row_reports_row_number _____________________
+
+    def test_malformed_row_reports_row_number():
+        result = import_file("fixtures/bad-row-3.csv")
+>       assert "row 3" in result.errors[0]
+E       AssertionError: assert 'row 3' in 'malformed row 2: expected 5 fields, got 4'
+
+tests/test_import.py:61: AssertionError
+========================= 1 failed, 14 passed in 2.31s =========================

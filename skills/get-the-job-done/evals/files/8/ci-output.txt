@@ -1,0 +1,14 @@
+$ ci run auth-tokens @ 5e1c0d7
+step 1/3: lint ............ ok
+step 2/3: tests
+  tests/auth/test_login.py::test_login_returns_access_token PASSED
+  tests/auth/test_login.py::test_access_token_expires_after_15_minutes PASSED
+  tests/auth/test_tokens.py::test_expired_token_gets_401_token_expired PASSED
+  tests/auth/test_refresh.py::test_refresh_returns_new_access_token PASSED
+  tests/auth/test_refresh.py::test_refresh_token_cannot_be_reused SKIPPED (rotation not wired up yet)
+  37 more tests in suites this branch did not change: all PASSED
+  41 passed, 1 skipped
+step 2/3: tests ........... ok
+step 3/3: done-checklist (scripts/run-gates.sh GATES.md)
+  0 gate(s): 0 passed, 0 failed
+  FAILED, exit 2: GATES.md contains no checks

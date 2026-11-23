@@ -426,7 +426,7 @@ test('the plan, review and diagram shipped as eval fixtures meet the contract', 
 
 test('the SVG skeleton in references/diagrams.md is itself a valid diagram', async () => {
   const guide = await readFile(new URL('../references/diagrams.md', import.meta.url), 'utf8');
-  const skeleton = /```svg\n([\s\S]*?)\n```/.exec(guide)?.[1];
+  const skeleton = /```svg\r?\n([\s\S]*?)\r?\n```/.exec(guide)?.[1];
   assert.ok(skeleton, 'diagrams.md has no ```svg block');
   assert.deepEqual(findSvgProblems(skeleton), []);
   assert.match(skeleton, /prefers-color-scheme: dark/);

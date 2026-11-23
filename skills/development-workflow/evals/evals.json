@@ -6,6 +6,12 @@
       "prompt": "Add CSV export to the reports page. No repository or implementation context is attached.",
       "expected_output": "The reply starts by requesting/inspecting the missing project context and defines a plan to follow the default pipeline. It does not narrate fabricated searches, tests, review, mutation runs, or commits.",
       "files": [],
+      "assertions": [
+        "The reply identifies the missing repository, existing report/export behavior, acceptance criteria, and test commands",
+        "The reply sequences research, planning, TDD, implementation, default test hardening, review, verification, and commit",
+        "The reply treats mutation testing as a risk/value decision rather than automatic",
+        "The reply does not claim actions were completed"
+      ],
       "expectations": [
         "The reply identifies the missing repository, existing report/export behavior, acceptance criteria, and test commands",
         "The reply sequences research, planning, TDD, implementation, default test hardening, review, verification, and commit",
@@ -18,6 +24,10 @@
       "prompt": "Fix the typo 'occured' to 'occurred'.",
       "expected_output": "The reply uses the compact mandatory core and does not add research, a plan artifact, review, hardening, or mutation ceremony.",
       "files": [],
+      "assertions": [
+        "The reply proposes or performs the direct scoped fix and a proportionate check",
+        "The reply skips mutation testing and other feature-scale stages"
+      ],
       "expectations": [
         "The reply proposes or performs the direct scoped fix and a proportionate check",
         "The reply skips mutation testing and other feature-scale stages"
@@ -28,6 +38,11 @@
       "prompt": "The UTC+13 date-parsing bug is back. Users see yesterday's date.",
       "expected_output": "The reply reproduces the UTC+13 behavior with a failing test before the fix, verifies the same test green, and records the cause in the commit.",
       "files": [],
+      "assertions": [
+        "The reply puts a reproducing red test before the production fix",
+        "The reply verifies with the previously failing case",
+        "The reply does not automatically require mutation testing for this small bug"
+      ],
       "expectations": [
         "The reply puts a reproducing red test before the production fix",
         "The reply verifies with the previously failing case",
@@ -38,7 +53,14 @@
       "id": 4,
       "prompt": "Build a normal low-risk profile preference feature. The project has no mutation engine, and setup would exceed the feature budget.",
       "expected_output": "The reply uses the default feature pipeline including bounded test hardening and independent review, while explicitly skipping mutation testing because setup cost exceeds its risk/value.",
-      "files": ["evals/fixtures/profile-preference.md"],
+      "files": [
+        "evals/files/4/profile-preference.md"
+      ],
+      "assertions": [
+        "The reply includes post-implementation test hardening and review by fresh eyes",
+        "The reply explicitly skips mutation testing with the cost/value reason",
+        "The reply does not call the feature incomplete because optional mutation was skipped"
+      ],
       "expectations": [
         "The reply includes post-implementation test hardening and review by fresh eyes",
         "The reply explicitly skips mutation testing with the cost/value reason",
@@ -49,7 +71,14 @@
       "id": 5,
       "prompt": "Authorization policy evaluation changed. The plan marks it critical, Stryker is already configured, and a 10-minute scoped budget is approved.",
       "expected_output": "The reply selects mutation testing under the documented risk/value rule, after a green hardened freeze, and keeps review clearance and incomplete semantics intact.",
-      "files": ["evals/fixtures/authorization-plan.md"],
+      "files": [
+        "evals/files/5/authorization-plan.md"
+      ],
+      "assertions": [
+        "The reply explains why critical decision logic, configured tooling, and an approved scope justify mutation testing",
+        "The reply freezes green code and isolates the mutation run",
+        "The reply does not remediate review-affected results before clearance"
+      ],
       "expectations": [
         "The reply explains why critical decision logic, configured tooling, and an approved scope justify mutation testing",
         "The reply freezes green code and isolates the mutation run",
@@ -61,6 +90,11 @@
       "prompt": "The optional mutation budget expired with Pending work, but clean tests and code review pass. Finish the workflow.",
       "expected_output": "The reply says the mutation stage is incomplete and cannot be presented or committed as complete, reports residual risk for a user decision, and does not falsely say clean tests or review failed.",
       "files": [],
+      "assertions": [
+        "The reply preserves the distinction between incomplete optional mutation evidence and successful clean tests/review",
+        "The reply stops for the user's accept/rerun/stop decision",
+        "The reply does not use score or narration to fabricate completion"
+      ],
       "expectations": [
         "The reply preserves the distinction between incomplete optional mutation evidence and successful clean tests/review",
         "The reply stops for the user's accept/rerun/stop decision",
@@ -72,6 +106,12 @@
       "prompt": "This host has no subagents and does not support git worktrees. Explain how to complete default hardening/review and an explicitly requested mutation run.",
       "expected_output": "The reply uses reset/fresh-context sequential passes for hardening/review, a disposable clone/copy with production hash checks for mutation, and reports the loss of independent judgment. It stops if safe isolation is unavailable.",
       "files": [],
+      "assertions": [
+        "The reply provides a concrete no-subagent fallback",
+        "The reply provides a disposable clone/copy fallback for worktrees",
+        "The reply never applies mutations in the feature checkout",
+        "The reply reports capability limitations honestly"
+      ],
       "expectations": [
         "The reply provides a concrete no-subagent fallback",
         "The reply provides a disposable clone/copy fallback for worktrees",

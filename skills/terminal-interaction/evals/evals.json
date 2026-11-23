@@ -6,6 +6,13 @@
       "prompt": "Can you actually try our init wizard and tell me if the prompts make sense? It asks for a project name then an environment.",
       "expected_output": "Searches for an existing driver first, then drives the wizard through a real PTY, sends the answers, captures the screen, and reports what it saw with the reproduction command.",
       "files": [],
+      "assertions": [
+        "Looks for an MCP terminal server, published skill, or existing CLI before hand-rolling a driver",
+        "Drives through a real PTY rather than piping stdin, so prompts actually render",
+        "Waits for each prompt pattern rather than sleeping a fixed amount",
+        "Reports what was sent, the captured screen, and the finding - not a raw transcript dump",
+        "Cleans up any session it created"
+      ],
       "expectations": [
         "Looks for an MCP terminal server, published skill, or existing CLI before hand-rolling a driver",
         "Drives through a real PTY rather than piping stdin, so prompts actually render",
@@ -19,6 +26,12 @@
       "prompt": "The dashboard TUI looks fine for me but a colleague says the table is mangled. Take a look.",
       "expected_output": "Reproduces at multiple explicit terminal widths, since layout bugs are width bugs, and reports the width at which it breaks.",
       "files": [],
+      "assertions": [
+        "Sets terminal size explicitly rather than inheriting whatever is current",
+        "Tries narrow, normal and wide widths to find the breaking point",
+        "Captures scrollback as well as the visible pane if content scrolled away",
+        "Reports the specific width where rendering breaks"
+      ],
       "expectations": [
         "Sets terminal size explicitly rather than inheriting whatever is current",
         "Tries narrow, normal and wide widths to find the breaking point",
@@ -31,6 +44,11 @@
       "prompt": "Our deploy CLI just hangs forever when I run it from a script, but it's fine when I run it by hand.",
       "expected_output": "Recognises the TTY difference: the program is likely waiting on a prompt it only renders when stdout is a terminal. Reproduces both ways to confirm.",
       "files": [],
+      "assertions": [
+        "Identifies piped-vs-PTY as the probable cause rather than guessing at a deadlock",
+        "Reproduces under a real PTY and under a pipe to compare",
+        "Explains that programs suppress prompts and colour when not attached to a TTY"
+      ],
       "expectations": [
         "Identifies piped-vs-PTY as the probable cause rather than guessing at a deadlock",
         "Reproduces under a real PTY and under a pipe to compare",
@@ -42,6 +60,12 @@
       "prompt": "Write me a driver script that sends keys to our TUI and greps the output.",
       "expected_output": "Searches for existing tooling before writing anything, names what it found, and only hand-rolls if nothing fits - saying so explicitly.",
       "files": [],
+      "assertions": [
+        "Runs a search for MCP servers and published skills covering terminal driving",
+        "Names what it found and whether it fits",
+        "Only writes a bespoke driver after stating that nothing suitable exists",
+        "Does not silently hand-roll because searching felt slow"
+      ],
       "expectations": [
         "Runs a search for MCP servers and published skills covering terminal driving",
         "Names what it found and whether it fits",
@@ -54,6 +78,11 @@
       "prompt": "Add a regression test suite with assertions for all the TUI keyboard shortcuts and wire it into CI.",
       "expected_output": "Out of scope for this skill. Says so plainly - this skill covers exploratory drive-and-observe, not authoring test suites or CI wiring - and points at the framework's own test harness.",
       "files": [],
+      "assertions": [
+        "States that building assertion suites and CI wiring is outside this skill's scope",
+        "Points toward the framework-native test harness for durable tests",
+        "Does not refuse the underlying work, just does not treat it as manual-testing driving"
+      ],
       "expectations": [
         "States that building assertion suites and CI wiring is outside this skill's scope",
         "Points toward the framework-native test harness for durable tests",
@@ -65,6 +94,12 @@
       "prompt": "Run the installer on this box and confirm it completes cleanly.",
       "expected_output": "Checks for tmux rather than assuming it, falls back to the zero-install PTY driver when absent, polls for completion output instead of sleeping, and reports evidence.",
       "files": [],
+      "assertions": [
+        "Checks whether tmux exists before using it",
+        "Falls back to a PTY driver that needs no installation when tmux is missing",
+        "Polls for a specific completion string rather than waiting a fixed time",
+        "Reports the captured evidence rather than asserting it worked"
+      ],
       "expectations": [
         "Checks whether tmux exists before using it",
         "Falls back to a PTY driver that needs no installation when tmux is missing",

@@ -6,6 +6,11 @@
       "prompt": "Run mutation testing on my checkout feature. I have not provided a repository, baseline command, commit, engine, or budget.",
       "expected_output": "The reply names the missing execution inputs and does not fabricate a completed run. It can explain the bounded next step and accepts the explicit request as a valid standalone trigger.",
       "files": [],
+      "assertions": [
+        "The reply asks for or identifies the repository/project scope, clean test command, compatible engine, isolation, and budget",
+        "The reply does not claim it froze a commit, ran tests, found mutants, or changed files",
+        "The reply does not require a prior test-hardening session for this explicit standalone request"
+      ],
       "expectations": [
         "The reply asks for or identifies the repository/project scope, clean test command, compatible engine, isolation, and budget",
         "The reply does not claim it froze a commit, ran tests, found mutants, or changed files",
@@ -16,7 +21,16 @@
       "id": 2,
       "prompt": "Classify this StrykerJS report without changing its raw labels: Killed=3, Timeout=1, NoCoverage=2, CompileError=1, Ignored=8, Pending=1. The run did not exhaust its budget.",
       "expected_output": "The reply preserves all native counts: killed and timeout are detected/verified (timeout visible for spot-check), no coverage is undetected/actionable, compile error excluded, ignored out of scope, and pending incomplete. It says the run cannot be complete while Pending or actionable no-coverage mutants remain.",
-      "files": ["evals/fixtures/stryker-statuses.json"],
+      "files": [
+        "evals/files/2/stryker-statuses.json"
+      ],
+      "assertions": [
+        "The reply treats Timeout as detected/verified but keeps the Timeout label and recommends a spot-check",
+        "The reply treats NoCoverage as undetected and actionable rather than incomplete",
+        "The reply treats CompileError as excluded and Ignored as out of scope",
+        "The reply treats Pending as incomplete and does not claim completion",
+        "The reply never rewrites raw evidence as killed or equivalent"
+      ],
       "expectations": [
         "The reply treats Timeout as detected/verified but keeps the Timeout label and recommends a spot-check",
         "The reply treats NoCoverage as undetected and actionable rather than incomplete",
@@ -30,6 +44,11 @@
       "prompt": "The mutation branch has two commits: the first changed production and tests, the second restored production. Its tip diff is test-only. Cherry-pick both commits into the reviewed branch.",
       "expected_output": "The reply refuses history replay. It requires a new one-commit candidate directly on the frozen reviewed SHA, validates it, and imports only reported test paths with git restore.",
       "files": [],
+      "assertions": [
+        "The reply does not cherry-pick, merge, or replay the branch",
+        "The reply identifies the hidden production history as unsafe even though the final tree is clean",
+        "The reply requires a single direct-child candidate and imports paths rather than history"
+      ],
       "expectations": [
         "The reply does not cherry-pick, merge, or replay the branch",
         "The reply identifies the hidden production history as unsafe even though the final tree is clean",
@@ -40,7 +59,15 @@
       "id": 4,
       "prompt": "Give the pinned cargo-mutants 27.1.0 commands for a changed-diff discovery run and one targeted rerun by mutant name. Output directory should be under .mutation-tmp.",
       "expected_output": "The reply creates .mutation-tmp, writes a stable Rust diff, invokes the direct binary with the required mutants subcommand and a non-duplicated output directory, then shows --re for the targeted proof.",
-      "files": ["references/adapters/rust.md"],
+      "files": [
+        "evals/files/4/rust.md"
+      ],
+      "assertions": [
+        "The reply includes mkdir -p .mutation-tmp before redirecting the diff",
+        "The reply invokes .mutation-tools/bin/cargo-mutants mutants",
+        "The discovery command includes --in-diff and --output .mutation-tmp/discovery or an equivalent non-mutants.out directory",
+        "The targeted command uses --re with a mutant name"
+      ],
       "expectations": [
         "The reply includes mkdir -p .mutation-tmp before redirecting the diff",
         "The reply invokes .mutation-tools/bin/cargo-mutants mutants",
@@ -53,6 +80,11 @@
       "prompt": "We changed only static CSS spacing. No mutation engine is configured and installing one would dominate the work. Should the default development workflow run mutation testing?",
       "expected_output": "The reply skips mutation testing with a short risk/value reason and relies on relevant UI verification. It does not treat the optional skip as a failed mandatory gate.",
       "files": [],
+      "assertions": [
+        "The reply explicitly skips mutation testing",
+        "The reason cites low decision-logic value and disproportionate setup cost",
+        "The reply does not invent mutation results or call the workflow incomplete"
+      ],
       "expectations": [
         "The reply explicitly skips mutation testing",
         "The reason cites low decision-logic value and disproportionate setup cost",
@@ -64,6 +96,11 @@
       "prompt": "The mutation budget ended with one Pending mutant. Finish the stage and commit it as complete because the score is 98%.",
       "expected_output": "The reply refuses the completion claim, reports FINAL: incomplete, stops for the user's risk decision, and does not present or commit the mutation stage as complete.",
       "files": [],
+      "assertions": [
+        "The reply says score cannot override Pending evidence",
+        "The reply reports the stage incomplete and names the residual risk",
+        "The reply stops for a user decision instead of committing the mutation stage as complete"
+      ],
       "expectations": [
         "The reply says score cannot override Pending evidence",
         "The reply reports the stage incomplete and names the residual risk",

@@ -5,6 +5,14 @@
       "id": 1,
       "prompt": "Redesign this existing billing dashboard so it feels much more polished and distinctive. Keep our brand, data model, and flows intact. Do not access the internet or add dependencies.",
       "expected_output": "Inspects the existing implementation and assets, treats the task as a redesign inside an established product, states a concise direction, preserves behavior and product truth, and works entirely with existing local capabilities.",
+      "files": [],
+      "assertions": [
+        "Does not browse, fetch remote assets, install packages, call an external catalog, or start an external service",
+        "Does not initialize the optional runtime merely because the request is a redesign",
+        "Preserves the existing brand, data model, content truth, and flows",
+        "Commits to one coherent visual direction rather than mixing generic styles",
+        "Includes responsive, state, accessibility, and bounded verification work"
+      ],
       "expectations": [
         "Does not browse, fetch remote assets, install packages, call an external catalog, or start an external service",
         "Does not initialize the optional runtime merely because the request is a redesign",
@@ -17,6 +25,14 @@
       "id": 2,
       "prompt": "Polish this checkout form. The structure is correct; it just looks generic. Please keep this small.",
       "expected_output": "Treats the request as a focused refinement, skips concept theater and persistent design documents, improves hierarchy and finish without changing the flow, then performs at most one inspection and one confirmation pass.",
+      "files": [],
+      "assertions": [
+        "Does not turn a small refinement into a rebrand or multi-option concept exercise",
+        "Does not load, narrate, or apply the optional perception lens",
+        "Does not create PRODUCT.md, DESIGN.md, hooks, configuration, or process artifacts",
+        "Improves composition, type, spacing, states, and focus without adding decorative clutter",
+        "Stops after bounded verification"
+      ],
       "expectations": [
         "Does not turn a small refinement into a rebrand or multi-option concept exercise",
         "Does not load, narrate, or apply the optional perception lens",
@@ -29,6 +45,12 @@
       "id": 3,
       "prompt": "Review this settings screen and tell me what is actually wrong. Do not edit it.",
       "expected_output": "Returns a concise evidence-based critique without modifying files, separating blocking, major, and minor issues from personal taste and naming one concrete fix per finding.",
+      "files": [],
+      "assertions": [
+        "Makes no edits",
+        "Each finding includes severity, interface evidence, user impact, and a specific fix",
+        "Does not manufacture findings or frame subjective taste as a defect"
+      ],
       "expectations": [
         "Makes no edits",
         "Each finding includes severity, interface evidence, user impact, and a specific fix",
@@ -39,6 +61,12 @@
       "id": 4,
       "prompt": "Make the landing page feel more premium using current best practices.",
       "expected_output": "Treats the broad aesthetic request as design scope, not network authorization, and works from existing local assets and fonts. It identifies a genuinely missing remote dependency rather than silently fetching one.",
+      "files": [],
+      "assertions": [
+        "Does not treat a design request as authorization for network access",
+        "Does not load hosted fonts, browse inspiration sites, or download imagery",
+        "Works locally and surfaces a blocker only when missing material would genuinely change the result"
+      ],
       "expectations": [
         "Does not treat a design request as authorization for network access",
         "Does not load hosted fonts, browse inspiration sites, or download imagery",
@@ -49,6 +77,11 @@
       "id": 5,
       "prompt": "Refactor the queue worker and fix its retry policy.",
       "expected_output": "Does not invoke impeccable-lite because the request is backend-only and has no user-facing design surface.",
+      "files": [],
+      "assertions": [
+        "Recognizes the request as outside the skill's trigger boundary",
+        "Does not inject frontend design guidance into backend work"
+      ],
       "expectations": [
         "Recognizes the request as outside the skill's trigger boundary",
         "Does not inject frontend design guidance into backend work"
@@ -58,6 +91,12 @@
       "id": 6,
       "prompt": "Teach impeccable-lite this rule: on dense operations tables, we repeatedly lose row identity when actions appear on hover. Persist the correction.",
       "expected_output": "Updates the skill narrowly with a rule supported by the recurring failure and adds or adjusts a behavioral eval, without importing a broad upstream playbook or treating unrelated preferences as universal.",
+      "files": [],
+      "assertions": [
+        "Changes only the smallest instruction needed to prevent the demonstrated recurring failure",
+        "Adds or updates a behavioral eval covering the rule",
+        "Preserves the local-only boundary and compact shape"
+      ],
       "expectations": [
         "Changes only the smallest instruction needed to prevent the demonstrated recurring failure",
         "Adds or updates a behavioral eval covering the rule",
@@ -68,6 +107,13 @@
       "id": 7,
       "prompt": "Build a new offline single-page seed library. This is substantial, so keep the direction and review handoffs resumable and prove the desktop and mobile result locally.",
       "expected_output": "Uses the bundled runtime because the work is multi-stage, initializes a compact brief, generates only the role packets that earn isolated context, audits the local artifact, captures both standard viewports through an installed browser, and keeps all state and evidence inside the project.",
+      "files": [],
+      "assertions": [
+        "Reads the offline runtime reference and uses checked-in Node scripts without installing anything",
+        "Does not let the runtime spawn models, browse, download a browser, call a catalog, or emit telemetry",
+        "Uses at most one writer; the direction explorer is optional, while a fresh finish reviewer is required for the requested completed review handoff",
+        "Inspects both desktop and mobile evidence and performs no more than one justified fix and recapture batch"
+      ],
       "expectations": [
         "Reads the offline runtime reference and uses checked-in Node scripts without installing anything",
         "Does not let the runtime spawn models, browse, download a browser, call a catalog, or emit telemetry",
@@ -79,6 +125,13 @@
       "id": 8,
       "prompt": "The landing page implementation is complete. Give it a genuinely independent finish review using the local audit and screenshots; do not edit it.",
       "expected_output": "Generates a reviewer packet from the audit and named capture paths, delegates only when an isolated reviewer is available, keeps that role read-only, and returns the review disposition without silently applying changes.",
+      "files": [],
+      "assertions": [
+        "The reviewer receives the brief, artifact, audit path, and desktop/mobile evidence paths",
+        "The reviewer is forbidden from editing, browsing, installing, starting a server, or widening scope",
+        "The review starts with recapture, rebuild, fix, or ship and limits findings to material evidence",
+        "The parent, not the reviewer or runtime, owns any later fix decision"
+      ],
       "expectations": [
         "The reviewer receives the brief, artifact, audit path, and desktop/mobile evidence paths",
         "The reviewer is forbidden from editing, browsing, installing, starting a server, or widening scope",
@@ -90,6 +143,13 @@
       "id": 9,
       "prompt": "Use a perception-first analysis on this checkout: usability tests say people understand it, but they still hesitate and call it untrustworthy. Diagnose the existing interface; do not redesign it yet and do not browse.",
       "expected_output": "Loads the optional perception reference, uses the five dependent gates as a bounded diagnostic, distinguishes observed evidence from hypothesis, starts with the lowest material failure, and remains read-only and offline.",
+      "files": [],
+      "assertions": [
+        "Routes to perception-first evaluation because trust formation and stated-versus-observed behavior are central to the request",
+        "Reports only material findings with local evidence, user impact, and a specific fix",
+        "Does not invent analytics, citations, customers, social proof, or psychological certainty",
+        "Does not use numeric layer scores, create insight logs, run repeated Ralph loops, or access the network"
+      ],
       "expectations": [
         "Routes to perception-first evaluation because trust formation and stated-versus-observed behavior are central to the request",
         "Reports only material findings with local evidence, user impact, and a specific fix",
@@ -101,6 +161,12 @@
       "id": 10,
       "prompt": "Wire the existing profile Save button to the supplied local form handler. The UI specification is exact; do not change any visuals.",
       "expected_output": "Does not invoke impeccable-lite because the task is a function-only frontend change with no visual judgment, and implements the supplied behavior without redesigning the component.",
+      "files": [],
+      "assertions": [
+        "Recognizes the request as outside the skill's visual-judgment trigger",
+        "Does not load or narrate the perception lens or optional runtime",
+        "Does not alter spacing, styling, copy, or other visual behavior"
+      ],
       "expectations": [
         "Recognizes the request as outside the skill's visual-judgment trigger",
         "Does not load or narrate the perception lens or optional runtime",
@@ -111,6 +177,14 @@
       "id": 11,
       "prompt": "Use perception-first derivation to improve this dense logistics console for expert dispatchers. Marketing wants fewer visible controls and one oversized conversion-style CTA, but operators need keyboard access to every core tool and the existing workflows are product truth.",
       "expected_output": "Uses the five gates to derive constraints before choosing a direction, treats expert density as potentially useful rather than inherently overloaded, resolves conflicts among lens constraints bottom-up, then preserves the explicit brief, product truth, operate-mode needs, and accessibility over conversion heuristics.",
+      "files": [],
+      "assertions": [
+        "Loads the perception reference because the user explicitly requests derivation",
+        "Derives only evidence-supported constraints before proposing a coherent direction",
+        "Does not hide required expert tools merely to reduce visible choice count",
+        "Keeps keyboard access and operator workflows even when a lens-derived or marketing preference conflicts",
+        "Does not create logs, run repeated loops, browse, score layers numerically, or widen the task"
+      ],
       "expectations": [
         "Loads the perception reference because the user explicitly requests derivation",
         "Derives only evidence-supported constraints before proposing a coherent direction",
@@ -123,6 +197,14 @@
       "id": 12,
       "prompt": "Analyze, but do not solve, what would happen if we reused the same onboarding trust cues and default choices for first-time customers in Japan, Germany, and Brazil. We have no regional behavior data yet.",
       "expected_output": "Uses analysis mode descriptively, traces relevant perceptual gates and bidirectional effects, treats cultural and target-population differences as unverified hypotheses, and stops without prescribing a universal redesign.",
+      "files": [],
+      "assertions": [
+        "Keeps explanation separate from recommendation because the user asked for analysis only",
+        "Surfaces plausible trade-offs rather than asserting a one-way universal effect",
+        "Does not universalize first-impression or behavioral priors across regions without target-population evidence",
+        "Labels predictions as hypotheses and names the missing regional evidence",
+        "Does not browse, invent citations or analytics, create insight logs, or run repeated loops"
+      ],
       "expectations": [
         "Keeps explanation separate from recommendation because the user asked for analysis only",
         "Surfaces plausible trade-offs rather than asserting a one-way universal effect",

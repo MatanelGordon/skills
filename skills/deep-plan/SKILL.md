@@ -1,7 +1,10 @@
 ---
 name: deep-plan
 description: >
-  Produce a plan fit for zero context: investigated, disjoint file-map ownership, test strategy covering critical paths, edge cases and coverage, written to .plan/NAME/plan.md and committed for shared architecture. Use before non-trivial feature/refactor/migration spanning 3+ files; when asked to plan/design/scope; after prior sprawl; when splitting agents; or resuming an existing plan. Owns .plan. Hands execution to parallel-build when seams are genuinely independent, saying so otherwise.
+  Use when an execution-ready plan is needed for a non-trivial multi-file feature,
+  refactor, or migration, or when asked to plan, design, scope, split agents, or amend a
+  plan. Owns .plan/NAME/plan.md. It plans and amends; parallel-build executes and
+  resumes.
 license: MIT
 metadata:
   author: Matanel Gordon

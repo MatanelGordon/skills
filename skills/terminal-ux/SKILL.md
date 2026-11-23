@@ -1,15 +1,10 @@
 ---
 name: terminal-ux
 description: >
-  Build complex, testable terminal UIs and data visualizations with Ink (React for CLIs)
-  — dashboards, live charts, sparklines, braille plots, gauges, tables, progress, log
-  panes, and keyboard-driven layouts. Use whenever writing or reviewing a TUI, CLI
-  output, or terminal visualization: Ink components, Box flexbox layout, colors,
-  keyboard input and focus, redraw performance, terminal width and resize handling, and
-  rendering data as text. Also use when asked to test a terminal UI — covers
-  ink-testing-library, renderToString, snapshot and layout-invariant tests, simulating
-  keystrokes, and the async input gotcha. Ink specific: assumes React + Ink, not
-  blessed/blessed-contrib/Textual.
+  Use when building, reviewing, or testing a React and Ink terminal UI, CLI output, or
+  text data visualization: layout, charts, input, width, color, redraw performance,
+  accessibility, and ink-testing-library. For full-screen lifecycle and resize
+  artifacts, use tui-builder.
 license: MIT
 metadata:
   author: Matanel Gordon

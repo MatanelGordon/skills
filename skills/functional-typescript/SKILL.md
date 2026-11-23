@@ -1,16 +1,10 @@
 ---
 name: functional-typescript
 description: >
-  Write TypeScript in a functional style — pure functions, immutable data, discriminated
-  unions, and Result-typed errors instead of classes, inheritance, mutation, and thrown
-  exceptions. Use whenever writing, reviewing, or refactoring TypeScript or JavaScript:
-  new modules, services, React/Node code, domain models, error handling, API boundaries,
-  or state machines. Also use when deciding between a class and a function, when tempted
-  to reach for inheritance or a mutable service field, when handling "what if this
-  fails", or when a type has optional fields that are only valid in certain
-  combinations. Covers strict tsconfig, readonly/as const, exhaustive matching, branded
-  types, parse-don't-validate, neverthrow/Effect, and functional core + imperative
-  shell.
+  Use for functional-style TypeScript or JavaScript handlers, API boundaries, state
+  machines, or new modules when writing, reviewing, or refactoring, especially with
+  classes, mutation, inheritance, invalid optional states, exceptions for expected
+  failures, or unparsed external data.
 license: MIT
 metadata:
   author: Matanel Gordon

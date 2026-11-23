@@ -1,7 +1,9 @@
 ---
 name: critical-thinking
 description: >
-  Present flagged decisions as tables, not prose. Use when a summary would tell the user "consider X", "one thing needs your call", "you should decide", or "worth flagging"—or defer sign-off, trade-off, or open choice. Each decision becomes a compact 2–4-option table: pros, cons, cost/reversibility, downside-admitting recommendation, and an "if you do nothing" default. Also when asked "what are my options" or choosing tools/designs/scopes/approaches. Not for FYIs with no choice.
+  Use when a decision needs a 2-4-option table: the user asks what are my options, you
+  choose among viable approaches, or a summary would say consider, your call, or worth
+  flagging. Not for FYIs, trivia, or one sane path.
 license: MIT
 metadata:
   author: Matanel Gordon

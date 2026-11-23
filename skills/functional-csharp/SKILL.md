@@ -1,12 +1,10 @@
 ---
 name: functional-csharp
 description: >
-  Apply functional C# conventions when writing, reviewing, or refactoring .NET
-  code, especially domain models, business rules, handlers, state machines, and
-  expected-error handling. Use when mutable state, inheritance, nullable-state
-  combinations, or exceptions obscure the model. Prefer records, immutable
-  data, discriminated unions, pure functions, exhaustive matching, and
-  Result/Option while respecting framework constraints.
+  Use for functional-style C# or .NET handlers, state machines, domain boundaries, or
+  new domain code when writing, reviewing, or refactoring, especially where mutable
+  state, inheritance, nullable fields, or exceptions for expected failures obscure the
+  model.
 license: MIT
 metadata:
   author: Matanel Gordon

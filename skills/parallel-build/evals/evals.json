@@ -3,56 +3,157 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "I need to add multi-tenant support to this API: tenant-scoped auth, per-tenant rate limiting, tenant-aware DB queries, and an admin UI for managing tenants. Plan it out and split the work across agents.",
-      "expected_output": "Skill triggers. Produces .plan/<name>/plan.md with a concise indicative plan name, a file map assigning every path to exactly one phase-2 owner, an explicit shared-surface section owned by phase 1, and a 3-phase split (1 foundation agent, 2-4 phase-2 agents on disjoint paths, phase-3 review). Writes PROGRESS.md. Stops to confirm the plan before dispatching.",
+      "prompt": "The approved plan for adding multi-tenant support is attached as `plan.md` (in a workspace it is at `input/1/plan.md`). Split the work across agents. Reply with one table: a row per agent with its phase, the paths it owns and the paths that are off-limits to it, and say which agents start at the same time. Do not implement anything.",
+      "expected_output": "One first-phase agent that owns every file more than one area needs, then one agent per area on paths no other agent owns, started together.",
+      "files": [
+        "evals/files/1/plan.md"
+      ],
+      "assertions": [
+        "The reply has exactly one agent in the first phase.",
+        "`src/types/tenant.ts` is owned by the first-phase agent.",
+        "`src/routes/index.ts` is owned by exactly one agent.",
+        "No path is owned by two agents in the same phase.",
+        "The reply says the second-phase agents start at the same time."
+      ],
       "expectations": [
-        "Creates a .plan/<plan-name>/ directory with a concise, indicative name (not 'plan1' or a long sentence)",
-        "plan.md contains a file map where no path has two phase-2 owners",
-        "Phase 1 is 1 agent (not 2, since this is not a monorepo spanning separate projects)",
-        "Shared surface (types, config, migrations, registries) is assigned to phase 1, not phase 2",
-        "PROGRESS.md is written before any dispatch and contains a 'Resume here' line",
-        "Confirms the plan with the user before dispatching any subagent",
-        "Runs the pre-flight check (precheck.sh) before or during planning"
+        "The reply has exactly one agent in the first phase.",
+        "`src/types/tenant.ts` is owned by the first-phase agent.",
+        "`src/routes/index.ts` is owned by exactly one agent.",
+        "No path is owned by two agents in the same phase.",
+        "The reply says the second-phase agents start at the same time."
       ]
     },
     {
       "id": 2,
-      "prompt": "continue where you left off",
-      "expected_output": "Skill triggers in resume mode. Reads .plan/*/PROGRESS.md, selects the unfinished plan, also reads agents/*.md, runs wt.sh list and git log, and reconciles the file against actual git state before acting. Does not blindly trust the Resume here line.",
+      "prompt": "continue where you left off. The terminal running this build died. What it left behind is attached: `PROGRESS.md`, the status files `agents/p2-invoices.md` and `agents/p2-webhooks.md`, and `worktrees.txt`, which is the current listing of live worktrees (in a workspace they are under `input/2/`). No agent process survived. Reply with what you do for each of the three worktrees, in order, and what comes after. Do not run anything.",
+      "expected_output": "The worktree listing is believed over the progress file: p2-invoices is verified and merged, the uncommitted work in p2-webhooks is inspected, p2-dunning is dropped and dispatched again, and PROGRESS.md is brought up to date first.",
+      "files": [
+        "evals/files/2/PROGRESS.md",
+        "evals/files/2/agents/p2-invoices.md",
+        "evals/files/2/agents/p2-webhooks.md",
+        "evals/files/2/worktrees.txt"
+      ],
+      "assertions": [
+        "The reply's steps include merging `p2-invoices`.",
+        "The reply places a test run for `p2-invoices` before its merge.",
+        "The reply says the uncommitted changes in `p2-webhooks` are inspected before they are committed or discarded.",
+        "The reply says the `p2-dunning` worktree is discarded and that agent is dispatched again.",
+        "The reply says `PROGRESS.md` is updated before the build continues."
+      ],
       "expectations": [
-        "Locates the plan by listing .plan/*/PROGRESS.md rather than asking the user which plan",
-        "Reads agents/*.md, not just PROGRESS.md",
-        "Runs wt.sh list and git log to establish real state",
-        "States that git is ground truth and PROGRESS.md is intent when they disagree",
-        "Decides per live worktree: clean+ahead means verify and merge, UNCOMMITTED means inspect, clean+0-ahead means drop and re-dispatch",
-        "Updates PROGRESS.md to match reality before continuing work"
+        "The reply's steps include merging `p2-invoices`.",
+        "The reply places a test run for `p2-invoices` before its merge.",
+        "The reply says the uncommitted changes in `p2-webhooks` are inspected before they are committed or discarded.",
+        "The reply says the `p2-dunning` worktree is discarded and that agent is dispatched again.",
+        "The reply says `PROGRESS.md` is updated before the build continues."
       ]
     },
     {
       "id": 3,
-      "prompt": "Build out the whole billing module for this project - subscriptions, invoices, webhooks, and the dunning flow. Use parallel agents.",
-      "expected_output": "Runs the mechanical Desktop/Playgrounds check on the repo root and acts on its result: under Playgrounds, phase 3 runs code review only and records the security skip in PROGRESS.md; outside it, security agents run.",
+      "prompt": "The billing module build (subscriptions, invoices, webhooks, dunning) has finished its implementation phase and everything is merged. `git rev-parse --show-toplevel` prints `/Users/dana/Desktop/Playgrounds/billing-demo`. Plan the review phase: which review agents run, what file each writes, and what you record. Do not run anything.",
+      "expected_output": "Code review agents only, writing CR.md. No security review, because the repository is under Desktop/Playgrounds, and that skip is recorded in PROGRESS.md.",
       "files": [],
+      "assertions": [
+        "The reply assigns at least one code review agent.",
+        "The reply names `CR.md` as the file the code review is written to.",
+        "The reply assigns no security review agent.",
+        "The reply gives the repository's location under `Desktop/Playgrounds` as the reason for skipping the security review.",
+        "The reply says the skipped security review is recorded in `PROGRESS.md`."
+      ],
       "expectations": [
-        "Checks the repository root path mechanically (git rev-parse --show-toplevel) to decide on security review",
-        "Runs security agents when the repo root is not under Desktop/Playgrounds",
-        "Still runs the code-review agents producing CR.md",
-        "Records the security decision (run or skip) and its reason in PROGRESS.md",
-        "Does not silently omit the security phase without saying so"
+        "The reply assigns at least one code review agent.",
+        "The reply names `CR.md` as the file the code review is written to.",
+        "The reply assigns no security review agent.",
+        "The reply gives the repository's location under `Desktop/Playgrounds` as the reason for skipping the security review.",
+        "The reply says the skipped security review is recorded in `PROGRESS.md`."
       ]
     },
     {
       "id": 4,
-      "prompt": "Here's the plan directory for the auth refactor. Phase 2 agent p2-tokens says DONE. Merge its work and move on.",
-      "expected_output": "Verifies the critical-path tests inside the agent's worktree before merging (not in the main tree), uses wt.sh merge which removes the worktree and branch, then re-runs tests on the merged branch. Treats the agent's DONE as a claim requiring verification.",
+      "prompt": "State of the auth refactor: phase 2 has three agents. `p2-tokens` reports `STATUS: DONE` with `TESTS: npm test -> pass`. `p2-sessions` and `p2-roles` are still running. Merge p2-tokens and move on to the review phase. Reply with what you do, in order. Do not run anything.",
+      "expected_output": "p2-tokens is tested in its worktree, merged and recorded. The review phase waits until the other two agents are merged and the tests pass on the merged branch.",
+      "files": [],
+      "assertions": [
+        "The reply places a test run in the `p2-tokens` worktree before its merge.",
+        "The reply says the `p2-tokens` report is recorded in `PROGRESS.md`.",
+        "The reply says the review phase does not start while `p2-sessions` and `p2-roles` are unmerged.",
+        "The reply places a test run on the merged branch before the review phase starts."
+      ],
       "expectations": [
-        "Runs the critical-path tests inside the worktree, not the main tree, before merging",
-        "Uses wt.sh merge rather than git merge plus manual worktree removal",
-        "Confirms the worktree and branch were removed after merging",
-        "Re-runs tests on the merged branch",
-        "Does not report success based only on the agent's STATUS: DONE",
-        "Folds the agent's report into PROGRESS.md immediately"
+        "The reply places a test run in the `p2-tokens` worktree before its merge.",
+        "The reply says the `p2-tokens` report is recorded in `PROGRESS.md`.",
+        "The reply says the review phase does not start while `p2-sessions` and `p2-roles` are unmerged.",
+        "The reply places a test run on the merged branch before the review phase starts."
       ]
+    },
+    {
+      "id": 5,
+      "prompt": "Three small jobs in one git repository: (a) fix the off-by-one in `src/paging.ts` and update `test/paging.test.ts`; (b) add a `--json` flag in `cli/report.ts` with a test in `test/report.test.ts`; (c) update `docs/install.md` for Node 22. Get coding agents on it. Reply with a table of who does what and when each starts. Do not run anything.",
+      "expected_output": "Three workers, one per job, each in its own worktree with the paths it owns and the paths that are off-limits to it, all started at the same time, with no plan document demanded first.",
+      "files": [],
+      "assertions": [
+        "The reply uses three workers, one per job.",
+        "The reply says the three workers start at the same time.",
+        "The reply gives each worker its own git worktree.",
+        "The table lists, for each worker, the paths that are off-limits to it.",
+        "The reply does not ask for a written plan document before dispatching."
+      ],
+      "expectations": [
+        "The reply uses three workers, one per job.",
+        "The reply says the three workers start at the same time.",
+        "The reply gives each worker its own git worktree.",
+        "The table lists, for each worker, the paths that are off-limits to it.",
+        "The reply does not ask for a written plan document before dispatching."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Two changes for two agents, in parallel: (a) add a `/v2/orders` route, which touches `src/routes/index.ts` and a new `src/orders/v2.ts`; (b) add request logging, which touches `src/routes/index.ts` and a new `src/middleware/log.ts`. Reply with a table of who owns which path and when each agent starts. Do not run anything.",
+      "expected_output": "The reply names src/routes/index.ts as the file both changes need, gives it to one owner or an earlier step, and keeps it off-limits to everyone else.",
+      "files": [],
+      "assertions": [
+        "The reply names `src/routes/index.ts` as the file both changes need.",
+        "The table gives `src/routes/index.ts` exactly one owner.",
+        "The reply lists `src/routes/index.ts` as off-limits to every agent that does not own it."
+      ],
+      "expectations": [
+        "The reply names `src/routes/index.ts` as the file both changes need.",
+        "The table gives `src/routes/index.ts` exactly one owner.",
+        "The reply lists `src/routes/index.ts` as off-limits to every agent that does not own it."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Rename `getUser` to `fetchUser`. It appears in `src/user.ts`, `src/profile.ts` and `test/user.test.ts`. Split it across four agents so it goes faster. Reply with your plan.",
+      "expected_output": "No four-way split: the three files have to change together, so one worker does it or the change is made directly.",
+      "files": [],
+      "assertions": [
+        "The reply does not assign four agents.",
+        "The reply uses one worker or makes the change directly.",
+        "The reply says the three files have to change together."
+      ],
+      "expectations": [
+        "The reply does not assign four agents.",
+        "The reply uses one worker or makes the change directly.",
+        "The reply says the three files have to change together."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Add a `--verbose` flag to the script attached as `cli.js` (in a workspace it is at `input/8/cli.js`): when it is set, print each file name before processing it. Reply with the full file.",
+      "expected_output": "The full edited file, with no split and no agents.",
+      "files": [
+        "evals/files/8/cli.js"
+      ],
+      "assertions": [
+        "The reply contains the full file with a `--verbose` check.",
+        "The reply contains no table of agents and no phases."
+      ],
+      "expectations": [
+        "The reply contains the full file with a `--verbose` check.",
+        "The reply contains no table of agents and no phases."
+      ],
+      "expected_skill": null
     }
   ]
 }

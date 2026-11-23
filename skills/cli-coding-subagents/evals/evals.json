@@ -3,47 +3,277 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Use codex to build the CSV import feature while we work on something else.",
-      "expected_output": "Runs precheck.sh first, creates a worktree via wt.sh, writes a prompt file containing acceptance criteria, critical-path tests, and scope/off-limits, dispatches in background with output redirected to a log.",
+      "prompt": "Use codex to build the CSV import feature while we work on something else. This project is a git repository and its tests run with `npm test`. Reply with the commands you would run, in order, and the prompt file you would give the worker. Do not run anything.",
+      "expected_output": "A login and quota check first, then a separate git worktree for the worker, then a background codex dispatch whose transcript goes to a log file, with a worker prompt that has acceptance criteria, the test command and the paths the worker may edit.",
       "files": [],
+      "assertions": [
+        "The reply places a codex login and quota check before the dispatch command.",
+        "The reply contains a command that creates a separate git worktree for the worker.",
+        "The dispatch command redirects the worker's output to a log file.",
+        "The worker prompt has an acceptance criteria section.",
+        "The worker prompt lists the paths the worker may edit."
+      ],
       "expectations": [
-        "precheck.sh runs before any dispatch",
-        "Worktree created with wt.sh new, not by hand",
-        "Prompt has acceptance criteria, verbatim test commands, and file ownership",
-        "Transcript goes to a log file, not into context"
+        "The reply places a codex login and quota check before the dispatch command.",
+        "The reply contains a command that creates a separate git worktree for the worker.",
+        "The dispatch command redirects the worker's output to a log file.",
+        "The worker prompt has an acceptance criteria section.",
+        "The worker prompt lists the paths the worker may edit."
       ]
     },
     {
       "id": 2,
-      "prompt": "Precheck says copilot is at exit 20 - paid overage. Dispatch the doc updates to copilot anyway?",
-      "expected_output": "Stops and asks the user before dispatching, quoting the overage numbers; offers codex as the alternative. Only proceeds on explicit yes.",
+      "prompt": "The quota check just printed these two lines:\n\ncodex    OK             7d window 3% used (plan: pro)\ncopilot  NEEDS_APPROVAL PAID OVERAGE: entitlement spent, now billing overage 12/100 — plan pro, 300/300 credits used, resets 2026-12-01\n\nDispatch the doc updates to copilot anyway?",
+      "expected_output": "No copilot dispatch. The reply quotes the overage figures, asks for an explicit yes before billing paid overage, and offers codex for the doc updates.",
       "files": [],
+      "assertions": [
+        "The reply contains no copilot dispatch command.",
+        "The reply quotes `12/100`.",
+        "The reply asks the user to confirm before copilot is used.",
+        "The reply offers codex as the alternative for the doc updates."
+      ],
       "expectations": [
-        "No copilot dispatch before the user answers",
-        "Numbers from precheck are quoted",
-        "Codex offered as the alternative route"
+        "The reply contains no copilot dispatch command.",
+        "The reply quotes `12/100`.",
+        "The reply asks the user to confirm before copilot is used.",
+        "The reply offers codex as the alternative for the doc updates."
       ]
     },
     {
       "id": 3,
-      "prompt": "The codex agent reported QUESTION: assumed the existing Result type instead of adding a new one. What now?",
-      "expected_output": "Answers by resuming the same session (codex-session.py to recover the id, codex exec resume), not by re-dispatching; batches questions if several agents are running.",
+      "prompt": "A codex worker running in the worktree `/work/.wt-app/p2-parser` finished with this line in its report:\n\nQUESTION: assumed the existing Result type instead of adding a new one.\n\nThe answer is yes, keep the existing type. Two other codex workers are still running. Reply with the exact commands that pass the answer to that worker. Do not run anything.",
+      "expected_output": "The existing session is resumed with `codex exec resume` and an explicit session id found by matching the worktree path, after changing directory into the worktree.",
       "files": [],
+      "assertions": [
+        "The reply uses `codex exec resume` with a session id.",
+        "The reply finds the session id by matching the worktree path `/work/.wt-app/p2-parser`.",
+        "The reply does not use `--last`.",
+        "The reply changes directory into `/work/.wt-app/p2-parser` instead of passing `-C` to the resume command."
+      ],
       "expectations": [
-        "Uses session resume, not a fresh dispatch",
-        "Recovers the codex session id by worktree cwd, not --last",
-        "cd into the worktree since resume rejects -C"
+        "The reply uses `codex exec resume` with a session id.",
+        "The reply finds the session id by matching the worktree path `/work/.wt-app/p2-parser`.",
+        "The reply does not use `--last`.",
+        "The reply changes directory into `/work/.wt-app/p2-parser` instead of passing `-C` to the resume command."
       ]
     },
     {
       "id": 4,
-      "prompt": "The agent says DONE. Merge its work.",
-      "expected_output": "Verifies critical-path tests inside the worktree first, then wt.sh merge (worktree and branch removed), then re-runs tests on the merged branch. DONE is treated as a claim.",
+      "prompt": "The codex worker for the slug `p2-tokens` reports:\n\nSTATUS: DONE\nTESTS: npm test -> pass (14 passed)\n\nIts worktree is `/work/.wt-app/p2-tokens` and its branch is `sa/p2-tokens`. Merge its work. Reply with the commands in order and say what you check between them. Do not run anything.",
+      "expected_output": "Tests run inside the worktree first, then the merge removes the worktree and the branch, then the tests run again on the merged branch, and only then is the work reported as finished.",
       "files": [],
+      "assertions": [
+        "The reply places an `npm test` run in the worker's worktree before the merge.",
+        "The reply says the worktree is removed once the merge succeeds.",
+        "The reply places a second `npm test` run on the merged branch after the merge.",
+        "The reply says the work is reported as finished only after the tests pass on the merged branch."
+      ],
       "expectations": [
-        "Tests run in the worktree before merging",
-        "wt.sh merge used; worktree confirmed gone",
-        "Tests re-run on the merged result before reporting success"
+        "The reply places an `npm test` run in the worker's worktree before the merge.",
+        "The reply says the worktree is removed once the merge succeeds.",
+        "The reply places a second `npm test` run on the merged branch after the merge.",
+        "The reply says the work is reported as finished only after the tests pass on the merged branch."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Split this refactor across a few subagents and run them through ori on free OpenRouter models. The refactor has six independent modules. Reply with the steps and the dispatch command you would use for one worker. Do not run anything.",
+      "expected_output": "A credential check first, a model taken from a listing made at run time, `--model` given to ori before the `--`, and no more than three workers at once because free models share a rate limit.",
+      "files": [],
+      "assertions": [
+        "The reply places an OpenRouter credential check before the dispatch.",
+        "The reply says the model id is taken from a model listing made at run time.",
+        "In the `ori` command, `--model` comes before the `--` separator.",
+        "The reply limits the run to at most three workers at the same time.",
+        "The reply gives the 20 requests per minute limit as the reason for the low concurrency."
+      ],
+      "expectations": [
+        "The reply places an OpenRouter credential check before the dispatch.",
+        "The reply says the model id is taken from a model listing made at run time.",
+        "In the `ori` command, `--model` comes before the `--` separator.",
+        "The reply limits the run to at most three workers at the same time.",
+        "The reply gives the 20 requests per minute limit as the reason for the low concurrency."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Kick off the subagents on OpenRouter. `ori auth` reports that no credential resolves on this machine.",
+      "expected_output": "Nothing is dispatched. The reply asks the user to run `ori login` and names the non-interactive alternatives as the user's to run.",
+      "files": [],
+      "assertions": [
+        "The reply contains no dispatch command.",
+        "The reply asks the user to run `ori login`.",
+        "The reply does not run `ori login` or open a browser itself.",
+        "The reply names `ori login --with-key` or `OPENROUTER_API_KEY` as something the user can run."
+      ],
+      "expectations": [
+        "The reply contains no dispatch command.",
+        "The reply asks the user to run `ori login`.",
+        "The reply does not run `ori login` or open a browser itself.",
+        "The reply names `ori login --with-key` or `OPENROUTER_API_KEY` as something the user can run."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "google/lyria-3-pro-preview is free on OpenRouter and has a million tokens of context. Its API entry lists output_modalities [\"audio\"] and has no \"tools\" in supported_parameters. Use it as the coding agent.",
+      "expected_output": "The model is refused because it cannot call tools and does not output text, and the reply says the replacement must come from a current listing of tool-capable models.",
+      "files": [],
+      "assertions": [
+        "The reply declines to use `google/lyria-3-pro-preview` as the coding agent.",
+        "The reply gives the missing `tools` support as a reason.",
+        "The reply says that being free with a large context is not enough.",
+        "The reply says the replacement has to come from a current listing of tool-capable models."
+      ],
+      "expectations": [
+        "The reply declines to use `google/lyria-3-pro-preview` as the coding agent.",
+        "The reply gives the missing `tools` support as a reason.",
+        "The reply says that being free with a large context is not enough.",
+        "The reply says the replacement has to come from a current listing of tool-capable models."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "The subagents run on OpenRouter through ori. This migration is too big for one run. Set it up so a subagent can keep going across runs without blowing the token budget. Reply with the setup: the budget numbers, the handoff file and the rules for each iteration.",
+      "expected_output": "A 750K ceiling per subagent in iterations of about 150K, each rewriting a handoff file that carries the objective word for word, written before the iteration runs out, with a stop on no progress.",
+      "files": [],
+      "assertions": [
+        "The reply gives a ceiling of 750K tokens per subagent in iterations of about 150K.",
+        "The handoff file is rewritten each iteration, not appended to.",
+        "The handoff file carries the original objective word for word.",
+        "The reply says each iteration stops at about 80% of its share to write the handoff.",
+        "The reply says the loop stops when two iterations in a row have the same next action and no new commits."
+      ],
+      "expectations": [
+        "The reply gives a ceiling of 750K tokens per subagent in iterations of about 150K.",
+        "The handoff file is rewritten each iteration, not appended to.",
+        "The handoff file carries the original objective word for word.",
+        "The reply says each iteration stops at about 80% of its share to write the handoff.",
+        "The reply says the loop stops when two iterations in a row have the same next action and no new commits."
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Only one free model on OpenRouter qualifies as a coding agent today. Just have it review its own output so we still have a review gate.",
+      "expected_output": "The reply does not present same-model review as independent: it is labelled as weaker, and paying for the review pass alone is offered.",
+      "files": [],
+      "assertions": [
+        "The reply does not call the same-model review independent.",
+        "The reply says a model reviewing its own output shares its blind spots.",
+        "The reply offers paying for the review pass alone as an option."
+      ],
+      "expectations": [
+        "The reply does not call the same-model review independent.",
+        "The reply says a model reviewing its own output shares its blind spots.",
+        "The reply offers paying for the review pass alone as an option."
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "The subagents on OpenRouter free models keep erroring out and now everything is failing. Just add a retry loop and let it run overnight.",
+      "expected_output": "No unattended retry loop: failed calls count against the quota. The reply caps retries or switches models, checks the model still exists, and mentions the one-time credit purchase that raises the daily limit.",
+      "files": [],
+      "assertions": [
+        "The reply advises against an unattended retry loop.",
+        "The reply says failed calls still count against the quota.",
+        "The reply recommends capping retries or switching models.",
+        "The reply says to check that the model id still exists.",
+        "The reply mentions that buying 10 dollars of credit raises the daily limit to 1,000 requests."
+      ],
+      "expectations": [
+        "The reply advises against an unattended retry loop.",
+        "The reply says failed calls still count against the quota.",
+        "The reply recommends capping retries or switching models.",
+        "The reply says to check that the model id still exists.",
+        "The reply mentions that buying 10 dollars of credit raises the daily limit to 1,000 requests."
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "I don't mind paying a little on OpenRouter if it means the agents stop getting rate limited. Keep it cheap though. Reply with how you would pick the model.",
+      "expected_output": "A price ceiling per million output tokens instead of free-only, a credit check before any paid model is recommended, and the fact that the per-minute cap applies to free models only.",
+      "files": [],
+      "assertions": [
+        "The reply uses a price ceiling per million output tokens instead of free models only.",
+        "The reply names 0.50 dollars per million output tokens as the default ceiling.",
+        "The reply says the remaining credit is checked before a paid model is recommended.",
+        "The reply says the 20 requests per minute cap applies to free models only."
+      ],
+      "expectations": [
+        "The reply uses a price ceiling per million output tokens instead of free models only.",
+        "The reply names 0.50 dollars per million output tokens as the default ceiling.",
+        "The reply says the remaining credit is checked before a paid model is recommended.",
+        "The reply says the 20 requests per minute cap applies to free models only."
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "Use the best model on OpenRouter for this, money is no object.",
+      "expected_output": "The price ceiling is not raised silently. The reply states what lifting it costs, asks the user to confirm, checks the wallet, and keeps the review by a different model.",
+      "files": [],
+      "assertions": [
+        "The reply asks the user to confirm before raising or removing the price ceiling.",
+        "The reply states a cost per run or per million tokens for a model above the ceiling.",
+        "The reply says the wallet balance has to cover the spend.",
+        "The reply keeps the review of the subagent's output by a different model."
+      ],
+      "expectations": [
+        "The reply asks the user to confirm before raising or removing the price ceiling.",
+        "The reply states a cost per run or per million tokens for a model above the ceiling.",
+        "The reply says the wallet balance has to cover the spend.",
+        "The reply keeps the review of the subagent's output by a different model."
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "Dispatch a codex subagent through ori on a free model to fix the failing test in the worktree `/work/.wt-app/fix-test`. Reply with the commands in order. Do not run anything.",
+      "expected_output": "A separate codex home is prepared first, then `ori codex` runs with `CODEX_HOME` pointing at it, `--model` before the `--`, no sandbox, and the worktree as the working directory.",
+      "files": [],
+      "assertions": [
+        "The reply contains a step that prepares a separate codex home directory before the dispatch command.",
+        "The dispatch command sets `CODEX_HOME` to the `.ori-codex` directory in the home directory.",
+        "In the dispatch command, `--model` comes before the `--` separator.",
+        "The dispatch command contains `--dangerously-bypass-approvals-and-sandbox`.",
+        "The dispatch command runs the worker in `/work/.wt-app/fix-test`."
+      ],
+      "expectations": [
+        "The reply contains a step that prepares a separate codex home directory before the dispatch command.",
+        "The dispatch command sets `CODEX_HOME` to the `.ori-codex` directory in the home directory.",
+        "In the dispatch command, `--model` comes before the `--` separator.",
+        "The dispatch command contains `--dangerously-bypass-approvals-and-sandbox`.",
+        "The dispatch command runs the worker in `/work/.wt-app/fix-test`."
+      ]
+    },
+    {
+      "id": 14,
+      "prompt": "Fix the typo in this sentence from our README and reply with the corrected sentence only: \"You will recieve an email when the build finishes.\"",
+      "expected_output": "The corrected sentence and nothing about delegation.",
+      "files": [],
+      "assertions": [
+        "The reply contains the sentence with `receive` spelled correctly.",
+        "The reply contains no dispatch command, worktree or pre-flight check."
+      ],
+      "expectations": [
+        "The reply contains the sentence with `receive` spelled correctly.",
+        "The reply contains no dispatch command, worktree or pre-flight check."
+      ],
+      "expected_skill": null
+    },
+    {
+      "id": 15,
+      "prompt": "Use codex to fix the flaky date test in this project. `git rev-parse --git-dir` here prints `fatal: not a git repository`. Reply with what you would do, in order. Do not run anything.",
+      "expected_output": "The login and quota check still runs, no worktree and no `git init`, and the user is told the worker edits the project directory directly.",
+      "files": [],
+      "assertions": [
+        "The reply places a codex login and quota check before the dispatch.",
+        "The reply contains no command that creates a git worktree.",
+        "The reply does not include `git init` as a step it takes on its own.",
+        "The reply tells the user the worker will edit the project directory directly."
+      ],
+      "expectations": [
+        "The reply places a codex login and quota check before the dispatch.",
+        "The reply contains no command that creates a git worktree.",
+        "The reply does not include `git init` as a step it takes on its own.",
+        "The reply tells the user the worker will edit the project directory directly."
       ]
     }
   ]

@@ -19,20 +19,20 @@
     },
     {
       "id": 2,
-      "prompt": "Should `parse_config` in the attached `config.py` (in a workspace it is at `input/2/config.py`) keep returning `None` when the file is malformed? Users write these files by hand, so broken ones are routine, and right now the Settings page tells them no file was found when the actual problem is a typo in it. The page has to say what is wrong. Answer yes or no in one line, then give me the rewritten `config.py` in full in one code block. Python 3.12, standard library only. No need to run it.",
-      "expected_output": "Says no, then a rewritten `config.py` in which `parse_config` returns a result type whose failure side is a dedicated error class per cause (missing file, malformed file) instead of `None` or a raised exception.",
+      "prompt": "Is `None` the right thing for `parse_config` in the attached `config.py` (in a workspace it is at `input/2/config.py`) to return when the file is malformed? Users write these files by hand, so broken ones are routine, and right now the Settings page tells them no file was found when the actual problem is a typo in it. The page has to say what is wrong. Answer yes or no in one line, then give me the rewritten `config.py` in full in one code block. Python 3.12, standard library only. No need to run it.",
+      "expected_output": "Says no, then a rewritten `config.py` in which `parse_config` returns a result type whose failure side is an error class with fields (ideally one per cause: missing file, malformed file) instead of `None` or a raised exception.",
       "files": [
         "evals/files/2/config.py"
       ],
       "assertions": [
         "The return annotation of `parse_config` in the rewritten code is a result type that separates success from failure (for example `Result[Config, ConfigError]` or `Config | ConfigError`), not `Config | None`, plain `Config`, or one class with optional `config` and `error` fields.",
         "No function in the rewritten code raises an exception for a missing or malformed file; there is no `raise` statement on those paths.",
-        "The malformed-file failure in the rewritten code is a dedicated class with at least one field (for example a dataclass `Malformed` with a `reason`), not a bare string and not a subclass of `Exception`."
+        "The malformed-file failure in the rewritten code is returned as an instance of a class with at least one field (for example a dataclass `Malformed` with a `reason`), not as a bare string and not as an instance of an `Exception` subclass."
       ],
       "expectations": [
         "The return annotation of `parse_config` in the rewritten code is a result type that separates success from failure (for example `Result[Config, ConfigError]` or `Config | ConfigError`), not `Config | None`, plain `Config`, or one class with optional `config` and `error` fields.",
         "No function in the rewritten code raises an exception for a missing or malformed file; there is no `raise` statement on those paths.",
-        "The malformed-file failure in the rewritten code is a dedicated class with at least one field (for example a dataclass `Malformed` with a `reason`), not a bare string and not a subclass of `Exception`."
+        "The malformed-file failure in the rewritten code is returned as an instance of a class with at least one field (for example a dataclass `Malformed` with a `reason`), not as a bare string and not as an instance of an `Exception` subclass."
       ]
     },
     {
@@ -95,18 +95,18 @@
     {
       "id": 6,
       "prompt": "Please review the attached `subscription.py` (in a workspace it is at `input/6/subscription.py`) before I merge it. It is new domain code for our billing service: the API layer calls `renew` when a customer clicks Renew, and shows them a message when the renewal is refused. Python 3.12. Give me a numbered list of at most six findings, most important first. For each one name the class or function, say what is wrong, and say what you want changed, with a line or two of code where that helps. Do not rewrite the whole file.",
-      "expected_output": "A numbered list of findings that includes: `renew` changes the object it is given, the refusal is raised instead of returned, `datetime.now()` is called inside the rule instead of the time being passed in, and the status string with its optional cancel fields should be one class per state.",
+      "expected_output": "A numbered list of findings that includes: `Subscription` should be a frozen dataclass, the refusal is raised instead of returned, `datetime.now()` is called inside the rule instead of the time being passed in, and the status string with its optional cancel fields should be one class per state.",
       "files": [
         "evals/files/6/subscription.py"
       ],
       "assertions": [
-        "One finding asks for `renew` to return a new subscription value instead of changing the `sub` object it is given.",
+        "One finding asks for `Subscription` (or the classes that replace it) to be declared with `@dataclass(frozen=True)`; further arguments such as `slots=True` are allowed.",
         "One finding asks for the cancelled-subscription refusal in `renew` to be returned as a value (for example `Err(...)` or a `Result` return type) instead of raised.",
         "One finding asks for `datetime.now()` to be taken out of `renew` by passing the current time (or a clock) in as a parameter.",
         "One finding asks for the `status` string and the optional `cancelled_at` and `cancel_reason` fields to be replaced by one class per state (for example `Trial | Active | Cancelled`)."
       ],
       "expectations": [
-        "One finding asks for `renew` to return a new subscription value instead of changing the `sub` object it is given.",
+        "One finding asks for `Subscription` (or the classes that replace it) to be declared with `@dataclass(frozen=True)`; further arguments such as `slots=True` are allowed.",
         "One finding asks for the cancelled-subscription refusal in `renew` to be returned as a value (for example `Err(...)` or a `Result` return type) instead of raised.",
         "One finding asks for `datetime.now()` to be taken out of `renew` by passing the current time (or a clock) in as a parameter.",
         "One finding asks for the `status` string and the optional `cancelled_at` and `cancel_reason` fields to be replaced by one class per state (for example `Trial | Active | Cancelled`)."
@@ -115,18 +115,18 @@
     {
       "id": 7,
       "prompt": "Write `signup.py` for our web app (Python 3.12, standard library only). It needs one function that takes the raw form fields `email`, `username` and `age`, all strings, and turns them into a signup record the rest of the code can rely on. Rules: the email contains exactly one `@`; the username is 3 to 20 characters, only letters, digits and underscores; the age is a whole number from 13 to 120. The form handler calls this on every submission and has to show the user which field was wrong and why. Give me the whole module in one code block (and save it as `signup.py` if you can write files). No need to run it.",
-      "expected_output": "A `signup.py` whose parsing function returns a result type: a signup record on success and, on failure, a dataclass naming the field and the reason. Nothing is raised for a broken rule, and validated strings such as the email are `NewType`s.",
+      "expected_output": "A `signup.py` whose parsing function returns a result type: a frozen signup record on success and, on failure, a dataclass that names the field (by attribute or by class) and carries the reason. Nothing is raised for a broken rule, and validated strings such as the email are `NewType`s.",
       "files": [],
       "assertions": [
-        "No function in the final `signup.py` code contains a `raise` statement for a broken rule (bad email, bad username or bad age).",
+        "The signup record returned on success in the final `signup.py` code is an instance of a class declared with `@dataclass(frozen=True)` (further arguments such as `slots=True` are allowed), not a `dict` or a plain class.",
         "The return annotation of the parsing function in the final `signup.py` code is a result type that separates success from failure (for example `Result[Signup, Invalid]` or `Ok[Signup] | Err[Invalid]`), not a tuple, plain `Signup`, or one class with optional value and error fields.",
-        "A broken rule in the final `signup.py` code is represented by a dataclass with the field name and the reason as separate fields (for example `Invalid(field=\"age\", reason=...)`), not by a bare string or an exception.",
+        "A broken rule in the final `signup.py` code is returned as a dataclass instance that names the field by an attribute (`Invalid(field=\"age\", ...)`) or by its class (`InvalidAge(...)`), not as a string, a `dict` entry or an exception.",
         "The final `signup.py` code declares at least one `NewType` for a validated value (for example `Email = NewType(\"Email\", str)`)."
       ],
       "expectations": [
-        "No function in the final `signup.py` code contains a `raise` statement for a broken rule (bad email, bad username or bad age).",
+        "The signup record returned on success in the final `signup.py` code is an instance of a class declared with `@dataclass(frozen=True)` (further arguments such as `slots=True` are allowed), not a `dict` or a plain class.",
         "The return annotation of the parsing function in the final `signup.py` code is a result type that separates success from failure (for example `Result[Signup, Invalid]` or `Ok[Signup] | Err[Invalid]`), not a tuple, plain `Signup`, or one class with optional value and error fields.",
-        "A broken rule in the final `signup.py` code is represented by a dataclass with the field name and the reason as separate fields (for example `Invalid(field=\"age\", reason=...)`), not by a bare string or an exception.",
+        "A broken rule in the final `signup.py` code is returned as a dataclass instance that names the field by an attribute (`Invalid(field=\"age\", ...)`) or by its class (`InvalidAge(...)`), not as a string, a `dict` entry or an exception.",
         "The final `signup.py` code declares at least one `NewType` for a validated value (for example `Email = NewType(\"Email\", str)`)."
       ]
     },

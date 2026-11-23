@@ -126,7 +126,7 @@ but ask again in a new one.
 Native codex always runs `gpt-5.6-sol`, without a sandbox and with full
 permissions. In OpenRouter mode the model comes from a listing made at run
 time, as that section describes, never from this table.
-When copilot is in paid overage, the work goes to codex; copilot is used only
+When copilot is in paid overage, offer codex for the work and use copilot only
 after the user says yes to the overage (step 1, code 20).
 
 ### 3. Worktree
@@ -180,9 +180,9 @@ the report was 174 bytes.
 
 Watch for hangs. A worker whose log and status file have not changed for about
 15 minutes, with no new commits, is probably blocked on a prompt because a flag
-is missing: stop it and dispatch again with the flag. A worker whose process
-was killed partway is resumed instead. The commands for both are under
-"Watching a running worker" in invocation.md.
+is missing: stop it and dispatch again with the flag ("Watching a running
+worker" in invocation.md). A worker whose process was killed partway is resumed
+instead ("Long runs get killed" there).
 
 ### 6. Collect, verify, merge
 
@@ -194,8 +194,8 @@ nothing. Then merge, then test again. In order:
 SK=/path/printed/by/setup
 SLUG=p2-parser                               # example slug
 WT=$("$SK/scripts/wt.sh" path "$SLUG") || exit 1
-(cd "$WT" && npm test)                       # npm test stands for the worker's critical-path tests
-"$SK/scripts/wt.sh" merge "$SLUG"            # merges, then removes the worktree and branch
+(cd "$WT" && npm test) || exit 1             # npm test stands for the worker's critical-path tests
+"$SK/scripts/wt.sh" merge "$SLUG" || exit 1  # merges, then removes the worktree and branch
 npm test                                     # the same tests on the merged branch
 ```
 

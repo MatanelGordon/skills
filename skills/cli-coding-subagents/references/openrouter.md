@@ -121,7 +121,7 @@ Launch every OpenRouter codex worker through that home. Set `SLUG`, `WT`,
 
 ```bash
 MODEL=vendor/model-id-from-ori-models   # replace with an id ori-models.sh printed this run
-CODEX_HOME="$HOME/.ori-codex" ori codex --model "$MODEL" -- \
+CODEX_HOME="$HOME/.ori-codex" ori codex --model "$MODEL" --reasoning-effort high -- \
   exec --dangerously-bypass-approvals-and-sandbox -C "$WT" -o "$OUT" "$(cat "$PROMPT_FILE")" < /dev/null > "$LOG" 2>&1
 ```
 
@@ -135,7 +135,9 @@ The model is an **`ori` flag**, before the `--`, as in the block above. Do not
 write `ori codex -- --model "$MODEL"` (or the same with `ori claude`).
 Everything after `--` is passed to the harness untouched, so the id reaches the
 harness's own `--model`, which does not understand OpenRouter IDs. `ori` also
-owns `--reasoning-effort`.
+owns `--reasoning-effort` (`max`, `xhigh`, `high`, `medium`, `low`, `minimal`,
+`none` in `ori codex --help`), so it goes before the `--` too; without it the
+harness falls back to its configured default.
 
 *Verified by execution: `ori claude --model z-ai/glm-5.2:free -- -p "…"` and the
 same command with `nvidia/nemotron-3.5-lightning:free` both returned the
@@ -227,8 +229,8 @@ Use **750K tokens per subagent**, sliced into roughly **150K iterations**.
 
 You launch each iteration: one dispatch of the command in section 3, in the same
 worktree, whose prompt carries the objective and says to read `HANDOFF.md` at
-the worktree root first. Between iterations, read the report and `HANDOFF.md`;
-that is the checkpoint. `HANDOFF.md` is committed on the worker's branch; the
+the worktree root first, and lists `HANDOFF.md` in its Scope. Between
+iterations, read the report and `HANDOFF.md`; that is the checkpoint. `HANDOFF.md` is committed on the worker's branch; the
 last iteration deletes it before you merge.
 
 Each iteration rewrites `HANDOFF.md`; it never appends:

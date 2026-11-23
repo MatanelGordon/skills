@@ -9,6 +9,7 @@ multi-hundred-line string.
 
 ```bash
 PROMPT_FILE="$RUN_DIR/prompts/<slug>.md"
+# with every flag from the dispatch block in invocation.md in place of the dots:
 codex exec ... "$(cat "$PROMPT_FILE")" < /dev/null > "$LOG" 2>&1
 ```
 

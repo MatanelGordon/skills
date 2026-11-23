@@ -91,8 +91,11 @@ mkdir -p "${RUN_DIR:?run directory not set}/logs"
 # machine-specific; this example is an nvm v24 node plus the copilot JS entry.
 NODE24="/path/to/node24/bin/node"
 COPILOT="/path/to/copilot"
+SID=$(uuidgen)                        # session id, chosen now so a follow-up can resume it
+echo "$SID" > "$RUN_DIR/logs/$SLUG.sid"
 
 "$NODE24" "$COPILOT" -p "$(cat "$PROMPT_FILE")" \
+  --session-id "$SID" \
   --model claude-sonnet-5 \
   --effort high \
   --allow-all-tools \
@@ -112,6 +115,7 @@ needed.
 | Flag | Why |
 |---|---|
 | `-p "$PROMPT"` | Non-interactive; exits when done. |
+| `--session-id "$SID"` | Sets the id of the new session, so a follow-up can resume it without scraping. |
 | `--model` | Use `claude-sonnet-5` or `gpt-5.6-sol`. These spellings were verified; most others are rejected. |
 | `--effort high` | Always high for real work. |
 | `--allow-all-tools` | Required in non-interactive mode; without it the worker runs no tools. |
@@ -142,16 +146,19 @@ ambient token may lack Copilot access. Fix login with `copilot login`.
 
 ## Watching a running worker
 
+Set `SLUG`, `WT`, `RUN_DIR` and `LOG` as in the dispatch block, in the same
+Bash call:
+
 ```bash
-find "$LOG" "$RUN_DIR/agents/$SLUG.md" -mmin -15   # prints nothing when both are stale
-git -C "$WT" log -1 --format=%cr                   # time of its last commit
+find "${LOG:?}" "${RUN_DIR:?}/agents/$SLUG.md" -mmin -15   # prints nothing when both are stale
+git -C "${WT:?}" log -1 --format=%cr                       # time of its last commit
 tail -5 "$LOG"
 ```
 
 Nothing printed by the first command and no recent commit means the worker is
 probably stuck. A hung worker is waiting on a prompt because a flag is missing:
-stop it (stop its background task, or `pkill -f "$WT"`) and dispatch again with
-the flag. A worker whose process was killed partway is different: resume it
+stop it (stop its background task, or `pkill -f -- "-C ${WT:?}"`, which matches
+only the dispatch running in that worktree) and dispatch again with the flag. A worker whose process was killed partway is different: resume it
 rather than starting over ("Long runs get killed", above).
 
 ## Follow-ups: resume, don't re-dispatch
@@ -162,25 +169,18 @@ dispatch and avoids re-reading the codebase.
 
 ### Copilot: choose the id up front
 
-`--session-id` sets the UUID for a new session, so it never needs scraping:
-
-Set `SLUG`, `WT`, `RUN_DIR`, `PROMPT_FILE`, `LOG`, `NODE24` and `COPILOT` as in
-the dispatch block above, in the same Bash call.
+The dispatch block above chose the session id with `--session-id` and saved it
+in `$RUN_DIR/logs/$SLUG.sid`, where a resumed orchestrator finds it (not in the
+worker's status file, which the worker overwrites). Set `SLUG`, `WT`, `RUN_DIR`,
+`LOG`, `NODE24` and `COPILOT` as in that block, in the same Bash call:
 
 ```bash
-SID=$(uuidgen)
-"$NODE24" "$COPILOT" -p "$(cat "$PROMPT_FILE")" --session-id "$SID" \
-  --model claude-sonnet-5 --effort high --allow-all-tools --allow-all-paths \
-  --no-ask-user -C "$WT" --no-color --log-level none -s < /dev/null > "$LOG" 2>&1
-
-# Follow-up in the same session, with context retained.
+SID=$(cat "$RUN_DIR/logs/$SLUG.sid") || exit 1
 ANSWER="Yes - use the existing Result type, do not add a new one."   # example answer
 "$NODE24" "$COPILOT" -p "$ANSWER" \
   --resume="$SID" --allow-all-tools --allow-all-paths --no-ask-user \
   -C "$WT" --no-color --log-level none -s < /dev/null >> "$LOG" 2>&1
 ```
-
-Record `$SID` in the worker's status file so a resumed orchestrator can find it.
 
 ### Codex: recover the id by worktree
 

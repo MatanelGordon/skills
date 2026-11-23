@@ -58,7 +58,8 @@ A piece is independent when it can be merged alone and pass its own tests. Split
 by feature, not by technical layer.
 
 Write an ownership table with one row per worker: slug, paths owned, paths
-off-limits, test command, and tool (template in `references/templates.md`).
+off-limits, test command, and tool (template in `references/templates.md`). In
+a phased build the plan's file map is that table.
 Every worker has a test command; for a change with no test suite, it is the
 check that proves the acceptance criteria (a build, a lint, a link check).
 
@@ -79,7 +80,7 @@ write them.** Dispatch without a plan is how agents collide, because nothing
 has established who owns which files.
 
 ```bash
-ls -t .plan/*/plan.md 2>/dev/null
+cd "$(git rev-parse --show-toplevel)" && ls -t .plan/*/plan.md 2>/dev/null
 ```
 
 - **No plan**: run `deep-plan` first. It owns `.plan/`, produces `plan.md` with
@@ -97,7 +98,7 @@ rather than improvising. Amend `plan.md` under `## Amendments` when execution
 proves it wrong; do not drift silently.
 
 ```bash
-PLAN="$(git rev-parse --show-toplevel)/.plan/<plan-name>"
+PLAN="$(git rev-parse --show-toplevel)/.plan/oauth-device-flow"   # example: your plan's name
 mkdir -p "$PLAN"/{prompts,agents,logs}
 ```
 
@@ -122,10 +123,12 @@ phase 1.
 - **1 to 2 security agents** write `SECURITY.md`, or `SECURITY.part1.md` and
   `SECURITY.part2.md`. Prefer codex, or a Claude `Agent`.
 
-Review workers are dispatched like any other: own worktree of the merged
-branch, the same prompt template. Their Scope is their findings file in the
-plan directory (absolute path) and their status file; the code is off-limits.
-Their acceptance criteria are the `CR.md` shape in `references/templates.md`.
+A review worker run through a CLI is dispatched like any other: own worktree
+of the merged branch, the same prompt template. Its Scope is its findings file
+in the plan directory (absolute path) and its status file; the code is
+off-limits. In place of critical-path tests, its acceptance criteria are the
+`CR.md` shape in `references/templates.md`. A Claude `Agent` reviewer gets the
+same scope and criteria in its brief.
 
 Skip security agents for throwaway projects under `Desktop/Playgrounds`: they
 will never ship and auditing them is noise. Code review still runs. Check:
@@ -276,10 +279,11 @@ A worktree in the list means a worker never got merged. Decide per worktree:
 - **clean + 0 ahead**: it never started. Run
   `"$SK/scripts/wt.sh" drop <slug>` and re-dispatch.
 - **MISSING**: the directory was deleted outside `wt.sh`, but its commits are
-  still on the branch `sa/<slug>`. Run `git worktree prune`, look at
-  `git log HEAD..sa/<slug>`, then merge the branch with `git merge --no-ff` if
-  the work is complete and its tests pass, or `"$SK/scripts/wt.sh" drop <slug>`
-  and re-dispatch.
+  still on its branch. With `SLUG` set to that worktree's name: run
+  `git worktree prune` and look at `git log HEAD.."sa/$SLUG"`. If the work is
+  complete, `git merge --no-ff "sa/$SLUG"`, run the tests on the merged branch,
+  then `"$SK/scripts/wt.sh" merge "$SLUG"` to delete the branch. Otherwise
+  `"$SK/scripts/wt.sh" drop "$SLUG"` and re-dispatch.
 
 Assume no subagent processes survived; nothing resumes on its own. Old logs
 are in `$PLAN/logs/`.

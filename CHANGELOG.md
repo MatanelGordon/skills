@@ -8,8 +8,8 @@
   user: at most 500 words, with linked SVG diagrams, the questions that need
   the user's call (`Q1`, `Q2`), the choices already made and the risks. Open
   questions sit under the plan's existing "Risks and unknowns" heading, so no
-  second plan format exists. `SKILL.md` went from 30,498 to 5,651
-  characters.
+  second plan format exists. `SKILL.md` went from 30,424 to 5,651
+  characters, and the Markdown an agent may load from 68,212 to 11,726.
 - Removed the hosted Agent-Native Plans workflow from `visual-plan`, with its
   four reference files and `agent-native-skill.json`. That text came from
   Builder.io's MIT-licensed `@agent-native/core` skill; the replacement is
@@ -22,7 +22,7 @@
   strips it), the review is within its word budget, and every open question
   and ADR in the plan appears in the review. Diagrams are one adaptive SVG
   each, checked by rendering in light and dark.
-- **Slimmed `functional-csharp`** from 16,449 to 10,972 characters. The
+- **Slimmed `functional-csharp`** from 16,369 to 10,972 characters. The
   five rules keep their inline examples; the `Match` walkthrough, pattern
   matching, the ErrorOr chain, pipelines, the parameter-record example and the
   Decider code moved to `references/`, including a new `patterns.md`. The

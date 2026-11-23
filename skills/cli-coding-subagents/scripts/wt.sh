@@ -17,7 +17,8 @@
 # Override the root with PARALLEL_WT_ROOT.
 #
 # Exit codes: 0 ok · 1 error (see message) · 2 merge conflict, needs resolution
-#             · 3 main tree dirty, merge not attempted · 64 bad usage
+#             · 3 main tree dirty, merge not attempted · 4 not a git repository,
+#             so no worktree is possible · 64 bad usage
 set -uo pipefail
 
 die() { echo "wt: $1" >&2; exit "${2:-1}"; }
@@ -30,7 +31,7 @@ case "${1:-}" in
   *) echo "wt: unknown command: $1" >&2; usage >&2; exit 64 ;;
 esac
 
-git rev-parse --git-dir >/dev/null 2>&1 || die "not inside a git repository"
+git rev-parse --git-dir >/dev/null 2>&1 || die "not a git repository: $PWD (no worktree is possible here)" 4
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 REPO_NAME="$(basename "$REPO_ROOT")"
 WT_ROOT="${PARALLEL_WT_ROOT:-$(dirname "$REPO_ROOT")/.wt-$REPO_NAME}"

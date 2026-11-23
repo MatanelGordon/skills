@@ -1,25 +1,3 @@
----
-name: openrouter-cli-subagent
-description: >
-  Run codex and claude coding subagents through OpenRouter with the ori CLI, so
-  subagent work costs nothing when free models suffice. Use when asked to run
-  agents on OpenRouter, use ori, work on free models or cheap ones under a price
-  ceiling, cut subagent cost, escape free-tier rate limits, or route work to a
-  specific OpenRouter model. Covers the login pre-flight that stops
-  rather than attempting browser OAuth, discovering which free models are
-  genuinely usable for coding today, routing claude for orchestration and codex
-  for fixes, mandatory cross-model code review and plan review because these
-  models are not trusted, and staying under a token ceiling with handoff-file
-  iterations. Also use when free-model work stalls on rate limits, dropped tool
-  calls, or a model that vanished mid-run. Builds on cli-coding-subagents.
-license: MIT
-metadata:
-  author: Matanel Gordon
-  source: https://github.com/MatanelGordon/skills
-  requires: the ori CLI (openrouter) on PATH and an OpenRouter credential; builds on cli-coding-subagents
-  depends: cli-coding-subagents
----
-
 # OpenRouter CLI subagents
 
 > **TEMPORARY: DO NOT USE CLAUDE WITH THIS SKILL.** `ori claude` is not working

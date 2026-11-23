@@ -33,6 +33,23 @@ SK=$(ls -d "$HOME"/.claude/skills/cli-coding-subagents "$HOME"/.codex/skills/cli
 
 ---
 
+## Setup
+
+```bash
+SK=$(for root in "$HOME/.claude/skills" "${CODEX_HOME:-$HOME/.codex}/skills" "$HOME/.codex/skills" \
+                 "$HOME/.copilot/skills" "$HOME/.agents/skills" "$HOME/.tabnine/agent/skills"; do
+  dir="$root/cli-coding-subagents"; complete=yes
+  for helper in precheck.sh wt.sh codex-session.py ori-precheck.sh ori-models.sh ori-codex-home.sh; do
+    [ -x "$dir/scripts/$helper" ] || complete=no
+  done
+  [ "$complete" = yes ] && { echo "$dir"; break; }
+done)
+[ -n "$SK" ] || { echo "cli-coding-subagents: no complete copy found; reinstall the whole skill directory" >&2; exit 40; }
+echo "$SK"
+```
+
+---
+
 ## 1. Pre-flight (mandatory, every session)
 
 ```bash

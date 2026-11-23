@@ -6,7 +6,7 @@
 # Usage:
 #   ori-precheck.sh [--json]
 #
-# Exit codes (same contract as cli-coding-subagents/scripts/precheck.sh):
+# Exit codes (same contract as precheck.sh beside this script):
 #
 #   0   OK              — a credential resolves; safe to dispatch
 #   10  NOT_LOGGED_IN   — no credential; STOP and ask the user to run `ori login`

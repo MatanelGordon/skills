@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
-"""Print the codex session id for a given worktree, for `codex exec resume`.
+"""Print the codex session id recorded for a worktree.
 
-Codex has no flag to pre-set a session id, but the first line of every rollout is
-a `session_meta` record carrying both `session_id` and `cwd`. Matching on cwd is
-parallel-safe; picking the newest file is not, because concurrent agents race.
+Usage: codex-session.py <worktree-path>
 
-    SID=$(codex-session.py /path/to/worktree)
-    cd "$WT" && codex exec resume "$SID" ... "follow-up prompt"
-
-Exits 1 with no output if no session matches that directory.
+Exit codes: 0 id printed · 1 no session ran in that directory · 64 bad usage.
+The reason for choosing a session this way, and the command that takes the id,
+are in references/invocation.md under "Follow-ups".
 """
 import glob
 import json

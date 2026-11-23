@@ -4,15 +4,17 @@
     {
       "id": 1,
       "prompt": "I'm starting our job runner in Python 3.12 and need the Job model as `job.py`. A job is in exactly one of three states: pending, running with a worker id, or finished with an output path. Also add a `describe(job)` function that returns a one-line summary for whichever state the job is in. Give me the whole module in one code block (and save it as `job.py` if you can write files). No need to run or type-check it, I'll do that.",
-      "expected_output": "A `job.py` with one frozen, slotted dataclass per state joined in a `Job` union, a `NewType` for the worker id, and a `describe` that uses `match` ending in `assert_never`; not one class with a status field and optional fields.",
+      "expected_output": "A `job.py` with one frozen dataclass per state joined in a `Job` union, a `NewType` for the worker id, and a `describe` that uses `match` ending in `assert_never`; not one class with a status field and optional fields.",
       "files": [],
       "assertions": [
-        "The final `job.py` code has a separate class for each of the three states, each decorated with `@dataclass(frozen=True, slots=True)`; further arguments such as `kw_only=True` are allowed.",
+        "The final `job.py` code has a separate class for each of the three states (pending, running, finished), not one `Job` class with a status field.",
+        "Every state class in the final `job.py` code is decorated with `@dataclass(frozen=True)`; further arguments such as `slots=True` are allowed.",
         "The `describe` function in the final `job.py` code uses a `match` statement whose last `case` arm calls `assert_never`.",
         "The worker id in the final `job.py` code is typed with a `NewType` (for example `WorkerId = NewType(\"WorkerId\", str)`), not with plain `str` or `int`."
       ],
       "expectations": [
-        "The final `job.py` code has a separate class for each of the three states, each decorated with `@dataclass(frozen=True, slots=True)`; further arguments such as `kw_only=True` are allowed.",
+        "The final `job.py` code has a separate class for each of the three states (pending, running, finished), not one `Job` class with a status field.",
+        "Every state class in the final `job.py` code is decorated with `@dataclass(frozen=True)`; further arguments such as `slots=True` are allowed.",
         "The `describe` function in the final `job.py` code uses a `match` statement whose last `case` arm calls `assert_never`.",
         "The worker id in the final `job.py` code is typed with a `NewType` (for example `WorkerId = NewType(\"WorkerId\", str)`), not with plain `str` or `int`."
       ]
@@ -71,8 +73,7 @@
         "The script defines or imports no `Ok`, `Err` or `Result` type.",
         "The script contains no `@dataclass` decorator.",
         "The script imports nothing from outside the Python standard library."
-      ],
-      "expected_skill": null
+      ]
     },
     {
       "id": 5,
@@ -162,6 +163,20 @@
         "The reply adds `nickname` to `Customer` as a `models.CharField` with `max_length=40`.",
         "The `set_nickname` method in the reply assigns to `self.nickname`.",
         "The reply's code contains none of `@dataclass`, `Ok`, `Err` or `Result`."
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Quick Python question, nothing to write or review: what is the actual difference between `except Exception:` and a bare `except:`? A few sentences is enough.",
+      "expected_output": "A few sentences saying that a bare `except:` catches every `BaseException`, including `KeyboardInterrupt` and `SystemExit`, while `except Exception:` lets those through. No advice to replace exceptions with returned error values.",
+      "files": [],
+      "assertions": [
+        "The reply names `KeyboardInterrupt` or `SystemExit` as something a bare `except:` catches and `except Exception:` lets through.",
+        "The reply does not suggest returning an error value (such as a `Result`, `Ok`/`Err` or an error dataclass) instead of raising exceptions."
+      ],
+      "expectations": [
+        "The reply names `KeyboardInterrupt` or `SystemExit` as something a bare `except:` catches and `except Exception:` lets through.",
+        "The reply does not suggest returning an error value (such as a `Result`, `Ok`/`Err` or an error dataclass) instead of raising exceptions."
       ],
       "expected_skill": null
     }

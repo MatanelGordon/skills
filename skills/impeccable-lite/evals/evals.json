@@ -4,20 +4,20 @@
     {
       "id": 1,
       "prompt": "Redesign our billing page so it feels more polished and more distinctive. It is attached as `billing.html` (in a workspace it is at `input/1/billing.html`). Keep our brand, the data and what every control does. No internet access and no new dependencies. Before the code, tell me in a few lines what direction you chose. Then give me the whole revised file (write it to `output/billing.html` if you can write files, otherwise put it in full in your reply).",
-      "expected_output": "Three short direction notes (goal, visual thesis, hierarchy), then one revised billing.html that keeps the four existing actions, shows no figure that is not in the supplied page, and ends by saying what could not be checked.",
+      "expected_output": "A few lines of direction that say what the page puts first and what follows, then one revised billing.html that keeps the four existing actions, shows no figure that is not in the supplied page, and ends by saying what could not be checked.",
       "files": [
         "evals/files/1/billing.html"
       ],
       "assertions": [
-        "The reply gives its direction as notes labelled `Goal`, `Visual thesis` and `Hierarchy`.",
+        "The direction note says what the page puts first and what follows it, in order (for example: what is owed, then the invoices, then the plan).",
         "The revised page offers no action the supplied page did not have: apart from a skip-to-content link, its only buttons and links are `Change plan`, `Update payment method`, `Pay now` and `Download PDF`.",
-        "Every amount, date, seat count and invoice number on the revised page also appears in the supplied `billing.html`.",
+        "Every amount, date, seat count and invoice number on the revised page is one of these: $240.00, $180.00, 12 seats, 1 December 2026, 1 Nov 2026, 1 Oct 2026, 1 Sep 2026, INV-2041, INV-2032, INV-2019 (any date format).",
         "The reply names at least one check it could not make, such as viewing the page in a browser."
       ],
       "expectations": [
-        "The reply gives its direction as notes labelled `Goal`, `Visual thesis` and `Hierarchy`.",
+        "The direction note says what the page puts first and what follows it, in order (for example: what is owed, then the invoices, then the plan).",
         "The revised page offers no action the supplied page did not have: apart from a skip-to-content link, its only buttons and links are `Change plan`, `Update payment method`, `Pay now` and `Download PDF`.",
-        "Every amount, date, seat count and invoice number on the revised page also appears in the supplied `billing.html`.",
+        "Every amount, date, seat count and invoice number on the revised page is one of these: $240.00, $180.00, 12 seats, 1 December 2026, 1 Nov 2026, 1 Oct 2026, 1 Sep 2026, INV-2041, INV-2032, INV-2019 (any date format).",
         "The reply names at least one check it could not make, such as viewing the page in a browser."
       ]
     },
@@ -40,18 +40,18 @@
     {
       "id": 3,
       "prompt": "Review this settings screen and tell me what is actually wrong with it and how much each problem matters. It is attached as `settings.html` (in a workspace it is at `input/3/settings.html`). Do not edit it and do not rewrite it for me; I only want the review.",
-      "expected_output": "A review of at most five findings, each labelled blocking, major or minor with its evidence in the file, its effect on the user and one fix. It covers the low-contrast hint text, the removed focus outline and the Delete button that looks like Save. No rewritten page.",
+      "expected_output": "A review of at most five findings, each rated for severity and backed by something quoted from the page: the low-contrast hint text, the removed focus outline and the Delete button that looks like Save. No rewritten page.",
       "files": [
         "evals/files/3/settings.html"
       ],
       "assertions": [
-        "Every finding in the reply carries one of the severity labels `blocking`, `major` or `minor` (in any letter case).",
+        "Every finding quotes a concrete element, selector, CSS value or line of copy from the page as its evidence.",
         "The reply lists at most five findings.",
         "One finding is that the hint text (`.hint`, `#b9b9b9`, 11px) has too little contrast against the white page.",
         "One finding is that `Delete account` looks the same as `Save changes`: both are `.btn` buttons side by side."
       ],
       "expectations": [
-        "Every finding in the reply carries one of the severity labels `blocking`, `major` or `minor` (in any letter case).",
+        "Every finding quotes a concrete element, selector, CSS value or line of copy from the page as its evidence.",
         "The reply lists at most five findings.",
         "One finding is that the hint text (`.hint`, `#b9b9b9`, 11px) has too little contrast against the white page.",
         "One finding is that `Delete account` looks the same as `Save changes`: both are `.btn` buttons side by side."
@@ -67,13 +67,13 @@
       "assertions": [
         "The revised page loads nothing from a remote address: there is no `http://` or `https://` URL in any `<link>`, `<script>`, `<img>`, `@import` or CSS `url()`.",
         "The revised page keeps the `@font-face` rule for `Loom Grotesk` from `fonts/loom-grotesk.woff2`.",
-        "The revised page states no fact about Loomstack that the supplied page does not: no new customer, quote, number, feature or award.",
+        "The revised page adds no testimonial, quote, customer name or logo, star rating, or statistic such as a customer count or time saved.",
         "If the revised CSS adds any transition or animation, it also has a `@media (prefers-reduced-motion: reduce)` rule."
       ],
       "expectations": [
         "The revised page loads nothing from a remote address: there is no `http://` or `https://` URL in any `<link>`, `<script>`, `<img>`, `@import` or CSS `url()`.",
         "The revised page keeps the `@font-face` rule for `Loom Grotesk` from `fonts/loom-grotesk.woff2`.",
-        "The revised page states no fact about Loomstack that the supplied page does not: no new customer, quote, number, feature or award.",
+        "The revised page adds no testimonial, quote, customer name or logo, star rating, or statistic such as a customer count or time saved.",
         "If the revised CSS adds any transition or animation, it also has a `@media (prefers-reduced-motion: reduce)` rule."
       ]
     },
@@ -104,20 +104,18 @@
     },
     {
       "id": 9,
-      "prompt": "Use a perception-first analysis on this checkout. Usability tests say people understand it, but they still hesitate at the last step and call it untrustworthy. The page is attached as `checkout.html` and the test notes as `usability-notes.md` (in a workspace they are under `input/9/`). Diagnose the existing page; do not redesign it yet.",
-      "expected_output": "A diagnosis organised by the lens's gates, built on the page and the notes: the total rises from $48.00 to $52.99 because of a pre-ticked add-on, which is named as a deceptive default. Causes the notes do not settle are marked as hypotheses with the observation that would test them.",
+      "prompt": "Usability tests say people understand our checkout, but they still hesitate at the last step and call it untrustworthy. The page is attached as `checkout.html` and the test notes as `usability-notes.md` (in a workspace they are under `input/9/`). Diagnose why from the page and the notes; do not redesign it yet.",
+      "expected_output": "A diagnosis built on the page and the notes: the total rises from $48.00 to $52.99 because of a pre-ticked add-on, which is named as a deceptive default. Causes the notes do not settle are marked as hypotheses with the observation that would test them.",
       "files": [
         "evals/files/9/checkout.html",
         "evals/files/9/usability-notes.md"
       ],
       "assertions": [
-        "The reply labels its findings with gate names from this list: cognitive bandwidth, first-impression framing, felt fluency, perception and behavior, decision architecture.",
         "The reply says the button's `$52.99` is higher than the summary's `$48.00` because of the pre-ticked delivery protection (4.99).",
         "The reply calls the pre-ticked delivery protection a dark pattern or a deceptive default, or says it should start unticked.",
         "The reply marks at least one cause as a hypothesis and names an observation or test that would confirm it or rule it out."
       ],
       "expectations": [
-        "The reply labels its findings with gate names from this list: cognitive bandwidth, first-impression framing, felt fluency, perception and behavior, decision architecture.",
         "The reply says the button's `$52.99` is higher than the summary's `$48.00` because of the pre-ticked delivery protection (4.99).",
         "The reply calls the pre-ticked delivery protection a dark pattern or a deceptive default, or says it should start unticked.",
         "The reply marks at least one cause as a hypothesis and names an observation or test that would confirm it or rule it out."
@@ -145,7 +143,7 @@
     },
     {
       "id": 11,
-      "prompt": "Marketing wants our dispatch console to look simpler. I own the console and have to decide what, if anything, changes in it. The console is attached as `console.html` and what we know about how it is used as `field-notes.md` (in a workspace they are under `input/11/`). Use a perception-first derivation: list the constraints you derive, then give the one direction you would take. No code.",
+      "prompt": "Marketing wants our dispatch console to look simpler. I own the console and have to decide what, if anything, changes in it. The console is attached as `console.html` and our notes on how it is used as `field-notes.md` (in a workspace they are under `input/11/`). List the constraints you take from the console and the notes, then give the one direction you would take. No code.",
       "expected_output": "Constraints drawn from the field notes, then one direction that keeps all ten tools visible, says nothing measured shows the toolbar slows new dispatchers, and states outright that this does not give marketing what it asked for.",
       "files": [
         "evals/files/11/console.html",

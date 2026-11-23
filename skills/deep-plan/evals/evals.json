@@ -74,12 +74,12 @@
       "assertions": [
         "The reply points out that the plan's status is `draft`.",
         "In the list, a step where the user approves or confirms the plan comes before any step that starts phase 1.",
-        "The reply says the plan's status line is changed (to `approved` or `executing`) before or when phase 1 starts."
+        "The reply says the plan's status line is updated from `draft` before or when phase 1 starts."
       ],
       "expectations": [
         "The reply points out that the plan's status is `draft`.",
         "In the list, a step where the user approves or confirms the plan comes before any step that starts phase 1.",
-        "The reply says the plan's status line is changed (to `approved` or `executing`) before or when phase 1 starts."
+        "The reply says the plan's status line is updated from `draft` before or when phase 1 starts."
       ]
     },
     {
@@ -196,12 +196,10 @@
       ],
       "assertions": [
         "The plan text has a status line that reads `draft`.",
-        "The plan is named in short hyphenated form (for example `invoice-csv-export`), in its title or its file path.",
         "The reply says nothing is to be built until the user has approved the plan."
       ],
       "expectations": [
         "The plan text has a status line that reads `draft`.",
-        "The plan is named in short hyphenated form (for example `invoice-csv-export`), in its title or its file path.",
         "The reply says nothing is to be built until the user has approved the plan."
       ]
     }

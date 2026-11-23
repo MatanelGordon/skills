@@ -4,17 +4,19 @@
     {
       "id": 1,
       "prompt": "Before we build this, I'm not sure the booking state machine actually holds up once events arrive late or more than once. The draft is attached as `booking-states.md` (in a workspace it is at `input/1/booking-states.md`). Can you try a quick version so we can see? Python 3, one short script of about 60 lines. Give me the script in full in your reply, and write it to a file too if you can write files. If you are able to run it, run it and tell me what it showed; if you are not, I will run it myself.",
-      "expected_output": "One throwaway Python script whose opening comment states the question in one sentence and a prediction of the answer, and which replays late and repeated events from hardcoded scenarios. No tests.",
+      "expected_output": "One throwaway Python script whose opening comment states the question in one sentence and a prediction of the answer, and which replays late and repeated events from hardcoded scenarios, including a `pay_ok` that arrives after the hold has expired. No tests.",
       "files": [
         "evals/files/1/booking-states.md"
       ],
       "assertions": [
-        "The script, in the reply or in a file the agent wrote, has in its opening comment or docstring a line labelled `Question:` that states in one sentence what the script is meant to find out.",
-        "A prediction of what the run will show, labelled as a prediction, guess or expectation, appears in the script's opening comment, or in the text addressed to the user before any output of the script."
+        "The script, in the reply or in a file the agent wrote, has an opening comment or docstring that states, in one sentence, the question the script is meant to answer.",
+        "A prediction of what the run will show, labelled as a prediction, guess or expectation, appears in the script's opening comment, or in the text addressed to the user before any output of the script.",
+        "The script includes a scenario in which `pay_ok` arrives after `hold_timeout` has already moved the booking to `expired`."
       ],
       "expectations": [
-        "The script, in the reply or in a file the agent wrote, has in its opening comment or docstring a line labelled `Question:` that states in one sentence what the script is meant to find out.",
-        "A prediction of what the run will show, labelled as a prediction, guess or expectation, appears in the script's opening comment, or in the text addressed to the user before any output of the script."
+        "The script, in the reply or in a file the agent wrote, has an opening comment or docstring that states, in one sentence, the question the script is meant to answer.",
+        "A prediction of what the run will show, labelled as a prediction, guess or expectation, appears in the script's opening comment, or in the text addressed to the user before any output of the script.",
+        "The script includes a scenario in which `pay_ok` arrives after `hold_timeout` has already moved the booking to `expired`."
       ]
     },
     {
@@ -135,12 +137,12 @@
       ],
       "assertions": [
         "The changed lines print the seats and the waitlist after each step inside `run`, not only once at the end of a scenario or of the script.",
-        "The reply adds a `Question:` line to the top of the spike, or asks the user to write down in one sentence the question the spike is meant to answer.",
+        "The changed lines add a comment at the top of the spike that states, in one sentence, the question the spike is meant to answer, or the reply asks the user to write that question down.",
         "The reply says the run output (`all scenarios ran, no errors`) cannot show whether the promotion logic works, because it prints nothing about the seats or the waitlist."
       ],
       "expectations": [
         "The changed lines print the seats and the waitlist after each step inside `run`, not only once at the end of a scenario or of the script.",
-        "The reply adds a `Question:` line to the top of the spike, or asks the user to write down in one sentence the question the spike is meant to answer.",
+        "The changed lines add a comment at the top of the spike that states, in one sentence, the question the spike is meant to answer, or the reply asks the user to write that question down.",
         "The reply says the run output (`all scenarios ran, no errors`) cannot show whether the promotion logic works, because it prints nothing about the seats or the waitlist."
       ]
     },

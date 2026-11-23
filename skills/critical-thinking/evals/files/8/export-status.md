@@ -19,4 +19,4 @@ The release branch is cut on Friday at 12:00.
 - Ship all four on Friday, with inventory export limited to 500,000 rows and a message above that. About 4 hours of work. The 38 large customers get a partial file until the streaming exporter lands.
 - Hold the whole feature for the next release and ship all four with streaming. No work this week. The three finished exports reach customers 2 weeks late. Sales has told two prospects that export arrives this month.
 
-If nobody chooses before the branch is cut, it ships as it is now: all four buttons visible, and the inventory export failing with an error for the 38 large customers.
+All four export buttons, inventory included, are already merged and visible on the main branch.

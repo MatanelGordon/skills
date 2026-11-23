@@ -4,17 +4,17 @@
     {
       "id": 1,
       "prompt": "The invoice proration feature on my branch is green. Harden its tests before I open the PR. Nothing from the repo is attached.",
-      "expected_output": "The reply names the inputs it needs before it can start, including the final diff, the plan's edge cases and the test command, and does not report any test as run or passing.",
+      "expected_output": "The reply names the inputs it needs before it can start, including the final diff, the acceptance criteria or planned edge cases, and the test command, and does not report any test as run or passing.",
       "files": [],
       "assertions": [
         "The reply asks for the final diff of the proration feature, or the list of files it changed.",
-        "The reply asks for the edge cases (or amendments) written in the plan for this feature.",
+        "The reply asks for the acceptance criteria, the spec or the planned edge cases of the proration feature.",
         "The reply asks for the command that runs the existing tests.",
         "The reply does not say that any test was run or that any test passed."
       ],
       "expectations": [
         "The reply asks for the final diff of the proration feature, or the list of files it changed.",
-        "The reply asks for the edge cases (or amendments) written in the plan for this feature.",
+        "The reply asks for the acceptance criteria, the spec or the planned edge cases of the proration feature.",
         "The reply asks for the command that runs the existing tests.",
         "The reply does not say that any test was run or that any test passed."
       ]
@@ -121,19 +121,19 @@
     },
     {
       "id": 7,
-      "prompt": "Hardening pass on the `ms` suffix I added to `parse_duration` in our Rust CLI; `cargo test` is green on my machine. The final diff is `duration-final.diff` and the whole file is `src/duration.rs` (in a workspace both are under `input/7/`). Like every module in this crate, its tests live in the `#[cfg(test)] mod tests` block at the bottom of the source file, and there is no `tests/` folder. Give me the hardening tests to add, in full. Cargo is not installed where you are, so do not try to build.",
-      "expected_output": "The reply proposes tests for the new suffix but says that putting them in `src/duration.rs` changes a production file, does not call the change test-only, and hands the in-file tests to the implementer or code review to add.",
+      "prompt": "Hardening pass on the `ms` suffix I added to `parse_duration` in our Rust CLI; `cargo test` is green on my machine. The final diff is `duration-final.diff` and the whole file is `src/duration.rs` (in a workspace both are under `input/7/`). Like every module in this crate, its tests live in the `#[cfg(test)] mod tests` block at the bottom of the source file, and there is no `tests/` folder. Our CI rejects a hardening PR whose diff touches any file under `src/`. Give me the hardening tests to add to that block, in full. Cargo is not installed where you are, so do not try to build.",
+      "expected_output": "The reply says that putting the tests in `src/duration.rs` would get the hardening PR rejected, because that file is under `src/`, and offers another route, such as handing the in-file tests to the implementer as a separate change.",
       "files": [
         "evals/files/7/duration-final.diff",
         "evals/files/7/src/duration.rs"
       ],
       "assertions": [
-        "The reply says that adding these tests changes `src/duration.rs`, a production source file.",
-        "The reply hands the tests to the implementer, or to the normal implementation and review process, to add to `src/duration.rs`."
+        "The reply says that adding the tests to `src/duration.rs` would make CI reject the hardening PR, because that file is under `src/`.",
+        "The reply offers a route that keeps `src/duration.rs` out of the hardening PR (such as a separate change by the implementer, or a test file outside `src/`), or asks the user to choose one."
       ],
       "expectations": [
-        "The reply says that adding these tests changes `src/duration.rs`, a production source file.",
-        "The reply hands the tests to the implementer, or to the normal implementation and review process, to add to `src/duration.rs`."
+        "The reply says that adding the tests to `src/duration.rs` would make CI reject the hardening PR, because that file is under `src/`.",
+        "The reply offers a route that keeps `src/duration.rs` out of the hardening PR (such as a separate change by the implementer, or a test file outside `src/`), or asks the user to choose one."
       ]
     },
     {

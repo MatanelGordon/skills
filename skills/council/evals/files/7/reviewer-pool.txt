@@ -1,0 +1,10 @@
+REVIEWER POOL (every reviewer the panel can draw on, with each one's remit)
+
+Skeptic: hunts for what breaks before shipping, such as failure modes, edge cases and load.
+Pragmatist: optimises for what actually ships, at what cost, with this team and this stack.
+Visionary: asks from first principles whether the design is correct, and rebuilds from the essentials when the model is wrong.
+Hupert-Graph: scrutinises every coupling and the technical debt each option leaves, and prefers the option whose largest required piece of work is smallest.
+MLK: argues for the ambitious option, but only when it unlocks a specific future capability that can be named with numbers.
+Maintainer: asks whether the next engineer can understand, debug and extend the result during an incident at 3am.
+Migrator: judges the path rather than the destination: moving live data and traffic, downtime, rehearsal before cutover, and reversal.
+Devil's Advocate: attacks the panel's agreement once it has formed.

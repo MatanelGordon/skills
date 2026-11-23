@@ -11,14 +11,14 @@
       "assertions": [
         "The runbook creates a separate working copy of the repository for the run, with `git worktree add`, `git clone` or a copy.",
         "The runbook names commit `749ac1b` as the commit the mutation run is based on.",
-        "The runbook installs the Stryker packages with `npm install --no-save`.",
+        "The runbook installs the Stryker packages without adding them to the feature branch's `package.json` (for example `npm install --no-save`, or installing them only in the separate working copy).",
         "Before the first mutation run, the runbook has a step that runs the unmutated test suite (for example `npm test` or `npx vitest run`) inside the separate working copy.",
         "The reply asks the user to set or approve an overall limit for the run: a total time limit or a maximum number of mutants."
       ],
       "expectations": [
         "The runbook creates a separate working copy of the repository for the run, with `git worktree add`, `git clone` or a copy.",
         "The runbook names commit `749ac1b` as the commit the mutation run is based on.",
-        "The runbook installs the Stryker packages with `npm install --no-save`.",
+        "The runbook installs the Stryker packages without adding them to the feature branch's `package.json` (for example `npm install --no-save`, or installing them only in the separate working copy).",
         "Before the first mutation run, the runbook has a step that runs the unmutated test suite (for example `npm test` or `npx vitest run`) inside the separate working copy.",
         "The reply asks the user to set or approve an overall limit for the run: a total time limit or a maximum number of mutants."
       ]

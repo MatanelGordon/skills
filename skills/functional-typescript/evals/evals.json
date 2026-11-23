@@ -73,8 +73,7 @@
         "Clicking the \"Try again\" button leads to `this.setState({ hasError: false })`, directly or through a method such as `reset`.",
         "The reply contains no version of `ErrorBoundary` written as a function component.",
         "The updated file contains none of `Result`, `assertNever` or `Brand`."
-      ],
-      "expected_skill": null
+      ]
     },
     {
       "id": 5,
@@ -168,8 +167,7 @@
         "The change shown or applied touches no line outside the `available` method.",
         "The reply does not turn `StockCounter` into standalone functions or an immutable type.",
         "The reply does not change `reserve` to return a `Result` or other error value in place of its `throw`."
-      ],
-      "expected_skill": null
+      ]
     },
     {
       "id": 10,
@@ -186,6 +184,23 @@
         "The plans table is checked with `satisfies` (for example `as const satisfies Record<string, PlanInfo>`), not given a `: Record<...>` type annotation.",
         "The plan id type is derived from the table (for example `keyof typeof PLANS`), not written out as a second list of the three plan names."
       ]
+    },
+    {
+      "id": 11,
+      "prompt": "Something in TypeScript confuses me and I only want to understand it; I am not asking you to write or change any code. `greet` takes a parameter of type `{ name: string }`. If I call `greet({ name: \"Ada\", age: 36 })` I get \"Object literal may only specify known properties, and 'age' does not exist in type '{ name: string; }'\". But if I first write `const person = { name: \"Ada\", age: 36 };` and then call `greet(person)`, there is no error. Why does TypeScript treat the two calls differently? A few sentences are enough.",
+      "expected_output": "A short explanation: an object literal passed directly gets an excess property check, while a value from a variable is only checked structurally and has the required `name`. No code rewrite and no branded or `Result` types.",
+      "files": [],
+      "assertions": [
+        "The reply says the error comes from a check that applies only to an object literal written directly where the typed value is expected (an excess property check, sometimes called freshness).",
+        "The reply says `greet(person)` is accepted because `person` has every property that `{ name: string }` requires.",
+        "The reply contains no branded type, no `Result` type and no `readonly` modifier."
+      ],
+      "expectations": [
+        "The reply says the error comes from a check that applies only to an object literal written directly where the typed value is expected (an excess property check, sometimes called freshness).",
+        "The reply says `greet(person)` is accepted because `person` has every property that `{ name: string }` requires.",
+        "The reply contains no branded type, no `Result` type and no `readonly` modifier."
+      ],
+      "expected_skill": null
     }
   ]
 }

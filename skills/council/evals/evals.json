@@ -4,19 +4,19 @@
     {
       "id": 1,
       "prompt": "We have to decide whether to split `install/index.mjs` into per-agent plugin modules or keep it as one file, and I want that decision pressure-tested by a panel of independent reviewers before we commit. I will start each reviewer in its own fresh session myself, so all I need from you now is the decision brief that I paste into every session. What we know: I read `install/index.mjs`, and it is one file of about 900 lines with a branch per agent. Existing installations must keep working in both copy and symlink mode, and live installations load that exact path. People other than the author will add future agents. The CI dashboard shows the installer test suite takes 41 seconds. An AI-written design note, `docs/plugin-layout.md`, claims a plugin layout would halve the time it takes to add an agent. Reply with the brief only, in full: no reviewer answers and no recommendation. (Node.js is installed if you can run commands; if you cannot, work from the text.)",
-      "expected_output": "A decision brief of at most 300 words with the parts DECISION, lettered OPTIONS, CONSTRAINTS, EVIDENCE and STAKES, in which the file reading is tagged (code-read), the CI timing (measured: CI dashboard) and the AI-written note (unverified-docs). No reviewer answers and no recommendation.",
+      "expected_output": "A decision brief that states the decision and the options, keeps the hard limits apart from the evidence, says where each piece of evidence comes from (reading install/index.mjs, the CI dashboard) and marks the AI-written note's claim as unverified. No reviewer answers and no recommendation.",
       "files": [],
       "assertions": [
-        "The brief has five labelled parts named `DECISION`, `OPTIONS`, `CONSTRAINTS`, `EVIDENCE` and `STAKES`.",
-        "The brief tags the claim from `docs/plugin-layout.md` (halving the time to add an agent) as `(unverified-docs)`.",
-        "The brief tags the 41-second test-suite timing with a tag that begins `(measured:` and names the CI dashboard.",
-        "The brief tags the reading of `install/index.mjs` with a tag that begins `(code-read`."
+        "The brief calls the claim from `docs/plugin-layout.md` (that a plugin layout halves the time to add an agent) unverified, unconfirmed or unproven; describing it only as an AI-written note that \"claims\" or \"suggests\" it does not count.",
+        "The brief names the CI dashboard as the source of the 41-second test-suite timing.",
+        "The brief says that its description of `install/index.mjs` (one file of about 900 lines with a branch per agent) comes from reading that file.",
+        "The brief does not list the 41-second test timing or the `docs/plugin-layout.md` claim among its constraints."
       ],
       "expectations": [
-        "The brief has five labelled parts named `DECISION`, `OPTIONS`, `CONSTRAINTS`, `EVIDENCE` and `STAKES`.",
-        "The brief tags the claim from `docs/plugin-layout.md` (halving the time to add an agent) as `(unverified-docs)`.",
-        "The brief tags the 41-second test-suite timing with a tag that begins `(measured:` and names the CI dashboard.",
-        "The brief tags the reading of `install/index.mjs` with a tag that begins `(code-read`."
+        "The brief calls the claim from `docs/plugin-layout.md` (that a plugin layout halves the time to add an agent) unverified, unconfirmed or unproven; describing it only as an AI-written note that \"claims\" or \"suggests\" it does not count.",
+        "The brief names the CI dashboard as the source of the 41-second test-suite timing.",
+        "The brief says that its description of `install/index.mjs` (one file of about 900 lines with a branch per agent) comes from reading that file.",
+        "The brief does not list the 41-second test timing or the `docs/plugin-layout.md` claim among its constraints."
       ]
     },
     {
@@ -44,7 +44,7 @@
     {
       "id": 3,
       "prompt": "We are pressure-testing an installer decision with a panel of independent reviewers. Round one is finished and the Devil's Advocate has answered; the whole state is attached as `installer-round-one.txt` (in a workspace it is at `input/3/installer-round-one.txt`). Tell me whether a second round is needed and why, then write the chairman's final verdict. Give the verdict in full in your reply. (Node.js is installed if you can run commands; if you cannot, work from the text.)",
-      "expected_output": "Says no second round is needed because all three votes are A, every confidence is 4/5 or 5/5 and the Devil's Advocate returned NO MATERIAL OBJECTION, then gives a verdict for A in the sections VOTE TALLY to FIRST CONCRETE STEP whose revisit triggers are the three members' WOULD CHANGE MY MIND items.",
+      "expected_output": "Says no second round is needed because all three votes are A, every confidence is 4/5 or 5/5 and the Devil's Advocate returned NO MATERIAL OBJECTION, then gives a verdict for A that says the three reasons are distinct, lists the three WOULD CHANGE MY MIND items as revisit triggers and names a specific first action.",
       "files": [
         "evals/files/3/installer-round-one.txt"
       ],
@@ -52,32 +52,32 @@
         "The reply names the CONFIDENCE values, all 4/5 or 5/5, as one reason no second round is needed.",
         "The verdict lists all three WOULD CHANGE MY MIND items as revisit triggers: the failing compatibility test, the integration blocked for more than one workday, and the trace across more than three unrelated branches.",
         "The verdict states explicitly that the three members' reasons for A are distinct from one another rather than one shared reason; listing each member's reason without such a statement does not count.",
-        "The verdict has parts headed `VOTE TALLY`, `PREMISE CHALLENGES`, `REVISIT TRIGGERS` and `FIRST CONCRETE STEP`."
+        "The verdict names a specific first action to take next, such as adding a particular test or check; continuing as before or monitoring does not count."
       ],
       "expectations": [
         "The reply names the CONFIDENCE values, all 4/5 or 5/5, as one reason no second round is needed.",
         "The verdict lists all three WOULD CHANGE MY MIND items as revisit triggers: the failing compatibility test, the integration blocked for more than one workday, and the trace across more than three unrelated branches.",
         "The verdict states explicitly that the three members' reasons for A are distinct from one another rather than one shared reason; listing each member's reason without such a statement does not count.",
-        "The verdict has parts headed `VOTE TALLY`, `PREMISE CHALLENGES`, `REVISIT TRIGGERS` and `FIRST CONCRETE STEP`."
+        "The verdict names a specific first action to take next, such as adding a particular test or check; continuing as before or monitoring does not count."
       ]
     },
     {
       "id": 4,
       "prompt": "We are pressure-testing an installer decision with a panel of independent reviewers. Round one is back, and I have already run the check for a missing reviewer role; both are in the attached `installer-missing-role-check.txt` (in a workspace it is at `input/4/installer-missing-role-check.txt`). Before I start round two, tell me three things: whether the Devil's Advocate runs now, whether the missing-role check adds a reviewer, and exactly who takes part in round two. Reply with those three answers and one line of reason for each; do not write any reviewer's round-two answer. (Node.js is installed if you can run commands; if you cannot, work from the text.)",
-      "expected_output": "The Devil's Advocate does not run because the round-one votes are split (A, B, A); `MISSING ROLE: security-expert` is rejected because that role is not in the fixed reviewer pool, so nobody is added; round two is Skeptic, Pragmatist and Hupert-Graph.",
+      "expected_output": "The Devil's Advocate does not run because the round-one votes are split (A, B, A); `MISSING ROLE: security-expert` is rejected because that role is not among the pool's voting roles, so nobody is added; round two is Skeptic, Pragmatist and Hupert-Graph.",
       "files": [
         "evals/files/4/installer-missing-role-check.txt"
       ],
       "assertions": [
         "The reply gives the split round-one votes (no agreement on one option) as the reason the Devil's Advocate does not run.",
         "The reply rejects `security-expert` as a round-two reviewer.",
-        "The reply's reason for the rejection is that `security-expert` is not one of the fixed reviewer roles that may be added.",
+        "The reply's reason for the rejection is that `security-expert` is not one of the voting roles in the reviewer pool.",
         "The reply names exactly three round-two participants: Skeptic, Pragmatist and Hupert-Graph."
       ],
       "expectations": [
         "The reply gives the split round-one votes (no agreement on one option) as the reason the Devil's Advocate does not run.",
         "The reply rejects `security-expert` as a round-two reviewer.",
-        "The reply's reason for the rejection is that `security-expert` is not one of the fixed reviewer roles that may be added.",
+        "The reply's reason for the rejection is that `security-expert` is not one of the voting roles in the reviewer pool.",
         "The reply names exactly three round-two participants: Skeptic, Pragmatist and Hupert-Graph."
       ]
     },
@@ -103,10 +103,11 @@
     },
     {
       "id": 7,
-      "prompt": "Pressure-test this decision for me with a panel of independent reviewers: which engineering mission should the team take on next? The validated brief is attached as `mission-brief.txt` (in a workspace it is at `input/7/mission-brief.txt`). I will start each reviewer in its own fresh session myself, so for now tell me only which reviewers vote in the first round, with one line per reviewer saying what in the brief puts them on the list. Do not write any reviewer's answer. (Node.js is installed if you can run commands; if you cannot, work from the text.)",
+      "prompt": "Pressure-test this decision for me with a panel of independent reviewers: which engineering mission should the team take on next? The validated brief is attached as `mission-brief.txt`, and the pool of reviewers we can draw on, with each one's remit, as `reviewer-pool.txt` (in a workspace both are under `input/7/`). I will start each reviewer in its own fresh session myself, so for now tell me only which reviewers vote in the first round, with one line per reviewer saying what in the brief puts them on the list. Do not write any reviewer's answer. (Node.js is installed if you can run commands; if you cannot, work from the text.)",
       "expected_output": "A first-round list of exactly Skeptic, Pragmatist, MLK and Hupert-Graph: MLK because option A claims a tenfold increase in tenants, Hupert-Graph because the decision ranks one mission above the others. No reviewer answers.",
       "files": [
-        "evals/files/7/mission-brief.txt"
+        "evals/files/7/mission-brief.txt",
+        "evals/files/7/reviewer-pool.txt"
       ],
       "assertions": [
         "The first-round list is exactly these four reviewers: Skeptic, Pragmatist, MLK and Hupert-Graph.",
@@ -122,22 +123,22 @@
     {
       "id": 8,
       "prompt": "We are pressure-testing a connection-handling decision with a panel of independent reviewers. One reviewer's round-one answer is attached as `reviewer-answer.txt`, together with the config file it cites, `config/runtime.ts` (in a workspace both are under `input/8/`). Before the verdict is written, check the numbers in its ARGUMENT. Tell me whether this answer goes into the verdict as it is, goes back to the reviewer, or is dropped, and give one line per number saying how the verdict should treat it. (Node.js is installed if you can run commands; if you cannot, work from the text.)",
-      "expected_output": "The answer is kept for the verdict as it is. 500 keeps its code-read tag; 800, 10x and 430 are each treated as estimates; the missing rollback inventory does not make the number of rollback paths 0.",
+      "expected_output": "The answer is kept for the verdict as it is. 500 is confirmed by config/runtime.ts; 800, 10x and 430 are each treated as unsupported estimates; the missing rollback inventory does not make the number of rollback paths 0.",
       "files": [
         "evals/files/8/reviewer-answer.txt",
         "evals/files/8/config/runtime.ts"
       ],
       "assertions": [
         "The reply's decision is that the answer goes into the verdict as it is.",
-        "The reply applies the word `estimate` to 800.",
-        "The reply applies the word `estimate` to 10x.",
-        "The reply applies the word `estimate` to 430."
+        "The reply treats 800 as unsupported or estimated, not as a value read from `config/runtime.ts`.",
+        "The reply treats 10x as unsupported or estimated, not as measured.",
+        "The reply treats 430 as unsupported or estimated, not as measured."
       ],
       "expectations": [
         "The reply's decision is that the answer goes into the verdict as it is.",
-        "The reply applies the word `estimate` to 800.",
-        "The reply applies the word `estimate` to 10x.",
-        "The reply applies the word `estimate` to 430."
+        "The reply treats 800 as unsupported or estimated, not as a value read from `config/runtime.ts`.",
+        "The reply treats 10x as unsupported or estimated, not as measured.",
+        "The reply treats 430 as unsupported or estimated, not as measured."
       ]
     },
     {
@@ -175,17 +176,17 @@
     },
     {
       "id": 11,
-      "prompt": "We are pressure-testing a decision with a panel of independent reviewers. Round one was split and I am about to send round two. Each round-two prompt carries the reviewer's role text, the decision brief and all four round-one answers in full, and the longest prompt comes to 24,001 characters. The sessions the reviewers run in accept at most 24,000 characters. Nothing is attached for this one: those two numbers are the whole problem. What do I do so that round two can go out?",
-      "expected_output": "Round two is stopped: 24,001 characters are needed and 24,000 are available, nothing may be shortened, summarised or left out to fit, and the round can be rerun only in sessions with a larger limit.",
+      "prompt": "We are pressure-testing a decision with a panel of independent reviewers. Round one was split and I am about to send round two. Each round-two prompt is built from a fixed template: the reviewer's role text, the decision brief, all four round-one answers in full and the answer format. Everything except the round-one answers, including the spacing between the parts, goes out exactly as written. The longest prompt comes to 24,001 characters, and the sessions the reviewers run in accept at most 24,000 characters in total. Nothing is attached for this one: those numbers are the whole problem. What do I do so that round two can go out?",
+      "expected_output": "Round two is stopped: 24,001 characters are needed and 24,000 are available, no round-one answer may be shortened, summarised or left out to fit, and the round can be sent only in sessions with a larger limit.",
       "files": [],
       "assertions": [
         "The reply says round two is not sent while the limit is 24,000 characters.",
-        "The reply does not suggest shortening, summarising, trimming or leaving out any part of a prompt to make it fit.",
+        "The reply does not suggest shortening, summarising, trimming or leaving out any part of a round-one answer to make the prompt fit.",
         "The reply says the way forward is reviewer sessions with a larger character limit."
       ],
       "expectations": [
         "The reply says round two is not sent while the limit is 24,000 characters.",
-        "The reply does not suggest shortening, summarising, trimming or leaving out any part of a prompt to make it fit.",
+        "The reply does not suggest shortening, summarising, trimming or leaving out any part of a round-one answer to make the prompt fit.",
         "The reply says the way forward is reviewer sessions with a larger character limit."
       ]
     },
@@ -198,34 +199,32 @@
       ],
       "assertions": [
         "The reply says the Migrator's answer cannot be counted because `C` is not one of the brief's options.",
-        "The reply says the run stops because fewer than three answers are usable.",
+        "The reply says the run stops here, with no second round, because too few answers are usable.",
         "The reply does not suggest asking the Migrator or the Maintainer to redo, clarify, correct or resubmit their round-one answer."
       ],
       "expectations": [
         "The reply says the Migrator's answer cannot be counted because `C` is not one of the brief's options.",
-        "The reply says the run stops because fewer than three answers are usable.",
+        "The reply says the run stops here, with no second round, because too few answers are usable.",
         "The reply does not suggest asking the Migrator or the Maintainer to redo, clarify, correct or resubmit their round-one answer."
       ]
     },
     {
       "id": 13,
       "prompt": "We are pressure-testing an installer decision with a panel of independent reviewers. Round one was split and the check for a missing reviewer role has answered; the state is attached as `installer-round-two-setup.txt` (in a workspace it is at `input/13/installer-round-two-setup.txt`). I start every reviewer in a fresh session myself. Give me two things in full: the label assignment for round two, and the complete, ready-to-paste round-two prompt for the reviewer that the missing-role check added. I do not need the other reviewers' prompts. (Node.js is installed if you can run commands; if you cannot, work from the text.)",
-      "expected_output": "A new label assignment for Skeptic, Pragmatist and Hupert-Graph that differs from the earlier one, and one round-two prompt for Migrator: its full role text, the brief, all three round-one answers unchanged under the new anonymous labels with no reviewer names, the anti-conformity rule, the round-two answer format with STEELMAN and REACTING TO, and the late-joiner instruction.",
+      "expected_output": "A new label assignment for Skeptic, Pragmatist and Hupert-Graph that differs from the earlier one, and one round-two prompt for Migrator built from the supplied parts, with all three round-one answers in full under the new labels and no reviewer names.",
       "files": [
         "evals/files/13/installer-round-two-setup.txt"
       ],
       "assertions": [
         "The round-two label assignment given for Skeptic, Pragmatist and Hupert-Graph is not identical to the earlier one (Skeptic R2, Pragmatist R3, Hupert-Graph R1).",
-        "The prompt contains the Migrator's role text, including the sentence that begins `Some architectures are unmigratable on a live system`.",
-        "The prompt's answer format has a `STEELMAN:` line and a `REACTING TO:` line.",
-        "The prompt contains the words `agreement without new grounds is a failed contribution`.",
+        "The prompt contains three round-one answers, each with all seven of its lines from `VOTE:` to `PREMISE CHALLENGE:`.",
+        "The prompt does not contain the names Skeptic, Pragmatist or Hupert-Graph.",
         "In the prompt, the round-one answer that ends with `PREMISE CHALLENGE: The options assume file count is the same thing as architectural coupling.` is headed by an anonymous label such as `[R1]`, not by the name `Hupert-Graph`."
       ],
       "expectations": [
         "The round-two label assignment given for Skeptic, Pragmatist and Hupert-Graph is not identical to the earlier one (Skeptic R2, Pragmatist R3, Hupert-Graph R1).",
-        "The prompt contains the Migrator's role text, including the sentence that begins `Some architectures are unmigratable on a live system`.",
-        "The prompt's answer format has a `STEELMAN:` line and a `REACTING TO:` line.",
-        "The prompt contains the words `agreement without new grounds is a failed contribution`.",
+        "The prompt contains three round-one answers, each with all seven of its lines from `VOTE:` to `PREMISE CHALLENGE:`.",
+        "The prompt does not contain the names Skeptic, Pragmatist or Hupert-Graph.",
         "In the prompt, the round-one answer that ends with `PREMISE CHALLENGE: The options assume file count is the same thing as architectural coupling.` is headed by an anonymous label such as `[R1]`, not by the name `Hupert-Graph`."
       ]
     }

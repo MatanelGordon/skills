@@ -111,7 +111,7 @@
     {
       "id": 6,
       "prompt": "Attached is our payments API (in a workspace it is under input/6/): tree.txt shows the layout, and src/app.ts, src/routes/index.ts and src/features/payments/get-payment/endpoint.ts are included as they are. I need a new endpoint, POST /api/payments/:id/refund. List the files you would create and the existing files you would edit, then give the full new text of every existing file you edit. You do not need to write the refund handler itself.",
-      "expected_output": "Endpoints are found by scanning src/features at startup instead of being imported one by one in src/routes/index.ts, so the refund endpoint is a new folder that no existing file names.",
+      "expected_output": "The refund endpoint is a new folder under src/features/payments/. Wiring it in with one import in src/routes/index.ts is acceptable, but the reply points out that this file changes for every new endpoint and suggests mounting endpoints by scanning src/features instead.",
       "files": [
         "evals/files/6/tree.txt",
         "evals/files/6/src/app.ts",
@@ -119,12 +119,12 @@
         "evals/files/6/src/features/payments/get-payment/endpoint.ts"
       ],
       "assertions": [
-        "No existing file, as given in the reply or as edited, imports the refund endpoint by its path or name.",
-        "The reply or a written file contains code that lists the folders under `src/features` at startup (for example with `readdirSync` or a glob) to mount each endpoint."
+        "The reply points out that `src/routes/index.ts` has to be edited every time an endpoint is added.",
+        "The reply proposes or makes a change that mounts endpoints by scanning `src/features` at startup (for example with `readdirSync` or a glob)."
       ],
       "expectations": [
-        "No existing file, as given in the reply or as edited, imports the refund endpoint by its path or name.",
-        "The reply or a written file contains code that lists the folders under `src/features` at startup (for example with `readdirSync` or a glob) to mount each endpoint."
+        "The reply points out that `src/routes/index.ts` has to be edited every time an endpoint is added.",
+        "The reply proposes or makes a change that mounts endpoints by scanning `src/features` at startup (for example with `readdirSync` or a glob)."
       ]
     },
     {

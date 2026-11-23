@@ -8,6 +8,8 @@ CONSTRAINTS: the command line and the installed file layout must not change; fut
 EVIDENCE: installer control flow in install/index.mjs (code-read); integration effort claimed for a plugin layout (unverified-docs)
 STAKES: the structure chosen now is the one every future agent integration is written against.
 
+VOTING ROLES IN THE REVIEWER POOL: Skeptic, Pragmatist, Visionary, Hupert-Graph, MLK, Maintainer, Migrator
+
 ROUND 1 ROSTER (selected from the brief): Skeptic, Pragmatist, Hupert-Graph
 
 ROUND 1 RAW RESPONSES (each member answered alone, in its own fresh session)
@@ -49,3 +51,52 @@ Hupert-Graph = R1
 
 MISSING-ROLE CHECK RAW OUTPUT (casting director, run once over the brief and that packet)
 MISSING ROLE: Migrator
+
+PROMPT PARTS FOR ROUND TWO (use each one exactly as written)
+
+MIGRATOR ROLE TEXT
+### Migrator
+
+**Charter**
+
+Evaluate the path, not the destination: data migration, downtime windows, whether the change can be tested before cutover, and whether it can be reversed mid-flight.
+
+**Tie-break**
+
+"Some architectures are unmigratable on a live system; if the path cannot be rehearsed or reversed, that surfaces now, in this council — not during the incident."
+
+**You are NOT**
+
+Everyone else — they judge where we land; you judge whether we survive the journey. A perfect destination with an untestable path is a NO from you.
+
+**Antagonists**
+
+Every destination-focused member. Their destination argument loses when its path cannot be rehearsed or reversed.
+
+ANTI-CONFORMITY RULE
+ANTI-CONFORMITY RULE:
+Agreement discovered independently is signal.
+Agreement produced by reading others is noise.
+Do not soften your charter to match the room.
+
+ROUND-TWO ANSWER FORMAT
+STEELMAN: label + one sentence
+REACTING TO: label(s)
+
+NUMERIC EVIDENCE RULE:
+Every number in ARGUMENT must use exactly one source tag:
+- (measured: from what) for measured evidence
+- (code-read: path or symbol) only when that exact number appears directly in code or configuration
+- (estimate) for an inference, unverified documentation, or missing evidence
+Absence of evidence never establishes a numeric zero, baseline, current ceiling, or measured result.
+
+VOTE: option letter from the brief
+POSITION: one sentence
+ARGUMENT: max 200 words, strictly from your charter's lens
+STRONGEST OBJECTION TO MY OWN POSITION: one sentence
+CONFIDENCE: n/5
+WOULD CHANGE MY MIND: one specific observable piece of evidence
+PREMISE CHALLENGE: one sentence, or the literal word NONE
+
+NOTE FOR A REVIEWER ADDED AFTER ROUND ONE
+You were added because the council lacks your view. You have read a settled conversation. If you have grounds to disagree, you MUST disagree; agreement without new grounds is a failed contribution from you specifically.

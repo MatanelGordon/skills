@@ -8,6 +8,8 @@ CONSTRAINTS: the command line and the installed file layout must not change; fut
 EVIDENCE: installer control flow in install/index.mjs (code-read); integration effort claimed for a plugin layout (unverified-docs)
 STAKES: the structure chosen now is the one every future agent integration is written against.
 
+VOTING ROLES IN THE REVIEWER POOL: Skeptic, Pragmatist, Visionary, Hupert-Graph, MLK, Maintainer, Migrator
+
 ROUND 1 ROSTER (selected from the brief): Skeptic, Pragmatist, Hupert-Graph
 
 ROUND 1 RAW RESPONSES (each member answered alone, in its own fresh session)

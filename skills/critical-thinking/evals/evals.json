@@ -9,16 +9,16 @@
         "evals/files/1/migration-notes.md"
       ],
       "assertions": [
-        "The reply contains a table whose columns are the options for the old `orders_v1` table.",
+        "The reply contains a table in which each option for the old `orders_v1` table has its own column or its own row.",
         "The reply contains exactly one table.",
-        "The reply's table about `orders_v1` has rows labelled `Pros`, `Cons`, `Cost` and `Reversible?`.",
-        "The reply contains a line that starts with the words `If you do nothing` (bold or plain)."
+        "The reply states at least one downside for every option it gives for `orders_v1`.",
+        "The reply says that, if `orders_v1` is left in place, the disk alert fires in about 4 weeks (or about a month)."
       ],
       "expectations": [
-        "The reply contains a table whose columns are the options for the old `orders_v1` table.",
+        "The reply contains a table in which each option for the old `orders_v1` table has its own column or its own row.",
         "The reply contains exactly one table.",
-        "The reply's table about `orders_v1` has rows labelled `Pros`, `Cons`, `Cost` and `Reversible?`.",
-        "The reply contains a line that starts with the words `If you do nothing` (bold or plain)."
+        "The reply states at least one downside for every option it gives for `orders_v1`.",
+        "The reply says that, if `orders_v1` is left in place, the disk alert fires in about 4 weeks (or about a month)."
       ]
     },
     {
@@ -48,33 +48,33 @@
         "evals/files/3/hosting-notes.md"
       ],
       "assertions": [
-        "The reply contains a table with one column per hosting option.",
+        "The reply contains a table in which each hosting option it compares has its own column or its own row.",
         "The reply compares at most 4 hosting options; a candidate it only mentions as ruled out is not counted.",
         "The $38-a-month big-cloud instance is not one of the options the reply compares; mentioning it as ruled out is allowed.",
-        "The reply rates the reversibility of each compared option with one of the terms `trivially`, `with effort` or `one-way`.",
-        "The reply contains a line that starts with the words `If you do nothing` (bold or plain)."
+        "The reply says, for every hosting option it compares, how hard it would be to move away from that option later.",
+        "The reply says that, if no option is chosen, the site keeps going down whenever the laptop is closed or off."
       ],
       "expectations": [
-        "The reply contains a table with one column per hosting option.",
+        "The reply contains a table in which each hosting option it compares has its own column or its own row.",
         "The reply compares at most 4 hosting options; a candidate it only mentions as ruled out is not counted.",
         "The $38-a-month big-cloud instance is not one of the options the reply compares; mentioning it as ruled out is allowed.",
-        "The reply rates the reversibility of each compared option with one of the terms `trivially`, `with effort` or `one-way`.",
-        "The reply contains a line that starts with the words `If you do nothing` (bold or plain)."
+        "The reply says, for every hosting option it compares, how hard it would be to move away from that option later.",
+        "The reply says that, if no option is chosen, the site keeps going down whenever the laptop is closed or off."
       ]
     },
     {
       "id": 4,
       "prompt": "Should we migrate the whole platform from REST to gRPC? Give me the trade-offs. The facts and the platform team's estimates are in the attached `platform-facts.md` (in a workspace the file is at `input/4/platform-facts.md`). Answer in your reply; I'm taking it to Monday's architecture review.",
-      "expected_output": "Lays out the trade-offs between the migration paths, marks the full migration as one-way and costly, and offers a deeper analysis (a pre-mortem or a weighted scoring) before committing instead of treating one table as the verdict.",
+      "expected_output": "Lays out the trade-offs between the migration paths, says how hard each option would be to undo, with the full migration hardest and costliest, and offers a deeper analysis (a pre-mortem or a weighted scoring) before committing instead of treating one table as the verdict.",
       "files": [
         "evals/files/4/platform-facts.md"
       ],
       "assertions": [
-        "The reply uses the term `one-way` (any capitalisation, with or without the hyphen) for moving everything to gRPC; wording such as \"no easy rollback\" without that term does not count.",
+        "The reply says, for every option it compares, how hard that option would be to undo.",
         "The reply offers a pre-mortem, a weighted scoring of the options, or a deeper analysis of the decision as a step before committing; an offer to make the answer more specific if given more details does not count."
       ],
       "expectations": [
-        "The reply uses the term `one-way` (any capitalisation, with or without the hyphen) for moving everything to gRPC; wording such as \"no easy rollback\" without that term does not count.",
+        "The reply says, for every option it compares, how hard that option would be to undo.",
         "The reply offers a pre-mortem, a weighted scoring of the options, or a deeper analysis of the decision as a step before committing; an offer to make the answer more specific if given more details does not count."
       ]
     },
@@ -87,15 +87,15 @@
       ],
       "assertions": [
         "The reply contains exactly two tables.",
-        "The reply contains a table whose columns are the options for retries on `POST /charges`.",
+        "The reply contains a table in which each option for retries on `POST /charges` has its own column or its own row.",
         "The reply does not ask the reader to decide the setting name, the scratch branch or the changelog section.",
-        "The reply contains exactly two lines that start with the words `If you do nothing` (bold or plain)."
+        "The reply states, for each of the two decisions it puts to the reader, what happens if no option is chosen."
       ],
       "expectations": [
         "The reply contains exactly two tables.",
-        "The reply contains a table whose columns are the options for retries on `POST /charges`.",
+        "The reply contains a table in which each option for retries on `POST /charges` has its own column or its own row.",
         "The reply does not ask the reader to decide the setting name, the scratch branch or the changelog section.",
-        "The reply contains exactly two lines that start with the words `If you do nothing` (bold or plain)."
+        "The reply states, for each of the two decisions it puts to the reader, what happens if no option is chosen."
       ]
     },
     {
@@ -106,15 +106,15 @@
         "evals/files/6/job-context.md"
       ],
       "assertions": [
-        "The reply contains a table with at least two scheduling approaches as its columns.",
-        "Every approach column in the reply's table has an entry in a `Cons` row.",
-        "Each cell in the `Cost` row of the reply's table gives a number with a unit of time, money or work, or says the cost is none.",
+        "The reply contains a table in which at least two scheduling approaches each have their own column or their own row.",
+        "The reply states at least one downside for every scheduling approach it compares.",
+        "The reply gives a cost for every scheduling approach it compares, as a number with a unit of time, money or work, or as none.",
         "The paragraph that names the recommended approach also states a downside of that same approach."
       ],
       "expectations": [
-        "The reply contains a table with at least two scheduling approaches as its columns.",
-        "Every approach column in the reply's table has an entry in a `Cons` row.",
-        "Each cell in the `Cost` row of the reply's table gives a number with a unit of time, money or work, or says the cost is none.",
+        "The reply contains a table in which at least two scheduling approaches each have their own column or their own row.",
+        "The reply states at least one downside for every scheduling approach it compares.",
+        "The reply gives a cost for every scheduling approach it compares, as a number with a unit of time, money or work, or as none.",
         "The paragraph that names the recommended approach also states a downside of that same approach."
       ]
     },
@@ -147,18 +147,18 @@
         "evals/files/8/export-status.md"
       ],
       "assertions": [
-        "The reply contains a table whose columns are the ways to handle the inventory export.",
-        "Each cell in the `Cost` row of the reply's table gives a number with a unit of time, money or work, or says the cost is none.",
-        "Each cell in the `Reversible?` row of the reply's table uses one of the terms `trivially`, `with effort` or `one-way`.",
+        "The reply contains a table in which each way of handling the inventory export has its own column or its own row.",
+        "The reply gives a cost for every way of handling the inventory export it compares, as a number with a unit of time, money or work, or as none.",
+        "The reply says, for every way of handling the inventory export it compares, how hard that choice would be to undo.",
         "The paragraph that names the recommended option also states a downside of that same option.",
-        "The reply contains a line that starts with the words `If you do nothing` (bold or plain)."
+        "The reply says that, if no option is chosen before the branch is cut, the inventory export ships and fails for the largest customers."
       ],
       "expectations": [
-        "The reply contains a table whose columns are the ways to handle the inventory export.",
-        "Each cell in the `Cost` row of the reply's table gives a number with a unit of time, money or work, or says the cost is none.",
-        "Each cell in the `Reversible?` row of the reply's table uses one of the terms `trivially`, `with effort` or `one-way`.",
+        "The reply contains a table in which each way of handling the inventory export has its own column or its own row.",
+        "The reply gives a cost for every way of handling the inventory export it compares, as a number with a unit of time, money or work, or as none.",
+        "The reply says, for every way of handling the inventory export it compares, how hard that choice would be to undo.",
         "The paragraph that names the recommended option also states a downside of that same option.",
-        "The reply contains a line that starts with the words `If you do nothing` (bold or plain)."
+        "The reply says that, if no option is chosen before the branch is cut, the inventory export ships and fails for the largest customers."
       ]
     }
   ]

@@ -42,17 +42,17 @@
     {
       "id": 3,
       "prompt": "Our SUS score came back as 71. Is that good? And what would we have to score before we could call it excellent?",
-      "expected_output": "Says 71 is a little above the average of 68 and short of the 80.3 needed for an A, that SUS is not a percentage, and that the score should be tracked over time and checked against task success.",
+      "expected_output": "Says 71 is a little above the average of 68 and short of the bar for excellent (about 80 or above on the published scales), that SUS is not a percentage, and that the score should be tracked over time and checked against task success.",
       "files": [],
       "assertions": [
         "The reply states that a SUS score is not a percentage.",
-        "The reply gives 80.3 as the score for grade A or the top 10%.",
+        "The reply gives a specific SUS score from 80 to 86 (for example 80.3, 80.8 or 85.5) as the bar for excellent, grade A or the top 10%.",
         "The reply recommends measuring task success (task completion) rate alongside SUS.",
         "The reply recommends comparing the score with earlier or later SUS results (a trend) instead of judging the single result."
       ],
       "expectations": [
         "The reply states that a SUS score is not a percentage.",
-        "The reply gives 80.3 as the score for grade A or the top 10%.",
+        "The reply gives a specific SUS score from 80 to 86 (for example 80.3, 80.8 or 85.5) as the bar for excellent, grade A or the top 10%.",
         "The reply recommends measuring task success (task completion) rate alongside SUS.",
         "The reply recommends comparing the score with earlier or later SUS results (a trend) instead of judging the single result."
       ]

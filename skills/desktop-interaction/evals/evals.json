@@ -105,13 +105,13 @@
         "The reply says that pywebview's default renderer on macOS (Cocoa/WebKit) provides no remote debugging port.",
         "The reply says `debug=True` only gives a web inspector that a person opens by hand.",
         "The reply offers at least one of these: running the app with the Qt renderer for testing, or testing the web UI in an ordinary browser outside the app.",
-        "The reply does not claim that an outside script can drive the app's own window while it runs on pywebview's default macOS renderer, whether through `REMOTE_DEBUGGING_PORT`, `debug=True` or another setting."
+        "The reply does not claim that an outside script can attach to the app's web view through a debugging port or a web-automation protocol (for example by setting `REMOTE_DEBUGGING_PORT` or `debug=True`) while it runs on pywebview's default macOS renderer."
       ],
       "expectations": [
         "The reply says that pywebview's default renderer on macOS (Cocoa/WebKit) provides no remote debugging port.",
         "The reply says `debug=True` only gives a web inspector that a person opens by hand.",
         "The reply offers at least one of these: running the app with the Qt renderer for testing, or testing the web UI in an ordinary browser outside the app.",
-        "The reply does not claim that an outside script can drive the app's own window while it runs on pywebview's default macOS renderer, whether through `REMOTE_DEBUGGING_PORT`, `debug=True` or another setting."
+        "The reply does not claim that an outside script can attach to the app's web view through a debugging port or a web-automation protocol (for example by setting `REMOTE_DEBUGGING_PORT` or `debug=True`) while it runs on pywebview's default macOS renderer."
       ]
     },
     {

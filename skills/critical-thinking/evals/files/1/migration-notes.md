@@ -20,7 +20,7 @@ Branch `feat/orders-v2`. Planned to ship with Thursday's regular deploy.
 
 `orders_v1` is still in the production database and takes 18 GB. Nobody has asked for it to be kept or removed.
 
-- The database disk is 500 GB and 81% full. The disk alert fires at 85%. The database grows about 5 GB a week, so with `orders_v1` still there the alert fires in about 4 weeks.
+- The database disk is 500 GB and 81% full. The disk alert fires at 85%. The database grows about 5 GB a week.
 - Leave it in place until `orders_v2` has run for 2 weeks: no work now. Going back to v1 stays quick: set `ORDERS_READ_V1` and replay the orders written since the switch with `scripts/replay_orders.py`, about 20 minutes in total.
 - Drop it now: one statement, about 1 minute. Frees the 18 GB (disk down to 77%). After that the only way back to v1 is the nightly backup: about 3 hours to restore, with orders read-only during the restore.
 - Dump it to object storage, then drop it: the dump takes about 40 minutes and storing it costs about $0.40 a month. Frees the same 18 GB. Going back means restoring the dump, about 1 hour.

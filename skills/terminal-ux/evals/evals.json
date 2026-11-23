@@ -4,19 +4,19 @@
     {
       "id": 1,
       "prompt": "Our live terminal dashboard shows requests/sec and p99 latency as charts, with a list of events underneath. It is one Ink component, attached as `Dashboard.tsx` (in a workspace it is at `input/1/src/Dashboard.tsx`). Under production traffic it flickers and pins a CPU core, and after an hour of events it slows to a crawl. Every event has to stay visible in the terminal so people can scroll back through them. Rewrite the file to fix this. Reply with the complete rewritten file in one code block, at most 120 lines. Do not install or run anything, and do not write tests.",
-      "expected_output": "A rewritten Dashboard.tsx that moves samples into state on a timer or throttle 10 to 20 times a second, renders the event history through `<Static>`, and builds both charts with one function outside the component that copes with a flat series.",
+      "expected_output": "A rewritten Dashboard.tsx that buffers samples and moves them into state on a fixed interval or throttle instead of once per sample, renders the event history through `<Static>`, and builds both charts with one function outside the component that copes with a flat series.",
       "files": [
         "evals/files/1/src/Dashboard.tsx"
       ],
       "assertions": [
         "The rewritten file renders the event lines inside Ink's `<Static>` component.",
-        "State is updated from the samples by a timer or throttle that runs every 50 to 100 ms (10 to 20 times per second), not once per `sample` event.",
+        "State is updated from the samples on a fixed interval or throttle, not once per `sample` event: the `sample` handler only stores the sample, and a timer or throttled function copies the stored samples into state.",
         "The block-character chart string is built by a function declared outside the `Dashboard` component, not by loops inside it.",
         "The chart-building code guards against a series whose values are all equal (for example `max - min || 1` or a `max === min` branch)."
       ],
       "expectations": [
         "The rewritten file renders the event lines inside Ink's `<Static>` component.",
-        "State is updated from the samples by a timer or throttle that runs every 50 to 100 ms (10 to 20 times per second), not once per `sample` event.",
+        "State is updated from the samples on a fixed interval or throttle, not once per `sample` event: the `sample` handler only stores the sample, and a timer or throttled function copies the stored samples into state.",
         "The block-character chart string is built by a function declared outside the `Dashboard` component, not by loops inside it.",
         "The chart-building code guards against a series whose values are all equal (for example `max - min || 1` or a `max === min` branch)."
       ]
@@ -42,21 +42,19 @@
     {
       "id": 3,
       "prompt": "Make errors red in the output. The output is the Ink component attached as `DeploySteps.tsx` (in a workspace it is at `input/3/src/DeploySteps.tsx`), which lists the steps of a deploy; the errors are the steps whose status is `failed`. Reply with the complete updated file in one code block. Do not install or run anything.",
-      "expected_output": "The updated component shows failed steps in red and also marks them with a symbol or word, and it turns color off when `NO_COLOR` is set, `TERM` is `dumb`, or output is not a TTY.",
+      "expected_output": "The updated component shows failed steps in red and also marks them with a symbol or word, and it turns color off when `NO_COLOR` is set, which Ink's own color detection does not do.",
       "files": [
         "evals/files/3/src/DeploySteps.tsx"
       ],
       "assertions": [
         "In the updated file a failed step's row shows a symbol or word that marks it as failed (for example `✗`, `x`, `!`, `FAIL` or `failed`), in addition to the red color.",
         "The updated file reads the `NO_COLOR` environment variable.",
-        "The updated file compares `TERM` with `dumb`.",
-        "The updated file checks an `isTTY` property before applying color."
+        "The updated file turns color off when output is not a terminal, either by checking an `isTTY` property or by the reply stating that Ink's chalk color detection already turns color off when output is not a TTY."
       ],
       "expectations": [
         "In the updated file a failed step's row shows a symbol or word that marks it as failed (for example `✗`, `x`, `!`, `FAIL` or `failed`), in addition to the red color.",
         "The updated file reads the `NO_COLOR` environment variable.",
-        "The updated file compares `TERM` with `dumb`.",
-        "The updated file checks an `isTTY` property before applying color."
+        "The updated file turns color off when output is not a terminal, either by checking an `isTTY` property or by the reply stating that Ink's chalk color detection already turns color off when output is not a TTY."
       ]
     },
     {

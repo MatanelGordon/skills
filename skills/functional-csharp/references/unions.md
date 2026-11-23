@@ -56,7 +56,7 @@ Verified on .NET 8 — do not assume better:
 |---|---|
 | all cases, no `_` arm | **CS8509 warning** — "the pattern '_' is not covered" |
 | all cases + `null =>` arm | **CS8509 warning** — "the pattern 'not null' is not covered" |
-| all cases + `_ =>` arm | no warning |
+| all cases + `_ =>` arm | compiles clean |
 
 The compiler does **not** treat a private-constructor hierarchy as closed, so
 CS8509 fires whether or not your case list is complete. It therefore carries no
@@ -93,6 +93,31 @@ do it for you and are the practical answer.
 
 Use switch expressions for local branching where a missed case is cheap; use
 `Match` at boundaries and for core domain decisions where it is not.
+
+### Pattern matching
+
+```csharp
+public static decimal Fee(Order o) => o switch
+{
+    { State: OrderState.Shipped, Total.Amount: > 100 } => 0m,
+    { State: OrderState.Shipped }                      => 4.99m,
+    { State: OrderState.Paid }                         => 2.99m,
+    _                                                  => 0m,
+};
+
+// list patterns — need ImmutableArray<T>, T[] or another sliceable type.
+// ImmutableList<T> does NOT support them (no Range indexer). Verified.
+ImmutableArray<OrderLine> lines = [..order.Lines];
+var summary = lines switch
+{
+    []                       => "empty",
+    [var only]               => $"one: {only.Sku}",
+    [var first, .. var rest] => $"{first.Sku} +{rest.Length}",
+};
+```
+
+Prefer switch *expressions* over switch statements — they return a value, cannot
+fall through, and force every path to produce something.
 
 ## Encoding 2 — OneOf (structural, no hierarchy)
 

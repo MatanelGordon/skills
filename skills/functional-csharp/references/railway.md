@@ -63,6 +63,19 @@ public Result<Order> Place(CartDto dto) =>
         .Tap(o => _logger.LogInformation("Placed {OrderId}", o.Id));
 ```
 
+ErrorOr spells `Bind` as `Then` and recovery as `Else`:
+
+```csharp
+public static ErrorOr<Order> Place(Cart cart, Customer c) =>
+    ValidateCart(cart)
+        .Then(v => CheckCredit(c, v))
+        .Then(CreateOrder)
+        .Else(errors => Error.Failure(description: Summarize(errors)));
+```
+
+Once on the failure track, later steps are skipped. That is what removes the
+nested `if (result.IsFailure) return result;` staircase.
+
 ## LINQ query syntax
 
 Implement `Select` and `SelectMany` and the compiler's query syntax becomes
@@ -197,4 +210,5 @@ Never catch and discard — that is the one thing worse than throwing.
   beats a half-converted mixture.
 
 Result is for failures that are *expected*, *recoverable*, and *part of the
-domain*. Everything else is an exception.
+domain*. Everything else is an exception. Andrew Lock's caveat applies: don't
+apply the pattern just because you can.

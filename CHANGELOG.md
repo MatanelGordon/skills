@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.23.0 — 2026-11-23
+
+- **Evals that give `adr`, `bookkeeper`, `research-first` and
+  `confidence-ranker` something to consult.** Their cases ran in an empty
+  workspace: no decision record, no memory entry, no helper, no history. Both
+  arms then scored the same and the result said nothing about the skills. Each
+  of the four now carries a small repository under `evals/environment/fixture/`
+  that the evaluation image builds into a git checkout and starts the agent
+  in, with cases that ask for a plan which one fact in that repository must
+  change: a decision record that rules out the obvious design, a memory entry
+  naming the only runner a test passes on, a retry helper that already exists,
+  two commit messages that explain code that looks removable, a config file
+  that loads a "dead" module by name, a pinned version that contradicts the
+  request.
+- **Added `tools/planning-eval`.** It reads a finished SkillEvaluator Tier 3
+  run folder and reports, per attempt and without a grader model, whether the
+  skill was loaded, whether a tool call opened the place the fact lives in,
+  and whether the final reply reflects the fact. `npm run test:planning-eval`
+  runs its tests, which also check that no planted-fact prompt gives its fact
+  away. CI runs them in the validate job.
+- Rewrote the four eval sets in the eval format standard (`assertions` and
+  `expectations` identical, `files: []`, a negative case marked
+  `expected_skill: null`). Cases that only made sense in an empty repository
+  are retired and their ids are not reused: `adr` 2 and 3, `bookkeeper` 2,
+  `research-first` 2, `confidence-ranker` 1 and 3.
+
 ## 1.22.1 — 2026-11-21
 
 - Redesigned the README opening around an original light/dark hero, a concise

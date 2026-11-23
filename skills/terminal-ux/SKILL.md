@@ -1,10 +1,10 @@
 ---
 name: terminal-ux
 description: >
-  Use for any Ink (React for the terminal) code or CLI output: dashboards, charts,
-  sparklines, tables, layout, keys, color, width, pure render functions,
-  ink-testing-library, full-screen setup (alternate screen, cursor, restore on exit) and
-  resize bugs: ghost, repeated or blank frames, handler order.
+  Use when writing, fixing or testing an Ink (React) TUI or CLI output: dashboards,
+  charts, sparklines, tables, layout, keys, color, ink-testing-library; full-screen
+  setup (alternate screen, cursor, restoring the terminal) and resize bugs: ghost or
+  blank frames, handlers fighting, clear codes.
 license: MIT
 metadata:
   author: Matanel Gordon

@@ -203,6 +203,24 @@ below, one section each, in merge order.
   are retired and their ids are not reused: `adr` 2 and 3, `bookkeeper` 2,
   `research-first` 2, `confidence-ranker` 1 and 3.
 
+### Routing fixes
+
+- **Folded `tui-builder` into `terminal-ux`.** A 30B model sent seven of
+  tui-builder's own resize requests to terminal-ux: both skills covered Ink,
+  resize and redraw. Its rules now live, unchanged, in
+  `terminal-ux/references/full-screen-and-resize.md`, which terminal-ux points
+  to for full-screen setup and resize bugs; its eight eval cases are
+  terminal-ux cases 12 to 19. The collection is 25 skills.
+- **Rewrote five descriptions so the trigger a user would type comes first.**
+  `functional-typescript` and `functional-python` now open with their
+  language and the code smells they fix, instead of generic verbs ("new
+  modules", "handlers") that matched TypeScript trivia, Python files and Ink
+  charts. `get-the-job-done` opens with the user's pushback ("you said it was
+  done, but..."), not with "define runnable completion gates". `bookkeeper`
+  opens with facts to keep for next time and no longer names today-only
+  state, which pulled such requests in. `terminal-ux` names the resize and
+  full-screen symptoms itself. None points at a sibling skill.
+
 ### Integration
 
 - Ran `npm run normalize-evals` over the merged tree: the three

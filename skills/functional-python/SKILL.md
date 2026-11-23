@@ -1,10 +1,10 @@
 ---
 name: functional-python
 description: >
-  Use for functional-style Python handlers, state machines, domain boundaries, or new
-  modules when writing, reviewing, or refactoring, especially with mutable classes,
-  argument mutation, inheritance, invalid optional states, None as failure, exceptions
-  for expected failures, or unparsed input.
+  Use when Python code needs fixing or review because it mutates its arguments, models
+  variants with base classes, returns None or raises for expected failures, dispatches
+  on long if/elif chains, or has optional fields valid only together. Gives frozen
+  dataclasses, match/case, Result types.
 license: MIT
 metadata:
   author: Matanel Gordon

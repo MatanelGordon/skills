@@ -1,10 +1,10 @@
 ---
 name: functional-typescript
 description: >
-  Use for functional-style TypeScript or JavaScript handlers, API boundaries, state
-  machines, or new modules when writing, reviewing, or refactoring, especially with
-  classes, mutation, inheritance, invalid optional states, exceptions for expected
-  failures, or unparsed external data.
+  Use when TypeScript or JavaScript code needs fixing or review because it mutates its
+  inputs, models variants with classes or abstract base classes, throws or returns null
+  for expected failures, or has optional fields valid only together. Gives discriminated
+  unions, Result types, readonly data.
 license: MIT
 metadata:
   author: Matanel Gordon

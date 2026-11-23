@@ -1,10 +1,10 @@
 ---
 name: get-the-job-done
 description: >
-  Use to define runnable completion gates for sizeable work that might otherwise stop
-  early. Also before reporting done; when asked is it done or tested; when criteria were
-  not rerun; when work or scope drifted; when resuming finished work; or before skipping
-  or downgrading a failing requirement.
+  Use when the user disputes that work is done ('you said it was done, but...', 'your
+  wrap-up missed X'), asks if it was really tested, says stop recapping and finish, or
+  wants to lower a threshold, skip a failing check or call a requirement optional to
+  ship. Also before you report done.
 license: MIT
 metadata:
   author: Matanel Gordon

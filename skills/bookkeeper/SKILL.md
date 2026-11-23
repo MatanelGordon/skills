@@ -1,10 +1,10 @@
 ---
 name: bookkeeper
 description: >
-  Use to consult or update .memory/ for durable facts the repo cannot reveal: before
-  answering or planning about hosts, credential locations, vocabulary, naming,
-  environment quirks, or learned constraints, and when one surfaces. Not for decisions
-  (use adr) or temporary state.
+  Use when the user says to save, write down or keep for next time how things are here:
+  how to reach a host, where credentials live, what a term means, a recovery sequence,
+  environment quirks, learned constraints. Kept in the repo's .memory/; read its index
+  before answering about them.
 license: MIT
 metadata:
   author: Matanel Gordon

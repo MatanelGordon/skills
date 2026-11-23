@@ -102,29 +102,37 @@ node tools/planning-eval/score.mjs <run-dir> --cases skills/adr/evals/evals.json
 ## Reading the table
 
 ```
-| Case | Arm | Scored attempts | Skill loaded | Source opened | Facts reflected |
-| 6 | with-skill | 3 | 2/3 | 2/3 | 2/3 |
-| 6 | without-skill | 3 | n/a | 0/3 | 0/3 |
+| Case | Arm | Scored attempts | Skill loaded | Source opened | Facts reflected | Invalid |
+| 6 | with-skill | 3 | 2/3 | 2/3 | 2/3 | 0 |
+| 6 | without-skill | 3 | n/a | 0/3 | 0/3 | 0 |
 | all | with-skill | 6 | ...
 | all | with-skill, loaded | 4 | ...
 | all | without-skill | 6 | ...
 ```
 
+A second table gives each reply check of each case its own row, so a case
+whose fact needs two checks shows which one was missed.
+
 - **Facts reflected** is the result: attempts whose final reply passed every
   reply check of the case.
 - **Skill loaded** counts attempts where the agent called the Skill tool for
-  this skill or opened its `SKILL.md`. `with-skill, loaded` repeats the totals
-  for those attempts alone. Read it beside the full with-skill row, not in
-  place of it: the full row is what installing the skill gets you.
+  this skill, read its `SKILL.md`, or had its text put into the conversation
+  by a slash command. A failed Skill call does not count. `with-skill, loaded`
+  repeats the totals for those attempts alone. Read it beside the full
+  with-skill row, not in place of it: the full row is what installing the
+  skill gets you.
 - **Source opened** counts attempts where a tool call named the place the fact
   lives in. An attempt can open the source and still not reflect the fact.
   The skills' own first commands (`ls .adr/`, `test -f .memory/index.md`) count,
   so expect this column to be higher with the skill; that is what it is for.
   It reads `n/a` for a case without `trajectory_checks`.
-- An attempt with no reply or no trajectory is **invalid** and left out of the
-  rates. Rerun it.
-- `file_exists` checks need the container, so the scorer skips them and says
-  so. SkillEvaluator still applies them.
+- **Invalid** attempts are left out of the rates: no reply, no trajectory, an
+  unreadable trajectory, or a `failure.json` from SkillEvaluator (for example a
+  container that stopped). Rerun them.
+- A **negative case** (`expected_skill: null`) keeps its own rows but is left
+  out of the `all` rows: loading the skill there is a false trigger.
+- A `file_exists` check needs the container, so the scorer skips it and says so
+  under the tables. SkillEvaluator still applies it.
 
 ## What it cannot tell you
 

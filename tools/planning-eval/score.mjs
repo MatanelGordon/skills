@@ -9,15 +9,18 @@
  * the place" checks are the case's `trajectory_checks`, which only this script
  * reads. See README.md beside this file.
  */
-import { readdir, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { readdir, readFile } from 'node:fs/promises';
+import { basename, join } from 'node:path';
 
 import { isEntryPoint } from '../../install/entry-point.mjs';
+import { renderMarkdown, summarise } from './report.mjs';
+
+export { renderMarkdown, summarise };
 
 const ARMS = Object.freeze(['with-skill', 'without-skill']);
-const LOADED_ONLY = 'with-skill, loaded';
 const REPLY_CHECK_TYPES = Object.freeze(['output_matches', 'output_contains']);
+const FILE_READING_TOOLS = Object.freeze(['Read', 'Bash']);
 const LEADING_IGNORE_CASE = '(?i)';
 const INLINE_FLAG = /\(\?[a-zA-Z]+\)/;
 
@@ -32,32 +35,49 @@ export function compilePattern(pattern) {
 }
 
 const stepsOf = (trajectory) => (Array.isArray(trajectory?.steps) ? trajectory.steps : []);
-const textOf = (message) => (typeof message === 'string' ? message : '');
+
+/** A message's text: a string as it is, or the text parts of a content-part list joined. */
+const textOf = (message) => {
+  if (typeof message === 'string') return message;
+  if (!Array.isArray(message)) return '';
+  return message.filter((part) => part?.type === 'text' && typeof part.text === 'string').map((part) => part.text).join('');
+};
 
 /** The last agent message that has text: what the user would read as the answer. */
 export function finalReply(trajectory) {
   const replies = stepsOf(trajectory)
-    .filter((step) => step.source === 'agent' && textOf(step.message).trim() !== '')
-    .map((step) => step.message.trim());
+    .filter((step) => step.source === 'agent')
+    .map((step) => textOf(step.message).trim())
+    .filter((text) => text !== '');
   return replies.length ? replies[replies.length - 1] : '';
 }
 
-const toolCallsOf = (trajectory) => stepsOf(trajectory).flatMap((step) =>
-  (step.tool_calls ?? []).map((call) => ({
+const failedCallIds = (step) => new Set((step.observation?.results ?? [])
+  .filter((result) => result?.extra?.tool_result_is_error === true)
+  .map((result) => result.source_call_id));
+
+const toolCallsOf = (trajectory) => stepsOf(trajectory).flatMap((step) => {
+  const failed = failedCallIds(step);
+  return (step.tool_calls ?? []).map((call) => ({
     name: call.function_name ?? '',
     args: call.arguments ?? {},
     text: `${call.function_name ?? ''} ${JSON.stringify(call.arguments ?? {})}`,
-  })));
+    failed: failed.has(call.tool_call_id),
+  }));
+});
 
 /** Whether the skill's instructions reached the agent, and by which route. */
 export function skillLoad(trajectory, skillName) {
-  const calls = toolCallsOf(trajectory);
-  const invoked = calls.some((call) => call.name === 'Skill'
-    && (call.args.skill === skillName || String(call.args.skill ?? '').endsWith(`:${skillName}`)));
-  if (invoked) return { loaded: true, via: 'Skill tool' };
+  const calls = toolCallsOf(trajectory).filter((call) => !call.failed);
+  const namesSkill = (value) => value === skillName || String(value ?? '').endsWith(`:${skillName}`);
+  if (calls.some((call) => call.name === 'Skill' && namesSkill(call.args.skill))) {
+    return { loaded: true, via: 'Skill tool' };
+  }
 
   const skillFile = new RegExp(`skills/${skillName}/SKILL\\.md`);
-  if (calls.some((call) => skillFile.test(call.text))) return { loaded: true, via: 'read SKILL.md' };
+  if (calls.some((call) => FILE_READING_TOOLS.includes(call.name) && skillFile.test(call.text))) {
+    return { loaded: true, via: 'read SKILL.md' };
+  }
 
   // A slash command (or a Skill call) makes Claude Code add the skill's text as a
   // user message that starts with this line; a slash command leaves no tool call.
@@ -68,6 +88,8 @@ export function skillLoad(trajectory, skillName) {
 }
 
 const describeCheck = (check) => (check.type === 'output_contains' ? check.text : check.pattern);
+const replyChecksOf = (evalCase) => (Array.isArray(evalCase.checks) ? evalCase.checks : [])
+  .filter((check) => REPLY_CHECK_TYPES.includes(check.type));
 
 function replyCheckPasses(check, reply) {
   if (check.type === 'output_contains') return reply.includes(check.text);
@@ -77,7 +99,7 @@ function replyCheckPasses(check, reply) {
 /** One attempt: loaded, source consulted, facts reflected. */
 export function scoreTrial({ trajectory, evalCase, skillName, arm }) {
   const checks = Array.isArray(evalCase.checks) ? evalCase.checks : [];
-  const replyChecks = checks.filter((check) => REPLY_CHECK_TYPES.includes(check.type));
+  const replyChecks = replyChecksOf(evalCase);
   const skippedChecks = checks.filter((check) => !REPLY_CHECK_TYPES.includes(check.type)).map((check) => check.type);
   const load = arm === 'with-skill' ? skillLoad(trajectory, skillName) : { loaded: null, via: null };
   const base = { loaded: load.loaded, loadedVia: load.via, skippedChecks };
@@ -105,55 +127,27 @@ export function scoreTrial({ trajectory, evalCase, skillName, arm }) {
   };
 }
 
-const emptyCount = () => ({
-  scored: 0, invalid: 0, factsReflected: 0, consultable: 0, sourceConsulted: 0, loaded: 0,
-});
-
-// `consultable` counts the scored attempts whose case says where its fact lives.
-const addTrial = (count, trial) => (trial.status === 'invalid'
-  ? { ...count, invalid: count.invalid + 1 }
-  : {
-    ...count,
-    scored: count.scored + 1,
-    factsReflected: count.factsReflected + (trial.factsReflected ? 1 : 0),
-    consultable: count.consultable + (trial.sourceConsulted === null ? 0 : 1),
-    sourceConsulted: count.sourceConsulted + (trial.sourceConsulted ? 1 : 0),
-    loaded: count.loaded + (trial.loaded ? 1 : 0),
-  });
-
-const compareCaseIds = (left, right) => left.localeCompare(right, 'en', { numeric: true });
-
-/** Counts per case and arm, per arm, and for the with-skill attempts that loaded the skill. */
-export function summarise(trials) {
-  const counted = trials.filter((trial) => trial.status === 'scored' || trial.status === 'invalid');
-  const caseIds = [...new Set(counted.map((trial) => trial.caseId))].sort(compareCaseIds);
-
-  const cases = caseIds.flatMap((caseId) => ARMS
-    .map((arm) => ({ caseId, arm, trials: counted.filter((trial) => trial.caseId === caseId && trial.arm === arm) }))
-    .filter((group) => group.trials.length > 0)
-    .map((group) => ({ caseId: group.caseId, arm: group.arm, ...group.trials.reduce(addTrial, emptyCount()) })));
-
-  const totalFor = (keep) => counted.filter(keep).reduce(addTrial, emptyCount());
-  const totals = {
-    'with-skill': totalFor((trial) => trial.arm === 'with-skill'),
-    [LOADED_ONLY]: totalFor((trial) => trial.arm === 'with-skill' && trial.status === 'scored' && trial.loaded),
-    'without-skill': totalFor((trial) => trial.arm === 'without-skill'),
-  };
-  return { cases, totals };
-}
-
 async function readJson(path) {
-  return JSON.parse(await readFile(path, 'utf8'));
+  const text = await readFile(path, 'utf8');
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    throw new Error(`${path}: ${error.message}`);
+  }
 }
 
 async function loadCases(runDir, casesPath) {
-  if (casesPath) {
-    const doc = await readJson(casesPath);
-    return { skill: doc.skill_name, cases: doc.evals };
+  const snapshotPath = join(runDir, 'dataset_snapshot.json');
+  const snapshotCases = existsSync(snapshotPath) ? ((await readJson(snapshotPath)).dataset ?? []) : [];
+  const runSkill = snapshotCases[0]?.evaluated_skill ?? snapshotCases[0]?.expected_skill ?? null;
+  if (!casesPath) return { skill: runSkill, cases: snapshotCases };
+
+  const doc = await readJson(casesPath);
+  if (!Array.isArray(doc.evals)) throw new Error(`${casesPath}: no "evals" list`);
+  if (runSkill && doc.skill_name !== runSkill) {
+    throw new Error(`${casesPath} holds cases for '${doc.skill_name}', but ${runDir} evaluated '${runSkill}'`);
   }
-  const snapshot = await readJson(join(runDir, 'dataset_snapshot.json'));
-  const cases = snapshot.dataset ?? [];
-  return { skill: cases[0]?.evaluated_skill ?? cases[0]?.expected_skill ?? null, cases };
+  return { skill: doc.skill_name, cases: doc.evals };
 }
 
 async function trialFolders(runDir, arm) {
@@ -161,6 +155,43 @@ async function trialFolders(runDir, arm) {
   if (!existsSync(root)) return [];
   const entries = await readdir(root, { withFileTypes: true });
   return entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
+}
+
+/** Harbor cuts a trial folder's name to 32 characters; the task path in config.json keeps the whole case id. */
+async function caseIdOf(trialDir, folderName) {
+  const configPath = join(trialDir, 'config.json');
+  const taskPath = existsSync(configPath) ? (await readJson(configPath).catch(() => null))?.task?.path : null;
+  return typeof taskPath === 'string' ? basename(taskPath) : folderName.split('__')[0];
+}
+
+/** Why an attempt cannot be scored, or null when its trajectory can be read. */
+async function unscorableReason(trialDir) {
+  const failurePath = join(trialDir, 'failure.json');
+  if (existsSync(failurePath)) {
+    const failure = await readJson(failurePath).catch(() => ({}));
+    return { reason: `SkillEvaluator recorded the attempt as failed: ${failure.error?.type ?? 'unknown error'}` };
+  }
+  const trajectoryPath = join(trialDir, 'trajectory.json');
+  if (!existsSync(trajectoryPath)) return { reason: 'the attempt left no trajectory' };
+  try {
+    return { trajectory: await readJson(trajectoryPath) };
+  } catch (error) {
+    return { reason: `unreadable trajectory: ${error.message}` };
+  }
+}
+
+async function scoreFolder({ runDir, arm, name, caseById, skill }) {
+  const trialDir = join(runDir, 'claude-code', arm, 'trials', name);
+  const caseId = await caseIdOf(trialDir, name);
+  const evalCase = caseById.get(caseId);
+  if (!evalCase) throw new Error(`case ${caseId} of trial ${arm}/${name} is not in the dataset`);
+
+  const identity = { caseId, arm, trial: name, negative: evalCase.expected_skill === null };
+  const { trajectory, reason } = await unscorableReason(trialDir);
+  if (trajectory) return { ...identity, ...scoreTrial({ trajectory, evalCase, skillName: skill, arm }) };
+
+  const status = replyChecksOf(evalCase).length ? 'invalid' : 'no-checks';
+  return { ...identity, status, reason, loaded: null, factsReflected: null, sourceConsulted: null, skippedChecks: [] };
 }
 
 /**
@@ -172,83 +203,10 @@ export async function scoreRun(runDir, { casesPath } = {}) {
   if (!skill) throw new Error(`cannot tell which skill ${runDir} evaluated`);
   const caseById = new Map(cases.map((evalCase) => [String(evalCase.id), evalCase]));
 
-  const trials = [];
-  for (const arm of ARMS) {
-    for (const name of await trialFolders(runDir, arm)) {
-      const caseId = name.split('__')[0];
-      const evalCase = caseById.get(caseId);
-      if (!evalCase) throw new Error(`case ${caseId} of trial ${arm}/${name} is not in the dataset`);
-
-      const trajectoryPath = join(runDir, 'claude-code', arm, 'trials', name, 'trajectory.json');
-      const identity = { caseId, arm, trial: name };
-      if (!existsSync(trajectoryPath)) {
-        const hasChecks = (evalCase.checks ?? []).some((check) => REPLY_CHECK_TYPES.includes(check.type));
-        trials.push({
-          ...identity,
-          status: hasChecks ? 'invalid' : 'no-checks',
-          reason: 'the attempt left no trajectory',
-          loaded: null,
-          factsReflected: null,
-          sourceConsulted: null,
-        });
-        continue;
-      }
-      const trajectory = await readJson(trajectoryPath);
-      trials.push({ ...identity, ...scoreTrial({ trajectory, evalCase, skillName: skill, arm }) });
-    }
-  }
+  const folders = (await Promise.all(ARMS.map(async (arm) => (await trialFolders(runDir, arm))
+    .map((name) => ({ arm, name }))))).flat();
+  const trials = await Promise.all(folders.map(({ arm, name }) => scoreFolder({ runDir, arm, name, caseById, skill })));
   return { skill, runDir, trials, summary: summarise(trials) };
-}
-
-const ratio = (count, of) => `${count}/${of}`;
-
-const NOT_APPLICABLE = 'n/a';
-
-function row(label, arm, count) {
-  const loaded = arm === 'without-skill' ? NOT_APPLICABLE : ratio(count.loaded, count.scored);
-  const opened = count.consultable ? ratio(count.sourceConsulted, count.consultable) : NOT_APPLICABLE;
-  return `| ${label} | ${arm} | ${count.scored} | ${loaded} | ${opened} | ${ratio(count.factsReflected, count.scored)} |`
-    + (count.invalid ? ` ${count.invalid} invalid |` : '');
-}
-
-const scoredIn = (trials, caseId, arm) => trials
-  .filter((trial) => trial.caseId === caseId && trial.arm === arm && trial.status === 'scored');
-
-/** One row per reply check: how many scored attempts passed it in each arm. */
-function checkRows(trials) {
-  const caseIds = [...new Set(trials.filter((trial) => trial.status === 'scored').map((trial) => trial.caseId))]
-    .sort(compareCaseIds);
-  return caseIds.flatMap((caseId) => {
-    const sample = trials.find((trial) => trial.caseId === caseId && trial.status === 'scored');
-    return sample.facts.map((fact, index) => {
-      const cell = (arm) => {
-        const scored = scoredIn(trials, caseId, arm);
-        return scored.length ? ratio(scored.filter((trial) => trial.facts[index].passed).length, scored.length) : 'not run';
-      };
-      const check = fact.check.replaceAll('|', '\\|');
-      return `| ${caseId} | \`${check}\` | ${cell('with-skill')} | ${cell('without-skill')} |`;
-    });
-  });
-}
-
-/** The report as Markdown: one row per case and arm, the totals, then each reply check. */
-export function renderMarkdown(report) {
-  const { cases, totals } = report.summary;
-  const lines = [
-    `### ${report.skill}`,
-    '',
-    '| Case | Arm | Scored attempts | Skill loaded | Source opened | Facts reflected |',
-    '| --- | --- | --- | --- | --- | --- |',
-    ...cases.map((count) => row(count.caseId, count.arm, count)),
-    ...Object.entries(totals).map(([arm, count]) => row('all', arm, count)),
-    '',
-    '| Case | Reply check | with-skill | without-skill |',
-    '| --- | --- | --- | --- |',
-    ...checkRows(report.trials),
-  ];
-  const unscored = report.trials.filter((trial) => trial.status === 'no-checks').length;
-  if (unscored) lines.push('', `${unscored} attempt(s) belong to cases without reply checks and are not counted.`);
-  return `${lines.join('\n')}\n`;
 }
 
 const USAGE = 'Usage: node tools/planning-eval/score.mjs <tier3-run-dir>... [--cases <evals.json>] [--json]';
@@ -272,8 +230,7 @@ export function parseArgs(args) {
 
 async function main(args) {
   const { runDirs, casesPath, asJson } = parseArgs(args);
-  const reports = [];
-  for (const runDir of runDirs) reports.push(await scoreRun(runDir, { casesPath }));
+  const reports = await Promise.all(runDirs.map((runDir) => scoreRun(runDir, { casesPath })));
   console.log(asJson ? JSON.stringify(reports, null, 2) : reports.map(renderMarkdown).join('\n'));
 }
 

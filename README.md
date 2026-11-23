@@ -374,13 +374,20 @@ safe everywhere:
 ---
 name: my-skill
 description: >
-  What it does and, crucially, when an agent should reach for it. This field
-  is the trigger — describe situations, not features.
+  Use when [the situations that should load it, in the user's words]. One
+  clause on what it gives the agent.
 license: MIT
 metadata:
   author: You
 ---
 ```
+
+The description is the trigger: describe situations, not features, and put
+them first, because some agents show only the first 60 or so characters. Keep
+it to 300 characters: `npm run validate` fails a longer one, and fails the
+collection once all descriptions together reach 7,500, which keeps them under
+the roughly 8,000 characters Claude Code and Codex fit in their skill list
+before they start dropping descriptions.
 
 The `metadata` block is free-form. This repo uses it for `requires` (prose,
 shown after install), `depends` (read by the installer), and `platform` (gates

@@ -140,6 +140,20 @@ assuming headroom.
 also come from `COPILOT_GITHUB_TOKEN`, `GH_TOKEN`, or `GITHUB_TOKEN`, though an
 ambient token may lack Copilot access. Fix login with `copilot login`.
 
+## Watching a running worker
+
+```bash
+find "$LOG" "$RUN_DIR/agents/$SLUG.md" -mmin -15   # prints nothing when both are stale
+git -C "$WT" log -1 --format=%cr                   # time of its last commit
+tail -5 "$LOG"
+```
+
+Nothing printed by the first command and no recent commit means the worker is
+probably stuck. A hung worker is waiting on a prompt because a flag is missing:
+stop it (stop its background task, or `pkill -f "$WT"`) and dispatch again with
+the flag. A worker whose process was killed partway is different: resume it
+rather than starting over ("Long runs get killed", above).
+
 ## Follow-ups: resume, don't re-dispatch
 
 When a report contains `QUESTION:` or `BLOCKED:`, answer by resuming the same
@@ -209,3 +223,13 @@ session with its answer.
 Answer a question yourself when the plan already decides it, the codebase has
 an established convention, or the assumption is cheap to reverse. Escalate
 when it changes a contract, costs money, or is irreversible.
+
+## Troubleshooting
+
+| Symptom | Cause / fix |
+|---|---|
+| Copilot says it requires Node.js v24 or higher | Run it as `<node24> <copilot-js>` from pre-flight's `launch:` line. Do not prepend Node 24 to `PATH`, because the worker's tests would inherit a runtime the project may not target and report phantom failures. |
+| Copilot runs no tools or does nothing | `--allow-all-tools` is missing; it is required in non-interactive mode. |
+| Worker hangs forever | Codex lacks `--dangerously-bypass-approvals-and-sandbox`, or copilot lacks `--no-ask-user`; it is waiting for a person who is not watching. |
+| Worker edited the main tree | `-C "$WT"` was missing. |
+| A continued command silently lost flags | A `#` comment followed a line-continuation backslash. The backslash escaped the space instead of the newline. Never comment a continued line. |

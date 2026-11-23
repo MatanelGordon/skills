@@ -407,3 +407,10 @@ None that needs an ADR. The merge is reversible from git.
   restored the wording and wrote those sections; the files are 15,530 and
   14,078 characters. If the 30B measurement drops, detail moves to references.
 
+- 2026-11-23 — After review, SkillEvaluator Tier 1 reported the merged
+  `SKILL.md` at 18,242 characters, over the 16,000 read cap OpenClaw applies
+  below 100K tokens of context. Run-directory, no-git and `wt.sh` recovery
+  detail moved to a new `references/worktrees.md`, flag troubleshooting and
+  hang detection to `references/invocation.md`, and parallel-build's filled
+  ownership table to its `templates.md`. Both `SKILL.md` files are now under
+  16,000 characters. Nothing was dropped; the text moved.

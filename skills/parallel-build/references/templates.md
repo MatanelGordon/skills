@@ -10,6 +10,15 @@ cap delays it.
 |---|---|---|---|---|
 | `<slug>` | `<disjoint paths>` | `<every other worker's paths>` | `<command>` | `<tool/model>` |
 
+Filled in for three unrelated jobs (fix date parsing, add `--dry-run` to the
+sync tool, raise the default HTTP timeout):
+
+| Worker | Owns | Off-limits | Test command | Tool |
+|---|---|---|---|---|
+| `fix-dates` | `lib/dates.py`, `tests/test_dates.py` | `tools/**`, `config/**`, `tests/test_sync.py`, `tests/test_http.py` | `pytest tests/test_dates.py` | codex, `high` |
+| `sync-dry-run` | `tools/sync.py`, `tests/test_sync.py` | `lib/**`, `config/**`, `tests/test_dates.py`, `tests/test_http.py` | `pytest tests/test_sync.py` | codex, `high` |
+| `http-timeout` | `config/http.py`, `tests/test_http.py` | `lib/**`, `tools/**`, `tests/test_dates.py`, `tests/test_sync.py` | `pytest tests/test_http.py` | copilot |
+
 ## Plan directory layout
 
 ```

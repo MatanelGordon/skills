@@ -291,15 +291,10 @@ Then rewrite `PROGRESS.md` to match reality, rerun the pre-flight
 ## Examples
 
 **Three unrelated jobs.** "Fix the date parsing in `lib/dates.py`, add
-`--dry-run` to `tools/sync.py`, and write the Troubleshooting section of the
-README." No file is shared and nothing has to exist first, so this is a quick
-split. All three workers start at the same time, each in its own worktree:
-
-| Worker | Owns | Off-limits | Test command | Tool |
-|---|---|---|---|---|
-| `fix-dates` | `lib/dates.py`, `tests/test_dates.py` | `tools/**`, `tests/test_sync.py`, `README.md` | `pytest tests/test_dates.py` | codex, `high` |
-| `sync-dry-run` | `tools/sync.py`, `tests/test_sync.py` | `lib/**`, `tests/test_dates.py`, `README.md` | `pytest tests/test_sync.py` | codex, `high` |
-| `readme-troubleshooting` | `README.md` | `lib/**`, `tools/**`, `tests/**` | `npx markdown-link-check README.md` | copilot |
+`--dry-run` to `tools/sync.py`, and raise the default HTTP timeout in
+`config/http.py`." No file is shared and nothing has to exist first, so this is a quick
+split. All three workers start at the same time, each in its own worktree; the
+ownership table for it is the filled example in `references/templates.md`.
 
 **A build with a shared surface.** "Add email, SMS and push notifications."
 All three need `types/notification.ts` and a line in the route registry, so

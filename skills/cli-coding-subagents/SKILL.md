@@ -14,8 +14,8 @@ metadata:
 ## Purpose
 
 Run one autonomous coding worker through the codex, copilot, or OpenRouter
-(`ori`) CLI. The worker gets a fixed prompt contract, an isolated git worktree
-when possible, and a small report that the orchestrator verifies before merge.
+(`ori`) CLI: its own git worktree, a fixed prompt contract, and a short report
+that you verify before merging.
 
 This skill owns how to run each worker. When a job has several pieces, use the
 `parallel-build` skill first to decide the split, then apply this workflow to
@@ -62,23 +62,17 @@ done)
 echo "$SK"
 ```
 
-Prompts, logs, and status files go in a **run directory** that survives a
-reboot and sits outside every worktree. Never use `/tmp`: macOS purges it, and
-the log must remain available after a crash. In a phased build the run
-directory is the plan directory. For anything else, create one per run (one for
-a whole split, not one per worker), from the project directory:
+Prompts, logs and status files go in a **run directory**, one per run: the
+plan directory in a phased build, otherwise the one this prints (never `/tmp`,
+which macOS purges):
 
 ```bash
 SK=/path/printed/by/setup
 RUN_DIR=$("$SK/scripts/wt.sh" rundir upload-retries) || exit 1   # example name; prints the path
-echo "$RUN_DIR"                                                  # has prompts/ agents/ logs/
 ```
 
-In a git repository it lives beside the worktrees, outside the repository and
-outside `.plan/`, which `deep-plan` owns. With no git repository it is
-`.sa-runs/<name>/` in the project. Never `git add` the run directory: a worker
-rewriting a tracked status file leaves the main tree dirty, and `wt.sh merge`
-then refuses with exit 3.
+Where it lives and why it is never added to git:
+[references/worktrees.md](references/worktrees.md).
 
 ## Available scripts
 
@@ -150,12 +144,10 @@ WT=$("$SK/scripts/wt.sh" new "$SLUG")
 echo "$WT"
 ```
 
-If `wt.sh new` exits 4, the project is not a git repository. Do not run
-`git init` unless the user agrees. Dispatch with the project directory as the
-working directory (codex then also needs `--skip-git-repo-check`), leave the
-Commit section out of the prompt, and tell the user the run is not isolated:
-the worker edits their files directly. There is nothing to merge. Run workers
-at the same time only on paths that do not overlap.
+If `wt.sh new` exits 4, the project is not a git repository: no worktree and
+no `git init` unless the user agrees. The worker runs in the project directory
+and you tell the user so; the rest of that fallback is in
+[references/worktrees.md](references/worktrees.md).
 
 ### 4. Prompt
 
@@ -186,19 +178,11 @@ or `tail -40 "$LOG"` for copilot. Open a full transcript only to diagnose
 a failure. On a measured dispatch, a 1001-line transcript went to the log while
 the report was 174 bytes.
 
-Watch for hangs. A worker is probably stuck when its log and status file are
-both older than about 15 minutes and it has made no commits:
-
-```bash
-find "$LOG" "$RUN_DIR/agents/$SLUG.md" -mmin -15   # prints nothing when both are stale
-git -C "$WT" log -1 --format=%cr                   # time of its last commit
-tail -5 "$LOG"
-```
-
-A hung worker is waiting on a prompt because a flag is missing: stop it (stop
-its background task, or `pkill -f "$WT"`) and dispatch again with the flag. A
-worker whose process was killed partway is different: resume it rather than
-starting over (invocation.md, "Long runs get killed").
+Watch for hangs. A worker whose log and status file have not changed for about
+15 minutes, with no new commits, is probably blocked on a prompt because a flag
+is missing: stop it and dispatch again with the flag. A worker whose process
+was killed partway is resumed instead. The commands for both are under
+"Watching a running worker" in invocation.md.
 
 ### 6. Collect, verify, merge
 
@@ -215,15 +199,12 @@ WT=$("$SK/scripts/wt.sh" path "$SLUG") || exit 1
 npm test                                     # the same tests on the merged branch
 ```
 
-Report the work as finished only after the last run passes. A worker's
-`STATUS: DONE` is a claim, not evidence. If a run fails, say so and show the
-output; never report success you have not confirmed.
-
-Read the worker's report before merging:
-
-- `STATUS: DONE`: verify the critical-path tests actually pass, then merge.
-- `PARTIAL` or `BLOCKED`: read `BLOCKED`, then decide: re-dispatch with a
-  sharper prompt, finish it yourself, or merge what is good and track the rest.
+Read the worker's report before this block. `STATUS: DONE` is a claim, not
+evidence: the block above is how you check it, and the work is finished only
+after the last run passes. If a run fails, say so and show the output; never
+report success you have not confirmed. On `PARTIAL` or `BLOCKED`, read
+`BLOCKED`, then re-dispatch with a sharper prompt, finish it yourself, or merge
+what is good and track the rest.
 
 **Questions come back in the report, not as prompts.** `QUESTION:` means the
 worker proceeded on an assumption and wants it confirmed; `BLOCKED:` means it
@@ -233,34 +214,18 @@ by matching the worktree path (never `--last`); the commands are under
 "Follow-ups" in [references/invocation.md](references/invocation.md). Batch
 questions from concurrent workers and ask the user once.
 
-Merge one worker at a time and resolve conflicts as they appear. `wt.sh` exit
-codes are `0` ok, `1` error, `2` merge conflict, `3` merge not attempted, `4`
-not a git repository, and `64` bad usage.
-
-- Exit 2 leaves the conflict in the main working tree and keeps the worktree.
-  Fix the files there, run `git add` and `git commit`, then retry `merge`; or
-  use `git merge --abort` to back out.
-- Exit 3 means nothing was merged: the main tree has uncommitted changes, a
-  merge is already in progress, or an untracked file in the main tree would be
-  overwritten (`wt.sh` prints which). Commit or stash the changes (if they are
-  the user's, ask first), finish or abort the merge, or move the untracked
-  file, then retry.
-- Exit 4 means no worktree is possible; follow step 3's no-git fallback.
-
-`merge` refuses a worktree with uncommitted changes because removal would
-destroy them. Never run `git worktree remove` by hand. `wt.sh` also deletes the
-branch, prunes, and reports removal failures. Other commands are `wt.sh list`
-(state and commits ahead), `wt.sh drop <slug>` (discard unmerged work),
-`wt.sh gc` (sweep merged clean worktrees), and `wt.sh path <slug>` (locate one).
+Merge one worker at a time. Never run `git worktree remove` by hand: `wt.sh`
+also deletes the branch, prunes, and reports a removal that failed. When
+`wt.sh` exits non-zero (`2` conflict, `3` merge not attempted, `4` not a git
+repository), follow its recovery in
+[references/worktrees.md](references/worktrees.md).
 
 ## OpenRouter mode
 
-Run the same six steps through OpenRouter with the `ori` CLI, so worker runs
-cost nothing when free models are good enough. Use this mode when the user asks
-to run agents on OpenRouter, to use `ori`, to work on free models or cheap ones
-under a price ceiling, to cut subagent cost, or to route work to a specific
-OpenRouter model. Also use it when free-model work stalls on rate limits,
-dropped tool calls, or a model that vanished mid-run.
+Run the same six steps through OpenRouter with the `ori` CLI when the user asks
+for OpenRouter, `ori`, free or cheap models, lower subagent cost, or a specific
+OpenRouter model, and when free-model work stalls on rate limits, dropped tool
+calls, or a model that vanished mid-run.
 
 > **TEMPORARY: do not dispatch workers with `ori claude`.** It is not working
 > currently. Use `ori codex` only until this warning is removed. (This is about
@@ -271,27 +236,25 @@ Read [references/openrouter.md](references/openrouter.md) before dispatch. Diffe
 - Pre-flight is `ori-precheck.sh`. On exit 10 stop and ask the user to run
   `ori login`; never attempt the browser login yourself.
 - The model comes from `ori-models.sh` at the start of every run, never from
-  memory. Its default is a price ceiling of 0.50 USD per 1M output tokens, not
-  free-only, and it checks the wallet before listing paid models. Free models
-  share a 20 requests/minute cap that applies to the free tier only; a model at
-  a few cents per million tokens escapes it. Use `--free-only` only when
-  spending nothing is a hard requirement. Raising the ceiling is the user's
-  decision.
+  memory. Its default is a ceiling of 0.50 USD per 1M output tokens, not
+  free-only, and it checks the wallet before listing paid models. The 20
+  requests/minute cap is free-tier only, so a few cents escapes it; use
+  `--free-only` only when spending nothing is a hard requirement. Raising the
+  ceiling is the user's decision.
 - Codex launches with the isolated `CODEX_HOME` that `ori-codex-home.sh` prepares.
 - `--model` is an `ori` flag and goes before the `--`.
-- These models are not trusted. A different model reviews every code change
+- These models are not trusted: a different model reviews every code change
   and every plan before anything merges.
-- Free models share a rate limit, so run two or three workers at once, not eight.
+- On free models run two or three workers at once, not eight.
 - Each subagent has a 750K-token ceiling, in iterations of about 150K that
   hand off through `HANDOFF.md`.
 
 ## Examples
 
 - **"Have codex add retry logic to the uploader while I review the API."**
-  One worker, so no split. Pre-flight, worktree `upload-retries`, a prompt file
-  with acceptance criteria, the test command and the paths it owns, a
-  background codex dispatch at `high` with the transcript in a log. Then read
-  the report, test in the worktree, merge, and test again.
+  One worker. Pre-flight, worktree `upload-retries`, a prompt with acceptance
+  criteria, test command and owned paths, a background codex dispatch at `high`
+  logging to a file. Then the report, tests in the worktree, merge, tests again.
 - **Pre-flight prints copilot at code 20.** Stop. Quote the overage figures it
   printed, ask whether to bill them, and offer codex for the same work.
 - **A report ends with `QUESTION: assumed the v2 schema.`** Resume that
@@ -305,11 +268,7 @@ Read [references/openrouter.md](references/openrouter.md) before dispatch. Diffe
 
 | Symptom | Cause / fix |
 |---|---|
-| Copilot says it requires Node.js v24 or higher | Run it as `<node24> <copilot-js>` from pre-flight's `launch:` line. Do not prepend Node 24 to `PATH`, because the worker's tests would inherit a runtime the project may not target and report phantom failures. |
-| Copilot runs no tools or does nothing | `--allow-all-tools` is missing; it is required in non-interactive mode. |
-| Worker hangs forever | Codex lacks `--dangerously-bypass-approvals-and-sandbox`, or copilot lacks `--no-ask-user`; it is waiting for a person who is not watching. |
-| Worker edited the main tree | `-C "$WT"` was missing. |
-| A continued command silently lost flags | A `#` comment followed a line-continuation backslash. The backslash escaped the space instead of the newline. Never comment a continued line. |
+| Worker hangs, does nothing, edits the main tree, or a command lost its flags | A dispatch flag is missing or was cut off: see "Troubleshooting" in invocation.md. |
 | Merge conflict between workers | Their scopes overlapped. Resolve it in the main tree, then correct the split. |
 | Work vanished | The worker did not commit. The prompt's Commit section is mandatory for worktree runs. |
 | Context filled with worker output | Follow step 5's report-only rule. |
@@ -326,7 +285,5 @@ Read [references/openrouter.md](references/openrouter.md) before dispatch. Diffe
   dispatch can still stall on the network, which is why step 5 watches the log.
 - Copilot quota comes from an undocumented GitHub endpoint. When it cannot be
   read, the pre-flight asks (code 20) rather than assuming headroom.
-- Login state and quota change. Run the pre-flight again in every session.
-- The OpenRouter rate limits are published figures, not measured here, and the
-  750K ceiling is kept by structure, not by a token count.
-- The helpers are bash and Python 3. On Windows they need WSL or Git Bash.
+- OpenRouter rate limits are published figures, not measured here; the 750K
+  ceiling is kept by structure, not by a token count.

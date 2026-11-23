@@ -117,7 +117,7 @@ SK=/path/printed/by/setup
 
 Launch every OpenRouter codex worker through that home. Set `SLUG`, `WT`,
 `RUN_DIR`, `PROMPT_FILE`, `LOG` and `OUT` as in the codex block of
-[invocation.md](invocation.md), in the same Bash call:
+`invocation.md` beside this file, in the same Bash call:
 
 ```bash
 MODEL=vendor/model-id-from-ori-models   # replace with an id ori-models.sh printed this run

@@ -70,7 +70,7 @@ from ones still needing work.
 ## Resume here
 <Literally what the next action is, precise enough for a session with zero
 context to execute. e.g. "p2-feature-b reported DONE but is unmerged; verify
-`npm test` then run `"$SK/scripts/wt.sh" merge p2-feature-b`. Then dispatch phase 3.">
+`npm test` then run `wt.sh merge p2-feature-b`. Then dispatch phase 3.">
 
 ## Phases
 - [x] Phase 1 — foundation — merged
@@ -86,7 +86,7 @@ context to execute. e.g. "p2-feature-b reported DONE but is unmerged; verify
 | p2-feature-c | 2 | codex/xhigh | live | in progress | RUNNING since 14:05 |
 
 Worktree root: `<parent>/.wt-<repo>/` · logs: `./logs/<slug>.log`
-(Verify with `"$SK/scripts/wt.sh" list`; it is authoritative when this table is stale.)
+(Verify with `wt.sh list`; it is authoritative when this table is stale.)
 
 ## Agent reports
 ### p2-feature-a — DONE (merged 13:52)

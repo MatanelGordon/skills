@@ -1,0 +1,15 @@
+# SkillEvaluator Tier 3 run policy for this skill.
+schema_version: 1
+
+harbor:
+  runtime_env:
+    # Claude Code drops skill descriptions from its listing once the listing
+    # passes a character budget, and the evaluation container's bundled skills
+    # use that budget up, so the skill under test would be listed by name
+    # alone. A fixed budget keeps its description in the listing.
+    SLASH_COMMAND_TOOL_CHAR_BUDGET: "30000"
+
+grading:
+  # The default judge scores each trial. grader.py also prints the files the
+  # agent wrote, so scripts/check-review.mjs can check every trial afterwards.
+  mode: default_plus_custom

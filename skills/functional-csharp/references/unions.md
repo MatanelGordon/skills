@@ -1,28 +1,60 @@
 # Discriminated unions in C#
 
-## Status of native unions
+## C# 15 on .NET 11: `closed` and `union`
 
-Native union types are a **.NET 11 preview** feature (announced April 2026), not
-in any released version. Proposed syntax:
+.NET 11 shipped on 10 November 2026 (STS, supported to November 2028) with
+C# 15, which adds two ways to get compiler-checked unions. Both need a project
+that targets `net11.0`. .NET 10 is the LTS release, also supported to November
+2028, so many codebases will stay on the encodings further down for a while.
+Checked against Microsoft Learn, November 2026.
+
+**A closed hierarchy** is the native form of Encoding 1:
 
 ```csharp
-public record Success<T>(T Value);
-public record Failure(string Message);
-public union Result<T>(Success<T>, Failure);       // PREVIEW — verify before using
-
-string describe = result switch
+public closed record class OrderState
 {
-    Success<int> s => $"Value: {s.Value}",
-    Failure f      => $"Error: {f.Message}",
+    public sealed record Unpaid(DateTimeOffset CreatedAt)          : OrderState;
+    public sealed record Paid(DateTimeOffset PaidAt, Money Amount) : OrderState;
+}
+
+public static string Describe(OrderState s) => s switch
+{
+    OrderState.Unpaid   => "Awaiting payment",
+    OrderState.Paid p   => $"Paid {p.Amount}",
+    // no `_` arm needed, and the compiler stays silent: every direct case is handled
 };
 ```
 
-Noted caveats from the preview: mixing value types with reference types causes
-boxing in the initial release; all-reference-type unions avoid it. **Check the
-current .NET/C# version and release notes before writing this** — if the target
-is .NET 10 LTS (released Nov 2025, supported to Nov 2028), use the encodings below.
+- `closed` cannot be combined with `sealed`, `static` or `abstract`; it
+  already implies `abstract`. Only *direct* subtypes are pinned to the
+  assembly, which is why each case is sealed.
+- A generic case must use every type parameter in its base:
+  `Leaf<T>(T Value) : Tree<T>` compiles, `Constant<U>(U Value) : Tree<int>`
+  does not.
 
-## Encoding 1 — sealed record hierarchy (default)
+**A union** composes existing types without a common base:
+
+```csharp
+public union Lookup(Order, NotFound);
+
+Lookup found = new NotFound(id);          // implicit conversion from each case type
+string text = found switch
+{
+    Order o    => o.Id.ToString(),
+    NotFound n => $"missing {n.Id}",
+    null       => "no value",             // a default Lookup holds null
+};
+```
+
+- To avoid boxing value-type cases, write a custom `[Union]` struct that
+  implements `IUnion` and adds `HasValue` and one `TryGetValue` per case.
+- Why `null` rather than `_` for the empty case: a discard also swallows a
+  case added later, and the compiler can no longer warn about it.
+
+Use `closed` for states that carry their own data and belong together; use
+`union` for a return value that is one of several types that already exist.
+
+## Encoding 1 — sealed record hierarchy (.NET 10 and earlier)
 
 ```csharp
 public abstract record Shape
@@ -50,13 +82,14 @@ keeps the namespace clean.
 
 ### Exhaustiveness: what you actually get
 
-Verified on .NET 8 — do not assume better:
+Verified on .NET 8, and still true on .NET 10. A C# 15 `closed` base removes the
+problem:
 
 | Switch over a record hierarchy | Result |
 |---|---|
 | all cases, no `_` arm | **CS8509 warning** — "the pattern '_' is not covered" |
 | all cases + `null =>` arm | **CS8509 warning** — "the pattern 'not null' is not covered" |
-| all cases + `_ =>` arm | no warning |
+| all cases + `_ =>` arm | compiles clean |
 
 The compiler does **not** treat a private-constructor hierarchy as closed, so
 CS8509 fires whether or not your case list is complete. It therefore carries no
@@ -93,6 +126,32 @@ do it for you and are the practical answer.
 
 Use switch expressions for local branching where a missed case is cheap; use
 `Match` at boundaries and for core domain decisions where it is not.
+
+### Pattern matching
+
+```csharp
+public static decimal Fee(Order o) => o switch
+{
+    { State: OrderState.Shipped, Total.Amount: > 100 } => 0m,
+    { State: OrderState.Shipped }                      => 4.99m,
+    { State: OrderState.Paid }                         => 2.99m,
+    _                                                  => 0m,
+};
+
+// list patterns — ImmutableArray<T> and T[] support all of them. ImmutableList<T>
+// supports [] and [var x, ..] but cannot capture a slice (`.. var rest`):
+// error CS1503, no Range indexer. Verified on .NET 8.
+ImmutableArray<OrderLine> lines = [..order.Lines];
+var summary = lines switch
+{
+    []                       => "empty",
+    [var only]               => $"one: {only.Sku}",
+    [var first, .. var rest] => $"{first.Sku} +{rest.Length}",
+};
+```
+
+Prefer switch *expressions* over switch statements — they return a value, cannot
+fall through, and force every path to produce something.
 
 ## Encoding 2 — OneOf (structural, no hierarchy)
 
@@ -144,7 +203,7 @@ throw is worse than either style consistently applied.
 | Ad-hoc N-way return from a handler | OneOf |
 | Team already fluent in FP, wants Option/Either/Validation throughout | LanguageExt |
 | Success-or-error specifically | ErrorOr / CSharpFunctionalExtensions |
-| Targeting .NET 11+ once released | native `union` (re-check status) |
+| Targeting .NET 11 or later | `closed` record hierarchy for states; `union` for one-of-existing-types |
 
 ## State machines
 
@@ -167,6 +226,7 @@ public static Result<Subscription> Cancel(Subscription s, DateOnly on, string wh
             => Result.Ok<Subscription>(new Subscription.Cancelled(on, why)),
         Subscription.Cancelled
             => Result.Fail<Subscription>("already cancelled"),
+        _   => throw new UnreachableException(),   // not needed with a C# 15 `closed` base
     };
 ```
 

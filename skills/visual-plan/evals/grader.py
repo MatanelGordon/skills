@@ -1,29 +1,30 @@
 #!/usr/bin/env python3
-"""Keep what the agent wrote, so every trial's files can be read and checked.
+"""Print what the agent wrote, so every trial's files can be checked afterwards.
 
 SkillEvaluator runs this inside the trial container after the agent stops
-(Tier 3, grading mode default_plus_custom). It copies the small text files the
-agent left under /workspace, the staged skills excluded, into
-/logs/artifacts/workspace/, which the tool collects into the run folder. It
-judges nothing: scripts/check-review.mjs is run on those copies afterwards,
-the same way for both arms. Its three metrics only say which files exist.
+(Tier 3, grading mode default_plus_custom). It prints the small text files the
+agent left under /workspace, the staged skills excluded, between marker lines.
+The tool keeps this output as verifier/test-stdout.txt in the run folder; the
+container and its workspace are discarded. It judges nothing: the skill's
+scripts/check-review.mjs is run on the printed files afterwards, the same way
+for both arms. Its three metrics only say which files exist.
 """
 import json
 import os
-import shutil
 from pathlib import Path
 
 WORKSPACE = Path(os.environ.get("SKILL_EVAL_WORKSPACE", "/workspace"))
 LOGS_DIR = Path(os.environ.get("HARBOR_LOGS_DIR", "/logs"))
 VERIFIER_DIR = Path(os.environ.get("HARBOR_VERIFIER_DIR", str(LOGS_DIR / "verifier")))
-REWARD_JSON = Path(os.environ.get("HARBOR_REWARD_JSON", str(VERIFIER_DIR / "reward.json")))
-REWARD_TXT = Path(os.environ.get("HARBOR_REWARD_TXT", str(VERIFIER_DIR / "reward.txt")))
-EXPORT_DIR = LOGS_DIR / "artifacts" / "workspace"
+REWARD_JSON = VERIFIER_DIR / "reward.json"
+REWARD_TXT = VERIFIER_DIR / "reward.txt"
 
 SKIPPED_DIRS = {"skills", "node_modules", "__pycache__"}
 KEPT_SUFFIXES = {".md", ".svg", ".js", ".mjs", ".ts", ".tsx", ".json", ".txt", ".html", ".py"}
-MAX_FILE_BYTES = 256 * 1024
-MAX_TOTAL_BYTES = 4 * 1024 * 1024
+MAX_FILE_BYTES = 128 * 1024
+MAX_TOTAL_BYTES = 1024 * 1024
+BEGIN = "===== VISUAL-PLAN-EVAL FILE "
+END = "===== VISUAL-PLAN-EVAL END ====="
 
 
 def is_kept(relative):
@@ -34,7 +35,7 @@ def is_kept(relative):
 
 
 def workspace_files():
-    """Relative paths of the files worth keeping, smallest first so a size cap drops the least."""
+    """Relative paths of the files worth keeping, smallest first so the size cap drops the largest."""
     found = []
     for root, _dirs, names in os.walk(WORKSPACE):
         for name in names:
@@ -48,37 +49,38 @@ def workspace_files():
     return sorted(found)
 
 
-def export(files):
-    """Copy the files into the artifacts folder; returns the paths copied."""
-    copied = []
+def print_files(files):
+    """Print each file between marker lines; returns the paths printed."""
+    printed = []
     total = 0
     for size, relative in files:
         if total + size > MAX_TOTAL_BYTES:
             break
-        target = EXPORT_DIR / relative
-        target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(WORKSPACE / relative, target)
-        copied.append(relative)
+        text = (WORKSPACE / relative).read_text(encoding="utf-8", errors="replace")
+        print(f"{BEGIN}{relative.as_posix()} =====")
+        print(text, end="" if text.endswith("\n") else "\n")
+        print(END)
+        printed.append(relative)
         total += size
-    return copied
+    return printed
 
 
-def present(copied, predicate):
-    return 1.0 if any(predicate(path) for path in copied) else 0.0
+def present(paths, predicate):
+    return 1.0 if any(predicate(path) for path in paths) else 0.0
 
 
 def main():
     try:
-        copied = export(workspace_files())
+        printed = print_files(workspace_files())
         metrics = {
-            "review_file_present": present(copied, lambda path: path.name.lower() == "review.md"),
-            "plan_file_present": present(copied, lambda path: path.name.lower() == "plan.md"),
-            "svg_file_present": present(copied, lambda path: path.suffix.lower() == ".svg"),
+            "review_file_present": present(printed, lambda path: path.name.lower() == "review.md"),
+            "plan_file_present": present(printed, lambda path: path.name.lower() == "plan.md"),
+            "svg_file_present": present(printed, lambda path: path.suffix.lower() == ".svg"),
         }
-        details = {"exported_files": {"score": 1.0, "reason": ", ".join(str(path) for path in copied) or "none"}}
-        reward = {"overall": 1.0, "custom_metrics": metrics, "details": details}
-    except Exception as error:  # a failed copy must not turn into a failed trial
-        reward = {"overall": 1.0, "custom_metrics": {}, "details": {"export_error": {"score": 0.0, "reason": str(error)}}}
+        reward = {"overall": 1.0, "custom_metrics": metrics}
+    except Exception as error:  # a failed listing must not turn into a failed trial
+        print(f"grader.py could not list the workspace: {error}")
+        reward = {"overall": 1.0, "custom_metrics": {}}
     VERIFIER_DIR.mkdir(parents=True, exist_ok=True)
     REWARD_JSON.write_text(json.dumps(reward, indent=2), encoding="utf-8")
     REWARD_TXT.write_text(str(reward["overall"]), encoding="utf-8")

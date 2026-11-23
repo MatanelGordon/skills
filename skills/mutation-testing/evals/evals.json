@@ -150,14 +150,14 @@
         "evals/files/8/tests/shipping.test.js"
       ],
       "assertions": [
-        "Before the mutation rerun, the steps include a plain Vitest run of the tests with the new test in place, for example `npx vitest run tests/shipping.test.js`, separate from the Stryker run.",
+        "The reply contains no `git merge`, `git cherry-pick` or `git rebase` command that takes commits from the mutation branch `mutation/free-shipping`.",
         "The mutation rerun in the reply is limited to line 10 of `src/shipping.js`, for example with a `mutate` range such as `src/shipping.js:10:1-10:80`, not the whole file or project.",
         "The mutation rerun writes its report to a new file, not to `.mutation-tmp/discovery.json`.",
         "The steps include a review of the new assertion or of the test-only diff, placed before the commit.",
         "The reply says the new test goes back as a single commit made directly on top of the frozen commit `6b1f9d4`."
       ],
       "expectations": [
-        "Before the mutation rerun, the steps include a plain Vitest run of the tests with the new test in place, for example `npx vitest run tests/shipping.test.js`, separate from the Stryker run.",
+        "The reply contains no `git merge`, `git cherry-pick` or `git rebase` command that takes commits from the mutation branch `mutation/free-shipping`.",
         "The mutation rerun in the reply is limited to line 10 of `src/shipping.js`, for example with a `mutate` range such as `src/shipping.js:10:1-10:80`, not the whole file or project.",
         "The mutation rerun writes its report to a new file, not to `.mutation-tmp/discovery.json`.",
         "The steps include a review of the new assertion or of the test-only diff, placed before the commit.",

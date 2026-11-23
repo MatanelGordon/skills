@@ -30,13 +30,13 @@
       "assertions": [
         "The reply proposes showing a new test failing against a scratch copy, a separate worktree or the pre-change commit of `src/discount.js`.",
         "The reply proposes comparing a hash or diff of `src/discount.js` from before and after the test changes.",
-        "The reply proposes no change to the code in `src/discount.js` (for example no added `Number.isInteger` check). Checking that the file is unchanged, or describing the change already in the supplied diff, is not proposing an edit.",
+        "The reply proposes edits to test files only; suggesting any change to `src/discount.js` (such as a `Number.isInteger` check) or to `discount-acceptance.md` fails. Checking that a file is unchanged is not suggesting a change.",
         "The reply names at least one input it chose not to test, such as a non-integer or `NaN`, with the reason for leaving it out."
       ],
       "expectations": [
         "The reply proposes showing a new test failing against a scratch copy, a separate worktree or the pre-change commit of `src/discount.js`.",
         "The reply proposes comparing a hash or diff of `src/discount.js` from before and after the test changes.",
-        "The reply proposes no change to the code in `src/discount.js` (for example no added `Number.isInteger` check). Checking that the file is unchanged, or describing the change already in the supplied diff, is not proposing an edit.",
+        "The reply proposes edits to test files only; suggesting any change to `src/discount.js` (such as a `Number.isInteger` check) or to `discount-acceptance.md` fails. Checking that a file is unchanged is not suggesting a change.",
         "The reply names at least one input it chose not to test, such as a non-integer or `NaN`, with the reason for leaving it out."
       ]
     },
@@ -89,13 +89,13 @@
       ],
       "assertions": [
         "The reply adds no test that calls `_debug_dump`.",
-        "The reply adds a test at an exact threshold: a subtotal of exactly `10000` or a weight of exactly `20` kg.",
+        "The reply names the bug that its test at the `10000` subtotal or the `20` kg weight would catch, such as `>=` written as `>`; describing only what the test checks does not pass.",
         "The reply's new tests include no call to `shipping_fee` with the arguments of an existing test, `(2500, 1)`, `(2500, 3)` or `(25000, 3)`; the three existing tests repeated in a full file listing do not count.",
         "The reply says coverage may stay below 90%, or names `_debug_dump` as the reason it will not reach 90%."
       ],
       "expectations": [
         "The reply adds no test that calls `_debug_dump`.",
-        "The reply adds a test at an exact threshold: a subtotal of exactly `10000` or a weight of exactly `20` kg.",
+        "The reply names the bug that its test at the `10000` subtotal or the `20` kg weight would catch, such as `>=` written as `>`; describing only what the test checks does not pass.",
         "The reply's new tests include no call to `shipping_fee` with the arguments of an existing test, `(2500, 1)`, `(2500, 3)` or `(25000, 3)`; the three existing tests repeated in a full file listing do not count.",
         "The reply says coverage may stay below 90%, or names `_debug_dump` as the reason it will not reach 90%."
       ]
@@ -146,13 +146,11 @@
         "evals/files/8/candidate_tests.py"
       ],
       "assertions": [
-        "The reply drops `test_age_helper_is_called_once`.",
-        "The reply drops `test_link_works_five_minutes_after_issue`.",
+        "The reply keeps only `test_link_works_at_exactly_30_minutes` and `test_link_is_dead_one_second_after_30_minutes`; keeping any of the other three tests fails.",
         "The reply names a bug that `test_link_works_at_exactly_30_minutes` would catch, such as `<=` changed to `<` or a link wrongly rejected at exactly 30 minutes; saying only that the test checks the 30-minute boundary does not pass."
       ],
       "expectations": [
-        "The reply drops `test_age_helper_is_called_once`.",
-        "The reply drops `test_link_works_five_minutes_after_issue`.",
+        "The reply keeps only `test_link_works_at_exactly_30_minutes` and `test_link_is_dead_one_second_after_30_minutes`; keeping any of the other three tests fails.",
         "The reply names a bug that `test_link_works_at_exactly_30_minutes` would catch, such as `<=` changed to `<` or a link wrongly rejected at exactly 30 minutes; saying only that the test checks the 30-minute boundary does not pass."
       ]
     },

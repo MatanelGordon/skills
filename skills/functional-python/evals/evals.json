@@ -28,12 +28,12 @@
       ],
       "assertions": [
         "The return annotation of `parse_config` in the rewritten code is a result type that separates success from failure (for example `Result[Config, ConfigError]` or `Config | ConfigError`), not `Config | None`, plain `Config`, or one class with optional `config` and `error` fields.",
-        "No function in the rewritten code raises an exception for a missing or malformed file; there is no `raise` statement on those paths.",
+        "The `settings_banner` function in the rewritten code branches on the value returned by `parse_config` with a `match` statement, not with `if` or `isinstance` checks.",
         "The malformed-file failure in the rewritten code is returned as an instance of a class with at least one field (for example a dataclass `Malformed` with a `reason`), not as a bare string and not as an instance of an `Exception` subclass."
       ],
       "expectations": [
         "The return annotation of `parse_config` in the rewritten code is a result type that separates success from failure (for example `Result[Config, ConfigError]` or `Config | ConfigError`), not `Config | None`, plain `Config`, or one class with optional `config` and `error` fields.",
-        "No function in the rewritten code raises an exception for a missing or malformed file; there is no `raise` statement on those paths.",
+        "The `settings_banner` function in the rewritten code branches on the value returned by `parse_config` with a `match` statement, not with `if` or `isinstance` checks.",
         "The malformed-file failure in the rewritten code is returned as an instance of a class with at least one field (for example a dataclass `Malformed` with a `reason`), not as a bare string and not as an instance of an `Exception` subclass."
       ]
     },

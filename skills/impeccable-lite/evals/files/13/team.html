@@ -6,21 +6,16 @@
 <title>Team · Quillmate</title>
 <style>
   @font-face { font-family: "Quill Serif"; src: url("fonts/quill-serif.woff2") format("woff2"); }
-  :root {
-    --ink: #1B1F23; --paper: #FBFAF7; --line: #D9D5CC; --muted: #5F6368; --accent: #B4411F;
-    --radius: 2px; --space: 8px;
-    --font: "Quill Serif", Georgia, serif;
-  }
-  body { margin: 0; font: 16px/1.5 var(--font); color: var(--ink); background: var(--paper); }
-  main { max-width: 56rem; margin: 0 auto; padding: calc(var(--space) * 4); }
-  .page-head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid var(--ink); padding-bottom: var(--space); }
+  body { margin: 0; font: 16px/1.5 "Quill Serif", Georgia, serif; color: #1B1F23; background: #FBFAF7; }
+  main { max-width: 56rem; margin: 0 auto; padding: 32px; }
+  .page-head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #1B1F23; padding-bottom: 8px; }
   h1 { font-size: 1.75rem; margin: 0; }
-  .btn { font: inherit; padding: var(--space) calc(var(--space) * 2); border: 1px solid var(--ink); border-radius: var(--radius); background: transparent; color: var(--ink); }
-  .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--paper); }
-  .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-  .members { width: 100%; border-collapse: collapse; margin-top: calc(var(--space) * 3); }
-  .members th { text-align: left; font-weight: 400; color: var(--muted); border-bottom: 1px solid var(--line); padding: var(--space) 0; }
-  .members td { border-bottom: 1px solid var(--line); padding: var(--space) 0; }
+  .btn { font: inherit; padding: 8px 16px; border: 1px solid #1B1F23; border-radius: 2px; background: transparent; color: #1B1F23; }
+  .btn-primary { background: #B4411F; border-color: #B4411F; color: #FBFAF7; }
+  .btn:focus-visible { outline: 2px solid #1B1F23; outline-offset: 2px; }
+  .members { width: 100%; border-collapse: collapse; margin-top: 24px; }
+  .members th { text-align: left; font-weight: 400; color: #5F6368; border-bottom: 1px solid #D9D5CC; padding: 8px 0; }
+  .members td { border-bottom: 1px solid #D9D5CC; padding: 8px 0; }
 </style>
 </head>
 <body>

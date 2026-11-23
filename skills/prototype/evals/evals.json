@@ -66,20 +66,20 @@
     {
       "id": 4,
       "prompt": "Here's my spike for the new pricing rules, attached as `pricing_spike.py` (in a workspace it is at `input/4/pricing_spike.py`). Can you add tests and make the discount tiers configurable before we review it on Thursday? Show me the result in your reply, and write the files too if you can.",
-      "expected_output": "Does not add the tests or the configuration. Says they mean the file is no longer a throwaway, asks whether the question at the top of the file has been answered, and offers two paths: record the answer and discard the spike, or write the rules again as production code.",
+      "expected_output": "Does not add the tests or the configuration. Says they mean the file is no longer a throwaway, points out that the spike already answers its question (yes: the 1000-unit loyal order is at about 18.3% margin, so the prediction was wrong), and offers two paths: record the answer and discard the spike, or write the rules again as production code.",
       "files": [
         "evals/files/4/pricing_spike.py"
       ],
       "assertions": [
         "The reply says that tests or configurable tiers do not belong on throwaway code, or that adding them means `pricing_spike.py` is no longer a throwaway.",
         "The reply sets out two separate paths for the user to pick from: keep `pricing_spike.py` a throwaway and record its answer, or write the pricing rules again as production code.",
-        "The reply refers to the question or the empty `Answer:` line at the top of `pricing_spike.py` and asks or states whether that question has been answered.",
+        "The reply says the spike's question is already answered, and that the answer is yes: an order in it falls below the 20% minimum margin (the 1000-unit order for a loyal customer comes out at about 18.3%).",
         "No test function or test file is shown in the reply or written to disk."
       ],
       "expectations": [
         "The reply says that tests or configurable tiers do not belong on throwaway code, or that adding them means `pricing_spike.py` is no longer a throwaway.",
         "The reply sets out two separate paths for the user to pick from: keep `pricing_spike.py` a throwaway and record its answer, or write the pricing rules again as production code.",
-        "The reply refers to the question or the empty `Answer:` line at the top of `pricing_spike.py` and asks or states whether that question has been answered.",
+        "The reply says the spike's question is already answered, and that the answer is yes: an order in it falls below the 20% minimum margin (the 1000-unit order for a loyal customer comes out at about 18.3%).",
         "No test function or test file is shown in the reply or written to disk."
       ]
     },
@@ -107,7 +107,7 @@
     {
       "id": 6,
       "prompt": "I've got a spike of the new contact importer behind an interface in our CRM service. `imports/importer.py` and `imports/jobs.py` are attached (in a workspace they are under `input/6/imports/`). `jobs.py` shows three of the twelve places that create an importer; the other nine look the same. When the final importer is written, swapping it in will mean editing all twelve. Is that normal? I want to merge the spike to `main` this week so the team can try it. Tell me what you would change before that: a short list, most important first, one or two sentences per item. Don't rewrite the files.",
-      "expected_output": "A short list: create the importer in one place so the swap is one line, rename the flag and the class to say the code is a spike, write down in the code how the spike ends, take `sample_rows()` off the interface, and drop the helper classes behind it. No request for tests or error handling on the spike.",
+      "expected_output": "A short list: create the importer in one place so the swap is one line, rename the flag and the class to say the code is a spike, write down in the code how the spike ends, take `sample_rows()` off the interface, and drop the helper classes behind it.",
       "files": [
         "evals/files/6/imports/importer.py",
         "evals/files/6/imports/jobs.py"
@@ -116,15 +116,13 @@
         "The reply says to rename the flag `NEW_IMPORTER` or the class `NewContactImporter` so that the name marks the code as a prototype, a spike or temporary.",
         "The reply says the spike needs a note in the code about how it ends: what replaces it if the trial succeeds, or that it is deleted if the trial fails.",
         "The reply says `sample_rows()` should be taken off the `ContactImporter` interface, or reshaped, because it exposes something only the spike can provide.",
-        "The reply says to remove `RowCleaner` or `ImporterSettings`, or to fold them into the spike class, instead of keeping helper classes behind the interface.",
-        "The list of changes does not include adding tests, retries or more error handling to the spike."
+        "The reply says to remove `RowCleaner` or `ImporterSettings`, or to fold them into the spike class, instead of keeping helper classes behind the interface."
       ],
       "expectations": [
         "The reply says to rename the flag `NEW_IMPORTER` or the class `NewContactImporter` so that the name marks the code as a prototype, a spike or temporary.",
         "The reply says the spike needs a note in the code about how it ends: what replaces it if the trial succeeds, or that it is deleted if the trial fails.",
         "The reply says `sample_rows()` should be taken off the `ContactImporter` interface, or reshaped, because it exposes something only the spike can provide.",
-        "The reply says to remove `RowCleaner` or `ImporterSettings`, or to fold them into the spike class, instead of keeping helper classes behind the interface.",
-        "The list of changes does not include adding tests, retries or more error handling to the spike."
+        "The reply says to remove `RowCleaner` or `ImporterSettings`, or to fold them into the spike class, instead of keeping helper classes behind the interface."
       ]
     },
     {

@@ -1,5 +1,14 @@
 # Templates
 
+## Ownership table
+
+Use this for a quick split. Write one row per worker, then start every row at
+once unless the concurrency cap delays it.
+
+| Worker | Owns | Off-limits | Test command | Tool |
+|---|---|---|---|---|
+| `<slug>` | `<disjoint paths>` | `<every other worker's paths>` | `<command>` | `<tool/model>` |
+
 ## Plan directory layout
 
 ```
@@ -21,17 +30,14 @@ they survive a reboot — after a crash they are often the only record of what a
 agent did.
 
 `.plan/` is **committed to git**: that is what lets other sessions and teammates
-share the plan and architecture. Commit `PROGRESS.md` updates as you go rather
-than letting the working tree sit dirty.
+share the plan and architecture. For `PROGRESS.md` commits, main-working-tree
+location, and absolute-path rules, see `parallel-build` step 6 (Track progress).
 
 `<plan-name>` is concise and indicative: `oauth-device-flow`, `tui-memory`,
 `split-billing-service`. Not `plan1`, not `implement-the-new-feature-we-discussed`.
 
-**All of these live in the MAIN working tree and are addressed by absolute path.**
-Subagents run in worktrees but write their status file to the main tree's
-`agents/<slug>.md`. Never let a subagent write into `.plan/` inside its own
-worktree — that puts the file on its branch and turns every progress update into a
-merge conflict.
+For the `agents/<slug>.md` shape, use the **Progress reporting** section of the
+`cli-coding-subagents` prompt template.
 
 ---
 
@@ -64,7 +70,7 @@ from ones still needing work.
 ## Resume here
 <Literally what the next action is, precise enough for a session with zero
 context to execute. e.g. "p2-feature-b reported DONE but is unmerged; verify
-`npm test` then run `wt.sh merge p2-feature-b`. Then dispatch phase 3.">
+`npm test` then run `"$SK/scripts/wt.sh" merge p2-feature-b`. Then dispatch phase 3.">
 
 ## Phases
 - [x] Phase 1 — foundation — merged
@@ -80,7 +86,7 @@ context to execute. e.g. "p2-feature-b reported DONE but is unmerged; verify
 | p2-feature-c | 2 | codex/xhigh | live | in progress | RUNNING since 14:05 |
 
 Worktree root: `<parent>/.wt-<repo>/` · logs: `./logs/<slug>.log`
-(Verify with `wt.sh list`; it is authoritative when this table is stale.)
+(Verify with `"$SK/scripts/wt.sh" list`; it is authoritative when this table is stale.)
 
 ## Agent reports
 ### p2-feature-a — DONE (merged 13:52)
@@ -101,24 +107,6 @@ Worktree root: `<parent>/.wt-<repo>/` · logs: `./logs/<slug>.log`
 - [ ] wait on p2-feature-c
 - [ ] dispatch phase 3 (2 CR agents; security skipped)
 - [ ] run critical-path tests on the fully merged branch
-```
-
----
-
-## agents/<slug>.md
-
-Written by the subagent (its prompt requires it), read by the orchestrator.
-
-```markdown
-# <slug>
-STARTED: <HH:MM>
-STATUS: RUNNING | DONE | PARTIAL | BLOCKED
-STEP: <one line — what it is doing right now>
-CHANGED: <paths so far>
-TESTS: <command> -> pass|fail
-NOTES:
-- <decision / assumption>
-BLOCKED: <what stopped it, what it needs>
 ```
 
 ---

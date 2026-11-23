@@ -264,8 +264,7 @@
         "The script does not import `ink` or `react`.",
         "The script contains no terminal escape sequence such as `[?1049h` or `[2J`.",
         "The script registers no `resize` listener."
-      ],
-      "expected_skill": null
+      ]
     },
     {
       "id": 15,
@@ -366,8 +365,7 @@
         "The updated `cli.mjs` does not import `ink` or `react`.",
         "The updated `cli.mjs` contains no terminal escape sequence such as `[?1049h` or `[2J`.",
         "The updated `cli.mjs` registers no `resize` listener."
-      ],
-      "expected_skill": null
+      ]
     }
   ]
 }

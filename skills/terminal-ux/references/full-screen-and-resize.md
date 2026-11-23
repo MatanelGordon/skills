@@ -9,6 +9,11 @@ after resize, or a layout or divider stuck at its old width.
 These rules were a skill of their own until they were folded into
 `terminal-ux`. Nothing below changed except this introduction.
 
+They were proven on Ink 4.4.1, the version the eval cases pin. On Ink 7,
+`useWindowSize()` (see SKILL.md) already keeps the width as state and updates
+it on resize, which is what Rule 3 builds by hand; Rules 1 and 2 are about the
+entry point and apply on every version.
+
 Battle-tested rules from shipping Ink + React TUIs. The deep stack documented here is Ink/React on Node; the underlying principles — render into the alternate screen, control resize-handler ordering, treat size as state — transfer to other TUI frameworks even when the exact escape codes differ.
 
 The thing to get right, because it's gotten wrong every time, is terminal **resize**. Ink renders by diffing its previous output and repositioning the cursor, not by clearing and redrawing. On resize that model breaks three ways at once:

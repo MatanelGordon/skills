@@ -114,7 +114,8 @@ the code and the exact order the resize handlers must run in.
 2. **Clear on resize from the entry point, before `render()`:** a `resize`
    listener writing `\x1B[2J\x1B[H`, registered first so Ink draws onto a clean
    screen. Never in a `useEffect`, and never `\x1Bc`.
-3. **Keep the width in React state,** set by a resize handler that does nothing else.
+3. **Keep the width in React state,** set by a resize handler that does nothing else
+   (on Ink 7, `useWindowSize()` does this for you).
 
 ## Width: the wide-character trap
 

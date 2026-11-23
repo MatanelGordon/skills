@@ -138,7 +138,7 @@ whose fact needs two checks shows which one was missed.
 
 - Three attempts per arm show a direction, not a significant difference.
 - A run in SkillEvaluator's default workspace installs only the skill under
-  test, so "skill loaded" is the best case. With 27 skills competing, expect
+  test, so "skill loaded" is the best case. With 25 skills competing, expect
   fewer loads.
 - A reply that quotes the token while rejecting the fact passes the reply
   check. The judged assertions are there for that.

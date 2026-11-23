@@ -239,7 +239,11 @@ below, one section each, in merge order.
   resize and redraw. Its rules now live, unchanged, in
   `terminal-ux/references/full-screen-and-resize.md`, which terminal-ux points
   to for full-screen setup and resize bugs; its eight eval cases are
-  terminal-ux cases 12 to 19. The collection is 25 skills.
+  terminal-ux cases 12 to 19; the two that were tui-builder's negative cases
+  (a plain CI table, a `--json` flag for a pipeline CLI) are positive cases
+  now, because plain CLI output is terminal-ux's own ground. The collection
+  is 25 skills. A link to `tui-builder` from an earlier install now dangles;
+  `npm run install-skills` prunes it (#12).
 - **Rewrote five descriptions so the trigger a user would type comes first.**
   `functional-typescript` and `functional-python` now open with their
   language and the code smells they fix, instead of generic verbs ("new

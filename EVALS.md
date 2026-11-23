@@ -156,7 +156,7 @@ What each runner does with case 1:
 Published guidance ranges from "2-3 test cases" for a first iteration
 (agentskills.io) through "10–20 prompts" (OpenAI) to "20-50 simple tasks"
 (Anthropic, for agents in general). Six to ten per skill sits where those
-overlap for a library of 27 skills that are each run twice per case.
+overlap for a library of 25 skills that are each run twice per case.
 
 `npm run validate` prints a warning for a skill under 6 cases or without a
 negative case. It does not fail on it.

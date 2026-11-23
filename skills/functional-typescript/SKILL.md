@@ -1,10 +1,10 @@
 ---
 name: functional-typescript
 description: >
-  Use when TypeScript or JavaScript code needs fixing or review because it mutates its
-  inputs, models variants with classes or abstract base classes, throws or returns null
-  for expected failures, or has optional fields valid only together. Gives discriminated
-  unions, Result types, readonly data.
+  Use when writing or changing TypeScript or JavaScript modules, domain models or error
+  handling, above all code that mutates inputs, uses classes or abstract base classes
+  for variants, throws or returns null for expected failures, or has optional fields
+  valid only together. Gives unions, Result.
 license: MIT
 metadata:
   author: Matanel Gordon

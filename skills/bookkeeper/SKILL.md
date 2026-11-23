@@ -1,10 +1,10 @@
 ---
 name: bookkeeper
 description: >
-  Use when the user says to save, write down or keep for next time how things are here:
-  how to reach a host, where credentials live, what a term means, a recovery sequence,
-  environment quirks, learned constraints. Kept in the repo's .memory/; read its index
-  before answering about them.
+  Use when the user says to save or write down for next time how things are here: how to
+  reach a host, where credentials live, what a term means, a recovery sequence,
+  environment quirks, learned constraints, or when one surfaces while working or
+  planning. Kept in .memory/; read its index first.
 license: MIT
 metadata:
   author: Matanel Gordon

@@ -1,10 +1,10 @@
 ---
 name: functional-python
 description: >
-  Use when Python code needs fixing or review because it mutates its arguments, models
-  variants with base classes, returns None or raises for expected failures, dispatches
-  on long if/elif chains, or has optional fields valid only together. Gives frozen
-  dataclasses, match/case, Result types.
+  Use when writing or changing Python modules, domain models or error handling, above
+  all code that mutates arguments, uses base classes for variants, returns None or
+  raises for expected failures, dispatches on long if/elif chains, or has optional
+  fields valid only together. Gives match/case, Result.
 license: MIT
 metadata:
   author: Matanel Gordon

@@ -3,8 +3,8 @@ name: get-the-job-done
 description: >
   Use when the user disputes that work is done ('you said it was done, but...', 'your
   wrap-up missed X'), asks if it was really tested, says stop recapping and finish, or
-  wants to lower a threshold, skip a failing check or call a requirement optional to
-  ship. Also before you report done.
+  wants to skip a failing check or call a requirement optional. Also at the start of
+  sizeable work and before you report done.
 license: MIT
 metadata:
   author: Matanel Gordon

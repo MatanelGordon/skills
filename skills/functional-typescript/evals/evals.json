@@ -8,13 +8,11 @@
       "files": [],
       "assertions": [
         "Every property in the file's type declarations is marked `readonly`.",
-        "The receipt number is a field of the done variant only; it is not an optional (`?:`) property.",
         "The decline code is a field of a card-declined variant only; it is not an optional (`?:`) property.",
         "`statusMessage` has a compile-time exhaustiveness check that uses the `never` type (for example a `default` branch with `return assertNever(state)`, or `const unreachable: never = state`)."
       ],
       "expectations": [
         "Every property in the file's type declarations is marked `readonly`.",
-        "The receipt number is a field of the done variant only; it is not an optional (`?:`) property.",
         "The decline code is a field of a card-declined variant only; it is not an optional (`?:`) property.",
         "`statusMessage` has a compile-time exhaustiveness check that uses the `never` type (for example a `default` branch with `return assertNever(state)`, or `const unreachable: never = state`)."
       ]
@@ -26,13 +24,13 @@
       "files": [],
       "assertions": [
         "The `{ email, plan }` input is checked against a schema (for example `CreateUser.safeParse(input)`) before `fetch` is called.",
-        "The response JSON is checked against a schema (for example `UserCreated.safeParse(await res.json())`) before it is returned; it is not returned straight from `res.json()` or through an `as` cast.",
+        "A response body that fails the response schema leads to a returned error value (for example `return { ok: false, error: { kind: \"badResponse\" } }`), not to a `throw` and not to zod's throwing `.parse(`.",
         "The declared return type of `createUser` is a `Promise` of a `Result`-style union (an `ok: true` variant with the user, an `ok: false` variant with an error), or a neverthrow `ResultAsync`.",
         "A 409 response is returned as a tagged error value (for example `{ kind: \"emailTaken\" }`), not thrown and not returned as a bare string or `Error`."
       ],
       "expectations": [
         "The `{ email, plan }` input is checked against a schema (for example `CreateUser.safeParse(input)`) before `fetch` is called.",
-        "The response JSON is checked against a schema (for example `UserCreated.safeParse(await res.json())`) before it is returned; it is not returned straight from `res.json()` or through an `as` cast.",
+        "A response body that fails the response schema leads to a returned error value (for example `return { ok: false, error: { kind: \"badResponse\" } }`), not to a `throw` and not to zod's throwing `.parse(`.",
         "The declared return type of `createUser` is a `Promise` of a `Result`-style union (an `ok: true` variant with the user, an `ok: false` variant with an error), or a neverthrow `ResultAsync`.",
         "A 409 response is returned as a tagged error value (for example `{ kind: \"emailTaken\" }`), not thrown and not returned as a bare string or `Error`."
       ]
@@ -59,20 +57,22 @@
     },
     {
       "id": 4,
-      "prompt": "Every other component in our app is a function component, and a reviewer has asked why `ErrorBoundary.tsx` is still a class (attached; in a workspace it is at `input/4/src/components/ErrorBoundary.tsx`). It has to be a class component, right? Give me a short answer I can paste into the review thread. Do not change the file.",
-      "expected_output": "Yes: React only lets a class component define `getDerivedStateFromError` and `componentDidCatch`, so the boundary stays a class. No rewrite of the component.",
+      "prompt": "Our `ErrorBoundary.tsx` is attached (in a workspace it is at `input/4/src/components/ErrorBoundary.tsx`). When it has caught an error, the fallback should also show a \"Try again\" button that clears the error so the children render again. Make that change and paste the whole updated file in your reply, or write it to `output/ErrorBoundary.tsx` if you can write files. Node is not installed here, so there is nothing to run.",
+      "expected_output": "The whole file with a \"Try again\" button added next to the fallback that resets `hasError` through `this.setState`; `ErrorBoundary` stays a class component and nothing else is restructured.",
       "files": [
         "evals/files/4/src/components/ErrorBoundary.tsx"
       ],
       "assertions": [
-        "The reply says the error boundary has to stay a class component.",
-        "The reply names `getDerivedStateFromError` or `componentDidCatch` as the reason.",
-        "The reply contains no version of `ErrorBoundary` rewritten as a function component."
+        "The updated `ErrorBoundary` is still declared as a class that extends `React.Component`.",
+        "Clicking the \"Try again\" button leads to `this.setState({ hasError: false })`, directly or through a method such as `reset`.",
+        "The reply contains no version of `ErrorBoundary` written as a function component.",
+        "The updated file contains none of `Result`, `assertNever` or `Brand`."
       ],
       "expectations": [
-        "The reply says the error boundary has to stay a class component.",
-        "The reply names `getDerivedStateFromError` or `componentDidCatch` as the reason.",
-        "The reply contains no version of `ErrorBoundary` rewritten as a function component."
+        "The updated `ErrorBoundary` is still declared as a class that extends `React.Component`.",
+        "Clicking the \"Try again\" button leads to `this.setState({ hasError: false })`, directly or through a method such as `reset`.",
+        "The reply contains no version of `ErrorBoundary` written as a function component.",
+        "The updated file contains none of `Result`, `assertNever` or `Brand`."
       ],
       "expected_skill": null
     },
@@ -134,21 +134,19 @@
     },
     {
       "id": 8,
-      "prompt": "`expireTrials.ts` is attached (in a workspace it is at `input/8/src/billing/expireTrials.ts`). It runs every night. To test the 14-day and 3-day rules I currently have to mock the `db` module, mock the `mailer` module and freeze the system clock, and the tests break every time someone touches the loop. Restructure the file so the rules can be tested on their own. The behaviour and the `db` and `mailer` APIs stay as they are. Paste the new file in full in your reply, or write it to `output/expireTrials.ts` if you can write files. Do not write the tests. Node is not installed here, so there is nothing to run.",
-      "expected_output": "The 14-day and 3-day rules moved into a synchronous function that takes a trial and the current time and returns what to do as a value, with a thin outer function that reads the clock, loads the trials and performs the saves and sends; no trial object is changed in place.",
+      "prompt": "`expireTrials.ts` is attached (in a workspace it is at `input/8/src/billing/expireTrials.ts`). It runs every night. To test the 14-day and 3-day rules I currently have to mock the `db` module and the `mailer` module, and the tests break every time someone touches the loop. Restructure the file so the rules can be tested on their own. The behaviour and the `db` and `mailer` APIs stay as they are. Paste the new file in full in your reply, or write it to `output/expireTrials.ts` if you can write files. Do not write the tests. Node is not installed here, so there is nothing to run.",
+      "expected_output": "The 14-day and 3-day rules moved into a synchronous function that takes a trial and the current time and returns a tagged union of actions (expire, remind, nothing), with a thin outer function that reads the clock, loads the trials and performs the saves and sends; no trial object is changed in place.",
       "files": [
         "evals/files/8/src/billing/expireTrials.ts"
       ],
       "assertions": [
         "The function holding the 14-day and 3-day rules takes the current time as a parameter (for example `now: Date`).",
-        "The function holding the rules contains no call to `db` or `mailer`.",
-        "The rules function returns its decision as a value (for example `{ kind: \"expire\" }`, `{ kind: \"remind\", daysLeft: 2 }` or a list of such actions) for another function to act on.",
+        "The rules function returns a tagged union with one variant per outcome (for example `{ kind: \"expire\" } | { kind: \"remind\"; daysLeft: number } | { kind: \"none\" }`), not one object of flags such as `shouldSendEmail` and `emailSubject?`.",
         "The new file contains no assignment to a field of an existing trial object (no `trial.status = ...` and no `trial.remindedAt = ...`)."
       ],
       "expectations": [
         "The function holding the 14-day and 3-day rules takes the current time as a parameter (for example `now: Date`).",
-        "The function holding the rules contains no call to `db` or `mailer`.",
-        "The rules function returns its decision as a value (for example `{ kind: \"expire\" }`, `{ kind: \"remind\", daysLeft: 2 }` or a list of such actions) for another function to act on.",
+        "The rules function returns a tagged union with one variant per outcome (for example `{ kind: \"expire\" } | { kind: \"remind\"; daysLeft: number } | { kind: \"none\" }`), not one object of flags such as `shouldSendEmail` and `emailSubject?`.",
         "The new file contains no assignment to a field of an existing trial object (no `trial.status = ...` and no `trial.remindedAt = ...`)."
       ]
     },

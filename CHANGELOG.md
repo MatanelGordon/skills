@@ -41,6 +41,11 @@
   .NET 10 and earlier. Corrected two claims: `ImmutableList<T>` supports list
   patterns except a captured slice, and CS8509 fires on a switch expression
   without a `_` arm, not on every switch.
+- **`deep-plan` now writes the review too.** After `plan.md` it writes
+  `review.md` and `diagrams/` beside it, the `visual-plan` way, and puts every
+  question only the user can settle on a `Q<n>` line under "Risks and
+  unknowns", with a recommendation and a default. Its description is
+  unchanged; a new eval case (11) checks for the review.
 - Rewrote both skills' eval sets in the shared format: 12 cases for
   `functional-csharp` (the 4 existing ones, 7 for rules that moved or
   shrank, 1 negative) and 6 for `visual-plan` with fixtures, a container

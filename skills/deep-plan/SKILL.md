@@ -6,6 +6,7 @@ license: MIT
 metadata:
   author: Matanel Gordon
   source: https://github.com/MatanelGordon/skills
+  depends: visual-plan
 ---
 
 # Deep plan

@@ -6,7 +6,7 @@ cursor, putting the terminal back on exit or crash, the order of resize
 handlers, width kept as state, ghosted or repeated content, a blank screen
 after resize, or a layout or divider stuck at its old width.
 
-This was the separate `tui-builder` skill until it was folded into
+These rules were a skill of their own until they were folded into
 `terminal-ux`. Nothing below changed except this introduction.
 
 Battle-tested rules from shipping Ink + React TUIs. The deep stack documented here is Ink/React on Node; the underlying principles — render into the alternate screen, control resize-handler ordering, treat size as state — transfer to other TUI frameworks even when the exact escape codes differ.

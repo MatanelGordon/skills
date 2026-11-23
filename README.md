@@ -263,7 +263,7 @@ This registry deliberately installs **`impeccable-lite`**, not the upstream
 |---|---|
 | [impeccable-lite](skills/impeccable-lite/SKILL.md) | Compact interface direction and finish with an optional perception-first diagnostic, a built-ins-only workflow/audit, and deterministic local screenshots through the repository's narrow Puppeteer capture companion. |
 | [ux](skills/ux/SKILL.md) | A style-agnostic way to answer "is this good UX?" with a rubric instead of an opinion: severity-rated heuristics plus metrics with published thresholds. |
-| [terminal-ux](skills/terminal-ux/SKILL.md) | Terminal dashboards and visualisations with Ink, including the testing traps I hit so you don't have to, and the hard-won full-screen and terminal-resize rules (formerly `tui-builder`). |
+| [terminal-ux](skills/terminal-ux/SKILL.md) | Terminal dashboards and visualisations with Ink, including the testing traps I hit so you don't have to, and the hard-won full-screen and terminal-resize rules. |
 
 ### Driving and observing
 

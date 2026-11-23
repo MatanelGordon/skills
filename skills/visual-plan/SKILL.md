@@ -12,7 +12,8 @@ metadata:
 
 # Visual plan
 
-One plan, two files, both in `.plan/<name>/`:
+One plan, two files, side by side in the plan's folder: `.plan/<name>/`, or
+the folder of the plan the user points you at (never a copy of it):
 
 | File | Reader | Holds |
 |---|---|---|
@@ -51,12 +52,21 @@ enough) and when the user wants a few sentences in chat, not a file.
    In a plan you did not write, giving its open questions this form is the
    only edit you make.
 3. **Write `review.md`** in the shape below.
-4. **Draw 1 to 3 diagrams** as `diagrams/<short-name>.svg`. Read
-   `references/diagrams.md` first: it holds the skeleton to copy and the rules.
-   The first sits under the opening sentences; any other goes beside the
+4. **Draw 1 to 3 diagrams** as `diagrams/<short-name>.svg`, each linked from
+   the review as `![what it shows](diagrams/<short-name>.svg)`. Every file
+   starts like this, or it fails the check:
+
+   ```svg
+   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 240" role="img">
+     <title>What the diagram shows</title>
+   ```
+
+   `references/diagrams.md` holds the full skeleton (light and dark palette)
+   and the layout rules: copy it rather than starting from nothing. The first
+   diagram sits under the opening sentences; any other goes beside the
    section it explains.
-5. **Check.** Run the checker below and fix every failure it prints, until it
-   passes.
+5. **Check. Do not hand over until it passes.** Run the checker below and fix
+   every failure it prints.
 6. **Hand over.** Give the user the path to `review.md`. For a draft, ask them
    to approve or to answer by id, and change no source file until they do.
    Commit the new files the way the repo treats `plan.md` (where `.plan` is

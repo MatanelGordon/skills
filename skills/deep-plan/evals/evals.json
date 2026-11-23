@@ -202,6 +202,28 @@
         "The plan text has a status line that reads `draft`.",
         "The reply says nothing is to be built until the user has approved the plan."
       ]
+    },
+    {
+      "id": 11,
+      "prompt": "Plan adding due dates to the invoice API in the attached project (in a workspace: the folder `input/shared/invoice-api/`): every invoice gets a `due_on` date set to 30 days after creation, and `GET /invoices?overdue=true` lists the invoices past their due date. Settled: it is done when an invoice created today shows up in the overdue list 31 days from now and not before. Reminders and late fees are out of scope. One question is my call, not yours: whether `due_on` may be changed after the invoice is created.\n\nI will not read the whole plan; I approve plans from a short version. Write the plan into `.plan/` if you can write files; otherwise give everything you would write, in full, in your reply. Do not build anything.",
+      "expected_output": "A plan with a `draft` status and, beside it, a short document for the user that links the plan, shows an SVG diagram file, and asks whether `due_on` may change under the same id the plan gives that question (such as `Q1`), with a recommendation and a default.",
+      "files": [
+        "evals/files/shared/invoice-api/src/routes/invoices.js",
+        "evals/files/shared/invoice-api/src/db/query.js",
+        "evals/files/shared/invoice-api/package.json"
+      ],
+      "assertions": [
+        "Besides the plan itself, the output includes a second, shorter document written for the user to approve from.",
+        "The shorter document shows a diagram as a Markdown image link to an `.svg` file.",
+        "The question whether `due_on` may be changed after creation carries the same id, such as `Q1`, in the plan and in the shorter document.",
+        "The shorter document links to the plan file."
+      ],
+      "expectations": [
+        "Besides the plan itself, the output includes a second, shorter document written for the user to approve from.",
+        "The shorter document shows a diagram as a Markdown image link to an `.svg` file.",
+        "The question whether `due_on` may be changed after creation carries the same id, such as `Q1`, in the plan and in the shorter document.",
+        "The shorter document links to the plan file."
+      ]
     }
   ]
 }

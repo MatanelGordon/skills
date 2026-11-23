@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.23.0 — 2026-11-23
+
+- **Shortened every skill description to a routing line.** The 27 descriptions
+  totalled 14,636 characters, and Claude Code and Codex fit about 8,000 in the
+  skill list, so with every skill installed the descriptions were cut. In 25 of
+  them the "use when" part was missing or ended after character 60, which is
+  all some agents show. The 26 descriptions outside `development-workflow` now
+  open with the trigger, hold at most 300 characters, and name what only that
+  skill does; all 27 total 7,373. Only `description:` blocks changed. No skill
+  body, reference, script or eval was touched.
+- **The validator enforces both limits.** `npm run validate` fails a description
+  over 300 characters and fails the collection once all descriptions together
+  reach 7,500. Regression tests pin each boundary and that a folded description
+  is measured after its lines are joined. The old 1,024-character check is gone:
+  the new limit is stricter.
+
 ## 1.22.1 — 2026-11-21
 
 - Redesigned the README opening around an original light/dark hero, a concise

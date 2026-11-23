@@ -9,6 +9,10 @@ import { isEntryPoint } from './entry-point.mjs';
 
 const DEFAULT_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const ALLOWED_KEYS = new Set(['name', 'description', 'license', 'allowed-tools', 'metadata', 'compatibility']);
+// Descriptions are read as one list by every agent that has the skills installed.
+// Claude Code and Codex fit about 8,000 characters of it and cut the rest.
+const DESCRIPTION_MAX_CHARS = 300;
+const DESCRIPTIONS_TOTAL_LIMIT = 7500;
 
 const has = (cmd) => spawnSync(cmd, ['--version'], { stdio: 'ignore' }).status === 0;
 const HAVE = { bash: has('bash'), python3: has('python3') };
@@ -81,6 +85,7 @@ export async function validateRepository(root = DEFAULT_ROOT) {
     }
   };
 
+  let descriptionChars = 0;
   for (const dir of dirs) {
     const mdPath = join(skillsRoot, dir, 'SKILL.md');
     if (!existsSync(mdPath)) {
@@ -113,7 +118,10 @@ export async function validateRepository(root = DEFAULT_ROOT) {
       : /^description:\s*(.+)$/m.exec(fm)?.[1]?.trim();
     if (!desc) fail(dir, 'missing description');
     else {
-      if (desc.length > 1024) fail(dir, `description ${desc.length} chars (max 1024)`);
+      descriptionChars += desc.length;
+      if (desc.length > DESCRIPTION_MAX_CHARS) {
+        fail(dir, `description ${desc.length} chars (max ${DESCRIPTION_MAX_CHARS}) — say when to use the skill first and cut the rest`);
+      }
       if (/[<>]/.test(desc)) fail(dir, 'description contains angle brackets');
     }
 
@@ -125,6 +133,10 @@ export async function validateRepository(root = DEFAULT_ROOT) {
     if (platform && !['darwin', 'linux', 'win32'].includes(platform)) fail(dir, `unknown platform '${platform}'`);
 
     await walk(dir, join(skillsRoot, dir));
+  }
+
+  if (descriptionChars >= DESCRIPTIONS_TOTAL_LIMIT) {
+    fail('skills', `descriptions total ${descriptionChars} chars (must stay under ${DESCRIPTIONS_TOTAL_LIMIT}) — a longer skill list gets cut by the agent`);
   }
 
   for (const dir of dirs) {

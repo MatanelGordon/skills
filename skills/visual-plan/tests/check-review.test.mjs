@@ -256,8 +256,8 @@ test('findSvgProblems requires an svg root with xmlns, viewBox and a title', () 
 test('findSvgProblems rejects scripts, foreignObject and remote references', () => {
   assert.match(findSvgProblems(brokenSvg('<script>alert(1)</script>')).join('\n'), /<script>/);
   assert.match(findSvgProblems(brokenSvg('<foreignObject><p xmlns="http://www.w3.org/1999/xhtml">x</p></foreignObject>')).join('\n'), /<foreignObject>/);
-  assert.match(findSvgProblems(brokenSvg('<image href="https://example.com/a.png"/>')).join('\n'), /remote/);
-  assert.match(findSvgProblems(brokenSvg('<style>@import url("https://example.com/f.css");</style>')).join('\n'), /remote/);
+  assert.match(findSvgProblems(brokenSvg('<image href="https://example.com/a.png"/>')).join('\n'), /outside the file/);
+  assert.match(findSvgProblems(brokenSvg('<style>@import url("https://example.com/f.css");</style>')).join('\n'), /outside the file/);
   assert.deepEqual(findSvgProblems(brokenSvg('<defs><marker id="arrow"/></defs><path marker-end="url(#arrow)" d="M0 0"/><use href="#arrow"/>')), []);
 });
 
@@ -430,6 +430,185 @@ test('the SVG skeleton in references/diagrams.md is itself a valid diagram', asy
   assert.ok(skeleton, 'diagrams.md has no ```svg block');
   assert.deepEqual(findSvgProblems(skeleton), []);
   assert.match(skeleton, /prefers-color-scheme: dark/);
+});
+
+// --- Review findings, 23 November: each case below was a false pass or a false fail ---
+
+const svgWith = (body, attributes = '') => (
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"${attributes}><title>t</title>${body}</svg>`
+);
+
+test('findSvgProblems rejects what XML parsers reject: misplaced declaration, "--" in a comment, "]]>", bad character references', () => {
+  const cases = [
+    [`\n<?xml version="1.0"?>${svgWith('')}`, /declaration must be the very first/],
+    [`<!-- c --><?xml version="1.0"?>${svgWith('')}`, /declaration must be the very first/],
+    [svgWith('<!-- phase 1 -- foundation -->'), /"--"/],
+    [svgWith('<!-- ends with a dash --->'), /"--"/],
+    [svgWith('<text>a ]]> b</text>'), /\]\]>/],
+    [svgWith('<text>&#0;</text>'), /does not allow/],
+    [svgWith('<text>&#xFFFE;</text>'), /does not allow/],
+    [`<!DOCTYPE svg [ <!ENTITY a "b"> ]>${svgWith('')}`, /DOCTYPE/],
+    [svgWith('<!ELEMENT x ANY>'), /unexpected "<!"/],
+  ];
+  for (const [svg, expected] of cases) {
+    assert.match(findSvgProblems(svg).join('\n'), expected, svg);
+  }
+  assert.deepEqual(findSvgProblems(`﻿<?xml version="1.0"?>${svgWith('')}`), []);
+  assert.deepEqual(findSvgProblems(`<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">${svgWith('')}`), []);
+  assert.deepEqual(findSvgProblems(svgWith('<text>&#9;&#x1F600;</text>')), []);
+});
+
+test('findSvgProblems requires every namespace prefix to be declared on an enclosing element', () => {
+  assert.match(findSvgProblems(svgWith('<use xlink:href="#a"/>')).join('\n'), /prefix xlink.*plain href/);
+  assert.match(findSvgProblems(svgWith('<s:rect/>')).join('\n'), /prefix s/);
+  assert.deepEqual(findSvgProblems(svgWith('<defs><g id="a"/></defs><use xlink:href="#a"/>', ' xmlns:xlink="http://www.w3.org/1999/xlink"')), []);
+  assert.deepEqual(findSvgProblems(svgWith('<g xmlns:s="urn:s"><s:x/></g>')), []);
+  assert.match(findSvgProblems(svgWith('<g xmlns:s="urn:s"/><s:x/>')).join('\n'), /prefix s/);
+  assert.deepEqual(findSvgProblems(svgWith('<text xml:space="preserve">a</text>')), []);
+});
+
+test('findSvgProblems rejects references to other files, not only remote ones', () => {
+  const outside = [
+    '<image href="photo.png"/>',
+    '<use href="sprites.svg#icon"/>',
+    '<image href=" https://example.com/a.png"/>',
+    '<style>@font-face { font-family: F; src: url(font.woff2); }</style>',
+    '<rect style="fill: url(other.svg#g)"/>',
+  ];
+  for (const body of outside) {
+    assert.match(findSvgProblems(svgWith(body)).join('\n'), /outside the file/, body);
+  }
+  assert.match(findSvgProblems(`<?xml-stylesheet href="https://example.com/s.css"?>${svgWith('')}`).join('\n'), /outside the file/);
+  assert.match(findSvgProblems(svgWith('<s:script xmlns:s="http://www.w3.org/2000/svg">x</s:script>')).join('\n'), /<script>/);
+  assert.deepEqual(findSvgProblems(svgWith('<defs><linearGradient id="g"/></defs><rect fill="url(#g)" style="fill:url(#g)"/><image href="data:image/png;base64,AAAA"/>')), []);
+  assert.deepEqual(findSvgProblems(svgWith('<text>@import rules are explained here</text>')), []);
+});
+
+test('findSvgProblems requires a title with text and a viewBox of four numbers', () => {
+  const root = (viewBox, title) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}">${title}</svg>`;
+  assert.match(findSvgProblems(root('0 0 10 10', '<title/>')).join('\n'), /<title> with text/);
+  assert.match(findSvgProblems(root('0 0 10 10', '<title>  </title>')).join('\n'), /<title> with text/);
+  assert.match(findSvgProblems(root('junk', '<title>t</title>')).join('\n'), /viewBox of four numbers/);
+  assert.match(findSvgProblems(root('0 0 0 10', '<title>t</title>')).join('\n'), /viewBox of four numbers/);
+  assert.deepEqual(findSvgProblems(root('0,0,720,240', '<title>t</title>')), []);
+});
+
+test('findSvgProblems stays fast on large and pathological input', () => {
+  const many = svgWith('<rect/>'.repeat(20000));
+  const started = Date.now();
+  assert.deepEqual(findSvgProblems(many), []);
+  assert.ok(Date.now() - started < 2000, `20,000 elements took ${Date.now() - started} ms`);
+});
+
+test('countWords stays fast on pathological lines', () => {
+  const started = Date.now();
+  countWords(' '.repeat(5000));
+  countWords('![a'.repeat(20000));
+  countWords('<'.repeat(20000));
+  assert.ok(Date.now() - started < 1000, `took ${Date.now() - started} ms`);
+});
+
+test('imageTargets and plan links ignore comments and inline code, and read reference-style links', () => {
+  const markdown = [
+    '<!-- ![old](diagrams/old.svg) -->',
+    '`![sample](diagrams/sample.svg)`',
+    '![a][flow]',
+    '![b](<diagrams/my flow.svg> (A title))',
+    '<img src=diagrams/c.svg alt=c>',
+    '',
+    '[flow]: diagrams/flow.svg',
+  ].join('\n');
+  assert.deepEqual(imageTargets(markdown), ['diagrams/flow.svg', 'diagrams/my flow.svg', 'diagrams/c.svg']);
+});
+
+test('checkPlanDir accepts a reference-style plan link and rejects one that differs in case or sits in a comment', async () => {
+  const swap = (from, to) => GOOD_REVIEW.replace('[plan.md](plan.md)', from) + (to ? `\n${to}\n` : '');
+  await withPlanDir(goodFiles({ 'review.md': swap('[the plan][p]', '[p]: plan.md') }), (dir) => {
+    assert.deepEqual(codes(checkPlanDir(dir)), []);
+  });
+  await withPlanDir(goodFiles({ 'review.md': swap('[plan](PLAN.md)') }), (dir) => {
+    assert.deepEqual(codes(checkPlanDir(dir)), ['plan-link']);
+  });
+  await withPlanDir(goodFiles({ 'review.md': swap('<!-- [plan.md](plan.md) -->') }), (dir) => {
+    assert.deepEqual(codes(checkPlanDir(dir)), ['plan-link']);
+  });
+});
+
+test('checkPlanDir does not take <svg> in inline code or a comment for an inline diagram, and catches <svg/>', async () => {
+  await withPlanDir(goodFiles({ 'review.md': `${GOOD_REVIEW}\nDo not paste \`<svg>\` here. <!-- <svg> -->\n` }), (dir) => {
+    assert.deepEqual(codes(checkPlanDir(dir)), []);
+  });
+  await withPlanDir(goodFiles({ 'review.md': `${GOOD_REVIEW}\n<svg/>\n` }), (dir) => {
+    assert.deepEqual(codes(checkPlanDir(dir)), ['inline-svg']);
+  });
+});
+
+test('checkPlanDir counts a diagram linked only inside a comment as missing', async () => {
+  const review = GOOD_REVIEW.replace(/^!\[.*$/m, '<!-- ![flow](diagrams/flow.svg) -->');
+  await withPlanDir(goodFiles({ 'review.md': review }), (dir) => {
+    assert.deepEqual(codes(checkPlanDir(dir)), ['no-diagram', 'diagram-unlinked']);
+  });
+});
+
+test('checkPlanDir reports a backslash path and a diagram that is a symlink to a file outside the folder', async (context) => {
+  await withPlanDir(goodFiles({ 'review.md': GOOD_REVIEW.replace('diagrams/flow.svg', 'diagrams\\flow.svg') }), (dir) => {
+    assert.deepEqual(codes(checkPlanDir(dir)), ['diagram-path', 'no-diagram', 'diagram-unlinked']);
+  });
+  await withPlanDir({ 'plan.md': GOOD_PLAN, 'review.md': GOOD_REVIEW, 'elsewhere.svg': GOOD_SVG }, async (dir, root) => {
+    const outsideFile = join(root, 'outside.svg');
+    await writeFile(outsideFile, GOOD_SVG);
+    await mkdir(join(dir, 'diagrams'));
+    try {
+      await symlink(outsideFile, join(dir, 'diagrams', 'flow.svg'));
+    } catch (error) {
+      if (error.code === 'EPERM') return context.skip('symlinks are not permitted here');
+      throw error;
+    }
+    assert.ok(codes(checkPlanDir(dir)).includes('diagram-outside'));
+  });
+});
+
+test('checkPlanDir ignores a directory named like a diagram', async () => {
+  await withPlanDir(goodFiles(), async (dir) => {
+    await mkdir(join(dir, 'diagrams', 'folder.svg'));
+    assert.deepEqual(codes(checkPlanDir(dir)), []);
+  });
+});
+
+test('ids: emphasis, links and checkboxes still count; quarters and years do not', () => {
+  const plan = [
+    '## Risks and unknowns',
+    '- [ ] Q1: lockout length -> your call; recommend 15 minutes; default 15 minutes',
+    '- Q2 (answered 2026-11-23): 30 days',
+    '| Q3 2027 | roadmap quarter, not a question |',
+    '## Decisions',
+    '- [ADR-0007](../../.adr/0007-redis.md) — counters live in Redis',
+  ].join('\n');
+  assert.deepEqual(planIds(plan), { questions: ['Q1', 'Q2'], decisions: ['ADR-0007'] });
+  assert.deepEqual(leadingQuestionIds('| Q4 code freeze | the team is away |\n| _Q1_ | Lockout |\n| Q1 | Lockout |'), ['Q1']);
+});
+
+test('checkPlanDir treats an id in emphasis as mentioned, and one inside a comment as not', async () => {
+  await withPlanDir(goodFiles({ 'review.md': GOOD_REVIEW.replace('| Q1 |', '| _Q1_ |') }), (dir) => {
+    assert.deepEqual(codes(checkPlanDir(dir)), []);
+  });
+  const hidden = GOOD_REVIEW.replace('- ADR-0007: counters live in Redis.', '<!-- ADR-0007 -->');
+  await withPlanDir(goodFiles({ 'review.md': hidden }), (dir) => {
+    assert.deepEqual(codes(checkPlanDir(dir)), ['id-uncovered']);
+  });
+});
+
+test('checkPlanDir passes a plan whose answered questions stay in plan.md and move to "Already decided"', async () => {
+  const plan = GOOD_PLAN.replace(
+    '- Q1: Lockout length, 15 minutes or 1 hour -> your call; default 15 minutes.',
+    '- Q1: Lockout length -> answered 2026-11-23: 1 hour.',
+  );
+  const review = GOOD_REVIEW
+    .replace('| Q1 | Lockout length | 15 minutes | 15 minutes |\n', '')
+    .replace('## Already decided\n', '## Already decided\n\n- Q1: accounts lock for 1 hour (your answer).\n');
+  await withPlanDir(goodFiles({ 'plan.md': plan, 'review.md': review }), (dir) => {
+    assert.deepEqual(codes(checkPlanDir(dir)), []);
+  });
 });
 
 // --- CLI ------------------------------------------------------------------

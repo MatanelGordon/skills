@@ -11,6 +11,9 @@
  *   install-skills list           what is installed where, and how
  *   install-skills doctor         find broken or stale symlinks
  *   install-skills uninstall      remove this repo's skills from your agents
+ *
+ * install and uninstall also remove links into this repo's skills/ (and
+ * agents/) whose target is gone, left by a skill that was removed or renamed.
  *   install-skills --help
  */
 import {
@@ -24,11 +27,13 @@ import {
   cp,
   copyFile,
   rename,
+  realpath,
+  unlink,
   writeFile,
 } from 'node:fs/promises';
 import { constants, existsSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join, dirname, resolve } from 'node:path';
+import { join, dirname, isAbsolute, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import chalk from 'chalk';
 import prompts from 'prompts';
@@ -373,6 +378,74 @@ async function classify(dir, skill) {
   return classifyDestination(skill.path, join(dir, skill.name), 'dir');
 }
 
+const isInside = (path, dir) => {
+  const rel = relative(dir, path);
+  return rel !== '' && !rel.startsWith('..') && !isAbsolute(rel);
+};
+
+/**
+ * Remove the symlinks in `dir` that point into `sourceRoot` and no longer
+ * resolve: what a skill removed or renamed in this repo leaves behind in an
+ * agent's folder. A real file or folder, a live link, and a link anywhere else
+ * are never touched, and `unlink` cannot delete a real folder. Returns what it
+ * removed as { name, target }.
+ */
+export async function pruneStaleLinks(dir, sourceRoot) {
+  let entries;
+  try {
+    entries = await readdir(dir);
+  } catch (error) {
+    if (error?.code === 'ENOENT') return [];
+    throw error;
+  }
+  const roots = [resolve(sourceRoot)];
+  const realRoot = await realpath(sourceRoot).catch(() => null);
+  if (realRoot && realRoot !== roots[0]) roots.push(realRoot);
+  const pruned = [];
+  for (const name of entries.sort()) {
+    const path = join(dir, name);
+    const st = await lstat(path).catch(() => null);
+    if (!st?.isSymbolicLink() || existsSync(path)) continue;
+    const target = await readlink(path);
+    const resolvedTarget = resolve(dirname(path), target);
+    if (!roots.some((root) => isInside(resolvedTarget, root))) continue;
+    // Look again right before removing: the entry may have been replaced meanwhile.
+    if (!(await lstat(path).catch(() => null))?.isSymbolicLink()) continue;
+    await unlink(path);
+    pruned.push({ name, target });
+  }
+  return pruned;
+}
+
+/** Every folder this installer links into, with the repo folder its links point at. */
+const linkFolders = () => [
+  ...PLATFORMS.map((p) => ({ id: p.id, label: p.label, dir: p.dir, sourceRoot: SKILLS_DIR })),
+  { id: 'claude', label: AGENT_TARGET.label, dir: AGENT_TARGET.dir, sourceRoot: AGENTS_DIR },
+];
+
+/** Prune stale links in each folder and print every removal. Returns counts. */
+async function pruneStaleInstalls(folders) {
+  let pruned = 0;
+  let failed = 0;
+  for (const { label, dir, sourceRoot } of folders) {
+    let removed;
+    try {
+      removed = await pruneStaleLinks(dir, sourceRoot);
+    } catch (error) {
+      log.err(`${label}: could not prune stale links in ${dir.replace(HOME, '~')} — ${error.message}`);
+      failed++;
+      continue;
+    }
+    if (!removed.length) continue;
+    log.title(`${label} — links to skills no longer in this repo`);
+    for (const { name, target } of removed) {
+      log.ok(`pruned ${chalk.bold(name)} ${chalk.gray(`→ ${target.replace(HOME, '~')} (target gone)`)}`);
+    }
+    pruned += removed.length;
+  }
+  return { pruned, failed };
+}
+
 // ---------------------------------------------------------------- subcommands
 
 async function cmdList(skills) {
@@ -408,8 +481,7 @@ async function cmdList(skills) {
 
 async function cmdDoctor() {
   let problems = 0;
-  const scanDirs = [...PLATFORMS, { label: AGENT_TARGET.label, dir: AGENT_TARGET.dir }];
-  for (const p of scanDirs) {
+  for (const p of linkFolders()) {
     if (!existsSync(p.dir)) continue;
     for (const e of await readdir(p.dir, { withFileTypes: true }).catch(() => [])) {
       const full = join(p.dir, e.name);
@@ -418,7 +490,9 @@ async function cmdDoctor() {
       if (!existsSync(full)) {
         const target = await readlink(full).catch(() => '?');
         log.err(`${p.label}: ${e.name} → ${target} ${chalk.red('(dangling)')}`);
-        log.info(`fix: rm '${full.replace(HOME, '~')}' then re-run the installer`);
+        log.info(isInside(resolve(p.dir, target), p.sourceRoot)
+          ? 'fix: re-run the installer; it prunes links into this repo whose target is gone'
+          : `fix: rm '${full.replace(HOME, '~')}' then re-run the installer`);
         problems++;
       }
     }
@@ -492,6 +566,9 @@ async function cmdUninstall(skills, YES) {
       log.ok(`${a.name} removed`); removed++;
     }
   }
+  const stale = await pruneStaleInstalls(linkFolders().filter((folder) => picked.includes(folder.id)));
+  removed += stale.pruned;
+  if (stale.failed) process.exitCode = 1;
   log.title('Done'); log.info(`${removed} removed.`); console.log();
 }
 
@@ -569,9 +646,12 @@ async function cmdInstall(skills, options) {
   }
   for (const name of added) log.warn(`${name} added — required by something you selected`);
 
+  // Links left behind by a skill that was removed or renamed here point at nothing.
+  const stale = await pruneStaleInstalls(linkFolders());
+
   const chosen = skills.filter((s) => selection.includes(s.name));
   let count = 0;
-  let conflicts = 0;
+  let conflicts = stale.failed;
   for (const pid of answers.platforms) {
     const p = PLATFORMS.find((x) => x.id === pid);
     log.title(p.label);
@@ -611,6 +691,7 @@ async function cmdInstall(skills, options) {
 
   log.title('Done');
   log.info(`${count} installation${count === 1 ? '' : 's'} across ${answers.platforms.length} agent(s).`);
+  if (stale.pruned) log.info(`${stale.pruned} stale link${stale.pruned === 1 ? '' : 's'} pruned.`);
   if (conflicts) {
     log.warn(`${conflicts} conflict${conflicts === 1 ? '' : 's'} kept unchanged.`);
     process.exitCode = 1;
@@ -678,6 +759,7 @@ function printHelp() {
 
   Existing foreign links, foreign files, and edited copies are never replaced
   noninteractively. Interactive installs can back them up before replacement.
+  install and uninstall remove links into this repo whose target is gone.
 `);
 }
 

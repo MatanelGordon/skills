@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
-import { cp, copyFile, mkdtemp, mkdir, readFile, readlink, symlink, writeFile } from 'node:fs/promises';
+import { cp, copyFile, mkdtemp, mkdir, readdir, readFile, readlink, rm, symlink, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -11,6 +12,7 @@ import {
   classifyDestination,
   installPath,
   parseArgs,
+  pruneStaleLinks,
   resolveSkillSelection,
 } from './index.mjs';
 
@@ -264,4 +266,102 @@ test('installer runs through an extensionless file symlink, the shape of an npm 
   });
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.match(result.stdout, /install-skills --yes/);
+});
+
+const dirLink = process.platform === 'win32' ? 'junction' : 'dir';
+
+/** A source root with one live skill, and an agent folder to prune. */
+async function pruneFixture() {
+  const root = await makeTemp();
+  const sourceRoot = join(root, 'repo', 'skills');
+  await makeSkill(sourceRoot, 'live');
+  const agentDir = join(root, 'agent-skills');
+  await mkdir(agentDir, { recursive: true });
+  return { root, sourceRoot, agentDir };
+}
+
+test('pruneStaleLinks removes a link into the source root whose target is gone, and reports it', async () => {
+  const { sourceRoot, agentDir } = await pruneFixture();
+  const gone = await makeSkill(sourceRoot, 'gone');
+  await symlink(gone, join(agentDir, 'gone'), dirLink);
+  await symlink(join(sourceRoot, 'live'), join(agentDir, 'live'), dirLink);
+  await rm(gone, { recursive: true });
+
+  const pruned = await pruneStaleLinks(agentDir, sourceRoot);
+  assert.deepEqual(pruned.map(({ name, target }) => [name, resolve(agentDir, target)]), [['gone', gone]]);
+  assert.equal(existsSync(join(agentDir, 'live', 'SKILL.md')), true);
+  assert.deepEqual((await readdir(agentDir)).sort(), ['live']);
+});
+
+test('pruneStaleLinks removes a relative link into the source root whose target is gone', {
+  skip: process.platform === 'win32' ? 'a relative directory symlink needs Developer Mode on Windows; junctions are absolute' : false,
+}, async () => {
+  const { sourceRoot, agentDir } = await pruneFixture();
+  const gone = await makeSkill(sourceRoot, 'gone');
+  await symlink(relative(agentDir, gone), join(agentDir, 'gone'), 'dir');
+  await rm(gone, { recursive: true });
+
+  assert.deepEqual((await pruneStaleLinks(agentDir, sourceRoot)).map(({ name }) => name), ['gone']);
+  assert.deepEqual(await readdir(agentDir), []);
+});
+
+test('pruneStaleLinks never touches anything that is not a dangling link into the source root', async () => {
+  const { root, sourceRoot, agentDir } = await pruneFixture();
+  const foreign = await makeSkill(join(root, 'elsewhere'), 'foreign');
+  const lookalike = await makeSkill(join(root, 'repo', 'skills-old'), 'lookalike');
+  await symlink(foreign, join(agentDir, 'foreign'), dirLink);
+  await symlink(lookalike, join(agentDir, 'lookalike'), dirLink);
+  await rm(foreign, { recursive: true });
+  await rm(lookalike, { recursive: true });
+  await mkdir(join(agentDir, 'real-dir'));
+  await writeFile(join(agentDir, 'real-dir', 'notes.txt'), 'keep me', 'utf8');
+  await writeFile(join(agentDir, 'real-file'), 'keep me', 'utf8');
+  await symlink(join(sourceRoot, 'live'), join(agentDir, 'live'), dirLink);
+
+  assert.deepEqual(await pruneStaleLinks(agentDir, sourceRoot), []);
+  assert.deepEqual((await readdir(agentDir)).sort(), ['foreign', 'live', 'lookalike', 'real-dir', 'real-file']);
+  assert.equal(await readFile(join(agentDir, 'real-dir', 'notes.txt'), 'utf8'), 'keep me');
+});
+
+test('pruneStaleLinks returns nothing for a folder that does not exist', async () => {
+  const { root, sourceRoot } = await pruneFixture();
+  assert.deepEqual(await pruneStaleLinks(join(root, 'missing'), sourceRoot), []);
+});
+
+test('real CLI install prunes dangling links into this repo and keeps foreign ones', async () => {
+  const home = await makeTemp();
+  const skillsDir = join(home, '.claude', 'skills');
+  await mkdir(skillsDir, { recursive: true });
+  const retiredTarget = resolve('skills', 'zz-retired-fixture-skill');
+  const foreignTarget = join(home, 'elsewhere', 'gone');
+  await symlink(retiredTarget, join(skillsDir, 'zz-retired-fixture-skill'), dirLink);
+  await symlink(foreignTarget, join(skillsDir, 'foreign-gone'), dirLink);
+
+  const result = spawnSync(process.execPath, ['install/index.mjs', '--yes', '--copy'], {
+    cwd: resolve('.'),
+    env: { ...process.env, HOME: home, USERPROFILE: home, NO_COLOR: '1' },
+    encoding: 'utf8',
+  });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /pruned zz-retired-fixture-skill/);
+  const left = await readdir(skillsDir);
+  assert.equal(left.includes('zz-retired-fixture-skill'), false);
+  assert.equal(left.includes('foreign-gone'), true);
+  assert.match(await readFile(join(skillsDir, 'adr', 'SKILL.md'), 'utf8'), /name: adr/);
+});
+
+test('real CLI uninstall also prunes dangling links into this repo', async () => {
+  const home = await makeTemp();
+  const skillsDir = join(home, '.codex', 'skills');
+  await mkdir(skillsDir, { recursive: true });
+  await symlink(resolve('skills', 'zz-retired-fixture-skill'), join(skillsDir, 'zz-retired-fixture-skill'), dirLink);
+
+  const result = spawnSync(process.execPath, ['install/index.mjs', 'uninstall', '--yes'], {
+    cwd: resolve('.'),
+    env: { ...process.env, HOME: home, USERPROFILE: home, NO_COLOR: '1' },
+    encoding: 'utf8',
+  });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /pruned zz-retired-fixture-skill/);
+  assert.deepEqual(await readdir(skillsDir), []);
 });

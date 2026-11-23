@@ -1,15 +1,10 @@
 ---
 name: confidence-ranker
 description: >
-  Build justified confidence before a model answer drives an action. Use when
-  asked "are you sure?", "verify this", "can I rely on that?", or whether a
-  change, deletion, deployment, purchase, message, or other consequential step
-  is safe; when undocumented code or current external facts leave important
-  claims uncertain; and via /confidence to audit the previous answer or a
-  supplied claim. Isolate the claims that control the action, gather the
-  cheapest decisive evidence, rank each claim VERIFIED / CORROBORATED / TRACED
-  / INFERRED / UNSUPPORTED, and report whether the action is ready. Do not use
-  for routine stable facts, trivia, or subjective preference.
+  Use when evidence must justify confidence in a claim or action: asked are you sure,
+  verify this, can I rely on that, or /confidence; or consequential action rests on
+  uncertain code or current facts. Rank critical claims and give a readiness verdict.
+  Not for task completion.
 license: MIT
 metadata:
   author: Matanel Gordon

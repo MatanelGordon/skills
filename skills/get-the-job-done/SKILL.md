@@ -1,18 +1,10 @@
 ---
 name: get-the-job-done
 description: >
-  Finish the whole job and prove it, instead of reporting done at eighty percent.
-  Use before saying a task is complete, when writing a summary that claims work
-  finished, and whenever the user asks "is it done", "did you finish", "are you
-  sure", or "did you actually test it". Use when scope has quietly narrowed, when
-  a long run has drifted into summarising instead of working, when acceptance
-  criteria exist but nobody re-ran them, and when picking up work someone else
-  called finished. Use when anyone proposes skipping a failing check, ticking a
-  box that was not run, lowering a bar to go green, or calling a requirement
-  optional at the moment it starts to bind. Turns completion claims into GATES.md entries with a runnable
-  CHECK behind each one, and ships a checker that re-runs them, so a ticked box
-  that has since become false is caught rather than believed. Inspired by the
-  unlazy skill.
+  Use when task completion needs proof against the original ask: before reporting done,
+  when asked is it done or did you test it, when work drifted, scope narrowed, or a
+  failing requirement may be skipped. Creates and re-runs GATES.md checks; failures mean
+  not done.
 license: MIT
 metadata:
   author: Matanel Gordon

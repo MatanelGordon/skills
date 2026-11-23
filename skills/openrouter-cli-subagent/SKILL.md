@@ -1,17 +1,10 @@
 ---
 name: openrouter-cli-subagent
 description: >
-  Run codex and claude coding subagents through OpenRouter with the ori CLI, so
-  subagent work costs nothing when free models suffice. Use when asked to run
-  agents on OpenRouter, use ori, work on free models or cheap ones under a price
-  ceiling, cut subagent cost, escape free-tier rate limits, or route work to a
-  specific OpenRouter model. Covers the login pre-flight that stops
-  rather than attempting browser OAuth, discovering which free models are
-  genuinely usable for coding today, routing claude for orchestration and codex
-  for fixes, mandatory cross-model code review and plan review because these
-  models are not trusted, and staying under a token ceiling with handoff-file
-  iterations. Also use when free-model work stalls on rate limits, dropped tool
-  calls, or a model that vanished mid-run. Builds on cli-coding-subagents.
+  Use when coding subagents must run through OpenRouter with the ori CLI: free or
+  low-cost models, a price ceiling, a specific model, or recovery from rate limits,
+  dropped tool calls, or vanished models. Adds model discovery and required cross-model
+  review atop cli-coding-subagents.
 license: MIT
 metadata:
   author: Matanel Gordon

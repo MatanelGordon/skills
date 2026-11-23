@@ -1,7 +1,10 @@
 ---
 name: cli-coding-subagents
 description: >
-  Delegate coding work to codex and copilot CLIs as autonomous subagents in separate git worktrees. Use when the user asks for codex/copilot/CLI agents, farming work out, parallel implementation, or concurrent agents clearly beat one session. Covers mandatory login/quota pre-flight (including copilot paid-overage approval), exact flags, cheap output, prompts with acceptance criteria/critical-path tests/file ownership, and worktree merge/cleanup. For whole phased assignments, use parallel-build.
+  Use when Codex or Copilot CLI agents should handle delegated coding tasks in isolated
+  git worktrees, especially when asked to farm out or parallelize implementation. Owns
+  preflight, prompts, dispatch, merge, and cleanup. For executing a whole approved
+  phased plan, use parallel-build.
 license: MIT
 metadata:
   author: Matanel Gordon

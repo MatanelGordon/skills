@@ -1,15 +1,10 @@
 ---
 name: parallel-build
 description: >
-  Plan a large assignment, then execute it with CLI coding subagents (codex/copilot)
-  running in parallel across three phases — foundation, implementation, review — tracked
-  in the plan directory that the deep-plan skill created. Use when the user hands over a
-  big feature, migration, refactor, or multi-part build; when work is large enough to
-  split across several agents; or when asked to plan-then-parallelize. Also use to
-  RESUME an interrupted build — read the plan directory's PROGRESS.md and continue from
-  where it stopped, even in a session with no prior context. Requires a plan from
-  deep-plan; writes PROGRESS.md, per-agent prompts, CR.md and SECURITY.md beside it.
-  Builds on the cli-coding-subagents skill.
+  Use when phased Codex or Copilot CLI subagents should execute or resume a large
+  approved deep-plan, or when asked to plan then parallelize a feature, migration,
+  refactor, or multipart build. Tracks PROGRESS.md. Not for plan writing (use deep-plan)
+  or one-off dispatches (use cli-coding-subagents).
 license: MIT
 metadata:
   author: Matanel Gordon

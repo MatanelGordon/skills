@@ -1,13 +1,10 @@
 ---
 name: council
 description: >
-  Pressure-test consequential, hard-to-reverse architecture decisions with
-  isolated contrast-written sub-agents and deterministic protocol gates. Use
-  automatically for architecture choices with at least two real options and a
-  trade-off. For broader technical strategy, engineering missions, or
-  initiative prioritization, use only after an explicit Council request such as
-  "council this" or "pressure-test this decision". Not for factual questions,
-  options-only comparisons, or implementation planning.
+  Use when isolated subagents should pressure-test a consequential, hard-to-reverse
+  architecture choice with 2-5 real options and a trade-off. Broader technical strategy
+  requires an explicit Council request. Not for option tables (use critical-thinking) or
+  plans (use deep-plan).
 license: MIT
 metadata:
   author: Matanel Gordon

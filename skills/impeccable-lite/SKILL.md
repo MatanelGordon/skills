@@ -1,7 +1,10 @@
 ---
 name: impeccable-lite
 description: >
-  Design, redesign, critique, or polish user-facing interfaces when visual judgment is central. Use for web pages, app screens, components, documentation sites, and frontend UX that needs stronger hierarchy, typography, layout, color, motion, accessibility, responsiveness, perception, or finish. Do not use for backend work, function-only frontend changes, exact implementation with no design judgment, or non-interface documents.
+  Use when visual judgment is central to designing, redesigning, critiquing, or
+  polishing a user-facing interface: hierarchy, typography, layout, color, motion,
+  responsiveness, accessibility, and finish. For behavior and measurable usability, use
+  ux.
 license: "MIT; references/perception-first-lens.md is CC BY-SA 4.0"
 metadata:
   author: Matanel Gordon

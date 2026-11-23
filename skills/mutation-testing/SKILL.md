@@ -1,11 +1,10 @@
 ---
 name: mutation-testing
 description: >
-  Run an explicit, bounded mutation-testing investigation with a native engine,
-  preserve raw outcomes, and optionally return reviewed test-only changes. Use
-  when the user asks for mutation testing, an existing project engine makes a
-  scoped run cheap, or a plan marks changed decision logic as critical. This is
-  opt-in evidence, not a mandatory gate for ordinary features.
+  Use for explicit, bounded mutation testing with a native engine when the user names a
+  module or behavior, an existing engine makes a scoped run cheap, or a plan marks
+  changed decision logic critical. Opt-in after a green baseline; preserve raw results
+  and allow reviewed test-only changes.
 license: MIT
 metadata:
   author: Matanel Gordon

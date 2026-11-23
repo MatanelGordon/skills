@@ -1,12 +1,10 @@
 ---
 name: research-first
 description: >
-  Research before consequential implementation or claims. Before building a
-  utility, feature, service, or tool, check registries, GitHub, and the codebase
-  for existing solutions. Before declaring code redundant or safe to delete,
-  check both code and history. For web research or unstable facts, verify with
-  authoritative or independent sources. Skip trivial, reversible, or subjective
-  work.
+  Use when asked to write or build software: search existing solutions first. Includes
+  create, implement, or add requests for a utility, feature, service, or tool.
+  Consequential answers need two independent sources unless conclusive; check code and
+  history before calling code safe to delete.
 license: MIT
 metadata:
   author: Matanel Gordon

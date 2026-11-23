@@ -1,10 +1,10 @@
 ---
 name: test-hardening
 description: >
-  Add focused post-implementation tests for observable edge cases revealed by
-  the final code and diff. Use after executable behavior is green, when asked to
-  harden tests, or when development-workflow reaches its default hardening
-  stage. Changes tests and fixtures only and stops at explicit value limits.
+  Use when green implementation needs a bounded test-hardening pass, when asked to
+  harden tests, or at development-workflow's hardening stage. Add focused behavioral
+  edge-case tests from the final diff, changing tests and fixtures only. Not for initial
+  TDD or mutation survivors.
 license: MIT
 metadata:
   author: Matanel Gordon

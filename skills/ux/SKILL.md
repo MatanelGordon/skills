@@ -1,16 +1,10 @@
 ---
 name: ux
 description: >
-  Judge and improve user experience with a concrete, style-agnostic rubric — a
-  severity-rated heuristic audit plus measurable outcomes (task success, time on task,
-  error rate, SUS) with published thresholds for pass/fail. Use when designing or
-  reviewing any interface — web, mobile, CLI, TUI, API, or docs — when asked "is this
-  good UX", when a flow feels confusing, when choosing between design options, when
-  writing error messages, empty states, or confirmations, and when deciding what to cut.
-  Applies regardless of visual style or design system: it evaluates behavior, structure,
-  and outcomes, not aesthetics. Covers Nielsen's 10 heuristics with 0-4 severity
-  scoring, Google's HEART framework, SUS interpretation, and the UX laws that predict
-  problems before testing.
+  Use when judging or improving interface usability, flows, or task success across web,
+  mobile, CLI, TUI, API, or docs. Applies severity-rated heuristics and outcome metrics
+  to errors, empty states, confirmations, and what to cut. For visual styling and
+  polish, use impeccable-lite.
 license: MIT
 metadata:
   author: Matanel Gordon

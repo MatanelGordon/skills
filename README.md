@@ -501,7 +501,11 @@ blind-synced. Provenance for each file is recorded in
 Everything here is by **Matanel Gordon** and MIT licensed except
 `skills/impeccable-lite/references/perception-first-lens.md`, which is an
 attributed CC BY-SA 4.0 adaptation. Where a skill builds on published thinking,
-it says so inline. Notable sources:
+it says so inline. `visual-plan` up to version 1.22.1 was based on the
+`visual-plan` skill in Builder.io's MIT-licensed
+[`@agent-native/core`](https://github.com/BuilderIO/agent-native)
+(Copyright (c) 2026 Builder.io, Inc.); from 1.23.0 it is rewritten from
+scratch. Notable sources:
 [Nygard](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions)
 and [MADR](https://adr.github.io/madr/) for the ADR templates, and the
 [Lore protocol](https://arxiv.org/html/2603.15566v1) for the git trailer schema.

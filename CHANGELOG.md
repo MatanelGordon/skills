@@ -103,6 +103,9 @@ below, one section each, in merge order.
   written from scratch and needs no connector or account. This also clears
   the two email-address findings and the unexpected-file finding from
   SkillEvaluator.
+- Credited Builder.io in the README and in `visual-plan`'s frontmatter
+  (`inspired_by`): versions up to 1.22.1 were based on the `visual-plan`
+  skill in its MIT-licensed `@agent-native/core`.
 - Added `visual-plan/scripts/check-review.mjs`, a dependency-free checker with
   50 tests: both files exist, the review links the plan, every linked SVG
   exists, parses as namespace-aware XML and refers to nothing outside itself,

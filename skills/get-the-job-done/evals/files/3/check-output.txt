@@ -1,0 +1,14 @@
+$ ./scripts/run-gates.sh GATES.md                 # 2026-11-17 09:12
+  STALE   Migration 0042 applies cleanly to an empty database
+            | applying 0040_tenant_index_prep.sql ... ok
+            | applying 0041_orders_index.sql ... ok
+            | applying 0042_add_tenant_id.sql ...
+            | ERROR: column "tenant_id" of relation "orders" already exists
+            | migrate: stopped at 0042, exit 1
+  PASS    Migration 0042 has a down script
+  PASS    No code under src/ still reads orders.customer_ref
+  FAIL    Backfill of the 2M-row snapshot finishes in under 10 minutes
+            | backfill took 742s, limit 600s
+
+4 gate(s): 2 passed, 2 failed, 1 ticked-but-false
+exit 1

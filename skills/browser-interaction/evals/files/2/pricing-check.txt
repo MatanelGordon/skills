@@ -1,0 +1,10 @@
+Ticket #4821 (customer)
+  "The Monthly/Annual toggle on /pricing does nothing. The prices never change."
+  Browser: Safari 18.5 on macOS 15.5
+
+$ python scripts/check_pricing.py --url https://staging.acme.example/pricing
+host: ci-runner-12 (Ubuntu 24.04), playwright 1.58.0
+engine     build                    viewport   result
+chromium   bundled Chromium 145.0   1280x720   PASS     toggle switches prices, 0 console errors, 0 failed requests
+webkit     bundled WebKit 26.0      1280x720   PASS     toggle switches prices, 0 console errors, 0 failed requests
+firefox    -                        -          SKIPPED  browser bundle not installed

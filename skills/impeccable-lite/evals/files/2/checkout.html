@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checkout · Marlow Books</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  form { width: 400px; }
+  fieldset { margin-bottom: 10px; }
+  label { display: block; }
+  input { border: 1px solid #ccc; padding: 5px; width: 100%; }
+  input:focus { outline: none; }
+  .pay { background: #007bff; color: white; padding: 10px; border: none; width: 100%; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Checkout</h1>
+  <form action="/pay" method="post" novalidate>
+    <fieldset>
+      <legend>Contact</legend>
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" autocomplete="email">
+    </fieldset>
+    <fieldset>
+      <legend>Payment</legend>
+      <label for="card">Card number</label>
+      <input id="card" name="card" inputmode="numeric" autocomplete="cc-number" aria-invalid="true" aria-describedby="card-error">
+      <p class="field-error" id="card-error">Card number is incomplete.</p>
+      <label for="exp">Expiry (MM/YY)</label>
+      <input id="exp" name="exp" autocomplete="cc-exp">
+      <label for="cvc">Security code</label>
+      <input id="cvc" name="cvc" inputmode="numeric" autocomplete="cc-csc">
+    </fieldset>
+    <fieldset>
+      <legend>Billing address</legend>
+      <label for="postcode">Postcode</label>
+      <input id="postcode" name="postcode" autocomplete="postal-code">
+    </fieldset>
+    <button class="pay" type="submit" disabled>Pay $48.00</button>
+  </form>
+</main>
+</body>
+</html>

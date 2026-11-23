@@ -6,6 +6,11 @@
       "prompt": "Model an order that can be unpaid, paid with an amount, or shipped with a tracking code.",
       "expected_output": "Sealed record hierarchy with private constructor (closed union), switch expressions, immutable collections - not enum + nullable fields.",
       "files": [],
+      "assertions": [
+        "Abstract record with private ctor and sealed nested records",
+        "No enum-plus-nullables shape",
+        "ImmutableArray/ImmutableList for collections, not List<T>"
+      ],
       "expectations": [
         "Abstract record with private ctor and sealed nested records",
         "No enum-plus-nullables shape",
@@ -17,6 +22,11 @@
       "prompt": "Registration should throw ValidationException when the email is bad, yes?",
       "expected_output": "Expected failure becomes Result/ErrorOr with typed errors; exceptions reserved for bugs and infrastructure. Suggests a library over hand-rolling.",
       "files": [],
+      "assertions": [
+        "Result/ErrorOr return instead of throw for expected failure",
+        "Errors are typed (union/Error list), not strings",
+        "Recommends ErrorOr or CSharpFunctionalExtensions rather than a bespoke Result"
+      ],
       "expectations": [
         "Result/ErrorOr return instead of throw for expected failure",
         "Errors are typed (union/Error list), not strings",
@@ -28,6 +38,10 @@
       "prompt": "Will the compiler warn me if I forget a case when switching over my sealed record union?",
       "expected_output": "Honest answer: CS8509 fires unconditionally on record hierarchies (null arm shifts the message), so it's not an exhaustiveness gate; a Match method (or Dunet/OneOf) gives compile-time exhaustiveness.",
       "files": [],
+      "assertions": [
+        "States CS8509 cannot be used as an exhaustiveness gate",
+        "Recommends Match-per-case or a generator like Dunet for real exhaustiveness"
+      ],
       "expectations": [
         "States CS8509 cannot be used as an exhaustiveness gate",
         "Recommends Match-per-case or a generator like Dunet for real exhaustiveness"
@@ -38,6 +52,9 @@
       "prompt": "This hot loop builds a giant array - is local mutation okay here?",
       "expected_output": "Yes - local mutation inside a pure function is fine; immutability is about the boundary, not zero variables.",
       "files": [],
+      "assertions": [
+        "Accepts local mutation in a hot path without dogma"
+      ],
       "expectations": [
         "Accepts local mutation in a hot path without dogma"
       ]

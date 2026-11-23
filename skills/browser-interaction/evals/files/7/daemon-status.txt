@@ -1,0 +1,10 @@
+$ chrome-devtools status
+chrome-devtools-mcp 1.13.0
+daemon: running (pid 48213, started 09:12 from another terminal)
+arguments: --headless
+usageStatistics: enabled
+performanceCrux: enabled
+profile: default (not isolated)
+allowedUrlPattern: (not set)
+workspace: (not set)
+pages: 2 open

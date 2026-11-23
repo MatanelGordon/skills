@@ -1,0 +1,35 @@
+diff --git a/src/reset_link.py b/src/reset_link.py
+new file mode 100644
+index 0000000..9005244
+--- /dev/null
++++ b/src/reset_link.py
+@@ -0,0 +1,12 @@
++"""Password reset links."""
++
++RESET_LINK_TTL_SECONDS = 1800
++
++
++def _age_seconds(issued_at, now):
++    return now - issued_at
++
++
++def is_reset_link_valid(issued_at, now):
++    """A reset link works for 30 minutes after it was issued, the last second included."""
++    return 0 <= _age_seconds(issued_at, now) <= RESET_LINK_TTL_SECONDS
+diff --git a/tests/test_reset_link.py b/tests/test_reset_link.py
+new file mode 100644
+index 0000000..fda60f5
+--- /dev/null
++++ b/tests/test_reset_link.py
+@@ -0,0 +1,11 @@
++import unittest
++
++from src.reset_link import is_reset_link_valid
++
++
++class ResetLinkTest(unittest.TestCase):
++    def test_link_works_one_minute_after_issue(self):
++        self.assertTrue(is_reset_link_valid(issued_at=1_000, now=1_060))
++
++    def test_link_is_dead_after_two_hours(self):
++        self.assertFalse(is_reset_link_valid(issued_at=1_000, now=8_200))

@@ -1,0 +1,19 @@
+Test box tb-04 (Ubuntu 24.04) - what the coding agent has to work with
+Collected with `command -v` and the agent's own MCP listing.
+
+Installed
+  bash 5.2
+  git 2.43
+  jq 1.7
+  python3 3.12 (standard library only, no pip access)
+  tmux 3.4
+
+Not installed
+  expect
+  node, npm, node-pty
+  pexpect
+
+MCP servers configured for the agent
+  github            issues and pull requests
+  postgres-ro       read-only queries against the staging database
+  terminal-control  start a terminal session at a given size, send keys to it, read the screen back as text

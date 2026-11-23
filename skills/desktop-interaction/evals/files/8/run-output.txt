@@ -1,0 +1,11 @@
+$ python --version
+Python 3.12.7
+$ pip show playwright | head -2
+Name: playwright
+Version: 1.58.0
+$ python drive_app.py
+Traceback (most recent call last):
+  File "/Users/me/acme-notes/tools/drive_app.py", line 7, in <module>
+    app = p._electron.launch(executable_path=APP)
+          ^^^^^^^^^^^
+AttributeError: 'Playwright' object has no attribute '_electron'

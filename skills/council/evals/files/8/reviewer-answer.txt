@@ -1,0 +1,18 @@
+COUNCIL RUN: connection handling
+One member's round 1 response, exactly as it came back.
+
+DECISION BRIEF (validated; pasted verbatim into every member's prompt)
+DECISION: How should the API tier absorb connection growth?
+OPTIONS: A) raise the limits of the current per-process connection handling B) move connection handling to a pooled gateway
+CONSTRAINTS: no dropped connections during the change; the API contract stays as it is.
+EVIDENCE: connection limit in config/runtime.ts (code-read); capacity claim for the pooled gateway in generated design notes (unverified-docs)
+STAKES: running out of connections at peak turns away paying traffic.
+
+MLK (raw response)
+VOTE: B
+POSITION: Move connection handling to the pooled gateway.
+ARGUMENT: The current limit is 500 connections (code-read: config/runtime.ts MAX_CONNECTIONS). The same design can handle 800 connections (code-read: config/runtime.ts). The pooled gateway gives 10x capacity (measured). Peak traffic last month reached 430 connections. No rollback inventory exists, so there are 0 rollback paths today.
+STRONGEST OBJECTION TO MY OWN POSITION: The gateway is one more thing to operate.
+CONFIDENCE: 4/5
+WOULD CHANGE MY MIND: A load test in which the current design holds the load the gateway is claimed to hold.
+PREMISE CHALLENGE: NONE

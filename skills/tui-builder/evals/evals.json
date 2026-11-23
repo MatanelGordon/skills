@@ -3,31 +3,169 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "My Ink app leaves ghost frames and duplicated content after I resize the terminal.",
-      "expected_output": "Triggers - applies the resize rules (the skill's core value) rather than generic debugging.",
-      "files": [],
+      "prompt": "My Ink dashboard leaves ghost frames after I resize the terminal window: the DEPLOY WATCH box ends up on screen two or three times, stacked, and the window grows a scrollbar. The project is attached as `package.json`, `src/index.tsx` and `src/App.tsx` (in a workspace they are under `input/1/`). We are on Ink 4.4.1 and I can't upgrade it for this fix. Tell me in a sentence or two where the leftover frames come from, then give me every file you change, in full, in your reply. Node isn't installed where you're working, so don't try to install or run anything.",
+      "expected_output": "Says the app is drawing in the normal screen buffer, whose scrollback keeps the old frames, and gives a `src/index.tsx` that switches to the alternate screen before `render()` and switches back from a handler on the process `exit` event. No screen clearing is added inside a component.",
+      "files": [
+        "evals/files/1/package.json",
+        "evals/files/1/src/index.tsx",
+        "evals/files/1/src/App.tsx"
+      ],
+      "assertions": [
+        "The reply attributes the leftover frames to Ink drawing in the normal (main) screen buffer, the one with scrollback, instead of the alternate screen.",
+        "The corrected `src/index.tsx` writes a string containing `[?1049h` to stdout (or calls `ansiEscapes.enterAlternativeScreen`) before it calls `render(`.",
+        "The corrected `src/index.tsx` registers a handler on the process `exit` event, `process.once('exit', ...)` or `process.on('exit', ...)`, that writes a string containing `[?1049l`.",
+        "No `resize` listener in the reply's files that wipes the screen (for example by writing `\\x1Bc` or `[2J`) is registered after the `render(` call; a listener added inside a component or a `useEffect` counts as after."
+      ],
       "expectations": [
-        "Recognized as the resize-artifact case the skill exists for",
-        "Applies the battle-tested resize handling guidance"
+        "The reply attributes the leftover frames to Ink drawing in the normal (main) screen buffer, the one with scrollback, instead of the alternate screen.",
+        "The corrected `src/index.tsx` writes a string containing `[?1049h` to stdout (or calls `ansiEscapes.enterAlternativeScreen`) before it calls `render(`.",
+        "The corrected `src/index.tsx` registers a handler on the process `exit` event, `process.once('exit', ...)` or `process.on('exit', ...)`, that writes a string containing `[?1049l`.",
+        "No `resize` listener in the reply's files that wipes the screen (for example by writing `\\x1Bc` or `[2J`) is registered after the `render(` call; a listener added inside a component or a `useEffect` counts as after."
       ]
     },
     {
       "id": 2,
-      "prompt": "Starting a new full-screen terminal UI for browsing logs, Ink + React.",
-      "expected_output": "Triggers for full-screen TUI construction with its layout/lifecycle rules.",
-      "files": [],
+      "prompt": "I'm starting a new full-screen terminal UI for browsing logs, built with Ink and React. So far there is only `package.json` and a placeholder `src/App.tsx`, both attached (in a workspace they are under `input/2/`); the repo is pinned to Ink 4.4.1. Before I build any screens I want the entry point done. It should behave like htop or less: take over the whole screen, keep drawing cleanly when the window is resized, and hand the terminal back when the app quits. Write only `src/index.tsx`, at most 60 lines, and leave `App.tsx` as it is. Give me the file in full in your reply (and save it as `input/2/src/index.tsx` if you can write files). Node isn't installed where you're working, so don't try to install or run anything.",
+      "expected_output": "A `src/index.tsx` of at most 60 lines that enters the alternate screen, registers a resize listener that clears the screen and homes the cursor before it calls `render()`, and on the way out removes that listener and leaves the alternate screen.",
+      "files": [
+        "evals/files/2/package.json",
+        "evals/files/2/src/App.tsx"
+      ],
+      "assertions": [
+        "The new `src/index.tsx` registers a `resize` listener on `process.stdout` before it calls `render(`.",
+        "The `resize` listener in the new `src/index.tsx` writes a string containing both `[2J` and `[H` to stdout.",
+        "The new `src/index.tsx` removes that `resize` listener with `process.stdout.off('resize', ...)` or `removeListener('resize', ...)`."
+      ],
       "expectations": [
-        "Skill applied to full-screen interactive TUI work"
+        "The new `src/index.tsx` registers a `resize` listener on `process.stdout` before it calls `render(`.",
+        "The `resize` listener in the new `src/index.tsx` writes a string containing both `[2J` and `[H` to stdout.",
+        "The new `src/index.tsx` removes that `resize` listener with `process.stdout.off('resize', ...)` or `removeListener('resize', ...)`."
       ]
     },
     {
       "id": 3,
-      "prompt": "Write a script that prints a table of results and exits.",
-      "expected_output": "Does not trigger - non-interactive output is out of scope by the skill's own boundary.",
-      "files": [],
+      "prompt": "Write a small Node script that prints our test results as a table and exits. The data is attached as `results.json` (in a workspace: `input/3/results.json`). I want one row per suite with the columns suite, passed, failed and seconds, lined up under a header row. It runs as the last step of a CI job and its output goes into the job log, so plain text on stdout, no colours, nothing interactive, built-in modules only. Give me `report.mjs` in full in your reply (and save it next to the data if you can write files). Node isn't installed where you're working, so don't try to run it.",
+      "expected_output": "A short Node script, `report.mjs`, that reads `results.json` and prints a header row and one aligned plain-text row per suite, then exits. It contains no full-screen or interactive terminal code.",
+      "files": [
+        "evals/files/3/results.json"
+      ],
+      "assertions": [
+        "The script, in the reply or in `report.mjs`, prints one row for each suite in `results.json` with `console.log` or `process.stdout.write`.",
+        "The script does not import `ink` or `react`.",
+        "The script contains no terminal escape sequence such as `[?1049h` or `[2J`.",
+        "The script registers no `resize` listener."
+      ],
       "expectations": [
-        "No full-screen TUI machinery for print-and-exit output"
+        "The script, in the reply or in `report.mjs`, prints one row for each suite in `results.json` with `console.log` or `process.stdout.write`.",
+        "The script does not import `ink` or `react`.",
+        "The script contains no terminal escape sequence such as `[?1049h` or `[2J`.",
+        "The script registers no `resize` listener."
+      ],
+      "expected_skill": null
+    },
+    {
+      "id": 4,
+      "prompt": "After I resize the terminal, my Ink app goes blank and stays blank until I press an arrow key; then everything is drawn again as normal. The two source files are attached as `src/index.tsx` and `src/App.tsx` (in a workspace they are under `input/4/`). We are on Ink 4.4.1 and can't upgrade. The wipe on resize was added on purpose and has to stay; it just must not leave the app blank. Explain in two or three sentences why the screen stays blank, then give me every file you change, in full, in your reply. Node isn't installed where you're working, so don't try to install or run anything.",
+      "expected_output": "Explains that the screen-clearing listener registered in App's `useEffect` runs after Ink's own resize handler has redrawn, so it wipes the new frame, and moves it into `src/index.tsx` as a resize listener registered before `render()` and removed only once the app has exited, leaving no screen clearing in `src/App.tsx`.",
+      "files": [
+        "evals/files/4/src/index.tsx",
+        "evals/files/4/src/App.tsx"
+      ],
+      "assertions": [
+        "The reply says the `useEffect` listener that clears the screen runs after Ink's own resize handler has already redrawn.",
+        "In the corrected `src/index.tsx`, a `resize` listener that writes a string containing `[2J` is registered before the `render(` call.",
+        "The corrected `src/App.tsx` no longer writes the `[2J` sequence.",
+        "In the corrected `src/index.tsx`, the `process.stdout.off('resize', ...)` call for the screen-clearing listener runs only once `waitUntilExit()` has resolved (after `await waitUntilExit()`, in its `.then`, or in an exit handler), not straight after `render(`."
+      ],
+      "expectations": [
+        "The reply says the `useEffect` listener that clears the screen runs after Ink's own resize handler has already redrawn.",
+        "In the corrected `src/index.tsx`, a `resize` listener that writes a string containing `[2J` is registered before the `render(` call.",
+        "The corrected `src/App.tsx` no longer writes the `[2J` sequence.",
+        "In the corrected `src/index.tsx`, the `process.stdout.off('resize', ...)` call for the screen-clearing listener runs only once `waitUntilExit()` has resolved (after `await waitUntilExit()`, in its `.then`, or in an exit handler), not straight after `render(`."
       ]
+    },
+    {
+      "id": 5,
+      "prompt": "In my Ink app the two divider lines and the right-aligned state column keep the old terminal width when I drag the window wider or narrower. They only snap to the new width when I press the up or down arrow. The source is attached as `src/index.tsx` and `src/App.tsx` (in a workspace they are under `input/5/`). We are on Ink 4.4.1 and can't upgrade, and I need the width as a number inside the component because the row padding uses it, so swapping the dividers for a border won't do. Give me every file you change, in full, in your reply. Then, for the PR description, add a numbered list of what runs when the terminal is resized once your change is in: each listener or redraw in the order it happens, one line per step. Node isn't installed where you're working, so don't try to install or run anything.",
+      "expected_output": "A `src/App.tsx` that keeps the width in React state, set by a resize listener, with `src/index.tsx` left as it is. The numbered list runs in this order: the `clearOnResize` handler from `src/index.tsx`, then Ink's own resize redraw, then App's listener setting state, which causes a second render.",
+      "files": [
+        "evals/files/5/src/index.tsx",
+        "evals/files/5/src/App.tsx"
+      ],
+      "assertions": [
+        "In the corrected `src/App.tsx`, a `resize` listener on stdout stores the current column count in React state through a `useState` setter.",
+        "The numbered list has the `clearOnResize` handler from `src/index.tsx` as the first resize listener to run.",
+        "The numbered list has Ink's own resize handler as a separate step, after `clearOnResize` and before the listener in `src/App.tsx`."
+      ],
+      "expectations": [
+        "In the corrected `src/App.tsx`, a `resize` listener on stdout stores the current column count in React state through a `useState` setter.",
+        "The numbered list has the `clearOnResize` handler from `src/index.tsx` as the first resize listener to run.",
+        "The numbered list has Ink's own resize handler as a separate step, after `clearOnResize` and before the listener in `src/App.tsx`."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Can you review the terminal handling in this pull request before I merge it? It is a full-screen Ink app on Ink 4.4.1, which we can't upgrade. The two files are attached as `src/index.tsx` and `src/App.tsx` (in a workspace they are under `input/6/`). I only care about how the code treats the terminal: screen buffer, clearing, resize and exit. Reply with a numbered list of at most five findings. For each one give the file, the offending line, what the user will see go wrong, and the replacement code. Don't rewrite the whole files. Node isn't installed where you're working, so don't try to install or run anything.",
+      "expected_output": "A numbered list of at most five findings that includes: the full terminal reset on resize (`\\x1Bc`), which also wipes colours, font and cursor settings, replaced by clear-screen plus cursor-home; and the switch to the alternate screen moved before `render()`, because Ink's first frame is otherwise drawn on the main screen and the app starts blank. The restore on exit may also be moved onto the process `exit` event.",
+      "files": [
+        "evals/files/6/src/index.tsx",
+        "evals/files/6/src/App.tsx"
+      ],
+      "assertions": [
+        "A finding replaces the terminal reset that the `resize` handler in `src/index.tsx` writes (the escape character followed by `c`) with a string containing both `[2J` and `[H`.",
+        "A finding moves the `process.stdout.write('\\x1B[?1049h')` call in `src/index.tsx` so that it runs before the `render(` call.",
+        "The finding about the terminal reset (`\\x1Bc`) says it also resets the terminal's colours, font or cursor settings, not only what is on the screen."
+      ],
+      "expectations": [
+        "A finding replaces the terminal reset that the `resize` handler in `src/index.tsx` writes (the escape character followed by `c`) with a string containing both `[2J` and `[H`.",
+        "A finding moves the `process.stdout.write('\\x1B[?1049h')` call in `src/index.tsx` so that it runs before the `render(` call.",
+        "The finding about the terminal reset (`\\x1Bc`) says it also resets the terminal's colours, font or cursor settings, not only what is on the screen."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Resizing our Ink app makes the whole screen flash two or three times. Over time three resize listeners have piled up; they are marked A, B and C in the attached `src/index.tsx`, `src/App.tsx` and `src/StatusBar.tsx` (in a workspace they are under `input/7/`). We are on Ink 4.4.1 and can't upgrade. I don't need code yet. For each of A, B and C tell me whether to keep it, change it or delete it, and what it does once we're done, in a line or two each. Then say in one sentence what causes the extra flashes today. Keep the whole reply under 250 words, and don't install or run anything.",
+      "expected_output": "Keeps listener A in `src/index.tsx` as the only one that clears the screen, strips the terminal writes from B and C so they only update state (or deletes C and passes the width down from App), and says the extra flashes come from B clearing the screen after Ink has already redrawn it.",
+      "files": [
+        "evals/files/7/src/index.tsx",
+        "evals/files/7/src/App.tsx",
+        "evals/files/7/src/StatusBar.tsx"
+      ],
+      "assertions": [
+        "The reply keeps listener A in `src/index.tsx` as the one listener that clears the screen.",
+        "After the reply's changes, listener B only updates state: its `process.stdout.write` call is gone.",
+        "The reply leaves `StatusBar` a way to get the new width: listener C is kept as a state-only update, or `App` passes its width to `StatusBar` as a prop.",
+        "The reply blames the extra flashes on listener B clearing the screen after Ink's own resize handler has run."
+      ],
+      "expectations": [
+        "The reply keeps listener A in `src/index.tsx` as the one listener that clears the screen.",
+        "After the reply's changes, listener B only updates state: its `process.stdout.write` call is gone.",
+        "The reply leaves `StatusBar` a way to get the new width: listener C is kept as a state-only update, or `App` passes its width to `StatusBar` as a prop.",
+        "The reply blames the extra flashes on listener B clearing the screen after Ink's own resize handler has run."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Add a `--json` flag to this little Node CLI. With the flag it should print a single JSON array of `{file, bytes}` objects instead of the text lines. While you're in there, make a file that doesn't exist print `filesize: <file>: not found` on stderr and exit with code 1 instead of a stack trace. The script is attached as `cli.mjs` (in a workspace: `input/8/cli.mjs`). It only ever runs in shell pipelines and cron jobs. Give me the whole updated file in your reply (and edit it in place if you can write files). Node isn't installed where you're working, so don't try to run it.",
+      "expected_output": "The updated `cli.mjs` in full: `parseArgs` gains a boolean `json` option, `--json` prints one JSON array of `{file, bytes}` objects, and a missing file prints `filesize: <file>: not found` to stderr and exits with code 1. No interactive or full-screen terminal code is added.",
+      "files": [
+        "evals/files/8/cli.mjs"
+      ],
+      "assertions": [
+        "The updated `cli.mjs` declares a boolean `json` option in the `parseArgs` options.",
+        "The updated `cli.mjs` prints the `--json` output with `JSON.stringify` of an array whose objects have the keys `file` and `bytes`.",
+        "The updated `cli.mjs` does not import `ink` or `react`.",
+        "The updated `cli.mjs` contains no terminal escape sequence such as `[?1049h` or `[2J`.",
+        "The updated `cli.mjs` registers no `resize` listener."
+      ],
+      "expectations": [
+        "The updated `cli.mjs` declares a boolean `json` option in the `parseArgs` options.",
+        "The updated `cli.mjs` prints the `--json` output with `JSON.stringify` of an array whose objects have the keys `file` and `bytes`.",
+        "The updated `cli.mjs` does not import `ink` or `react`.",
+        "The updated `cli.mjs` contains no terminal escape sequence such as `[?1049h` or `[2J`.",
+        "The updated `cli.mjs` registers no `resize` listener."
+      ],
+      "expected_skill": null
     }
   ]
 }

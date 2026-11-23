@@ -1,0 +1,8 @@
+[
+  {"name": "checkout", "region": "eu-west", "p99": 182},
+  {"name": "決済サービス", "region": "ap-tokyo", "p99": 97},
+  {"name": "🚀 deploy-bot", "region": "us-east", "p99": 1204},
+  {"name": "recommendation-engine-canary", "region": "us-east", "p99": 311},
+  {"name": "검색", "region": "ap-seoul", "p99": 45},
+  {"name": "日本語の長いサービス名テスト", "region": "ap-tokyo", "p99": 12}
+]

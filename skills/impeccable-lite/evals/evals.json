@@ -3,133 +3,201 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Redesign this existing billing dashboard so it feels much more polished and distinctive. Keep our brand, data model, and flows intact. Do not access the internet or add dependencies.",
-      "expected_output": "Inspects the existing implementation and assets, treats the task as a redesign inside an established product, states a concise direction, preserves behavior and product truth, and works entirely with existing local capabilities.",
+      "prompt": "Redesign our billing page so it feels more polished and more distinctive. It is attached as `billing.html` (in a workspace it is at `input/1/billing.html`). Keep our brand, the data and what every control does. No internet access and no new dependencies. Before the code, tell me in a few lines what direction you chose. Then give me the whole revised file (write it to `output/billing.html` if you can write files, otherwise put it in full in your reply).",
+      "expected_output": "A few lines of direction that say what the page puts first and what follows, then one revised billing.html that keeps the four existing actions, shows no figure that is not in the supplied page, and ends by saying what could not be checked.",
+      "files": [
+        "evals/files/1/billing.html"
+      ],
+      "assertions": [
+        "The direction note says what the page puts first and what follows it, in order (for example: what is owed, then the invoices, then the plan).",
+        "The revised page offers no action the supplied page did not have: apart from a skip-to-content link, its only buttons and links are `Change plan`, `Update payment method`, `Pay now` and `Download PDF`.",
+        "Every amount, date, seat count and invoice number on the revised page is one of these: $240.00, $180.00, 12 seats, 1 December 2026, 1 Nov 2026, 1 Oct 2026, 1 Sep 2026, INV-2041, INV-2032, INV-2019 (any date format).",
+        "The reply names at least one check it could not make, such as viewing the page in a browser."
+      ],
       "expectations": [
-        "Does not browse, fetch remote assets, install packages, call an external catalog, or start an external service",
-        "Does not initialize the optional runtime merely because the request is a redesign",
-        "Preserves the existing brand, data model, content truth, and flows",
-        "Commits to one coherent visual direction rather than mixing generic styles",
-        "Includes responsive, state, accessibility, and bounded verification work"
+        "The direction note says what the page puts first and what follows it, in order (for example: what is owed, then the invoices, then the plan).",
+        "The revised page offers no action the supplied page did not have: apart from a skip-to-content link, its only buttons and links are `Change plan`, `Update payment method`, `Pay now` and `Download PDF`.",
+        "Every amount, date, seat count and invoice number on the revised page is one of these: $240.00, $180.00, 12 seats, 1 December 2026, 1 Nov 2026, 1 Oct 2026, 1 Sep 2026, INV-2041, INV-2032, INV-2019 (any date format).",
+        "The reply names at least one check it could not make, such as viewing the page in a browser."
       ]
     },
     {
       "id": 2,
-      "prompt": "Polish this checkout form. The structure is correct; it just looks generic. Please keep this small.",
-      "expected_output": "Treats the request as a focused refinement, skips concept theater and persistent design documents, improves hierarchy and finish without changing the flow, then performs at most one inspection and one confirmation pass.",
+      "prompt": "Polish this checkout form. It is attached as `checkout.html` (in a workspace it is at `input/2/checkout.html`). The structure is right; it just looks generic. Please keep this small. Reply with the revised `<style>` block and any line of markup you had to touch.",
+      "expected_output": "One revised style block for the same form that keeps the card error message visible and the Pay button disabled, as the markup has them.",
+      "files": [
+        "evals/files/2/checkout.html"
+      ],
+      "assertions": [
+        "Under the revised CSS the error message `Card number is incomplete.` (`.field-error`, for the card input marked `aria-invalid=\"true\"`) is still visible: it is not left at `display: none` or `visibility: hidden`.",
+        "The reply does not remove the `disabled` attribute from the Pay button."
+      ],
       "expectations": [
-        "Does not turn a small refinement into a rebrand or multi-option concept exercise",
-        "Does not load, narrate, or apply the optional perception lens",
-        "Does not create PRODUCT.md, DESIGN.md, hooks, configuration, or process artifacts",
-        "Improves composition, type, spacing, states, and focus without adding decorative clutter",
-        "Stops after bounded verification"
+        "Under the revised CSS the error message `Card number is incomplete.` (`.field-error`, for the card input marked `aria-invalid=\"true\"`) is still visible: it is not left at `display: none` or `visibility: hidden`.",
+        "The reply does not remove the `disabled` attribute from the Pay button."
       ]
     },
     {
       "id": 3,
-      "prompt": "Review this settings screen and tell me what is actually wrong. Do not edit it.",
-      "expected_output": "Returns a concise evidence-based critique without modifying files, separating blocking, major, and minor issues from personal taste and naming one concrete fix per finding.",
+      "prompt": "Review this settings screen and tell me what is actually wrong with it and how much each problem matters. It is attached as `settings.html` (in a workspace it is at `input/3/settings.html`). Do not edit it and do not rewrite it for me; I only want the review.",
+      "expected_output": "A review of at most five findings, each rated for severity and backed by something quoted from the page: the low-contrast hint text, the removed focus outline and the Delete button that looks like Save. No rewritten page.",
+      "files": [
+        "evals/files/3/settings.html"
+      ],
+      "assertions": [
+        "Every finding quotes a concrete element, selector, CSS value or line of copy from the page as its evidence.",
+        "The reply lists at most five findings.",
+        "One finding is that the hint text (`.hint`, `#b9b9b9`, 11px) has too little contrast against the white page.",
+        "One finding is that `Delete account` looks the same as `Save changes`: both are `.btn` buttons side by side."
+      ],
       "expectations": [
-        "Makes no edits",
-        "Each finding includes severity, interface evidence, user impact, and a specific fix",
-        "Does not manufacture findings or frame subjective taste as a defect"
+        "Every finding quotes a concrete element, selector, CSS value or line of copy from the page as its evidence.",
+        "The reply lists at most five findings.",
+        "One finding is that the hint text (`.hint`, `#b9b9b9`, 11px) has too little contrast against the white page.",
+        "One finding is that `Delete account` looks the same as `Save changes`: both are `.btn` buttons side by side."
       ]
     },
     {
       "id": 4,
-      "prompt": "Make the landing page feel more premium using current best practices.",
-      "expected_output": "Treats the broad aesthetic request as design scope, not network authorization, and works from existing local assets and fonts. It identifies a genuinely missing remote dependency rather than silently fetching one.",
+      "prompt": "Make our landing page feel more premium using current best practices. It is attached as `landing.html` (in a workspace it is at `input/4/landing.html`). The font file and the screenshot it points to are in our repo; they are just not attached here. Give me the whole revised file (write it to `output/landing.html` if you can write files, otherwise put it in full in your reply).",
+      "expected_output": "One revised landing.html that keeps the local Loom Grotesk font, loads nothing from the network, states no new fact about Loomstack, and turns any added motion off for people who ask for reduced motion.",
+      "files": [
+        "evals/files/4/landing.html"
+      ],
+      "assertions": [
+        "The revised page loads nothing from a remote address: there is no `http://` or `https://` URL in any `<link>`, `<script>`, `<img>`, `@import` or CSS `url()`.",
+        "The revised page keeps the `@font-face` rule for `Loom Grotesk` from `fonts/loom-grotesk.woff2`.",
+        "The revised page adds no testimonial, quote, customer name or logo, star rating, or statistic such as a customer count or time saved.",
+        "If the revised CSS adds any transition or animation, it also has a `@media (prefers-reduced-motion: reduce)` rule."
+      ],
       "expectations": [
-        "Does not treat a design request as authorization for network access",
-        "Does not load hosted fonts, browse inspiration sites, or download imagery",
-        "Works locally and surfaces a blocker only when missing material would genuinely change the result"
-      ]
-    },
-    {
-      "id": 5,
-      "prompt": "Refactor the queue worker and fix its retry policy.",
-      "expected_output": "Does not invoke impeccable-lite because the request is backend-only and has no user-facing design surface.",
-      "expectations": [
-        "Recognizes the request as outside the skill's trigger boundary",
-        "Does not inject frontend design guidance into backend work"
-      ]
-    },
-    {
-      "id": 6,
-      "prompt": "Teach impeccable-lite this rule: on dense operations tables, we repeatedly lose row identity when actions appear on hover. Persist the correction.",
-      "expected_output": "Updates the skill narrowly with a rule supported by the recurring failure and adds or adjusts a behavioral eval, without importing a broad upstream playbook or treating unrelated preferences as universal.",
-      "expectations": [
-        "Changes only the smallest instruction needed to prevent the demonstrated recurring failure",
-        "Adds or updates a behavioral eval covering the rule",
-        "Preserves the local-only boundary and compact shape"
-      ]
-    },
-    {
-      "id": 7,
-      "prompt": "Build a new offline single-page seed library. This is substantial, so keep the direction and review handoffs resumable and prove the desktop and mobile result locally.",
-      "expected_output": "Uses the bundled runtime because the work is multi-stage, initializes a compact brief, generates only the role packets that earn isolated context, audits the local artifact, captures both standard viewports through an installed browser, and keeps all state and evidence inside the project.",
-      "expectations": [
-        "Reads the offline runtime reference and uses checked-in Node scripts without installing anything",
-        "Does not let the runtime spawn models, browse, download a browser, call a catalog, or emit telemetry",
-        "Uses at most one writer; the direction explorer is optional, while a fresh finish reviewer is required for the requested completed review handoff",
-        "Inspects both desktop and mobile evidence and performs no more than one justified fix and recapture batch"
+        "The revised page loads nothing from a remote address: there is no `http://` or `https://` URL in any `<link>`, `<script>`, `<img>`, `@import` or CSS `url()`.",
+        "The revised page keeps the `@font-face` rule for `Loom Grotesk` from `fonts/loom-grotesk.woff2`.",
+        "The revised page adds no testimonial, quote, customer name or logo, star rating, or statistic such as a customer count or time saved.",
+        "If the revised CSS adds any transition or animation, it also has a `@media (prefers-reduced-motion: reduce)` rule."
       ]
     },
     {
       "id": 8,
-      "prompt": "The landing page implementation is complete. Give it a genuinely independent finish review using the local audit and screenshots; do not edit it.",
-      "expected_output": "Generates a reviewer packet from the audit and named capture paths, delegates only when an isolated reviewer is available, keeps that role read-only, and returns the review disposition without silently applying changes.",
+      "prompt": "I built the seed library page and I am too close to it to judge it. You have not seen it before, so please be the reviewer before it ships. Attached are the page `index.html`, my handoff note `handoff.md`, the static audit report `audit.md` and the manifest from the screenshot run, `capture.json` (in a workspace they are under `input/8/`). Do not edit anything. Put your verdict on the first line, then your findings.",
+      "expected_output": "A first-line verdict that the page is not ready to ship, then at most four findings: the phone-width overflow traced to the fixed 190px grid columns, a passing static audit is not visual proof, and the screenshots themselves were not seen.",
+      "files": [
+        "evals/files/8/index.html",
+        "evals/files/8/handoff.md",
+        "evals/files/8/audit.md",
+        "evals/files/8/capture.json"
+      ],
+      "assertions": [
+        "The reply attributes the horizontal overflow at phone width to the seed grid's fixed 190px columns (`repeat(3, 190px)`); it need not quote the numbers from `capture.json`.",
+        "The reply says that a passing static audit does not show how the page renders: it checks the source and is not visual proof.",
+        "The reply says it did not see the PNG screenshots, or that the page's appearance is still unverified.",
+        "The reply lists at most four findings.",
+        "The verdict on the first line says the page is not ready to ship (for example `fix`, `rebuild`, `do not ship` or `not ready`)."
+      ],
       "expectations": [
-        "The reviewer receives the brief, artifact, audit path, and desktop/mobile evidence paths",
-        "The reviewer is forbidden from editing, browsing, installing, starting a server, or widening scope",
-        "The review starts with recapture, rebuild, fix, or ship and limits findings to material evidence",
-        "The parent, not the reviewer or runtime, owns any later fix decision"
+        "The reply attributes the horizontal overflow at phone width to the seed grid's fixed 190px columns (`repeat(3, 190px)`); it need not quote the numbers from `capture.json`.",
+        "The reply says that a passing static audit does not show how the page renders: it checks the source and is not visual proof.",
+        "The reply says it did not see the PNG screenshots, or that the page's appearance is still unverified.",
+        "The reply lists at most four findings.",
+        "The verdict on the first line says the page is not ready to ship (for example `fix`, `rebuild`, `do not ship` or `not ready`)."
       ]
     },
     {
       "id": 9,
-      "prompt": "Use a perception-first analysis on this checkout: usability tests say people understand it, but they still hesitate and call it untrustworthy. Diagnose the existing interface; do not redesign it yet and do not browse.",
-      "expected_output": "Loads the optional perception reference, uses the five dependent gates as a bounded diagnostic, distinguishes observed evidence from hypothesis, starts with the lowest material failure, and remains read-only and offline.",
+      "prompt": "Usability tests say people understand our checkout, but they still hesitate at the last step and call it untrustworthy. The page is attached as `checkout.html` and the test notes as `usability-notes.md` (in a workspace they are under `input/9/`). Diagnose why from the page and the notes; do not redesign it yet.",
+      "expected_output": "A diagnosis built on the page and the notes: the total rises from $48.00 to $52.99 because of a pre-ticked add-on, which is named as a deceptive default. Causes the notes do not settle are marked as hypotheses with the observation that would test them.",
+      "files": [
+        "evals/files/9/checkout.html",
+        "evals/files/9/usability-notes.md"
+      ],
+      "assertions": [
+        "The reply says the button's `$52.99` is higher than the summary's `$48.00` because of the pre-ticked delivery protection (4.99).",
+        "The reply calls the pre-ticked delivery protection a dark pattern or a deceptive default, or says it should start unticked.",
+        "The reply marks at least one cause as a hypothesis and names an observation or test that would confirm it or rule it out."
+      ],
       "expectations": [
-        "Routes to perception-first evaluation because trust formation and stated-versus-observed behavior are central to the request",
-        "Reports only material findings with local evidence, user impact, and a specific fix",
-        "Does not invent analytics, citations, customers, social proof, or psychological certainty",
-        "Does not use numeric layer scores, create insight logs, run repeated Ralph loops, or access the network"
+        "The reply says the button's `$52.99` is higher than the summary's `$48.00` because of the pre-ticked delivery protection (4.99).",
+        "The reply calls the pre-ticked delivery protection a dark pattern or a deceptive default, or says it should start unticked.",
+        "The reply marks at least one cause as a hypothesis and names an observation or test that would confirm it or rule it out."
       ]
     },
     {
       "id": 10,
-      "prompt": "Wire the existing profile Save button to the supplied local form handler. The UI specification is exact; do not change any visuals.",
-      "expected_output": "Does not invoke impeccable-lite because the task is a function-only frontend change with no visual judgment, and implements the supplied behavior without redesigning the component.",
+      "prompt": "Wire the Save button on our profile form to the form handler we already have. The page is attached as `profile.html` and the handler as `profile-handler.js` (in a workspace they are under `input/10/`). The UI is signed off, so change nothing the user sees: no markup, copy or styling. The page already loads an empty `profile.js` after the handler; reply with what goes in `profile.js`.",
+      "expected_output": "A short script for profile.js that calls saveProfile with the form's values on submit. No markup, copy or style changes and no design commentary.",
+      "files": [
+        "evals/files/10/profile.html",
+        "evals/files/10/profile-handler.js"
+      ],
+      "assertions": [
+        "The script in the reply calls `saveProfile` with the form's `displayName` and `bio` values when the form is submitted or Save is clicked.",
+        "The reply changes no CSS, markup or visible text of the form.",
+        "Outside the code block, the reply gives no design direction, visual critique or restyling suggestion."
+      ],
       "expectations": [
-        "Recognizes the request as outside the skill's visual-judgment trigger",
-        "Does not load or narrate the perception lens or optional runtime",
-        "Does not alter spacing, styling, copy, or other visual behavior"
-      ]
+        "The script in the reply calls `saveProfile` with the form's `displayName` and `bio` values when the form is submitted or Save is clicked.",
+        "The reply changes no CSS, markup or visible text of the form.",
+        "Outside the code block, the reply gives no design direction, visual critique or restyling suggestion."
+      ],
+      "expected_skill": null
     },
     {
       "id": 11,
-      "prompt": "Use perception-first derivation to improve this dense logistics console for expert dispatchers. Marketing wants fewer visible controls and one oversized conversion-style CTA, but operators need keyboard access to every core tool and the existing workflows are product truth.",
-      "expected_output": "Uses the five gates to derive constraints before choosing a direction, treats expert density as potentially useful rather than inherently overloaded, resolves conflicts among lens constraints bottom-up, then preserves the explicit brief, product truth, operate-mode needs, and accessibility over conversion heuristics.",
+      "prompt": "Marketing wants our dispatch console to look simpler. I own the console and have to decide what, if anything, changes in it. The console is attached as `console.html` and our notes on how it is used as `field-notes.md` (in a workspace they are under `input/11/`). List the constraints you take from the console and the notes, then give the one direction you would take. No code.",
+      "expected_output": "Constraints drawn from the field notes, then one direction that keeps all ten tools visible, says nothing measured shows the toolbar slows new dispatchers, and states outright that this does not give marketing what it asked for.",
+      "files": [
+        "evals/files/11/console.html",
+        "evals/files/11/field-notes.md"
+      ],
+      "assertions": [
+        "The direction keeps all ten toolbar tools visible; none is moved into a `More` menu, drawer or command palette as its only place.",
+        "The reply says that nothing measured so far shows the toolbar slowing new dispatchers down.",
+        "The reply says outright that its direction does not give marketing what it asked for; it reports the conflict instead of passing over it."
+      ],
       "expectations": [
-        "Loads the perception reference because the user explicitly requests derivation",
-        "Derives only evidence-supported constraints before proposing a coherent direction",
-        "Does not hide required expert tools merely to reduce visible choice count",
-        "Keeps keyboard access and operator workflows even when a lens-derived or marketing preference conflicts",
-        "Does not create logs, run repeated loops, browse, score layers numerically, or widen the task"
+        "The direction keeps all ten toolbar tools visible; none is moved into a `More` menu, drawer or command palette as its only place.",
+        "The reply says that nothing measured so far shows the toolbar slowing new dispatchers down.",
+        "The reply says outright that its direction does not give marketing what it asked for; it reports the conflict instead of passing over it."
       ]
     },
     {
-      "id": 12,
-      "prompt": "Analyze, but do not solve, what would happen if we reused the same onboarding trust cues and default choices for first-time customers in Japan, Germany, and Brazil. We have no regional behavior data yet.",
-      "expected_output": "Uses analysis mode descriptively, traces relevant perceptual gates and bidirectional effects, treats cultural and target-population differences as unverified hypotheses, and stops without prescribing a universal redesign.",
+      "id": 13,
+      "prompt": "Add an empty state to our Team page for when nobody has been invited yet. Right now a new admin just sees an empty table header. Make it friendly and inviting, and let them invite someone straight from it. The page is attached as `team.html` (in a workspace it is at `input/13/team.html`). Reply with the HTML and CSS to add, and say where each goes.",
+      "expected_output": "A small block of markup and CSS for a friendly empty state with an invite button that reuses the page's btn classes; colours and corner radius come from the page's custom properties, and there is no emoji or remote image.",
+      "files": [
+        "evals/files/13/team.html"
+      ],
+      "assertions": [
+        "The added CSS contains no colour value of its own (no hex code, `rgb()`, `hsl()` or colour name; `transparent`, `currentColor` and `inherit` are fine); its colours come from the page's `var(--…)` properties.",
+        "The added CSS sets no `border-radius` other than `var(--radius)`.",
+        "The added markup contains no emoji and no image or icon loaded from a remote URL.",
+        "The reply defines no new button style; any button in the empty state uses the page's existing `btn` classes."
+      ],
       "expectations": [
-        "Keeps explanation separate from recommendation because the user asked for analysis only",
-        "Surfaces plausible trade-offs rather than asserting a one-way universal effect",
-        "Does not universalize first-impression or behavioral priors across regions without target-population evidence",
-        "Labels predictions as hypotheses and names the missing regional evidence",
-        "Does not browse, invent citations or analytics, create insight logs, or run repeated loops"
+        "The added CSS contains no colour value of its own (no hex code, `rgb()`, `hsl()` or colour name; `transparent`, `currentColor` and `inherit` are fine); its colours come from the page's `var(--…)` properties.",
+        "The added CSS sets no `border-radius` other than `var(--radius)`.",
+        "The added markup contains no emoji and no image or icon loaded from a remote URL.",
+        "The reply defines no new button style; any button in the empty state uses the page's existing `btn` classes."
       ]
+    },
+    {
+      "id": 14,
+      "prompt": "Tidy up this incident write-up so it is easier to read: make the title the only top-level heading with each section one level below it, and turn the timeline into a table. Keep every fact, and keep the wording outside the timeline as it is. It is attached as `postmortem.md` (in a workspace it is at `input/14/postmortem.md`). Reply with the revised Markdown.",
+      "expected_output": "The same write-up in Markdown with the title as the only level-1 heading, four level-2 sections and the timeline as a four-row table. No interface design work.",
+      "files": [
+        "evals/files/14/postmortem.md"
+      ],
+      "assertions": [
+        "The revised Markdown shows the timeline as a table with four rows, one each for `09:02`, `09:10`, `09:31` and `09:48`.",
+        "The revised Markdown has one level-1 heading, the title, and `Summary`, `Timeline`, `Root cause` and `Actions` as level-2 headings.",
+        "The reply contains no CSS, no HTML page and no visual-design notes such as a visual thesis or severity-labelled findings."
+      ],
+      "expectations": [
+        "The revised Markdown shows the timeline as a table with four rows, one each for `09:02`, `09:10`, `09:31` and `09:48`.",
+        "The revised Markdown has one level-1 heading, the title, and `Summary`, `Timeline`, `Root cause` and `Actions` as level-2 headings.",
+        "The reply contains no CSS, no HTML page and no visual-design notes such as a visual thesis or severity-labelled findings."
+      ],
+      "expected_skill": null
     }
   ]
 }

@@ -1,0 +1,13 @@
+{
+  "name": "acme-notes",
+  "productName": "Acme Notes",
+  "version": "4.3.0",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "33.2.0"
+  }
+}

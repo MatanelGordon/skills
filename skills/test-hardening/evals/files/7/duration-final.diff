@@ -1,0 +1,39 @@
+diff --git a/src/duration.rs b/src/duration.rs
+index 57bc73b..016e71c 100644
+--- a/src/duration.rs
++++ b/src/duration.rs
+@@ -1,11 +1,13 @@
+-//! Parse human durations such as "90s" or "5m".
++//! Parse human durations such as "90s", "5m" or "250ms".
+ 
+ use std::time::Duration;
+ 
+-/// Parses a whole number followed by `s` or `m`.
++/// Parses a whole number followed by `ms`, `s` or `m`.
+ pub fn parse_duration(text: &str) -> Option<Duration> {
+     let text = text.trim();
+-    let (digits, unit) = if let Some(rest) = text.strip_suffix('s') {
++    let (digits, unit) = if let Some(rest) = text.strip_suffix("ms") {
++        (rest, "ms")
++    } else if let Some(rest) = text.strip_suffix('s') {
+         (rest, "s")
+     } else if let Some(rest) = text.strip_suffix('m') {
+         (rest, "m")
+@@ -14,6 +16,7 @@ pub fn parse_duration(text: &str) -> Option<Duration> {
+     };
+     let value: u64 = digits.parse().ok()?;
+     match unit {
++        "ms" => Some(Duration::from_millis(value)),
+         "s" => Some(Duration::from_secs(value)),
+         _ => Some(Duration::from_secs(value * 60)),
+     }
+@@ -32,4 +35,9 @@ mod tests {
+     fn parses_minutes() {
+         assert_eq!(parse_duration("5m"), Some(Duration::from_secs(300)));
+     }
++
++    #[test]
++    fn parses_milliseconds() {
++        assert_eq!(parse_duration("250ms"), Some(Duration::from_millis(250)));
++    }
+ }

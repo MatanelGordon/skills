@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Account settings · Tern</title>
+<style>
+  :root { --ink: #1c2530; --paper: #ffffff; --line: #8a94a0; --blue: #1558d6; }
+  body { margin: 0; font: 16px/1.5 system-ui, sans-serif; color: var(--ink); background: var(--paper); }
+  main { max-width: 34rem; margin: 2rem auto; padding: 0 1rem; }
+  h1 { font-size: 1.5rem; margin: 0 0 1.5rem; }
+  .field { margin-bottom: 1.25rem; }
+  .field > label { display: block; font-weight: 600; margin-bottom: 0.25rem; }
+  input[type="text"], input[type="email"] { width: 100%; box-sizing: border-box; padding: 0.5rem 0.625rem; border: 1px solid var(--line); border-radius: 4px; font: inherit; }
+  .hint { color: #b9b9b9; font-size: 11px; margin: 0.25rem 0 0; }
+  input:focus, button:focus { outline: none; }
+  .actions { display: flex; gap: 0.5rem; margin-top: 1.5rem; }
+  .btn { background: var(--blue); color: #fff; border: 0; border-radius: 4px; padding: 0.5rem 1rem; font: inherit; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Account settings</h1>
+  <form action="/settings" method="post">
+    <div class="field">
+      <label for="display-name">Display name</label>
+      <input id="display-name" name="display_name" type="text" value="Sample User" autocomplete="name">
+      <p class="hint">Shown to teammates on comments and mentions.</p>
+    </div>
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" value="user@example.com" autocomplete="email">
+      <p class="hint">Changing this signs you out of all other devices.</p>
+    </div>
+    <p><label><input type="checkbox" name="digest" checked> Send me a weekly digest</label></p>
+    <div class="actions">
+      <button class="btn" type="submit">Save changes</button>
+      <button class="btn" type="button" id="delete-account">Delete account</button>
+    </div>
+  </form>
+</main>
+</body>
+</html>

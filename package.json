@@ -15,6 +15,7 @@
     "setup:browser-capture": "npm install --prefix tools/browser-capture --ignore-scripts --no-audit --no-fund",
     "test:browser-capture": "node tools/browser-capture/test.mjs",
     "validate": "node install/validate.mjs",
+    "normalize-evals": "node install/normalize-evals.mjs",
     "test": "node install/run-tests.mjs",
     "eval": "node install/run-evals.mjs"
   },

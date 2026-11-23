@@ -3,155 +3,229 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Council this decision: should we split install/index.mjs into per-agent plugin modules, or keep the single file? Existing installations and copy/symlink behavior must stay compatible. Contributors other than the author will add future agents, and live installations already depend on this path.",
-      "expected_output": "Skill triggers. Writes a decision brief with named A/B options, hard compatibility constraints, trust-tagged evidence, and stakes. Convenes Skeptic, Pragmatist, Migrator, Maintainer, and Hupert-Graph as the relevant subset, not the full pool.",
+      "prompt": "We have to decide whether to split `install/index.mjs` into per-agent plugin modules or keep it as one file, and I want that decision pressure-tested by a panel of independent reviewers before we commit. I will start each reviewer in its own fresh session myself, so all I need from you now is the decision brief that I paste into every session. What we know: I read `install/index.mjs`, and it is one file of about 900 lines with a branch per agent. Existing installations must keep working in both copy and symlink mode, and live installations load that exact path. People other than the author will add future agents. The CI dashboard shows the installer test suite takes 41 seconds. An AI-written design note, `docs/plugin-layout.md`, claims a plugin layout would halve the time it takes to add an agent. Reply with the brief only, in full: no reviewer answers and no recommendation. (Node.js is installed if you can run commands; if you cannot, work from the text.)",
+      "expected_output": "A decision brief that states the decision and the options, keeps the hard limits apart from the evidence, says where each piece of evidence comes from (reading install/index.mjs, the CI dashboard) and marks the AI-written note's claim as unverified. No reviewer answers and no recommendation.",
       "files": [],
+      "assertions": [
+        "The brief calls the claim from `docs/plugin-layout.md` (that a plugin layout halves the time to add an agent) unverified, unconfirmed or unproven; describing it only as an AI-written note that \"claims\" or \"suggests\" it does not count.",
+        "The brief names the CI dashboard as the source of the 41-second test-suite timing.",
+        "The brief says that its description of `install/index.mjs` (one file of about 900 lines with a branch per agent) comes from reading that file.",
+        "The brief does not list the 41-second test timing or the `docs/plugin-layout.md` claim among its constraints."
+      ],
       "expectations": [
-        "The brief is at most 300 words and contains DECISION, enumerated OPTIONS, CONSTRAINTS, trust-tagged EVIDENCE, and STAKES",
-        "The options are real alternatives with a trade-off",
-        "The convened subset is Skeptic, Pragmatist, Migrator, Maintainer, and Hupert-Graph",
-        "MLK, Visionary, and Devil's Advocate are not round-1 voters",
-        "Round-1 prompts use isolated sub-agents and the mandated output slots"
+        "The brief calls the claim from `docs/plugin-layout.md` (that a plugin layout halves the time to add an agent) unverified, unconfirmed or unproven; describing it only as an AI-written note that \"claims\" or \"suggests\" it does not count.",
+        "The brief names the CI dashboard as the source of the 41-second test-suite timing.",
+        "The brief says that its description of `install/index.mjs` (one file of about 900 lines with a branch per agent) comes from reading that file.",
+        "The brief does not list the 41-second test timing or the `docs/plugin-layout.md` claim among its constraints."
       ]
     },
     {
       "id": 2,
-      "prompt": "Which HTTP client does this project use? Separately, what are my options for where retry logic could live? I only want the choices, not a deliberated recommendation.",
-      "expected_output": "Skill does not convene. Answers the factual question directly from available evidence and routes the options-only comparison to critical-thinking territory rather than running personas.",
-      "files": [],
+      "prompt": "Two quick questions about the attached project, `package.json` and `src/api/client.mjs` (in a workspace they are under `input/2/`). First, which HTTP client does this project use? Second, what are my options for where retry logic could live? For the second question I only want the list of choices, not a recommendation and not a decision.",
+      "expected_output": "Names undici as the HTTP client, from the two files, and lists several places retry logic could live without recommending one. No reviewer panel, votes or verdict.",
+      "files": [
+        "evals/files/2/package.json",
+        "evals/files/2/src/api/client.mjs"
+      ],
+      "assertions": [
+        "The reply names `undici` as the HTTP client the project uses.",
+        "The reply lists at least three places where retry logic could live.",
+        "The reply does not recommend one retry placement over the others.",
+        "The reply contains no votes or verdict attributed to reviewers, panel members or personas."
+      ],
       "expectations": [
-        "No council members are spawned",
-        "The factual question is answered directly",
-        "The options-only request is treated as a comparison, not a council decision",
-        "No decision brief or chairman verdict is manufactured"
-      ]
+        "The reply names `undici` as the HTTP client the project uses.",
+        "The reply lists at least three places where retry logic could live.",
+        "The reply does not recommend one retry placement over the others.",
+        "The reply contains no votes or verdict attributed to reviewers, panel members or personas."
+      ],
+      "expected_skill": null
     },
     {
       "id": 3,
-      "prompt": "Continue this council from the supplied fixture. Apply the convergence check, the Devil's Advocate gate, and the chairman rules mechanically.",
-      "expected_output": "Finds identical A votes with all confidence values in the 4-5 high bucket, runs the Devil's Advocate gate, accepts the literal NO MATERIAL OBJECTION, skips round 2, and writes a chairman verdict whose revisit triggers aggregate the supplied falsifiers.",
+      "prompt": "We are pressure-testing an installer decision with a panel of independent reviewers. Round one is finished and the Devil's Advocate has answered; the whole state is attached as `installer-round-one.txt` (in a workspace it is at `input/3/installer-round-one.txt`). Tell me whether a second round is needed and why, then write the chairman's final verdict. Give the verdict in full in your reply. (Node.js is installed if you can run commands; if you cannot, work from the text.)",
+      "expected_output": "Says no second round is needed because all three votes are A, every confidence is 4/5 or 5/5 and the Devil's Advocate returned NO MATERIAL OBJECTION, then gives a verdict for A that says the three reasons are distinct, lists the three WOULD CHANGE MY MIND items as revisit triggers and names a specific first action.",
       "files": [
-        "ROUND-1 FIXTURE\n\nSkeptic\nVOTE: A\nPOSITION: Keep the single installer until a concrete failure justifies seams.\nARGUMENT: The first likely failure is agent-specific branching hiding a compatibility regression.\nSTRONGEST OBJECTION TO MY OWN POSITION: The file can become hard to test as agents accumulate.\nCONFIDENCE: 4/5\nWOULD CHANGE MY MIND: A failing compatibility test caused by two agent branches sharing mutable state.\nPREMISE CHALLENGE: NONE\n\nPragmatist\nVOTE: A\nPOSITION: Keep the working file because the split has no measured delivery payoff.\nARGUMENT: The compatible path already ships, while the split consumes time without a named release blocker.\nSTRONGEST OBJECTION TO MY OWN POSITION: A later split could cost more.\nCONFIDENCE: 5/5\nWOULD CHANGE MY MIND: A queued agent integration blocked for more than one workday by the current file.\nPREMISE CHALLENGE: NONE\n\nMaintainer\nVOTE: A\nPOSITION: Keep one traceable control flow while it remains readable end to end.\nARGUMENT: One file lets on-call trace detection through installation without crossing module boundaries.\nSTRONGEST OBJECTION TO MY OWN POSITION: Continued growth can make the trace opaque.\nCONFIDENCE: 4/5\nWOULD CHANGE MY MIND: A code-read trace that requires jumping across more than three unrelated branches (estimate).\nPREMISE CHALLENGE: NONE\n\nDEVIL'S ADVOCATE FIXTURE\nNO MATERIAL OBJECTION"
+        "evals/files/3/installer-round-one.txt"
+      ],
+      "assertions": [
+        "The reply names the CONFIDENCE values, all 4/5 or 5/5, as one reason no second round is needed.",
+        "The verdict lists all three WOULD CHANGE MY MIND items as revisit triggers: the failing compatibility test, the integration blocked for more than one workday, and the trace across more than three unrelated branches.",
+        "The verdict states explicitly that the three members' reasons for A are distinct from one another rather than one shared reason; listing each member's reason without such a statement does not count.",
+        "The verdict names a specific first action to take next, such as adding a particular test or check; continuing as before or monitoring does not count."
       ],
       "expectations": [
-        "The round-1 result is classified CONVERGED by identical vote strings and high confidence buckets",
-        "The Devil's Advocate runs only because the converged check passed",
-        "The literal NO MATERIAL OBJECTION skips round 2",
-        "The verdict still includes every observable WOULD CHANGE MY MIND item as a revisit trigger",
-        "Confidence numbers are not used as vote weights"
+        "The reply names the CONFIDENCE values, all 4/5 or 5/5, as one reason no second round is needed.",
+        "The verdict lists all three WOULD CHANGE MY MIND items as revisit triggers: the failing compatibility test, the integration blocked for more than one workday, and the trace across more than three unrelated branches.",
+        "The verdict states explicitly that the three members' reasons for A are distinct from one another rather than one shared reason; listing each member's reason without such a statement does not count.",
+        "The verdict names a specific first action to take next, such as adding a particular test or check; continuing as before or monitoring does not count."
       ]
     },
     {
       "id": 4,
-      "prompt": "Continue this contested council from the supplied fixture. Validate both supplied casting-director candidate outputs, then prepare the round-2 packet and prompts.",
-      "expected_output": "Classifies the round as NOT CONVERGED. Treats both the hedge and MISSING ROLE: security-expert as NONE NEEDED. Writes a persona-to-label mapping before round 2, re-shuffles labels, and creates round-2 prompts whose response packet contains no persona attribution.",
+      "prompt": "We are pressure-testing an installer decision with a panel of independent reviewers. Round one is back, and I have already run the check for a missing reviewer role; both are in the attached `installer-missing-role-check.txt` (in a workspace it is at `input/4/installer-missing-role-check.txt`). Before I start round two, tell me three things: whether the Devil's Advocate runs now, whether the missing-role check adds a reviewer, and exactly who takes part in round two. Reply with those three answers and one line of reason for each; do not write any reviewer's round-two answer. (Node.js is installed if you can run commands; if you cannot, work from the text.)",
+      "expected_output": "The Devil's Advocate does not run because the round-one votes are split (A, B, A); `MISSING ROLE: security-expert` is rejected because that role is not among the pool's voting roles, so nobody is added; round two is Skeptic, Pragmatist and Hupert-Graph.",
       "files": [
-        "CONTESTED ROUND-1 FIXTURE\n\nSkeptic\nVOTE: A\nPOSITION: Keep the current file until its first production failure is named.\nARGUMENT: Splitting can create compatibility gaps at module boundaries.\nSTRONGEST OBJECTION TO MY OWN POSITION: The file may already be too coupled.\nCONFIDENCE: 3/5\nWOULD CHANGE MY MIND: A reproduced cross-agent state leak.\nPREMISE CHALLENGE: NONE\n\nPragmatist\nVOTE: B\nPOSITION: Split only the agent branches that block the next shipped integration.\nARGUMENT: A narrow extraction can unblock delivery without a full redesign.\nSTRONGEST OBJECTION TO MY OWN POSITION: Partial extraction can leave two control paths.\nCONFIDENCE: 4/5\nWOULD CHANGE MY MIND: The next integration lands in one day without extraction.\nPREMISE CHALLENGE: NONE\n\nHupert-Graph\nVOTE: A\nPOSITION: Keep the smallest biggest mission and remove local coupling in-stack.\nARGUMENT: A module split without standalone value creates one mission with extra boundaries.\nSTRONGEST OBJECTION TO MY OWN POSITION: A real plugin boundary could carry standalone value.\nCONFIDENCE: 4/5\nWOULD CHANGE MY MIND: One extracted agent module can install and test independently.\nPREMISE CHALLENGE: The options assume file count is the same thing as architectural coupling.\n\nCASTING-DIRECTOR CANDIDATE 1\nmaybe a security person could help?\n\nCASTING-DIRECTOR CANDIDATE 2\nMISSING ROLE: security-expert"
+        "evals/files/4/installer-missing-role-check.txt"
+      ],
+      "assertions": [
+        "The reply gives the split round-one votes (no agreement on one option) as the reason the Devil's Advocate does not run.",
+        "The reply rejects `security-expert` as a round-two reviewer.",
+        "The reply's reason for the rejection is that `security-expert` is not one of the voting roles in the reviewer pool.",
+        "The reply names exactly three round-two participants: Skeptic, Pragmatist and Hupert-Graph."
       ],
       "expectations": [
-        "Contested vote letters produce NOT CONVERGED and the Devil's Advocate does not run",
-        "The hedge fails closed to NONE NEEDED",
-        "The non-pool security-expert name fails closed to NONE NEEDED",
-        "A complete persona-to-label mapping is written before round-2 prompts are built",
-        "Round-2 labels differ from any earlier label assignment",
-        "Anonymous responses in every round-2 prompt contain zero persona attribution",
-        "The Hupert-Graph premise challenge is preserved verbatim for the verdict"
+        "The reply gives the split round-one votes (no agreement on one option) as the reason the Devil's Advocate does not run.",
+        "The reply rejects `security-expert` as a round-two reviewer.",
+        "The reply's reason for the rejection is that `security-expert` is not one of the voting roles in the reviewer pool.",
+        "The reply names exactly three round-two participants: Skeptic, Pragmatist and Hupert-Graph."
       ]
     },
     {
       "id": 5,
-      "prompt": "Write the chairman verdict from these completed member-output fixtures. Apply usability, credibility, confidence-bucket, and correlated-agreement rules exactly.",
-      "expected_output": "Keeps all three responses usable because each has VOTE, POSITION, and ARGUMENT. Marks the member saying nothing realistically would change its mind as low-credibility. Keeps the member missing CONFIDENCE usable, does not place it in the high bucket, and derives credibility from its observable falsifier.",
+      "prompt": "We are pressure-testing the installer dispatch decision with a panel of independent reviewers, and round two is finished. The final answers are attached as `trace-split-round-two.txt` (in a workspace it is at `input/5/trace-split-round-two.txt`). Write the chairman's verdict and give it in full in your reply. (Node.js is installed if you can run commands; if you cannot, work from the text.)",
+      "expected_output": "A verdict that tallies A 2, B 1, counts the Skeptic's and Pragmatist's shared compatibility reason as one voice, rates the Skeptic low on credibility for `nothing realistically`, keeps the Pragmatist's vote but out of the high-confidence group, and reproduces the Maintainer's premise challenge word for word.",
       "files": [
-        "COMPLETED MEMBER OUTPUT FIXTURE\n\nSkeptic\nVOTE: A\nPOSITION: Keep the current path.\nARGUMENT: The alternative has an unnamed compatibility failure.\nSTRONGEST OBJECTION TO MY OWN POSITION: The current path may hide coupling.\nCONFIDENCE: 5/5\nWOULD CHANGE MY MIND: nothing realistically\nPREMISE CHALLENGE: NONE\n\nPragmatist\nVOTE: A\nPOSITION: Keep the current path for this release.\nARGUMENT: The same compatibility risk blocks shipment.\nSTRONGEST OBJECTION TO MY OWN POSITION: Delay can raise later cost.\nWOULD CHANGE MY MIND: A release task blocked for one workday by the current structure.\nPREMISE CHALLENGE: NONE\n\nMaintainer\nVOTE: B\nPOSITION: Split the trace into named agent modules.\nARGUMENT: The next engineer can trace one agent without scanning unrelated branches.\nSTRONGEST OBJECTION TO MY OWN POSITION: Cross-module dispatch can hide the whole flow.\nCONFIDENCE: 3/5\nWOULD CHANGE MY MIND: A code-read trace showing the single file has one linear dispatch path.\nPREMISE CHALLENGE: NONE"
+        "evals/files/5/trace-split-round-two.txt"
+      ],
+      "assertions": [
+        "The verdict counts the Skeptic's and the Pragmatist's votes for A as one voice because they share one reason.",
+        "The verdict rates the Skeptic's answer as low credibility because its WOULD CHANGE MY MIND line is `nothing realistically`.",
+        "The verdict says the Pragmatist's answer cannot count as high confidence because it has no CONFIDENCE line.",
+        "The verdict contains the Maintainer's premise challenge word for word: `The brief treats a split as a compatibility risk, but no evidence in it shows a split changes the installed path.`"
       ],
       "expectations": [
-        "All three responses are usable despite one missing CONFIDENCE slot",
-        "The nothing-realistically falsifier is explicitly marked low credibility regardless of 5/5 confidence",
-        "The missing-confidence response cannot enter the high bucket and is not discarded",
-        "The observable falsifier remains the credibility signal for the missing-confidence response",
-        "The two A votes that share the same compatibility-risk reason count as one correlated voice",
-        "The verdict preserves the Maintainer dissent"
-      ]
-    },
-    {
-      "id": 6,
-      "prompt": "Convene the council for this fixed brief. DECISION: How should a load-strained production HTTP service gain headroom? OPTIONS: A) rewrite the service fully in Rust; B) strangler-carve endpoints into Rust incrementally; C) fix the bottleneck in the current TypeScript stack. CONSTRAINTS: preserve the HTTP contract; one engineer owns and operates it alone for the next 12 months; migration must not interrupt production traffic; future endpoints attach through the chosen boundary. EVIDENCE: current hot path from code reading (code-read); Rust and TypeScript throughput claims from generated design notes (unverified-docs); no measured benchmark. STAKES: a failed path can interrupt live traffic, while too little headroom can block growth.",
-      "expected_output": "Runs a live persona-fidelity council. Convenes Visionary directly because this is a rewrite/port decision. Hupert-Graph votes C under the smallest-biggest-mission rule unless the current stack is proved incapable. MLK tags every throughput number as an estimate. Any non-NONE premise challenge is copied verbatim into the verdict.",
-      "files": [],
-      "expectations": [
-        "Visionary is a round-1 member from the rewrite trigger and is not deferred to the casting director",
-        "Hupert-Graph votes C because the in-stack fix has the smallest biggest required mission and the brief contains no proof that the current stack cannot reach the goal",
-        "Hupert-Graph does not mistake an incremental rewrite for three standalone small missions",
-        "Hupert-Graph's reasoning says it would still choose the in-stack option if it shipped slower, separating it from Pragmatist",
-        "MLK marks throughput or capacity numbers with (estimate) because no measured source exists",
-        "Every non-NONE PREMISE CHALLENGE appears verbatim in the chairman verdict",
-        "Round 1 uses VOTE letters and round 2, if reached, uses anonymous re-shuffled labels"
+        "The verdict counts the Skeptic's and the Pragmatist's votes for A as one voice because they share one reason.",
+        "The verdict rates the Skeptic's answer as low credibility because its WOULD CHANGE MY MIND line is `nothing realistically`.",
+        "The verdict says the Pragmatist's answer cannot count as high confidence because it has no CONFIDENCE line.",
+        "The verdict contains the Maintainer's premise challenge word for word: `The brief treats a split as a compatibility risk, but no evidence in it shows a split changes the installed path.`"
       ]
     },
     {
       "id": 7,
-      "prompt": "Convene the council for this prioritization decision. DECISION: Which engineering mission should the team undertake next? OPTIONS: A) rebuild the internal authorization service for a claimed 10x traffic ceiling; B) automate deployment rollback; C) add customer reporting exports. CONSTRAINTS: one team can complete only one mission this half; no option changes a platform or ecosystem attachment surface. EVIDENCE: current incident history (code-read); the 10x authorization claim appears only in generated design notes (unverified-docs); no demand forecast or benchmark exists. STAKES: the selected mission displaces the other two for six months.",
-      "expected_output": "Convenes Hupert-Graph because the decision prioritizes missions even though it does not shape a platform or ecosystem attachment surface. Convenes MLK because option A claims a larger future capacity unlock. MLK does not favor A merely because it is the biggest option; it either establishes the required future-unlock chain from evidence or raises a premise challenge without inventing facts.",
-      "files": [],
+      "prompt": "Pressure-test this decision for me with a panel of independent reviewers: which engineering mission should the team take on next? The validated brief is attached as `mission-brief.txt`, and the pool of reviewers we can draw on, with each one's remit, as `reviewer-pool.txt` (in a workspace both are under `input/7/`). I will start each reviewer in its own fresh session myself, so for now tell me only which reviewers vote in the first round, with one line per reviewer saying what in the brief puts them on the list. Do not write any reviewer's answer. (Node.js is installed if you can run commands; if you cannot, work from the text.)",
+      "expected_output": "A first-round list of exactly Skeptic, Pragmatist, MLK and Hupert-Graph: MLK because option A claims a tenfold increase in tenants, Hupert-Graph because the decision ranks one mission above the others. No reviewer answers.",
+      "files": [
+        "evals/files/7/mission-brief.txt",
+        "evals/files/7/reviewer-pool.txt"
+      ],
+      "assertions": [
+        "The first-round list is exactly these four reviewers: Skeptic, Pragmatist, MLK and Hupert-Graph.",
+        "The reason given for Hupert-Graph is that the decision ranks one mission above the others.",
+        "The reason given for MLK is option A's claim of serving ten times as many tenants."
+      ],
       "expectations": [
-        "Hupert-Graph is a mandatory round-1 member under the mission-prioritization trigger",
-        "MLK is identified as the role also known as Martin Luther King or Matanel Persona while its canonical pool-member name remains MLK",
-        "MLK names the beneficiary, current ceiling, new capability, causal mechanism, time horizon, leading indicator, and observable kill condition when the evidence supports them",
-        "MLK does not prefer option A merely because it is the largest or most ambitious option",
-        "MLK marks the 10x claim as an estimate because it has no measured source",
-        "MLK does not infer a numeric zero baseline or current ceiling from missing evidence",
-        "When the unlock chain cannot be supported without invented facts, MLK uses PREMISE CHALLENGE"
+        "The first-round list is exactly these four reviewers: Skeptic, Pragmatist, MLK and Hupert-Graph.",
+        "The reason given for Hupert-Graph is that the decision ranks one mission above the others.",
+        "The reason given for MLK is option A's claim of serving ten times as many tenants."
       ]
     },
     {
       "id": 8,
-      "prompt": "Continue this Council numeric-evidence audit without convening new members. Classify these claims for a member ARGUMENT: config/runtime.ts contains MAX_CONNECTIONS = 500 (code-read); a reviewer infers the same design can handle 800 connections (code-read inference); generated design notes promise 10x capacity (unverified-docs); and no rollback inventory exists. State the required inline tag for each number and whether the absent inventory proves there are zero rollback paths.",
-      "expected_output": "Tags the exact configured 500 as code-read with its path or symbol, tags inferred 800 and unverified 10x as estimates, and states that missing rollback evidence does not establish a numeric zero or measured baseline.",
-      "files": [],
+      "prompt": "We are pressure-testing a connection-handling decision with a panel of independent reviewers. One reviewer's round-one answer is attached as `reviewer-answer.txt`, together with the config file it cites, `config/runtime.ts` (in a workspace both are under `input/8/`). Before the verdict is written, check the numbers in its ARGUMENT. Tell me whether this answer goes into the verdict as it is, goes back to the reviewer, or is dropped, and give one line per number saying how the verdict should treat it. (Node.js is installed if you can run commands; if you cannot, work from the text.)",
+      "expected_output": "The answer is kept for the verdict as it is. 500 is confirmed by config/runtime.ts; 800, 10x and 430 are each treated as unsupported estimates; the missing rollback inventory does not make the number of rollback paths 0.",
+      "files": [
+        "evals/files/8/reviewer-answer.txt",
+        "evals/files/8/config/runtime.ts"
+      ],
+      "assertions": [
+        "The reply's decision is that the answer goes into the verdict as it is.",
+        "The reply treats 800 as unsupported or estimated, not as a value read from `config/runtime.ts`.",
+        "The reply treats 10x as unsupported or estimated, not as measured.",
+        "The reply treats 430 as unsupported or estimated, not as measured."
+      ],
       "expectations": [
-        "500 uses a (code-read: path or symbol) tag because the exact number appears directly in configuration",
-        "800 uses (estimate) because it is inferred rather than directly represented in code",
-        "10x uses (estimate) because unverified documentation cannot make a number measured",
-        "The absent rollback inventory is not converted into zero rollback paths or another numeric baseline",
-        "No council members are spawned for this mechanical continuation"
+        "The reply's decision is that the answer goes into the verdict as it is.",
+        "The reply treats 800 as unsupported or estimated, not as a value read from `config/runtime.ts`.",
+        "The reply treats 10x as unsupported or estimated, not as measured.",
+        "The reply treats 430 as unsupported or estimated, not as measured."
       ]
     },
     {
       "id": 9,
-      "prompt": "We need to choose our durable authorization architecture. Option A keeps policy evaluation inside the monolith; option B creates a separate policy service. Both can preserve the public API, but either choice will shape every future permission feature and will be expensive to reverse. Please recommend an approach.",
-      "expected_output": "Council activates without requiring the user to say Council because this is a consequential, hard-to-reverse architecture choice with two real options and a trade-off. It prepares the validated brief and isolated-member run.",
+      "prompt": "We need to choose our long-term authorization architecture. Option A keeps policy evaluation inside the monolith; option B moves it into a separate policy service. Both keep the public API unchanged, but either choice shapes every future permission feature and will be expensive to reverse. Pressure-test this decision with a panel of independent reviewers who each vote, then give me the verdict. One limit: company policy forbids starting sub-agents or separate sessions from this machine, and I will not be starting any myself, so whatever you give me in this one reply is all I get.",
+      "expected_output": "Says the reviewer panel is not run because separate isolated sessions are unavailable, does not act out any reviewers, and instead answers directly with a table comparing options A and B and a recommendation.",
       "files": [],
+      "assertions": [
+        "The reply contains no vote, position or quotation attributed to a named reviewer, panel member or persona.",
+        "The reply says the reviewer panel is not run because separate isolated sessions are not available.",
+        "The reply contains a table that compares option A with option B."
+      ],
       "expectations": [
-        "The architecture decision triggers Council automatically",
-        "The absence of an explicit Council phrase does not block architecture routing",
-        "The readiness gates are still checked before spawning",
-        "The response does not downgrade the request to an options-only comparison"
+        "The reply contains no vote, position or quotation attributed to a named reviewer, panel member or persona.",
+        "The reply says the reviewer panel is not run because separate isolated sessions are not available.",
+        "The reply contains a table that compares option A with option B."
       ]
     },
     {
       "id": 10,
-      "prompt": "Which technical initiative should the team prioritize next: improve deployment rollback, rebuild authorization for future scale, or add reporting exports? Give me your recommendation.",
-      "expected_output": "Council does not activate because this is broader technical-strategy and mission prioritization without an explicit Council request. The assistant may recommend directly or use an ordinary decision method.",
+      "prompt": "Which technical initiative should the team take on next: automating deployment rollback, rebuilding authorization for future scale, or adding customer reporting exports? For context, three of last quarter's incidents were bad deploys that each took over an hour to roll back by hand, authorization runs at about a third of its load ceiling, and two customers have asked for exports. Give me your recommendation in a short reply.",
+      "expected_output": "A direct recommendation of one of the three initiatives with its reason. No reviewer panel, votes, decision brief or verdict.",
       "files": [],
+      "assertions": [
+        "The reply recommends exactly one of the three initiatives as the next one.",
+        "The reply contains no votes or positions attributed to named reviewers, panel members or personas.",
+        "The reply contains no decision brief with parts named `DECISION`, `OPTIONS`, `CONSTRAINTS`, `EVIDENCE` and `STAKES`."
+      ],
       "expectations": [
-        "No Council members are spawned",
-        "Mission prioritization is recognized as non-architectural technical strategy in this request",
-        "The skill requires an explicit Council request for this category",
-        "The assistant can still answer the underlying strategy question directly"
-      ]
+        "The reply recommends exactly one of the three initiatives as the next one.",
+        "The reply contains no votes or positions attributed to named reviewers, panel members or personas.",
+        "The reply contains no decision brief with parts named `DECISION`, `OPTIONS`, `CONSTRAINTS`, `EVIDENCE` and `STAKES`."
+      ],
+      "expected_skill": null
     },
     {
       "id": 11,
-      "prompt": "Continue this contested Council. The host reports that a complete round-two prompt is 24001 characters and its maximum context budget for this run is 24000 characters. Prepare the round-two prompts without losing evidence.",
-      "expected_output": "The protocol aborts with PACKET_TOO_LARGE, reports the required and available sizes, and does not summarize, truncate, deduplicate, excerpt, or omit any round-one response.",
+      "prompt": "We are pressure-testing a decision with a panel of independent reviewers. Round one was split and I am about to send round two. Each round-two prompt is built from a fixed template: the reviewer's role text, the decision brief, all four round-one answers in full and the answer format. Everything except the round-one answers, including the spacing between the parts, goes out exactly as written. The longest prompt comes to 24,001 characters, and the sessions the reviewers run in accept at most 24,000 characters in total. Nothing is attached for this one: those numbers are the whole problem. What do I do so that round two can go out?",
+      "expected_output": "Round two is stopped: 24,001 characters are needed and 24,000 are available, no round-one answer may be shortened, summarised or left out to fit, and the round can be sent only in sessions with a larger limit.",
       "files": [],
+      "assertions": [
+        "The reply says round two is not sent while the limit is 24,000 characters.",
+        "The reply does not suggest shortening, summarising, trimming or leaving out any part of a round-one answer to make the prompt fit.",
+        "The reply says the way forward is reviewer sessions with a larger character limit."
+      ],
       "expectations": [
-        "The one-character overflow fails closed",
-        "PACKET_TOO_LARGE is surfaced",
-        "The required 24001 and available 24000 character sizes are reported",
-        "No compacted or partial round-two prompt is produced",
-        "The assistant does not silently raise the host budget"
+        "The reply says round two is not sent while the limit is 24,000 characters.",
+        "The reply does not suggest shortening, summarising, trimming or leaving out any part of a round-one answer to make the prompt fit.",
+        "The reply says the way forward is reviewer sessions with a larger character limit."
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "We are pressure-testing a session-store decision with a panel of independent reviewers, and round one is back. The brief and all four raw answers are attached as `session-store-round-one.txt` (in a workspace it is at `input/12/session-store-round-one.txt`). Two of the answers look off to me. Tell me what happens next and why, in a short reply. (Node.js is installed if you can run commands; if you cannot, work from the text.)",
+      "expected_output": "Only the Skeptic's and the Pragmatist's answers are usable: the Migrator voted C, which is not an option in the brief, and the Maintainer's answer has no vote, position or argument. With fewer than three usable answers the run stops, and nobody is asked to answer again.",
+      "files": [
+        "evals/files/12/session-store-round-one.txt"
+      ],
+      "assertions": [
+        "The reply says the Migrator's answer cannot be counted because `C` is not one of the brief's options.",
+        "The reply says the run stops here, with no second round, because too few answers are usable.",
+        "The reply does not suggest asking the Migrator or the Maintainer to redo, clarify, correct or resubmit their round-one answer."
+      ],
+      "expectations": [
+        "The reply says the Migrator's answer cannot be counted because `C` is not one of the brief's options.",
+        "The reply says the run stops here, with no second round, because too few answers are usable.",
+        "The reply does not suggest asking the Migrator or the Maintainer to redo, clarify, correct or resubmit their round-one answer."
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "We are pressure-testing an installer decision with a panel of independent reviewers. Round one was split and the check for a missing reviewer role has answered; the state is attached as `installer-round-two-setup.txt` (in a workspace it is at `input/13/installer-round-two-setup.txt`). I start every reviewer in a fresh session myself. Give me two things in full: the label assignment for round two, and the complete, ready-to-paste round-two prompt for the reviewer that the missing-role check added. I do not need the other reviewers' prompts. (Node.js is installed if you can run commands; if you cannot, work from the text.)",
+      "expected_output": "A new label assignment for Skeptic, Pragmatist and Hupert-Graph that differs from the earlier one, and one round-two prompt for Migrator built from the supplied parts, with all three round-one answers in full under the new labels and no reviewer names.",
+      "files": [
+        "evals/files/13/installer-round-two-setup.txt"
+      ],
+      "assertions": [
+        "The round-two label assignment given for Skeptic, Pragmatist and Hupert-Graph is not identical to the earlier one (Skeptic R2, Pragmatist R3, Hupert-Graph R1).",
+        "The prompt contains three round-one answers, each with all seven of its lines from `VOTE:` to `PREMISE CHALLENGE:`.",
+        "The prompt does not contain the names Skeptic, Pragmatist or Hupert-Graph.",
+        "In the prompt, the round-one answer that ends with `PREMISE CHALLENGE: The options assume file count is the same thing as architectural coupling.` is headed by an anonymous label such as `[R1]`, not by the name `Hupert-Graph`."
+      ],
+      "expectations": [
+        "The round-two label assignment given for Skeptic, Pragmatist and Hupert-Graph is not identical to the earlier one (Skeptic R2, Pragmatist R3, Hupert-Graph R1).",
+        "The prompt contains three round-one answers, each with all seven of its lines from `VOTE:` to `PREMISE CHALLENGE:`.",
+        "The prompt does not contain the names Skeptic, Pragmatist or Hupert-Graph.",
+        "In the prompt, the round-one answer that ends with `PREMISE CHALLENGE: The options assume file count is the same thing as architectural coupling.` is headed by an anonymous label such as `[R1]`, not by the name `Hupert-Graph`."
       ]
     }
   ]

@@ -1,0 +1,14 @@
+$ pip show playwright | grep Version
+Version: 1.58.0
+
+$ python capture.py
+console: []
+Traceback (most recent call last):
+  File "capture.py", line 18, in <module>
+    print(page.accessibility.snapshot())
+          ^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'accessibility'
+
+$ file dashboard.png
+dashboard.png: PNG image data, 1280 x 720, 8-bit/color RGB, non-interlaced
+(looking at it: the page header, then an empty white panel where the chart should be)

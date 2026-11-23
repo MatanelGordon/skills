@@ -1,0 +1,23 @@
+Mutation worktree   ../shop-mutation, branch mutation/refund-window,
+                    created at frozen commit 3d7a2c9, the reviewed and approved tip of feat/refund-window
+
+Survivor being closed
+  id 11   EqualityOperator   src/refunds.js:18:10
+  - return ageDays < REFUND_WINDOW_DAYS;
+  + return ageDays <= REFUND_WINDOW_DAYS;
+  (REFUND_WINDOW_DAYS is 30)
+
+Policy, docs/refunds.md, signed off by product:
+  "An order can be refunded up to and including 30 days after delivery."
+
+Test I added in the worktree, tests/refunds.test.js:
+  it('allows a refund on day 30', () => {
+    expect(isRefundable({ deliveredDaysAgo: 30 })).toBe(true);
+  });
+
+Result on the unmutated code, npx vitest run tests/refunds.test.js:
+  FAIL  tests/refunds.test.js > isRefundable > allows a refund on day 30
+  AssertionError: expected false to be true // Object.is equality
+
+  Test Files  1 failed (1)
+       Tests  1 failed | 5 passed (6)

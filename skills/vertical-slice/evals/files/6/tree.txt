@@ -1,0 +1,13 @@
+src/
+  app.ts
+  routes/
+    index.ts
+  features/
+    customers/
+      create-customer/    endpoint.ts  handler.ts
+      get-customer/       endpoint.ts  handler.ts
+      list-customers/     endpoint.ts  handler.ts
+    payments/
+      create-payment/     endpoint.ts  handler.ts
+      get-payment/        endpoint.ts  handler.ts
+      list-payments/      endpoint.ts  handler.ts

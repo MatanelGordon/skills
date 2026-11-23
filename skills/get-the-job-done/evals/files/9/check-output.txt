@@ -1,0 +1,20 @@
+$ ./scripts/run-gates.sh GATES.md                 # 2026-11-17 16:20
+  PASS    Malformed CSV is rejected with a row number, not a stack trace
+  FAIL    Re-importing the same file is idempotent
+            | test/import/idempotent.spec.ts
+            |   second import of fixtures/orders.csv adds no rows ... FAILED
+            |     expected 100 rows in orders, found 103
+            | 1 failed
+  FAIL    p95 import of the 50k fixture stays under 4s
+            | 20 runs: p50 2.1s, p95 6.0s, max 7.4s
+            | p95 6000ms is over --p95-max-ms 4000
+  PASS    No debug logging reaches the bundle
+
+4 gate(s): 2 passed, 2 failed
+exit 1
+
+# The same run-gates command, four more times that afternoon:
+#   16:24  idempotent PASS, p95 FAIL (5.8s)
+#   16:27  idempotent PASS, p95 FAIL (6.1s)
+#   16:31  idempotent PASS, p95 FAIL (6.0s)
+#   16:35  idempotent PASS, p95 FAIL (5.9s)

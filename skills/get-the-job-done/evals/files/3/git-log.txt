@@ -1,0 +1,5 @@
+$ git log --date=short --format='%h %ad %s' -- migrations/
+c7d91f4 2026-11-14 0040: add orders.tenant_id here so the 0041 index can include it
+8b21e0a 2026-11-09 0042: add tenant_id to orders, with down script
+3f0a6d2 2026-11-07 0041: index on orders(created_at)
+91be7c5 2026-11-03 0040: prep for the tenant index

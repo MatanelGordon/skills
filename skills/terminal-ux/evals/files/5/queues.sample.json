@@ -1,0 +1,11 @@
+[
+  {"name": "orders", "depth": 12, "limit": 500, "lastError": ""},
+  {
+    "name": "注文キュー",
+    "depth": 734,
+    "limit": 500,
+    "lastError": "consumer lag exceeded 30s on partition 4; rebalancing while 3 of 5 consumers are still draining the previous assignment"
+  },
+  {"name": "📦 outbound-eu", "depth": 3, "limit": 200, "lastError": "ECONNRESET"},
+  {"name": "billing-retries", "depth": 201, "limit": 200, "lastError": "HTTP 503 from ledger"}
+]

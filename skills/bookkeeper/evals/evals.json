@@ -6,6 +6,12 @@
       "prompt": "We learned that the production importer only runs correctly on runner win-build-03 because that host has the vendor ODBC driver. Record this for future sessions.",
       "expected_output": "Writes or updates one small durable-fact entry in the appropriate .memory topic file and updates both the topic table and Entries table in .memory/index.md in the same change.",
       "files": [],
+      "assertions": [
+        "Creates or updates one entry with the required HTML marker, per-entry frontmatter, and an updated timestamp",
+        "Updates the topic row in the first .memory/index.md table",
+        "Updates the exact entry row in the ## Entries table",
+        "Uses 2-4 reusable lowercase tags and records no credential values"
+      ],
       "expectations": [
         "Creates or updates one entry with the required HTML marker, per-entry frontmatter, and an updated timestamp",
         "Updates the topic row in the first .memory/index.md table",
@@ -18,6 +24,12 @@
       "prompt": "How do I connect to the host matanel-win11? This repository has no .memory/ directory.",
       "expected_output": "Checks for .memory/index.md, finds nothing, says so honestly rather than guessing connection details, and proceeds normally without inventing memory content.",
       "files": [],
+      "assertions": [
+        "Checks for .memory/index.md before answering",
+        "States that no memory entry exists rather than inventing one",
+        "Proceeds normally without treating absence as a hidden constraint",
+        "Does not begin with repo-wide grep or fabricate connection details"
+      ],
       "expectations": [
         "Checks for .memory/index.md before answering",
         "States that no memory entry exists rather than inventing one",
@@ -30,6 +42,10 @@
       "prompt": "We decided all services must communicate through domain events, never direct HTTP. Record the decision so future agents do not undo it.",
       "expected_output": "Routes the durable architectural decision to the adr skill instead of writing it to .memory.",
       "files": [],
+      "assertions": [
+        "Does not create or update a .memory entry",
+        "Uses the adr skill for the decision record"
+      ],
       "expectations": [
         "Does not create or update a .memory entry",
         "Uses the adr skill for the decision record"
@@ -40,6 +56,11 @@
       "prompt": "For this debugging session, remember that my scratch server is on port 4317 until I restart it.",
       "expected_output": "Keeps the temporary port in session context only and writes no repository memory because it is transient trivia.",
       "files": [],
+      "assertions": [
+        "Does not create .memory or change any memory file",
+        "Recognizes the value as temporary session state",
+        "Does not offer an ADR for the trivia"
+      ],
       "expectations": [
         "Does not create .memory or change any memory file",
         "Recognizes the value as temporary session state",

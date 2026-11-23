@@ -1,0 +1,35 @@
+{
+  "engine": "stryker-js",
+  "engineVersion": "10.1.1",
+  "scope": "src/checkout/shipping.js, lines 4-24",
+  "rawReport": ".mutation-tmp/discovery.json",
+  "rawReportSha256": "32be27c72b28335996f1d5007e9718971635bee5cb669f9e45f7f8018efc579b",
+  "budget": { "minutes": 20, "mutants": 40, "minutesUsed": 7, "exhausted": false },
+  "note": "The CI runner restarted before mutant 16 was tested. The budget was not the reason the run stopped.",
+  "counts": {
+    "Killed": 3,
+    "Timeout": 1,
+    "NoCoverage": 2,
+    "CompileError": 1,
+    "Ignored": 8,
+    "Pending": 1
+  },
+  "mutants": [
+    { "id": "1", "status": "Killed", "mutator": "ConditionalExpression", "location": "src/checkout/shipping.js:13:7" },
+    { "id": "2", "status": "Killed", "mutator": "EqualityOperator", "location": "src/checkout/shipping.js:13:7" },
+    { "id": "3", "status": "Killed", "mutator": "BlockStatement", "location": "src/checkout/shipping.js:13:42" },
+    { "id": "4", "status": "Ignored", "mutator": "StringLiteral", "location": "src/checkout/shipping.js:4:31", "statusReason": "Ignored because of excluded mutation \"StringLiteral\"" },
+    { "id": "5", "status": "Ignored", "mutator": "StringLiteral", "location": "src/checkout/shipping.js:5:28", "statusReason": "Ignored because of excluded mutation \"StringLiteral\"" },
+    { "id": "6", "status": "Ignored", "mutator": "StringLiteral", "location": "src/checkout/shipping.js:15:24", "statusReason": "Ignored because of excluded mutation \"StringLiteral\"" },
+    { "id": "7", "status": "Timeout", "mutator": "UpdateOperator", "location": "src/checkout/shipping.js:17:36" },
+    { "id": "8", "status": "Ignored", "mutator": "StringLiteral", "location": "src/checkout/shipping.js:18:19", "statusReason": "Ignored because of excluded mutation \"StringLiteral\"" },
+    { "id": "9", "status": "NoCoverage", "mutator": "ConditionalExpression", "location": "src/checkout/shipping.js:21:9" },
+    { "id": "10", "status": "NoCoverage", "mutator": "ArithmeticOperator", "location": "src/checkout/shipping.js:22:14" },
+    { "id": "11", "status": "CompileError", "mutator": "ObjectLiteral", "location": "src/checkout/shipping.js:20:22" },
+    { "id": "12", "status": "Ignored", "mutator": "StringLiteral", "location": "src/checkout/shipping.js:20:31", "statusReason": "Ignored because of excluded mutation \"StringLiteral\"" },
+    { "id": "13", "status": "Ignored", "mutator": "StringLiteral", "location": "src/checkout/shipping.js:22:30", "statusReason": "Ignored because of excluded mutation \"StringLiteral\"" },
+    { "id": "14", "status": "Ignored", "mutator": "StringLiteral", "location": "src/checkout/shipping.js:23:12", "statusReason": "Ignored because of excluded mutation \"StringLiteral\"" },
+    { "id": "15", "status": "Ignored", "mutator": "StringLiteral", "location": "src/checkout/shipping.js:23:40", "statusReason": "Ignored because of excluded mutation \"StringLiteral\"" },
+    { "id": "16", "status": "Pending", "mutator": "ConditionalExpression", "location": "src/checkout/shipping.js:24:5" }
+  ]
+}

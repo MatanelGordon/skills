@@ -1,0 +1,9 @@
+NOTES-482  Wrong account shown after switching workspace
+Reporter: support, on behalf of a customer
+Customer setup: Acme Notes 4.2.1 installed from the DMG, macOS 14.5
+
+After switching from workspace "Acme" to workspace "Globex":
+  1. The header inside the window still shows the Acme account (dana@acme.example).
+  2. The Account menu in the menu bar still offers "Sign out dana@acme.example".
+
+Please confirm both and tell us what is going on.

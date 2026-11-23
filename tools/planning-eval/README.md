@@ -114,7 +114,8 @@ A second table gives each reply check of each case its own row, so a case
 whose fact needs two checks shows which one was missed.
 
 - **Facts reflected** is the result: attempts whose final reply passed every
-  reply check of the case.
+  reply check of the case. Typographic dashes and spaces in the reply (a model
+  that writes `win‑build‑03` with U+2011) count as their ASCII form.
 - **Skill loaded** counts attempts where the agent called the Skill tool for
   this skill, read its `SKILL.md`, or had its text put into the conversation
   by a slash command. A failed Skill call does not count. `with-skill, loaded`

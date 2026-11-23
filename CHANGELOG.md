@@ -221,9 +221,12 @@ below, one section each, in merge order.
   `[rank](…)` link, because `` `rank` `` and **rank** are ordinary words there;
   that is the one form the check misses. Retired names come from git
   history, so committed and uncommitted removals and the old side of a rename
-  are all caught with no list to maintain. `CHANGELOG.md` files, `.plan/` and `.adr/` are exempt. CI now checks
-  out with full history, which the check needs, and a shallow clone under CI is
-  reported instead of passing silently.
+  are all caught with no list to maintain. `CHANGELOG.md` files, `.plan/` and
+  `.adr/` are exempt. CI now checks out with full history, which the check
+  needs, and a shallow clone under CI is reported instead of passing silently.
+  Where git history cannot be read (an export or tarball without `.git`, a
+  repository with no commits), validate prints a warning that the check was
+  skipped and why.
 - `npm run install-skills` (and `uninstall`) prune links in the chosen agent
   folders that point into this repo's `skills/` or `agents/` and whose target
   is gone, printing each one. A real file or folder, a live link, a link

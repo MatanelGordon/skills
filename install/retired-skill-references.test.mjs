@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
 import { pathToFileURL } from 'node:url';
 
 import {
-  findRetiredSkillReferences, retiredSkillNames, retiredSkillProblems, scanText,
+  checkRetiredSkills, findRetiredSkillReferences, retiredSkillNames, scanText,
 } from './retired-skill-references.mjs';
 import { validateRepository } from './validate.mjs';
 
@@ -161,11 +161,13 @@ test('a shallow clone is a problem under CI, where the check would otherwise fin
   const result = spawnSync('git', ['clone', '-q', '--depth', '1', pathToFileURL(origin).href, clone], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
 
-  const inCi = await retiredSkillProblems(clone, ['keep-me'], { CI: 'true' });
-  assert.deepEqual(inCi.map(({ scope }) => scope), ['repository']);
-  assert.match(inCi[0].message, /shallow.*fetch-depth: 0/);
-  assert.deepEqual(await retiredSkillProblems(clone, ['keep-me'], {}), []);
-  assert.deepEqual(await retiredSkillProblems(origin, ['keep-me'], { CI: 'true' }), []);
+  const inCi = await checkRetiredSkills(clone, ['keep-me'], { CI: 'true' });
+  assert.deepEqual(inCi.problems.map(({ scope }) => scope), ['repository']);
+  assert.match(inCi.problems[0].message, /shallow.*fetch-depth: 0/);
+  const local = await checkRetiredSkills(clone, ['keep-me'], {});
+  assert.deepEqual(local.problems, []);
+  assert.match(local.notice, /retired-skill check incomplete: .*shallow/);
+  assert.deepEqual(await checkRetiredSkills(origin, ['keep-me'], { CI: 'true' }), { problems: [], notice: null });
 });
 
 test('outside a git repository there is no history, so nothing is reported', async () => {
@@ -173,6 +175,39 @@ test('outside a git repository there is no history, so nothing is reported', asy
   await put(root, 'README.md', '`old-thing`\n');
   assert.deepEqual(retiredSkillNames(root, []), []);
   assert.deepEqual(await findRetiredSkillReferences(root, []), []);
+});
+
+test('when git history cannot be read, the check says it was skipped and why', async () => {
+  const root = await makeTemp();
+  const { problems, notice } = await checkRetiredSkills(root, [], {});
+  assert.deepEqual(problems, []);
+  assert.match(notice, /^retired-skill check skipped: git history could not be read \(.*not a git repository.*\)/i);
+
+  const unborn = await makeTemp();
+  git(unborn, 'init', '-q');
+  assert.match((await checkRetiredSkills(unborn, [], {})).notice, /^retired-skill check skipped: /);
+});
+
+test('npm run validate on an export without .git warns that the retired-skill check was skipped', async () => {
+  const root = await makeTemp();
+  await cp(resolve('install'), join(root, 'install'), { recursive: true });
+  await put(root, 'package.json', JSON.stringify({ name: 'fixture', version: '1.0.0' }));
+  await put(root, 'CHANGELOG.md', '# Changelog\n\n## 1.0.0 — 2026-11-24\n');
+  await put(root, 'README.md', '# fixture\n[keep-me](skills/keep-me/SKILL.md)\n');
+  await put(root, 'skills/keep-me/SKILL.md', skillText('keep-me'));
+  await put(root, 'skills/keep-me/evals/evals.json', JSON.stringify({
+    skill_name: 'keep-me',
+    evals: [{ id: 1, prompt: 'Do it', expected_output: 'Done', files: [], assertions: ['It is done'], expectations: ['It is done'] }],
+  }));
+
+  const result = spawnSync(process.execPath, [join(root, 'install', 'validate.mjs')], { cwd: root, encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stderr, /retired-skill check skipped: git history could not be read/);
+});
+
+test('npm run validate in this repository prints no skipped-check warning', () => {
+  const result = spawnSync(process.execPath, [resolve('install', 'validate.mjs')], { encoding: 'utf8' });
+  assert.doesNotMatch(result.stdout + result.stderr, /retired-skill check skipped/);
 });
 
 test('npm run validate fails on a current file that names a removed skill', async () => {

@@ -18,6 +18,9 @@
   single worker now lives only in `cli-coding-subagents`.
 - Workers get a git worktree automatically whenever the project is a git
   repository. `wt.sh` exits 4 outside one, and the skill says what to do then.
+- Added `wt.sh rundir <name>`: a place for the prompts, logs and status files
+  of a run that has no plan directory, beside the worktrees and outside the
+  repository.
 - Fixed the documented `codex exec resume` command. codex-cli 0.170.0 rejects
   `--color never` after `resume`; it now comes before.
 - Fixed `ori-codex-home.sh` replacing all three links on every run instead of
@@ -25,7 +28,7 @@
 - The installed skill is located by one resolver block that accepts a copy
   only when all six helpers are executable. The shorter form used by two of the
   three skills took the first directory that existed.
-- Added `skills/cli-coding-subagents/tests/scripts.test.mjs`: 14 tests over the
+- Added `skills/cli-coding-subagents/tests/scripts.test.mjs`: 15 tests over the
   helpers' exit codes and the resolver block.
 - Rewrote both eval sets in the eval standard. `parallel-build`'s cases were
   whole builds that no agent finished; each is now one step with its inputs

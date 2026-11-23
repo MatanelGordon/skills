@@ -207,15 +207,16 @@ If Tier 2 puts the pair at 0.85 or above, reword and measure again.
 
 Prompts, logs and status files need a place that survives a reboot and is
 outside every worktree. With a plan it is the plan directory. Without one it is
-`<git common dir>/sa-runs/<name>/` (never tracked, reachable from every
-worktree, and not under `.plan/`, which `deep-plan` owns). With no git it is
-`.sa-runs/<name>/` in the project.
+`<worktree-root>/_runs/<name>/`, created by `wt.sh rundir <name>` (outside the
+repository, and not under `.plan/`, which `deep-plan` owns). With no git it is
+`.sa-runs/<name>/` in the project. See the amendment of 23 November for why it
+is not under the git directory.
 
 ### Script changes
 
 | Script | Change |
 |---|---|
-| `wt.sh` | Exit 4, message "not a git repository", when run outside one (was exit 1). Header lists the code. |
+| `wt.sh` | Exit 4, message "not a git repository", when run outside one (was exit 1). Header lists the code. New command `rundir <name>` (see the amendments). |
 | `ori-codex-home.sh` | Compare the existing link with `$src`, so a correct link is left alone. |
 | `ori-precheck.sh` | Header comment: "same contract as `precheck.sh` beside it". |
 | `codex-session.py` | Docstring cut to what the script does and its exit codes; the reasoning stays in `references/invocation.md`. |
@@ -389,4 +390,20 @@ None that needs an ADR. The merge is reversible from git.
   old evals expected but the old skills never stated are now written down: the
   merge block ends with the test run on the merged branch, and raising the
   OpenRouter price ceiling needs the user's yes.
+- 2026-11-23 — Phase 2 ran on two codex workers (`gpt-5.6-sol`, `xhigh`) in
+  worktrees `j2-worker-skill` and `j2-split-skill` (the `j2-` prefix keeps the
+  `sa/` branches unique in a repository six jobs share). They ran with
+  `-s workspace-write`, not the skill's unsandboxed flags, because the run's
+  ground rules put the main checkout and the installed skills off-limits. The
+  sandbox refuses writes under any `.git`, so the workers could not commit and
+  the lead committed for them.
+- 2026-11-23 — That same refusal ruled out `<git common dir>/sa-runs/` as the
+  run directory: a sandboxed worker could not write its status file there. It
+  is `<worktree-root>/_runs/<name>/` instead, created by a new
+  `wt.sh rundir <name>` so the path is not left to the agent to compute.
+- 2026-11-23 — The character caps given to the workers (12,000 and 11,500)
+  were wrong. Both workers hit them by shortening sentences that carried a
+  reason and by leaving `Examples` and `Limitations` as placeholders. The lead
+  restored the wording and wrote those sections; the files are 15,530 and
+  14,078 characters. If the 30B measurement drops, detail moves to references.
 

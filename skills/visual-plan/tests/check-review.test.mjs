@@ -424,6 +424,17 @@ test('the plan, review and diagram shipped as eval fixtures meet the contract', 
   assert.deepEqual(result.ids, ['Q1', 'Q2', 'ADR-0007']);
 });
 
+test('the worked example in assets/ ships valid diagrams, all linked from its review', async () => {
+  const example = new URL('../assets/examples/council-protocol-hardening/', import.meta.url);
+  const review = await readFile(new URL('review.md', example), 'utf8');
+  const targets = imageTargets(review);
+  assert.deepEqual(targets, ['diagrams/overview.svg', 'diagrams/test-layers.svg']);
+  for (const target of targets) {
+    assert.deepEqual(findSvgProblems(await readFile(new URL(target, example), 'utf8')), [], target);
+  }
+  assert.ok(countWords(review) <= DEFAULT_MAX_WORDS);
+});
+
 test('the SVG skeleton in references/diagrams.md is itself a valid diagram', async () => {
   const guide = await readFile(new URL('../references/diagrams.md', import.meta.url), 'utf8');
   const skeleton = /```svg\r?\n([\s\S]*?)\r?\n```/.exec(guide)?.[1];

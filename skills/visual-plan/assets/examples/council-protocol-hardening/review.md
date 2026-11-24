@@ -1,6 +1,7 @@
+<!-- Example output of the visual-plan skill. In use, review.md sits beside plan.md; here the plan stays at .plan/council-protocol-hardening/plan.md on main, so the link points there. -->
 # Council skill: bookkeeping moved into code, evidence never trimmed
 
-**Status:** complete · Full plan for the agent: [plan.md](plan.md)
+**Status:** complete · Full plan for the agent: [plan.md](https://github.com/MatanelGordon/skills/blob/main/.plan/council-protocol-hardening/plan.md)
 
 The Council skill's round bookkeeping moved out of its 622-line prompt into `council-protocol.mjs`, a helper built only on Node.js built-ins. A real hosted run had shown that long round-two packets may be compacted and bookkeeping is easy to get wrong; code now guards both.
 

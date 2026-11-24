@@ -131,6 +131,15 @@ below, one section each, in merge order.
   question only the user can settle on a `Q<n>` line under "Risks and
   unknowns", with a recommendation and a default. Its description is
   unchanged; a new eval case (11) checks for the review.
+- **Plan files are never force-added.** `deep-plan` asks git first
+  (`git check-ignore -q .plan/<name>/plan.md`): where `.plan/` is not
+  ignored it commits `plan.md` with its change; where it is ignored it commits
+  no plan files, uses no `git add -f` and no `.gitignore` edit, and says once
+  that the plan stays local. `visual-plan` follows the same rule for
+  `review.md` and `diagrams/`. A new `deep-plan` eval case (12) checks it.
+- `visual-plan` ships its worked example, a review of the council plan with
+  two diagrams, in `assets/examples/council-protocol-hardening/` instead of
+  force-adding it under `.plan/`.
 - Rewrote both skills' eval sets in the shared format: 12 cases for
   `functional-csharp` (the 4 existing ones, 7 for rules that moved or
   shrank, 1 negative) and 6 for `visual-plan` with fixtures, a container

@@ -1,6 +1,8 @@
 # plan.md template
 
-Lives at `<repo>/.plan/<name>/plan.md`, committed to git.
+Lives at `<repo>/.plan/<name>/plan.md`. It is committed with its change unless
+the project's `.gitignore` excludes `.plan/`; then it stays local and is never
+force-added.
 
 `parallel-build` writes its execution artifacts into the same directory —
 `PROGRESS.md`, `prompts/`, `agents/`, `logs/`, `CR.md`, `SECURITY.md`. Those are

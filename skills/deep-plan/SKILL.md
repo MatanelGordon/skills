@@ -163,10 +163,16 @@ PLAN="$(git rev-parse --show-toplevel)/.plan/<name>"
 mkdir -p "$PLAN"
 ```
 
-`.plan/` is **committed to git** — that is what makes the architecture shared.
-Commit `plan.md` with the change it describes. `PROGRESS.md` churns during
-execution; commit those updates as you go rather than letting the tree sit dirty
-(a dirty tree blocks `wt.sh merge`).
+**Commit the plan only if the project lets you.** Ask git first:
+`git check-ignore -q .plan/<name>/plan.md`.
+
+- **Not ignored (exit 1):** `.plan/` is committed — that is what makes the
+  architecture shared. Commit `plan.md` with the change it describes.
+  `PROGRESS.md` churns during execution; commit those updates as you go rather
+  than letting the tree sit dirty (a dirty tree blocks `wt.sh merge`).
+- **Ignored (exit 0):** commit no plan files. No `git add -f`, no `--force`,
+  and no edit to `.gitignore` to get round it. The plan stays local; say once
+  in the hand-off that it is uncommitted because the project ignores `.plan/`.
 
 See `references/plan-template.md` for the full `plan.md` shape.
 
@@ -250,6 +256,7 @@ Ready when someone who has not read this conversation could execute it:
 - [ ] Shared surface assigned to phase 1
 - [ ] Unknowns and risks named
 - [ ] Status line present; `draft` until agreed
+- [ ] Plan files committed only where git does not ignore `.plan/`; never force-added
 - [ ] Every question for the user is a `Q<n>` line; `review.md` and `diagrams/` written and checked
 - [ ] Hard-to-reverse decisions captured as ADRs
 - [ ] Plan reviewed before dispatch

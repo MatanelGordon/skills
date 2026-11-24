@@ -69,8 +69,10 @@ enough) and when the user wants a few sentences in chat, not a file.
    every failure it prints.
 6. **Hand over.** Give the user the path to `review.md`. For a draft, ask them
    to approve or to answer by id, and change no source file until they do.
-   Commit the new files the way the repo treats `plan.md` (where `.plan` is
-   git-ignored, that means `git add -f`).
+   Commit `review.md` and `diagrams/` only if git does not ignore them
+   (`git check-ignore -q .plan/<name>/review.md` exits 1). Never force-add
+   them or edit `.gitignore`; where `.plan/` is ignored they stay local, and
+   you say so once.
 
 ## The checker
 

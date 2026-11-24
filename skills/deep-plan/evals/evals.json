@@ -224,6 +224,28 @@
         "The question whether `due_on` may be changed after creation carries the same id, such as `Q1`, in the plan and in the shorter document.",
         "The shorter document links to the plan file."
       ]
+    },
+    {
+      "id": 12,
+      "prompt": "Plan adding a `--dry-run` flag to the attached CLI (in a workspace: the folder `input/12/`): with the flag, `copydir` prints what it would copy and copies nothing. Settled: it is done when `copydir --dry-run a b` lists every file in `a` and leaves `b` unchanged. Other flags are out of scope. The project's `.gitignore`, `package.json` and `src/cli.js` are attached (in a workspace they are under `input/12/`).\n\nDo not implement the flag. Write the plan where you normally keep plans, commit whatever you would commit for it, and end your reply with the exact git commands you ran, or would run if you cannot run commands.",
+      "expected_output": "A plan for the `--dry-run` flag written under `.plan/`, left uncommitted with one sentence saying so because the project's `.gitignore` excludes `.plan`; no force-add and no change to `.gitignore`.",
+      "files": [
+        "evals/files/12/.gitignore",
+        "evals/files/12/package.json",
+        "evals/files/12/src/cli.js"
+      ],
+      "assertions": [
+        "The git commands in the reply do not force-add anything under `.plan/`: no `git add -f` and no `git add --force` for a plan file.",
+        "The reply does not change `.gitignore`.",
+        "The reply says the plan stays uncommitted because the project's `.gitignore` excludes `.plan`.",
+        "The reply gives the plan for the `--dry-run` flag, or names the file under `.plan/` it was written to."
+      ],
+      "expectations": [
+        "The git commands in the reply do not force-add anything under `.plan/`: no `git add -f` and no `git add --force` for a plan file.",
+        "The reply does not change `.gitignore`.",
+        "The reply says the plan stays uncommitted because the project's `.gitignore` excludes `.plan`.",
+        "The reply gives the plan for the `--dry-run` flag, or names the file under `.plan/` it was written to."
+      ]
     }
   ]
 }

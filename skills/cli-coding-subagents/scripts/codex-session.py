@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
-"""Print the codex session id for a given worktree, for `codex exec resume`.
+"""Print the codex session id recorded for a worktree.
 
-Codex has no flag to pre-set a session id, but the first line of every rollout is
-a `session_meta` record carrying both `session_id` and `cwd`. Matching on cwd is
-parallel-safe; picking the newest file is not, because concurrent agents race.
+Usage: codex-session.py <worktree-path>
 
-    SID=$(codex-session.py /path/to/worktree)
-    cd "$WT" && codex exec resume "$SID" ... "follow-up prompt"
+Reads the sessions under $CODEX_HOME (default ~/.codex), so run it with the
+same CODEX_HOME the worker ran under: ~/.ori-codex for an `ori codex` worker.
 
-Exits 1 with no output if no session matches that directory.
+Exit codes: 0 id printed · 1 no session ran in that directory · 64 bad usage.
+The reason for choosing a session this way, and the command that takes the id,
+are in references/invocation.md under "Follow-ups".
 """
+from __future__ import annotations  # keeps `str | None` working on Python 3.9, macOS's system python
+
 import glob
 import json
 import os
@@ -19,7 +21,8 @@ import sys
 def session_for(worktree: str) -> str | None:
     want = os.path.realpath(worktree)
     newest_mtime, session = 0.0, None
-    pattern = os.path.expanduser("~/.codex/sessions/**/rollout-*.jsonl")
+    codex_home = os.environ.get("CODEX_HOME") or os.path.expanduser("~/.codex")
+    pattern = os.path.join(codex_home, "sessions", "**", "rollout-*.jsonl")
     for path in glob.glob(pattern, recursive=True):
         try:
             with open(path, errors="ignore") as fh:

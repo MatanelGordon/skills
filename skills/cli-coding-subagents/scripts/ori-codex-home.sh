@@ -10,7 +10,7 @@
 # config. This script links only the static assets a subagent needs.
 #
 # Usage:
-#   ./scripts/ori-codex-home.sh          # idempotent; creates or repairs
+#   ori-codex-home.sh          # idempotent; creates or repairs
 #
 # Exit codes:
 #   0   ready
@@ -35,7 +35,7 @@ for item in AGENTS.md rules skills; do
   if [ ! -e "$src" ]; then continue; fi   # absent locally; nothing to link
   if [ -L "$dst" ] || [ -e "$dst" ]; then
     # Already present — repair if stale, leave if correct.
-    if [ "$dst" = "$(readlink "$dst" 2>/dev/null)" ]; then continue; fi
+    if [ "$src" = "$(readlink "$dst" 2>/dev/null)" ]; then continue; fi
     rm -f "$dst"
   fi
   ln -s "$src" "$dst"

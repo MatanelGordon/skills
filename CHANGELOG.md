@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.22.3 — 2026-11-23
+
+- Added an opt-in pull-request review mode to `development-workflow`. The skill
+  asks once, with the plan, whether the change should be reviewed through a pull
+  request. When the answer is yes it pushes the branch and opens a draft pull
+  request after test hardening and before the first review pass, pushes each
+  review fix as a new commit, and marks the pull request ready after
+  verification. It never merges without explicit permission. With no answer the
+  mode stays off, because a push cannot be unsent and a local branch can still
+  become a pull request later.
+- Rewrote the `development-workflow` description to lead with its trigger and
+  fit in 300 characters.
+- Added contract tests for the mode and four eval cases: asking, opening the
+  pull request at the right moment, the unanswered default, and not merging.
+
 ## 1.22.2 — 2026-11-21
 
 - Changed `development-workflow` review from a one-shot check into a bounded

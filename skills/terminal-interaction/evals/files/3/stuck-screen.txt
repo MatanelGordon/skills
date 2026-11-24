@@ -1,0 +1,3 @@
+Checking cluster health /y
+Checking cluster health ok
+Deploy api to prod? [y/N]

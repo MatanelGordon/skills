@@ -1,0 +1,43 @@
+COUNCIL RUN: installer file layout
+State after round 1 and the Devil's Advocate gate.
+
+DECISION BRIEF (validated; pasted verbatim into every member's prompt)
+DECISION: Should the installer's agent detection and install steps stay in install/index.mjs or be split into one module per agent inside the same package?
+OPTIONS: A) keep the single installer file B) split it into one module per agent
+CONSTRAINTS: the command line and the files written to disk stay identical, so nothing changes for existing installations; contributors other than the author add future agents.
+EVIDENCE: installer control flow in install/index.mjs (code-read); contributor speed-up claimed for a split layout (unverified-docs)
+STAKES: a regression in the installer breaks every new installation until it is fixed.
+
+ROUND 1 ROSTER (selected from the brief): Skeptic, Pragmatist, Maintainer
+
+ROUND 1 RAW RESPONSES (each member answered alone, in its own fresh session)
+
+Skeptic
+VOTE: A
+POSITION: Keep the single installer until a concrete failure justifies seams.
+ARGUMENT: The first likely failure is agent-specific branching hiding a compatibility regression.
+STRONGEST OBJECTION TO MY OWN POSITION: The file can become hard to test as agents accumulate.
+CONFIDENCE: 4/5
+WOULD CHANGE MY MIND: A failing compatibility test caused by two agent branches sharing mutable state.
+PREMISE CHALLENGE: NONE
+
+Pragmatist
+VOTE: A
+POSITION: Keep the working file because the split has no measured delivery payoff.
+ARGUMENT: The compatible path already ships, while the split consumes time without a named release blocker.
+STRONGEST OBJECTION TO MY OWN POSITION: A later split could cost more.
+CONFIDENCE: 5/5
+WOULD CHANGE MY MIND: A queued agent integration blocked for more than one workday by the current file.
+PREMISE CHALLENGE: NONE
+
+Maintainer
+VOTE: A
+POSITION: Keep one traceable control flow while it remains readable end to end.
+ARGUMENT: One file lets on-call trace detection through installation without crossing module boundaries.
+STRONGEST OBJECTION TO MY OWN POSITION: Continued growth can make the trace opaque.
+CONFIDENCE: 4/5
+WOULD CHANGE MY MIND: A code-read trace that requires jumping across more than three unrelated branches (estimate).
+PREMISE CHALLENGE: NONE
+
+DEVIL'S ADVOCATE RAW RESPONSE (spawned once, after round 1, with the anonymous packet)
+NO MATERIAL OBJECTION

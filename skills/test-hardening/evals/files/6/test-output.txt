@@ -1,0 +1,19 @@
+$ python3 -m unittest tests.test_retry -v
+test_doubles_the_wait_between_attempts (tests.test_retry.CallWithRetryTest.test_doubles_the_wait_between_attempts) ... ok
+test_gives_up_after_max_attempts (tests.test_retry.CallWithRetryTest.test_gives_up_after_max_attempts) ... FAIL
+test_retries_until_success (tests.test_retry.CallWithRetryTest.test_retries_until_success) ... ok
+test_retry_error_keeps_the_last_cause (tests.test_retry.CallWithRetryTest.test_retry_error_keeps_the_last_cause) ... ok
+test_returns_the_first_success (tests.test_retry.CallWithRetryTest.test_returns_the_first_success) ... ok
+
+======================================================================
+FAIL: test_gives_up_after_max_attempts (tests.test_retry.CallWithRetryTest.test_gives_up_after_max_attempts)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/dev/retry/tests/test_retry.py", line 39, in test_gives_up_after_max_attempts
+    self.assertEqual(func.calls, 3)
+AssertionError: 4 != 3
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.000s
+
+FAILED (failures=1)

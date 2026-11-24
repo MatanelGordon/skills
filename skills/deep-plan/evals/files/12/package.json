@@ -1,0 +1,9 @@
+{
+  "name": "copydir",
+  "version": "0.2.0",
+  "type": "module",
+  "bin": { "copydir": "src/cli.js" },
+  "scripts": {
+    "test": "node --test"
+  }
+}

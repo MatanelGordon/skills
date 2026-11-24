@@ -1,0 +1,48 @@
+COUNCIL RUN: installer dispatch path
+State after round 2. Nothing else is pending.
+
+DECISION BRIEF (validated; pasted verbatim into every member's prompt)
+DECISION: Should the installer keep its single dispatch path or be split into named agent modules?
+OPTIONS: A) keep the current single dispatch path B) split it into named agent modules
+CONSTRAINTS: existing installations must keep working; engineers other than the author debug installer failures; the next release ships in three weeks.
+EVIDENCE: single dispatch function in install/index.mjs (code-read); no compatibility test covers a split layout (code-read)
+STAKES: a compatibility break reaches every live installation in one release.
+
+ROUND 2 LABEL ASSIGNMENT (recorded before the round-2 prompts were built)
+Skeptic = R2
+Pragmatist = R3
+Maintainer = R1
+
+ROUND 2 RAW RESPONSES (each member answered in a new fresh session)
+
+Skeptic
+STEELMAN: R1 - a named module lets one agent be traced without reading the others.
+REACTING TO: R1
+VOTE: A
+POSITION: Keep the current path.
+ARGUMENT: The alternative has an unnamed compatibility failure.
+STRONGEST OBJECTION TO MY OWN POSITION: The current path may hide coupling.
+CONFIDENCE: 5/5
+WOULD CHANGE MY MIND: nothing realistically
+PREMISE CHALLENGE: NONE
+
+Pragmatist
+STEELMAN: R1 - shorter traces would cut the time spent on each installer bug.
+REACTING TO: R1, R2
+VOTE: A
+POSITION: Keep the current path for this release.
+ARGUMENT: The same compatibility risk blocks shipment.
+STRONGEST OBJECTION TO MY OWN POSITION: Delay can raise later cost.
+WOULD CHANGE MY MIND: A release task blocked for one workday by the current structure.
+PREMISE CHALLENGE: NONE
+
+Maintainer
+STEELMAN: R2 - a compatibility failure nobody has named would reach every live installation.
+REACTING TO: R2, R3
+VOTE: B
+POSITION: Split the trace into named agent modules.
+ARGUMENT: The next engineer can trace one agent without scanning unrelated branches.
+STRONGEST OBJECTION TO MY OWN POSITION: Cross-module dispatch can hide the whole flow.
+CONFIDENCE: 3/5
+WOULD CHANGE MY MIND: A code-read trace showing the single file has one linear dispatch path.
+PREMISE CHALLENGE: The brief treats a split as a compatibility risk, but no evidence in it shows a split changes the installed path.

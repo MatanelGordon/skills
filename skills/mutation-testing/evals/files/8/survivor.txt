@@ -1,0 +1,26 @@
+Mutation worktree   ../shop-mutation, branch mutation/free-shipping,
+                    created at frozen commit 6b1f9d4 (the reviewed tip of feat/free-shipping)
+Engine              StrykerJS 10.1.1 with the vitest runner, installed in the worktree only
+Clean test command  npx vitest run tests/shipping.test.js
+
+Discovery config, .mutation-tmp/stryker.config.json:
+{
+  "testRunner": "vitest",
+  "mutate": ["src/shipping.js"],
+  "reporters": ["clear-text", "json"],
+  "jsonReporter": { "fileName": ".mutation-tmp/discovery.json" },
+  "cleanTempDir": "always"
+}
+Discovery command   npx --no-install stryker run .mutation-tmp/stryker.config.json
+Discovery report    .mutation-tmp/discovery.json
+sha256              1b75a0dd7032aa835d41ce190eff2926311fbbfed7b05aa01490ac5e93838c73
+
+Survived
+  id 4   EqualityOperator   src/shipping.js:10:7
+  - if (subtotalCents >= FREE_SHIPPING_THRESHOLD_CENTS) {
+  + if (subtotalCents > FREE_SHIPPING_THRESHOLD_CENTS) {
+  tests that ran against it: "charges the flat rate below the threshold",
+                             "ships free above the threshold"
+
+Agreed spec, docs/shipping.md:
+  "Orders with a subtotal of $50.00 or more ship free. All other orders pay the $4.99 flat rate."

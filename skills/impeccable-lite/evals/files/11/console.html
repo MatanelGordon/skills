@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dispatch · Harbourline</title>
+<style>
+  body { margin: 0; font: 13px/1.35 system-ui, sans-serif; color: #111; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 8px; border-bottom: 1px solid #999; }
+  .toolbar button { font: inherit; padding: 4px 8px; }
+  kbd { font: inherit; color: #555; margin-left: 4px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 3px 8px; border-bottom: 1px solid #ddd; text-align: left; white-space: nowrap; }
+  tr[aria-selected="true"] { background: #e8f0fe; }
+</style>
+</head>
+<body>
+<main>
+  <div class="toolbar" role="toolbar" aria-label="Actions for the selected load">
+    <button type="button">Assign driver <kbd>A</kbd></button>
+    <button type="button">Reassign <kbd>R</kbd></button>
+    <button type="button">Split load <kbd>S</kbd></button>
+    <button type="button">Merge loads <kbd>M</kbd></button>
+    <button type="button">Change ETA <kbd>E</kbd></button>
+    <button type="button">Hold <kbd>H</kbd></button>
+    <button type="button">Release <kbd>L</kbd></button>
+    <button type="button">Call driver <kbd>C</kbd></button>
+    <button type="button">Add note <kbd>N</kbd></button>
+    <button type="button">Print manifest <kbd>P</kbd></button>
+  </div>
+  <table>
+    <thead><tr><th>Load</th><th>Origin</th><th>Destination</th><th>Driver</th><th>ETA</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr aria-selected="true"><td>HL-8841</td><td>Dock 4</td><td>Felixstowe</td><td>Unassigned</td><td>14:20</td><td>Waiting</td></tr>
+      <tr><td>HL-8842</td><td>Dock 2</td><td>Tilbury</td><td>Driver 31</td><td>14:45</td><td>On route</td></tr>
+      <tr><td>HL-8843</td><td>Dock 4</td><td>Harwich</td><td>Driver 12</td><td>15:05</td><td>Held</td></tr>
+    </tbody>
+  </table>
+</main>
+</body>
+</html>

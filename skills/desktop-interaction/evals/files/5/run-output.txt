@@ -1,0 +1,22 @@
+$ node repro.js
+launching: dev build (electron .)
+window title: Acme Notes
+clicked Export, wrote export.png
+
+$ TARGET=installed node repro.js
+launching: /Applications/Acme Notes.app/Contents/MacOS/Acme Notes
+node:internal/process/promises:394
+      triggerUncaughtException(err, true /* fromPromise */);
+      ^
+
+electron.launch: Timeout 30000ms exceeded.
+    at /Users/me/acme-notes/repro.js:9:30 {
+  name: 'TimeoutError'
+}
+
+Node.js v22.11.0
+
+$ sw_vers -productVersion
+14.5
+$ defaults read "/Applications/Acme Notes.app/Contents/Info.plist" CFBundleShortVersionString
+4.2.1

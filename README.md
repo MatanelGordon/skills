@@ -1,6 +1,6 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/readme/hero-dark.svg">
-  <img src="assets/readme/hero-light.svg" width="100%" alt="Skills: one source of truth for 27 Agent Skills and 2 subagents, linked into Claude Code, OpenAI Codex, GitHub Copilot and Tabnine.">
+  <img src="assets/readme/hero-light.svg" width="100%" alt="Skills: one source of truth for 25 Agent Skills and 2 subagents, linked into Claude Code, OpenAI Codex, GitHub Copilot and Tabnine.">
 </picture>
 
 One repository for the skills I want every coding agent to share. A skill is an
@@ -11,7 +11,7 @@ Three things make the setup work:
 
 - **One source of truth.** Update a skill here once; every symlinked agent sees
   the change immediately.
-- **Native everywhere.** The same 27 skills serve Claude Code, OpenAI Codex,
+- **Native everywhere.** The same 25 skills serve Claude Code, OpenAI Codex,
   GitHub Copilot, Tabnine, and tools that follow the shared `.agents` convention.
 - **Safe to own.** The installer detects conflicts before replacing anything,
   validation runs across operating systems, and external work stays attributed.
@@ -59,6 +59,11 @@ conflict: interactive installs can move it to a timestamped backup first;
 noninteractive installs keep it in place, report the conflict, and exit
 nonzero.
 
+A link into this repo whose target is gone, because a skill was removed or
+renamed here, is pruned by the next `install` or `uninstall`, which prints each
+one. Nothing else is removed: not a real folder, not a live link, not a link
+anywhere else.
+
 **Non-interactive.** For when you're in a hurry, or scripting it:
 
 ```bash
@@ -91,7 +96,7 @@ Claude Code and Codex pick skills up on the next session.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/readme/install-flow-dark.svg">
-  <img src="assets/readme/install-flow-light.svg" width="880" alt="Diagram: one clone of this repository, with 27 skills and 2 agents, feeds install/index.mjs, which symlinks or copies them into five skill directories: Claude Code (~/.claude/skills/), OpenAI Codex (~/.codex/skills/), GitHub Copilot (~/.copilot/skills/), Tabnine (~/.tabnine/agent/skills/) and the shared ~/.agents/skills/.">
+  <img src="assets/readme/install-flow-light.svg" width="880" alt="Diagram: one clone of this repository, with 25 skills and 2 agents, feeds install/index.mjs, which symlinks or copies them into five skill directories: Claude Code (~/.claude/skills/), OpenAI Codex (~/.codex/skills/), GitHub Copilot (~/.copilot/skills/), Tabnine (~/.tabnine/agent/skills/) and the shared ~/.agents/skills/.">
 </picture>
 
 | Agent | Where the installer puts skills |
@@ -135,10 +140,17 @@ flowchart LR
     Plan --> Test["2. Test first<br/>Red, green, refactor"]
     Test --> Implement["3. Implement<br/>Smallest change"]
     Implement --> Harden["4. Test harden<br/>Fresh edge cases"]
-    Harden --> Review["5. Independent review"]
-    Review --> Verify["6. Verify<br/>Clean tests and diff"]
+    Harden --> Review["5. Review convergence<br/>2+ fresh full-diff passes"]
+    Review -- "Production fix" --> Fix["Fix accepted findings"]
+    Fix --> TestFix["Rerun relevant tests"]
+    TestFix --> Review
+    Review --> Gate{"Converged?"}
+    Gate -- "Need another fresh pass" --> Review
+    Gate -- "Pass 4 unresolved" --> Escalate["Stop and escalate<br/>No completion claim"]
+    Gate -- "Yes" --> Clear["Review cleared"]
+    Clear --> Verify["6. Verify<br/>Clean tests and diff"]
     Verify --> Commit["7. Commit with why"]
-    Review -.-> Mutation["Optional mutation testing<br/>Explicit request or critical logic plus budget"]
+    Clear -.-> Mutation["Optional mutation testing<br/>Explicit request or critical logic plus budget"]
     Mutation -.-> Verify
 ```
 
@@ -155,21 +167,35 @@ flowchart LR
 4. **Test harden.** A fresh subagent reads the completed diff and adds tests for
    edge cases created by the implementation—not more production code. Then the
    green state is frozen.
-5. **Review.** Someone who didn't write the code reviews it. Mutation testing is
-   separate and opt-in: run it when explicitly requested, or when a configured
-   engine can cheaply probe plan-marked critical decision logic inside an
-   approved budget. The mutation branch is never merged.
+5. **Review.** Run two fresh full-diff passes at minimum, even when the first is
+   clean. Every pass sees the complete cumulative diff, acceptance criteria,
+   tests, and prior findings. A review-driven production fix invalidates approval:
+   rerun the affected tests and review the cumulative result again. Proceed only
+   when the latest pass has no unresolved CRITICAL/HIGH findings, tests are green,
+   and every MEDIUM/LOW finding has a disposition. On a fourth unsuccessful pass,
+   stop and escalate instead of claiming completion or looping forever. Mutation
+   testing remains separate and opt-in: run it when explicitly requested, or when
+   a configured engine can cheaply probe plan-marked critical decision logic
+   inside an approved budget. The mutation branch is never merged.
 6. **Verify.** Rerun clean relevant and repository tests and inspect the diff.
    If mutation testing was selected, import paths rather than candidate history
    and rerun its agreed proofs. Incomplete evidence stops that optional stage
    for a user risk decision; it is never reported as complete.
 7. **Commit.** The message says *why*. Hard-to-reverse calls become ADRs.
 
+**Pull-request review mode.** If you want to read a change on GitHub while it is
+reviewed, say yes when the workflow asks. It asks once, with the plan. It then
+works on a branch, opens a draft pull request after test hardening and before
+the first review pass, pushes every review fix as a new commit, and marks the
+pull request ready after verification. It never merges without your explicit
+permission. If nobody answers, the mode stays off, nothing is pushed that you
+have not asked for, and review runs locally.
+
 Not every change needs the full feature pipeline. Scale it honestly:
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/readme/workflow-scale-dark.svg">
-  <img src="assets/readme/workflow-scale-light.svg" width="880" alt="Stage matrix: a typo uses the mandatory core; a small bug uses a reproducing test and fix; features default to research, planning, TDD, implementation, hardening, review, verification and commit. Mutation testing is a dashed optional cell selected by explicit request or a configured, critical, scoped and budgeted risk rule.">
+  <img src="assets/readme/workflow-scale-light.svg" width="880" alt="Stage matrix: a typo uses the mandatory core; a small bug uses a reproducing test and fix; features default to research, planning, TDD, implementation, hardening, bounded review convergence, verification and commit. Mutation testing is a dashed optional cell selected by explicit request or a configured, critical, scoped and budgeted risk rule.">
 </picture>
 
 Skipping a step is fine. Skipping it *silently* isn't: one sentence saying why
@@ -184,19 +210,19 @@ others when you install it.
 
 | Skill | What it does |
 |---|---|
-| [development-workflow](skills/development-workflow/SKILL.md) | The spine: research → plan → test-first → implement → test-harden → review → verify → commit. Mutation testing is an explicit risk/value option, not a default feature gate. → `research-first`, `confidence-ranker`, `deep-plan`, `test-hardening`, `mutation-testing`, `adr` |
+| [development-workflow](skills/development-workflow/SKILL.md) | The spine: research → plan → test-first → implement → test-harden → bounded review convergence → verify → commit. Review takes two fresh full-diff passes minimum, rechecks every production fix, and stops after a fourth unsuccessful pass. An opt-in pull-request review mode puts a draft PR up before review and never merges without your permission. Mutation testing is an explicit risk/value option, not a default feature gate. → `research-first`, `confidence-ranker`, `deep-plan`, `test-hardening`, `mutation-testing`, `adr` |
 | [test-hardening](skills/test-hardening/SKILL.md) | Fresh post-implementation eyes add bounded tests for observable edge cases. Red proof happens in a scratch copy/worktree, production defects return as regressions, and hosts without subagents use a declared fresh-context fallback. |
 | [mutation-testing](skills/mutation-testing/SKILL.md) | Opt-in native mutation testing for an explicit scope or budgeted critical logic. Five adapters preserve engine meanings; a direct-parent Git guard rejects production history and imports only reviewed test paths. → `test-hardening` |
-| [deep-plan](skills/deep-plan/SKILL.md) | Turns "build X" into a plan someone with zero context could execute: a clarity gate before any writing, one owner per file path, every edge case enumerated with a status, and test commands quoted verbatim. Owns `.plan/`. |
+| [deep-plan](skills/deep-plan/SKILL.md) | Turns "build X" into a plan someone with zero context could execute: a clarity gate before any writing, one owner per file path, every edge case enumerated with a status, and test commands quoted verbatim. Writes a short `review.md` with diagrams for your sign-off beside the plan. Owns `.plan/`. → `visual-plan` |
+| [visual-plan](skills/visual-plan/SKILL.md) | Writes a plan as two files: `plan.md` for the implementing agent and a `review.md` of at most 500 words for you, with linked SVG diagrams, the questions that need your call, and the risks. A bundled checker keeps the two in step. → `deep-plan`, `impeccable-lite` |
 | [council](skills/council/SKILL.md) | Pressure-tests consequential architecture choices with isolated, contrast-written personas, anonymized cross-review, and a chairman verdict that preserves dissent. Weights falsifiers over confidence theatre. Built for weak single-model harnesses on closed networks. |
 | [prototype](skills/prototype/SKILL.md) | Throwaway code that answers a design question before real work burns tokens on the wrong thing. Greenfield: hardcode everything, delete it after. Brownfield: deliberately bad code behind exactly one seam, so the real thing lands as a one-line swap. |
 | [get-the-job-done](skills/get-the-job-done/SKILL.md) | Guards against work that only *looks* finished. Completion claims become `GATES.md` entries, each with a runnable `CHECK`, and a bundled checker re-runs them. Read-only and hook-free on purpose, so it survives six concurrent agents. |
-| [parallel-build](skills/parallel-build/SKILL.md) | Executes a plan across parallel subagents in three phases (foundation → implementation → review). Its `PROGRESS.md` lets a fresh session resume after a crash. → `cli-coding-subagents`, `deep-plan` |
-| [cli-coding-subagents](skills/cli-coding-subagents/SKILL.md) | The machinery underneath: runs codex and copilot as autonomous workers in git worktrees. Includes quota pre-flight (it asks before spending paid overage), strict prompt contracts, and merge and cleanup that never leave a worktree behind. |
-| [openrouter-cli-subagent](skills/openrouter-cli-subagent/SKILL.md) | The same workflow routed through OpenRouter via the `ori` CLI, so subagent work costs cents. Finds models that can actually call tools, under a price ceiling (default $0.50 per 1M output tokens). Checks the wallet before recommending anything paid. → `cli-coding-subagents` |
+| [parallel-build](skills/parallel-build/SKILL.md) | Decides how a job is split between workers: which pieces are independent, who owns which files, what has to land first, and how many run at once. Parallel by default. Independent pieces get a quick split; a build with a shared surface runs in three phases (foundation → implementation → review) from a `deep-plan` plan, and its `PROGRESS.md` lets a fresh session resume after a crash. → `cli-coding-subagents`, `deep-plan` |
+| [cli-coding-subagents](skills/cli-coding-subagents/SKILL.md) | Runs one coding worker through the codex, copilot or OpenRouter (`ori`) CLI, in its own git worktree whenever the project is a git repository. Includes quota pre-flight (it asks before spending paid overage), strict prompt contracts, and merge and cleanup that never leave a worktree behind. In OpenRouter mode it finds models that can actually call tools under a price ceiling (default $0.50 per 1M output tokens) and checks the wallet before recommending anything paid. |
 
 <details>
-<summary>Why get-the-job-done is hook-free, and why openrouter isn't free-only</summary>
+<summary>Why get-the-job-done is hook-free, and why OpenRouter mode isn't free-only</summary>
 
 <br>
 
@@ -206,9 +232,9 @@ since become false gets caught instead of believed. It deliberately ships no
 blocking hook: a blocker you can't cleanly remove is worse than the premature
 "done" it prevents.
 
-**openrouter-cli-subagent** sets a price ceiling instead of insisting on free
-models, because free-only leaves one model family and a 20 req/min cap, and a
-few cents gets you out of both. It discovers which models can really call
+**cli-coding-subagents**, in its OpenRouter mode, sets a price ceiling instead
+of insisting on free models, because free-only leaves one model family and a
+20 req/min cap, and a few cents gets you out of both. It discovers which models can really call
 tools (a free million-token model that turns out to be a *music* model is not a
 coding agent). It also splits author and reviewer context floors, so
 cross-model review is actually possible.
@@ -242,9 +268,7 @@ This registry deliberately installs **`impeccable-lite`**, not the upstream
 |---|---|
 | [impeccable-lite](skills/impeccable-lite/SKILL.md) | Compact interface direction and finish with an optional perception-first diagnostic, a built-ins-only workflow/audit, and deterministic local screenshots through the repository's narrow Puppeteer capture companion. |
 | [ux](skills/ux/SKILL.md) | A style-agnostic way to answer "is this good UX?" with a rubric instead of an opinion: severity-rated heuristics plus metrics with published thresholds. |
-| [terminal-ux](skills/terminal-ux/SKILL.md) | Terminal dashboards and visualisations with Ink, including the testing traps I hit so you don't have to. |
-| [tui-builder](skills/tui-builder/SKILL.md) | Full-screen TUI work, with hard-won terminal-resize rules. |
-| [visual-plan](skills/visual-plan/SKILL.md) | Turns text plans into reviewable visual plans with diagrams, file maps, and annotated code. |
+| [terminal-ux](skills/terminal-ux/SKILL.md) | Terminal dashboards and visualisations with Ink, including the testing traps I hit so you don't have to, and the hard-won full-screen and terminal-resize rules. |
 
 ### Driving and observing
 
@@ -272,10 +296,9 @@ and skips platform-locked skills on the wrong OS.
 |---|---|
 | `impeccable-lite` | Node ≥ 18 for its optional local workflow/audit and an installed Chrome, Chromium, or Edge browser for screenshots; registry checkouts may use the pre-provisioned Puppeteer companion, while copied and npx installs retain a built-ins-only fallback. |
 | `mutation-testing` | Node ≥ 18 + git for protocol gates; a compatible native engine for execution. Worktree-free hosts need a disposable clone/copy. |
-| `cli-coding-subagents` | codex + copilot CLIs, installed and authenticated |
+| `cli-coding-subagents` | codex + copilot CLIs, installed and authenticated; for OpenRouter mode, the `ori` CLI on PATH and an OpenRouter credential |
 | `parallel-build` | the above, plus git worktrees |
-| `openrouter-cli-subagent` | the `ori` CLI on PATH and an OpenRouter credential |
-| `terminal-ux` / `tui-builder` | Node ≥ 22 (Ink) |
+| `terminal-ux` | Node ≥ 22 (Ink) |
 
 ### Optional local browser capture
 
@@ -355,13 +378,20 @@ safe everywhere:
 ---
 name: my-skill
 description: >
-  What it does and, crucially, when an agent should reach for it. This field
-  is the trigger — describe situations, not features.
+  Use when [the situations that should load it, in the user's words]. One
+  clause on what it gives the agent.
 license: MIT
 metadata:
   author: You
 ---
 ```
+
+The description is the trigger: describe situations, not features, and put
+them first, because some agents show only the first 60 or so characters. Keep
+it to 300 characters: `npm run validate` fails a longer one, and fails the
+collection once all descriptions together reach 7,500, which keeps them under
+the roughly 8,000 characters Claude Code and Codex fit in their skill list
+before they start dropping descriptions.
 
 The `metadata` block is free-form. This repo uses it for `requires` (prose,
 shown after install), `depends` (read by the installer), and `platform` (gates
@@ -378,8 +408,10 @@ npm run validate
 
 These exercise the installer, validator, package contents, and eval harness,
 then check the subtle repository invariants: unbalanced code fences, literal
-escape characters, script syntax, eval schemas, README coverage, and aligned
-release metadata. CI runs them across Node 18/20/22 on Linux, macOS, and
+escape characters, script syntax, eval schemas, README coverage, aligned
+release metadata, and any current file that still names a skill removed or
+renamed under `skills/` (git history says which; `CHANGELOG.md`, `.plan/` and
+`.adr/` are exempt). CI runs them across Node 18/20/22 on Linux, macOS, and
 Windows.
 
 Eval JSON is executable rather than decorative. Provide any candidate and
@@ -391,6 +423,14 @@ node install/run-evals.mjs --skill research-first --id 4 \
   --candidate codex --candidate-arg exec --candidate-arg=- \
   --judge codex --judge-arg exec --judge-arg=-
 ```
+
+Every `evals/evals.json` follows [EVALS.md](EVALS.md): one format that this
+runner, [agent-skills-eval](https://github.com/darkrishabh/agent-skills-eval)
+and NVIDIA SkillEvaluator all load as committed, with rules for how many
+cases a skill needs, how big a case may be, where fixtures live and how to
+word an assertion a grader can check. `npm run normalize-evals` rewrites a
+file into that format and is safe to run twice; `npm run validate` fails on
+anything a runner could not load.
 
 ## Good skills that live elsewhere
 
@@ -468,7 +508,11 @@ blind-synced. Provenance for each file is recorded in
 Everything here is by **Matanel Gordon** and MIT licensed except
 `skills/impeccable-lite/references/perception-first-lens.md`, which is an
 attributed CC BY-SA 4.0 adaptation. Where a skill builds on published thinking,
-it says so inline. Notable sources:
+it says so inline. `visual-plan` up to version 1.22.1 was based on the
+`visual-plan` skill in Builder.io's MIT-licensed
+[`@agent-native/core`](https://github.com/BuilderIO/agent-native)
+(Copyright (c) 2026 Builder.io, Inc.); from 1.23.0 it is rewritten from
+scratch. Notable sources:
 [Nygard](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions)
 and [MADR](https://adr.github.io/madr/) for the ADR templates, and the
 [Lore protocol](https://arxiv.org/html/2603.15566v1) for the git trailer schema.

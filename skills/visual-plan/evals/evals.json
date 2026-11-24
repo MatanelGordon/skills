@@ -2,34 +2,155 @@
   "skill_name": "visual-plan",
   "evals": [
     {
-      "id": 1,
-      "prompt": "Turn the plan we just wrote into something I can review visually with diagrams and open questions.",
-      "expected_output": "Produces the structured visual plan (plan.mdx or equivalent) from the existing text plan as source - not a rewrite from scratch, not a chat paragraph.",
-      "files": [],
-      "expectations": [
-        "Existing plan used as source material",
-        "Output is the structured reviewable artifact with diagrams/questions",
-        "Actual plan URL appears in chat as the handoff, not just an opened preview"
-      ]
-    },
-    {
-      "id": 2,
-      "prompt": "We need to align on the dashboard redesign - three possible layouts, lots of open questions.",
-      "expected_output": "Visual plan with options and question blocks for reaction before implementation.",
-      "files": [],
-      "expectations": [
-        "Options and open questions rendered as structured blocks",
-        "User reaction sought before implementing"
-      ]
-    },
-    {
       "id": 3,
-      "prompt": "Add a null check to this function.",
-      "expected_output": "No visual plan for a trivial change.",
-      "files": [],
+      "prompt": "In the attached `format.js` (in a workspace it is at `input/3/src/format.js`), `formatName(user)` throws when `user` is null. Add a null check so it returns an empty string instead. Edit the file if you can; otherwise reply with the changed function.",
+      "expected_output": "formatName returns an empty string for a null user. The change is made directly: no plan file, no review file, no diagram.",
+      "files": [
+        "evals/files/3/src/format.js"
+      ],
+      "assertions": [
+        "`formatName`, in the edited file or in the reply, returns an empty string when `user` is null.",
+        "No `plan.md` or `review.md` file is created.",
+        "The reply contains no file map, no risk list and no diagram."
+      ],
       "expectations": [
-        "No plan artifact ceremony for a one-line fix"
+        "`formatName`, in the edited file or in the reply, returns an empty string when `user` is null.",
+        "No `plan.md` or `review.md` file is created.",
+        "The reply contains no file map, no risk list and no diagram."
+      ],
+      "expected_skill": null
+    },
+    {
+      "id": 4,
+      "prompt": "The implementation plan for our report export is attached as `plan.md` (in a workspace it is at `input/shared/export-queue/plan.md`). I have to approve it and I will not read all of it. Write `review.md` next to it: the short version for me, with a diagram of what changes. Node.js is available. If you cannot write files, give the review and the diagram file in full in your reply.",
+      "expected_output": "A review.md beside plan.md of at most about 500 words. It links plan.md, shows the change in an SVG diagram saved as its own file and linked as an image, asks Q1 and Q2 with a recommendation and a default each, cites ADR-0007 and lists the two risks. plan.md keeps its content.",
+      "files": [
+        "evals/files/shared/export-queue/plan.md"
+      ],
+      "assertions": [
+        "The review, in `review.md` or in the reply, lists both `Q1` and `Q2`.",
+        "For each of `Q1` and `Q2` the review names one recommended option.",
+        "The review mentions `ADR-0007`.",
+        "The review shows its diagram with a Markdown image link to an `.svg` file.",
+        "The review is shorter than `plan.md`."
+      ],
+      "expectations": [
+        "The review, in `review.md` or in the reply, lists both `Q1` and `Q2`.",
+        "For each of `Q1` and `Q2` the review names one recommended option.",
+        "The review mentions `ADR-0007`.",
+        "The review shows its diagram with a Markdown image link to an `.svg` file.",
+        "The review is shorter than `plan.md`."
+      ],
+      "checks": [
+        {
+          "type": "file_exists",
+          "path": "input/shared/export-queue/review.md"
+        }
       ]
+    },
+    {
+      "id": 5,
+      "prompt": "This plan and its review are from earlier: `plan.md`, `review.md` and `diagrams/flow.svg` are attached (in a workspace they are under `input/shared/export-queue/`). My answers: Q1: 30 days. I have no view on Q2. With that, the plan is approved. Update the files to match and do not start implementing. Node.js is available. If you cannot write files, reply with the changed lines of each file.",
+      "expected_output": "plan.md: status approved, Q1 resolved to 30 days, Q2 resolved to its default (in the page only), and a dated line under Amendments recording the answers. review.md: status approved and no question left waiting. No source file is created.",
+      "files": [
+        "evals/files/shared/export-queue/plan.md",
+        "evals/files/shared/export-queue/review.md",
+        "evals/files/shared/export-queue/diagrams/flow.svg"
+      ],
+      "assertions": [
+        "`plan.md`, or the changed lines in the reply, sets the status to `approved`.",
+        "`plan.md` records 30 days as how long an export file is kept.",
+        "`plan.md` settles Q2 with its default: notify in the page only.",
+        "`plan.md` has a new line under `Amendments` that records the user's answer.",
+        "`review.md` no longer shows `Q1` as a question waiting for an answer."
+      ],
+      "expectations": [
+        "`plan.md`, or the changed lines in the reply, sets the status to `approved`.",
+        "`plan.md` records 30 days as how long an export file is kept.",
+        "`plan.md` settles Q2 with its default: notify in the page only.",
+        "`plan.md` has a new line under `Amendments` that records the user's answer.",
+        "`review.md` no longer shows `Q1` as a question waiting for an answer."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "The small project attached (in a workspace: the folder `input/6/`) keeps notes in memory in `src/notes/store.js`, so a restart loses them. Plan saving them to a JSON file on disk. I have not decided whether to write the file on every change or every few seconds, so leave that to me. Do not implement anything. Write the plan as two files in `input/6/.plan/notes-on-disk/`: `plan.md` for the agent that will build it, and `review.md` for me to approve, short and with a diagram. Node.js is available. If you cannot write files, give both files in full in your reply.",
+      "expected_output": "plan.md: a complete plan that names src/notes/store.js, with steps, test commands and the write-timing question left open for the user. review.md: at most about 500 words, links plan.md and an SVG diagram saved as its own file, and asks the write-timing question with a recommendation and a default. No file under src/ is changed.",
+      "files": [
+        "evals/files/6/package.json",
+        "evals/files/6/src/notes/store.js"
+      ],
+      "assertions": [
+        "`plan.md`, in the workspace or in the reply, names `src/notes/store.js` in a file map or file list.",
+        "`review.md` asks the user to choose between writing on every change and writing every few seconds.",
+        "`review.md` says which option is used if the user does not answer.",
+        "`review.md` shows its diagram with a Markdown image link to an `.svg` file.",
+        "`src/notes/store.js` is unchanged."
+      ],
+      "expectations": [
+        "`plan.md`, in the workspace or in the reply, names `src/notes/store.js` in a file map or file list.",
+        "`review.md` asks the user to choose between writing on every change and writing every few seconds.",
+        "`review.md` says which option is used if the user does not answer.",
+        "`review.md` shows its diagram with a Markdown image link to an `.svg` file.",
+        "`src/notes/store.js` is unchanged."
+      ],
+      "checks": [
+        {
+          "type": "file_exists",
+          "path": "input/6/.plan/notes-on-disk/plan.md"
+        },
+        {
+          "type": "file_exists",
+          "path": "input/6/.plan/notes-on-disk/review.md"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "The plan for the search box fix is attached as `plan.md` (in a workspace it is at `input/shared/search-debounce/plan.md`). Write `review.md` next to it so I can approve it without reading the whole plan: short, with a diagram. Node.js is available. If you cannot write files, give the review and the diagram file in full in your reply.",
+      "expected_output": "A review.md of at most about 500 words that links plan.md and an SVG diagram file, says that nothing needs the user's decision, names the 250 ms delay and lists the plan's two risks. It invents no open question.",
+      "files": [
+        "evals/files/shared/search-debounce/plan.md"
+      ],
+      "assertions": [
+        "The review says that nothing needs the user's decision.",
+        "The review links to `plan.md`.",
+        "The review names the 250 ms delay.",
+        "The review's risks include the 250 ms pause feeling slow to fast typists.",
+        "The review shows its diagram with a Markdown image link to an `.svg` file."
+      ],
+      "expectations": [
+        "The review says that nothing needs the user's decision.",
+        "The review links to `plan.md`.",
+        "The review names the 250 ms delay.",
+        "The review's risks include the 250 ms pause feeling slow to fast typists.",
+        "The review shows its diagram with a Markdown image link to an `.svg` file."
+      ],
+      "checks": [
+        {
+          "type": "file_exists",
+          "path": "input/shared/search-debounce/review.md"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "The plan for the search box fix is attached as `plan.md` (in a workspace it is at `input/shared/search-debounce/plan.md`). I only need two sentences to paste into the team chat saying what it will change. Reply with just those two sentences and do not create any file.",
+      "expected_output": "Two plain sentences: the search box will wait for a pause in typing before it sends a request, and will drop answers that arrive out of order. No file, no diagram, no table.",
+      "files": [
+        "evals/files/shared/search-debounce/plan.md"
+      ],
+      "assertions": [
+        "The reply has at most two sentences about the search box change.",
+        "No `review.md` file is created.",
+        "The reply contains no table and no diagram."
+      ],
+      "expectations": [
+        "The reply has at most two sentences about the search box change.",
+        "No `review.md` file is created.",
+        "The reply contains no table and no diagram."
+      ],
+      "expected_skill": null
     }
   ]
 }

@@ -1,0 +1,11 @@
+.github/workflows/release.yml
+CHANGELOG.md
+README.md
+completions/_shipit
+completions/shipit.bash
+docs/usage.md
+package.json
+scripts/smoke.sh
+src/cli.ts
+src/commands/deploy.ts
+test/cli.test.ts

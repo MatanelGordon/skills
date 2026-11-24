@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 248" role="img" aria-labelledby="t d">
+  <title id="t">Export today and after this plan</title>
+  <desc id="d">Today the export endpoint builds the CSV inside the request and times out. After this plan the endpoint puts a job on the queue, a worker builds the file and uploads it to S3, and the page gets a link.</desc>
+  <style>
+    .bg { fill: #ffffff; }
+    .card { fill: #f6f8fa; stroke: #d1d9e0; }
+    .new { fill: #ddf4ff; stroke: #0969da; }
+    .ink { fill: #1f2328; }
+    .muted { fill: #59636e; }
+    .wire { fill: none; stroke: #818b98; stroke-width: 1.5; }
+    .tip { fill: #818b98; }
+    text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; font-size: 14px; }
+    .small { font-size: 12px; }
+    .caps { font-size: 11px; font-weight: 600; letter-spacing: .08em; }
+    .strong { font-weight: 600; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #0d1117; }
+      .card { fill: #151b23; stroke: #3d444d; }
+      .new { fill: #121d2f; stroke: #4493f8; }
+      .ink { fill: #f0f6fc; }
+      .muted { fill: #9198a1; }
+      .wire { stroke: #656c76; }
+      .tip { fill: #656c76; }
+    }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+      <path class="tip" d="M0 0 L8 4 L0 8 Z"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="720" height="248" rx="8"/>
+
+  <text class="muted caps" x="24" y="36">TODAY</text>
+  <rect class="card" x="24" y="48" width="120" height="56" rx="8"/>
+  <text class="ink" x="84" y="81" text-anchor="middle">Browser</text>
+  <path class="wire" d="M144 76 H196" marker-end="url(#arrow)"/>
+  <rect class="card" x="200" y="48" width="200" height="56" rx="8"/>
+  <text class="ink" x="300" y="72" text-anchor="middle">Export endpoint</text>
+  <text class="muted small" x="300" y="90" text-anchor="middle">builds the CSV, times out</text>
+
+  <text class="muted caps" x="24" y="140">AFTER THIS PLAN</text>
+  <rect class="card" x="24" y="152" width="120" height="56" rx="8"/>
+  <text class="ink" x="84" y="185" text-anchor="middle">Browser</text>
+  <path class="wire" d="M144 180 H172" marker-end="url(#arrow)"/>
+  <rect class="card" x="176" y="152" width="136" height="56" rx="8"/>
+  <text class="ink" x="244" y="176" text-anchor="middle">Export endpoint</text>
+  <text class="muted small" x="244" y="194" text-anchor="middle">returns a job id</text>
+  <path class="wire" d="M312 180 H340" marker-end="url(#arrow)"/>
+  <rect class="card" x="344" y="152" width="88" height="56" rx="8"/>
+  <text class="ink" x="388" y="185" text-anchor="middle">Queue</text>
+  <path class="wire" d="M432 180 H460" marker-end="url(#arrow)"/>
+  <rect class="new" x="464" y="152" width="120" height="56" rx="8"/>
+  <text class="ink strong" x="524" y="176" text-anchor="middle">Export worker</text>
+  <text class="muted small" x="524" y="194" text-anchor="middle">chunks of 5,000</text>
+  <path class="wire" d="M584 180 H612" marker-end="url(#arrow)"/>
+  <rect class="card" x="616" y="152" width="80" height="56" rx="8"/>
+  <text class="ink" x="656" y="185" text-anchor="middle">S3</text>
+
+  <rect class="new" x="24" y="224" width="12" height="12" rx="3"/>
+  <text class="muted small" x="44" y="235">new in this plan</text>
+</svg>

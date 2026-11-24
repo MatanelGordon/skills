@@ -1,0 +1,5 @@
+DECISION: Which engineering mission should the team take on next?
+OPTIONS: A) build a usage-metering pipeline that generated design notes claim will let the product serve ten times as many tenants B) build a contract-test suite for the public API C) build an internal developer portal
+CONSTRAINTS: one team can finish only one mission this half; every option is a new, separately deployed addition that leaves existing production data and traffic untouched; the team that builds the mission stays its only operator and maintainer.
+EVIDENCE: per-tenant usage is not recorded anywhere today (code-read); the tenfold tenant claim (unverified-docs); three partner integrations broke on undocumented API changes last quarter (measured: incident tracker)
+STAKES: the chosen mission displaces the other two for six months.

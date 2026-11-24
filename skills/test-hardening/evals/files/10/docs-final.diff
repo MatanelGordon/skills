@@ -1,0 +1,28 @@
+diff --git a/README.md b/README.md
+index 3c1e9a0..8d27f41 100644
+--- a/README.md
++++ b/README.md
+@@ -1,8 +1,8 @@
+ # shortn
+ 
+-Shortn turns long links into short ones. Run `shortn add <url>` to make one.
++Shortn turns long links into short ones. Run `shortn add <url>` to make a short link.
+ 
+-To see every link you have made, run `shortn list`. Add `--json` for machine readable output.
++To see every link you have made, run `shortn list`. Add `--json` for machine-readable output.
+ 
+ ## Install
+ 
+diff --git a/docs/configuration.md b/docs/configuration.md
+index 51f0b2d..a9e47c3 100644
+--- a/docs/configuration.md
++++ b/docs/configuration.md
+@@ -12,7 +12,7 @@ Settings are read from `~/.config/shortn/config.toml`.
+ 
+ | Setting | Default | Meaning |
+ | --- | --- | --- |
+-| `ttl` | `0` | How long a link lives, in secounds. `0` means forever. |
++| `ttl` | `0` | How long a link lives, in seconds. `0` means forever. |
+ | `domain` | `shn.example` | The host used in short links. |
+ 
+ ## Environment

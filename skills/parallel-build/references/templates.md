@@ -1,5 +1,24 @@
 # Templates
 
+## Ownership table
+
+Use this for a quick split, written to `ownership.md` in the run directory.
+Write one row per worker, then start every row at once unless the concurrency
+cap delays it.
+
+| Worker | Owns | Off-limits | Test command | Tool |
+|---|---|---|---|---|
+| `<slug>` | `<disjoint paths>` | `<every other worker's paths>` | `<command>` | `<tool/model>` |
+
+Filled in for three unrelated jobs (fix date parsing, add `--dry-run` to the
+sync tool, raise the default HTTP timeout):
+
+| Worker | Owns | Off-limits | Test command | Tool |
+|---|---|---|---|---|
+| `fix-dates` | `lib/dates.py`, `tests/test_dates.py` | `tools/**`, `config/**`, `tests/test_sync.py`, `tests/test_http.py` | `pytest tests/test_dates.py` | codex, `high` |
+| `sync-dry-run` | `tools/sync.py`, `tests/test_sync.py` | `lib/**`, `config/**`, `tests/test_dates.py`, `tests/test_http.py` | `pytest tests/test_sync.py` | codex, `high` |
+| `http-timeout` | `config/http.py`, `tests/test_http.py` | `lib/**`, `tools/**`, `tests/test_dates.py`, `tests/test_sync.py` | `pytest tests/test_http.py` | copilot |
+
 ## Plan directory layout
 
 ```
@@ -20,18 +39,19 @@
 they survive a reboot — after a crash they are often the only record of what an
 agent did.
 
-`.plan/` is **committed to git**: that is what lets other sessions and teammates
-share the plan and architecture. Commit `PROGRESS.md` updates as you go rather
-than letting the working tree sit dirty.
+`plan.md`, `PROGRESS.md`, `prompts/` and the review outputs are **committed to
+git** when git does not ignore `.plan/`: that is what lets other sessions and
+teammates share the plan and architecture. When `.plan/` is ignored, they stay
+local and are never force-added. `agents/` and `logs/` are never committed (see
+`parallel-build` step 3). For
+`PROGRESS.md` commits, main-working-tree location, and absolute-path rules, see
+`parallel-build` step 6 (Track progress).
 
 `<plan-name>` is concise and indicative: `oauth-device-flow`, `tui-memory`,
 `split-billing-service`. Not `plan1`, not `implement-the-new-feature-we-discussed`.
 
-**All of these live in the MAIN working tree and are addressed by absolute path.**
-Subagents run in worktrees but write their status file to the main tree's
-`agents/<slug>.md`. Never let a subagent write into `.plan/` inside its own
-worktree — that puts the file on its branch and turns every progress update into a
-merge conflict.
+For the `agents/<slug>.md` shape, use the **Progress reporting** section of the
+`cli-coding-subagents` prompt template.
 
 ---
 
@@ -105,25 +125,14 @@ Worktree root: `<parent>/.wt-<repo>/` · logs: `./logs/<slug>.log`
 
 ---
 
-## agents/<slug>.md
-
-Written by the subagent (its prompt requires it), read by the orchestrator.
-
-```markdown
-# <slug>
-STARTED: <HH:MM>
-STATUS: RUNNING | DONE | PARTIAL | BLOCKED
-STEP: <one line — what it is doing right now>
-CHANGED: <paths so far>
-TESTS: <command> -> pass|fail
-NOTES:
-- <decision / assumption>
-BLOCKED: <what stopped it, what it needs>
-```
-
----
-
 ## CR.md / SECURITY.md
+
+**Review workers.** A review worker run through a CLI is dispatched like any
+other: own worktree of the merged branch, the same prompt template. Its Scope
+is its findings file in the plan directory (absolute path) and its status file;
+the code is off-limits. In place of critical-path tests, its acceptance criteria
+are the shape below. A Claude `Agent` reviewer gets the same scope and criteria
+in its brief.
 
 ```markdown
 # Code Review — <plan-name>[ — part N]

@@ -6,6 +6,12 @@
       "prompt": "Add CSV export to the reports page. No repository or implementation context is attached.",
       "expected_output": "The reply starts by requesting/inspecting the missing project context and defines a plan to follow the default pipeline. It does not narrate fabricated searches, tests, review, mutation runs, or commits.",
       "files": [],
+      "assertions": [
+        "The reply identifies the missing repository, existing report/export behavior, acceptance criteria, and test commands",
+        "The reply sequences research, planning, TDD, implementation, default test hardening, review, verification, and commit",
+        "The reply treats mutation testing as a risk/value decision rather than automatic",
+        "The reply does not claim actions were completed"
+      ],
       "expectations": [
         "The reply identifies the missing repository, existing report/export behavior, acceptance criteria, and test commands",
         "The reply sequences research, planning, TDD, implementation, default test hardening, review, verification, and commit",
@@ -18,6 +24,10 @@
       "prompt": "Fix the typo 'occured' to 'occurred'.",
       "expected_output": "The reply uses the compact mandatory core and does not add research, a plan artifact, review, hardening, or mutation ceremony.",
       "files": [],
+      "assertions": [
+        "The reply proposes or performs the direct scoped fix and a proportionate check",
+        "The reply skips mutation testing and other feature-scale stages"
+      ],
       "expectations": [
         "The reply proposes or performs the direct scoped fix and a proportionate check",
         "The reply skips mutation testing and other feature-scale stages"
@@ -28,6 +38,11 @@
       "prompt": "The UTC+13 date-parsing bug is back. Users see yesterday's date.",
       "expected_output": "The reply reproduces the UTC+13 behavior with a failing test before the fix, verifies the same test green, and records the cause in the commit.",
       "files": [],
+      "assertions": [
+        "The reply puts a reproducing red test before the production fix",
+        "The reply verifies with the previously failing case",
+        "The reply does not automatically require mutation testing for this small bug"
+      ],
       "expectations": [
         "The reply puts a reproducing red test before the production fix",
         "The reply verifies with the previously failing case",
@@ -38,7 +53,14 @@
       "id": 4,
       "prompt": "Build a normal low-risk profile preference feature. The project has no mutation engine, and setup would exceed the feature budget.",
       "expected_output": "The reply uses the default feature pipeline including bounded test hardening and independent review, while explicitly skipping mutation testing because setup cost exceeds its risk/value.",
-      "files": ["evals/fixtures/profile-preference.md"],
+      "files": [
+        "evals/files/4/profile-preference.md"
+      ],
+      "assertions": [
+        "The reply includes post-implementation test hardening and review by fresh eyes",
+        "The reply explicitly skips mutation testing with the cost/value reason",
+        "The reply does not call the feature incomplete because optional mutation was skipped"
+      ],
       "expectations": [
         "The reply includes post-implementation test hardening and review by fresh eyes",
         "The reply explicitly skips mutation testing with the cost/value reason",
@@ -49,7 +71,14 @@
       "id": 5,
       "prompt": "Authorization policy evaluation changed. The plan marks it critical, Stryker is already configured, and a 10-minute scoped budget is approved.",
       "expected_output": "The reply selects mutation testing under the documented risk/value rule, after a green hardened freeze, and keeps review clearance and incomplete semantics intact.",
-      "files": ["evals/fixtures/authorization-plan.md"],
+      "files": [
+        "evals/files/5/authorization-plan.md"
+      ],
+      "assertions": [
+        "The reply explains why critical decision logic, configured tooling, and an approved scope justify mutation testing",
+        "The reply freezes green code and isolates the mutation run",
+        "The reply does not remediate review-affected results before clearance"
+      ],
       "expectations": [
         "The reply explains why critical decision logic, configured tooling, and an approved scope justify mutation testing",
         "The reply freezes green code and isolates the mutation run",
@@ -61,6 +90,11 @@
       "prompt": "The optional mutation budget expired with Pending work, but clean tests and code review pass. Finish the workflow.",
       "expected_output": "The reply says the mutation stage is incomplete and cannot be presented or committed as complete, reports residual risk for a user decision, and does not falsely say clean tests or review failed.",
       "files": [],
+      "assertions": [
+        "The reply preserves the distinction between incomplete optional mutation evidence and successful clean tests/review",
+        "The reply stops for the user's accept/rerun/stop decision",
+        "The reply does not use score or narration to fabricate completion"
+      ],
       "expectations": [
         "The reply preserves the distinction between incomplete optional mutation evidence and successful clean tests/review",
         "The reply stops for the user's accept/rerun/stop decision",
@@ -72,11 +106,129 @@
       "prompt": "This host has no subagents and does not support git worktrees. Explain how to complete default hardening/review and an explicitly requested mutation run.",
       "expected_output": "The reply uses reset/fresh-context sequential passes for hardening/review, a disposable clone/copy with production hash checks for mutation, and reports the loss of independent judgment. It stops if safe isolation is unavailable.",
       "files": [],
+      "assertions": [
+        "The reply provides a concrete no-subagent fallback",
+        "The reply provides a disposable clone/copy fallback for worktrees",
+        "The reply never applies mutations in the feature checkout",
+        "The reply reports capability limitations honestly"
+      ],
       "expectations": [
         "The reply provides a concrete no-subagent fallback",
         "The reply provides a disposable clone/copy fallback for worktrees",
         "The reply never applies mutations in the feature checkout",
         "The reply reports capability limitations honestly"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "The first review of a payment change found missing idempotency. I applied a production fix and the targeted tests pass. Can I proceed directly to verify and commit?",
+      "expected_output": "The reply says no: the review-driven production fix invalidates prior approval, so the complete cumulative diff needs a second fresh review pass after the relevant tests are green. It proceeds only if the full convergence gate is satisfied.",
+      "files": [],
+      "assertions": [
+        "The reply requires a second fresh review even though the targeted tests pass",
+        "The reply sends the complete cumulative diff, acceptance criteria, and prior finding/fix to review",
+        "The reply checks all severity dispositions and relevant/repository test state before verification"
+      ],
+      "expectations": [
+        "The reply requires a second fresh review even though the targeted tests pass",
+        "The reply sends the complete cumulative diff, acceptance criteria, and prior finding/fix to review",
+        "The reply checks all severity dispositions and relevant/repository test state before verification"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "The fourth review pass still reports an unresolved HIGH authorization finding after repeated fixes. Keep reviewing until it passes and mark the change complete.",
+      "expected_output": "The reply refuses to claim completion or start an automatic fifth pass. It must stop and escalate the unresolved finding and residual risk to the user for a new decision.",
+      "files": [],
+      "assertions": [
+        "The reply treats four as the total pass cap rather than four extra retries",
+        "The reply stops and escalates instead of looping indefinitely",
+        "The reply preserves the unresolved HIGH finding and does not mark the work complete"
+      ],
+      "expectations": [
+        "The reply treats four as the total pass cap rather than four extra retries",
+        "The reply stops and escalates instead of looping indefinitely",
+        "The reply preserves the unresolved HIGH finding and does not mark the work complete"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "The first review pass is clean and the full test suite passes. Mark this non-trivial feature complete now.",
+      "expected_output": "The reply does not mark the feature complete yet. It requires a second fresh full-diff review of the complete cumulative change even though the first pass and tests are clean.",
+      "files": [],
+      "assertions": [
+        "The reply enforces the two-pass minimum when no finding was discovered",
+        "The reply requires fresh eyes or a fresh context for the second pass",
+        "The reply reviews the complete cumulative diff rather than only new changes"
+      ],
+      "expectations": [
+        "The reply enforces the two-pass minimum when no finding was discovered",
+        "The reply requires fresh eyes or a fresh context for the second pass",
+        "The reply reviews the complete cumulative diff rather than only new changes"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "Add rate limiting to the public search endpoint of our API (Express, `src/routes/search.ts`, Jest tests under `test/`). The repository is on GitHub and I am here to answer questions. Reply with your plan and anything you need from me before you write any code. Do not implement it.",
+      "expected_output": "The reply gives a plan and asks once, alongside it, whether the change should be reviewed through a pull request.",
+      "files": [],
+      "assertions": [
+        "The reply asks the user whether the change should be reviewed through a pull request.",
+        "The reply puts the question to the user now, rather than listing it as a later step of the plan."
+      ],
+      "expectations": [
+        "The reply asks the user whether the change should be reviewed through a pull request.",
+        "The reply puts the question to the user now, rather than listing it as a later step of the plan."
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "The plan for CSV export on the reports page is approved, and yes, put this change through a pull request. Nothing is implemented yet. Reply with the ordered list of stages you will run from here. Mark the point where the branch is pushed and the pull request is opened, say how later fixes reach GitHub, and say what state the pull request is in when you stop. Do not implement anything.",
+      "expected_output": "The reply says a draft pull request is opened between test hardening and the first review pass, and that review fixes arrive as new commits with no force-push. It says the pull request ends marked ready and unmerged.",
+      "files": [],
+      "assertions": [
+        "The reply places the opening of the pull request after a step that adds edge-case tests to an implementation whose tests already pass.",
+        "The reply says the pull request is opened as a draft.",
+        "The reply rules out force-pushing review fixes.",
+        "The reply says the pull request stays unmerged until the user gives explicit permission."
+      ],
+      "expectations": [
+        "The reply places the opening of the pull request after a step that adds edge-case tests to an implementation whose tests already pass.",
+        "The reply says the pull request is opened as a draft.",
+        "The reply rules out force-pushing review fixes.",
+        "The reply says the pull request stays unmerged until the user gives explicit permission."
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "PR #42 for the rate-limiting change is open as a draft, and I have been reading it on GitHub while you reviewed. Both review passes are clean, every finding has a disposition, and the full test suite and CI are green. The branch has no conflicts and branch protection would allow a merge now. I am going offline for the rest of the day. Finish up. Reply with the steps you take now, in order.",
+      "expected_output": "The reply says final verification is run, the pull request is updated and marked ready, and nothing is merged. It says merging waits for the user's explicit permission.",
+      "files": [],
+      "assertions": [
+        "The reply says the pull request is marked ready for review.",
+        "The reply contains no step that merges the pull request.",
+        "The reply says merging waits for the user's explicit permission."
+      ],
+      "expectations": [
+        "The reply says the pull request is marked ready for review.",
+        "The reply contains no step that merges the pull request.",
+        "The reply says merging waits for the user's explicit permission."
+      ]
+    },
+    {
+      "id": 14,
+      "prompt": "This is an unattended overnight run: nobody will answer questions until morning. The brief says nothing about pull requests. The repository is on GitHub and `gh` is signed in. Task: add retry with backoff to the webhook sender in `src/webhooks/send.ts`. Reply with the steps this run takes from start to finish, including what it does with git. Describe the run; do not write the code in this reply.",
+      "expected_output": "The reply says the run does not wait for an answer, pushes nothing, opens no pull request and reviews locally. It says it will tell the user that review through a pull request was off.",
+      "files": [],
+      "assertions": [
+        "The reply says no pull request will be opened.",
+        "The reply says nothing will be pushed to GitHub.",
+        "The reply says it will tell the user that review through a pull request was off."
+      ],
+      "expectations": [
+        "The reply says no pull request will be opened.",
+        "The reply says nothing will be pushed to GitHub.",
+        "The reply says it will tell the user that review through a pull request was off."
       ]
     }
   ]

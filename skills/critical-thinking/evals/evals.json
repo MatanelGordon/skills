@@ -3,46 +3,162 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Great, the migration is done. Anything I should be aware of before we ship?",
-      "expected_output": "Any flagged decision arrives as a comparison table: 2-4 option columns, Pros/Cons/Cost/Reversible rows, a recommendation restating its own con, and an 'if you do nothing' line. Pure status facts stay prose.",
-      "files": [],
+      "prompt": "Great, the migration is done. Your notes from the session are attached as `migration-notes.md` (in a workspace the file is at `input/1/migration-notes.md`). The repository isn't available here, so go by the notes. Write me the wrap-up: what was done, and anything I should be aware of before we ship on Thursday. Put the whole wrap-up in your reply.",
+      "expected_output": "A wrap-up that reports the finished migration work as plain facts and presents the one open choice, what to do with `orders_v1`, as a single comparison table of 2 to 4 options with a recommendation and a line on what happens if nothing is decided.",
+      "files": [
+        "evals/files/1/migration-notes.md"
+      ],
+      "assertions": [
+        "The reply contains a table in which each option for the old `orders_v1` table has its own column or its own row.",
+        "The reply contains exactly one table.",
+        "The reply states at least one downside for every option it gives for `orders_v1`.",
+        "The reply says that, if `orders_v1` is left in place, the disk alert fires in about 4 weeks (or about a month)."
+      ],
       "expectations": [
-        "Each genuine decision point is a table, not a closing-paragraph 'consider...'",
-        "Every option column has real cons",
-        "Cost row is concrete (time/money), not 'some effort'",
-        "Recommendation names the recommended option's own downside",
-        "'If you do nothing' default is stated"
+        "The reply contains a table in which each option for the old `orders_v1` table has its own column or its own row.",
+        "The reply contains exactly one table.",
+        "The reply states at least one downside for every option it gives for `orders_v1`.",
+        "The reply says that, if `orders_v1` is left in place, the disk alert fires in about 4 weeks (or about a month)."
       ]
     },
     {
       "id": 2,
-      "prompt": "Rename the variable and push. Let me know when done.",
-      "expected_output": "No table. Trivial completed work with no decision gets a one-line confirmation.",
-      "files": [],
+      "prompt": "The variable rename I asked for is finished and pushed. Your notes from that session are attached as `session-notes.md` (in a workspace the file is at `input/2/session-notes.md`). The repository isn't available here, so go by the notes. Let me know it's done: a short message saying what was renamed, in which files, and the commit. Put the message in your reply.",
+      "expected_output": "A few lines confirming the rename of `usr_cnt` to `userCount`, the three files and commit `3f9c2ab`. No table, no options, no recommendation.",
+      "files": [
+        "evals/files/2/session-notes.md"
+      ],
+      "assertions": [
+        "The reply names the commit `3f9c2ab`.",
+        "The reply contains no table.",
+        "The reply presents no options for the user to choose between."
+      ],
       "expectations": [
-        "No comparison table for an FYI-only summary",
-        "No manufactured decision points"
-      ]
+        "The reply names the commit `3f9c2ab`.",
+        "The reply contains no table.",
+        "The reply presents no options for the user to choose between."
+      ],
+      "expected_skill": null
     },
     {
       "id": 3,
-      "prompt": "What are my options for hosting this side project's Postgres?",
-      "expected_output": "A 2-4 column table with pros, cons, concrete cost, reversibility, an honest recommendation, and the do-nothing default. Not five columns, no strawman option.",
-      "files": [],
+      "prompt": "What are my options for hosting this side project's Postgres? What I know about the project and the candidates I have looked at is in the attached `hosting-notes.md` (in a workspace the file is at `input/3/hosting-notes.md`). Reply with the options and the one you would pick. Don't set anything up.",
+      "expected_output": "A side-by-side table of at most four hosting options that fit the stated limits, with pros, cons, cost and reversibility for each, a pick that admits its own downside, and what happens if the database stays on the laptop.",
+      "files": [
+        "evals/files/3/hosting-notes.md"
+      ],
+      "assertions": [
+        "The reply contains a table in which each hosting option it compares has its own column or its own row.",
+        "The reply compares at most 4 hosting options; a candidate it only mentions as ruled out is not counted.",
+        "The $38-a-month big-cloud instance is not one of the options the reply compares; mentioning it as ruled out is allowed.",
+        "The reply says, for every hosting option it compares, how hard it would be to move away from that option later.",
+        "The reply says that, if no option is chosen, the site keeps going down when the laptop is closed, off or asleep; naming any one of these is enough."
+      ],
       "expectations": [
-        "At most 4 options, all genuinely viable",
-        "Reversibility uses trivially / with effort / one-way",
-        "Recommendation includes its honest con, or explicitly declares a true toss-up"
+        "The reply contains a table in which each hosting option it compares has its own column or its own row.",
+        "The reply compares at most 4 hosting options; a candidate it only mentions as ruled out is not counted.",
+        "The $38-a-month big-cloud instance is not one of the options the reply compares; mentioning it as ruled out is allowed.",
+        "The reply says, for every hosting option it compares, how hard it would be to move away from that option later.",
+        "The reply says that, if no option is chosen, the site keeps going down when the laptop is closed, off or asleep; naming any one of these is enough."
       ]
     },
     {
       "id": 4,
-      "prompt": "Should we migrate the whole platform from REST to gRPC? Give me the trade-offs.",
-      "expected_output": "Table for the comparison, plus escalation: this is one-way and expensive, so it offers a deeper pass (kepner-tregoe weighted analysis or a pre-mortem) rather than settling it in a table alone.",
-      "files": [],
+      "prompt": "Should we migrate the whole platform from REST to gRPC? Give me the trade-offs. The facts and the platform team's estimates are in the attached `platform-facts.md` (in a workspace the file is at `input/4/platform-facts.md`). Answer in your reply; I'm taking it to Monday's architecture review.",
+      "expected_output": "Lays out the trade-offs between the migration paths, says how hard each option would be to undo, with the full migration hardest and costliest, and offers a deeper analysis (a pre-mortem or a weighted scoring) before committing instead of treating one table as the verdict.",
+      "files": [
+        "evals/files/4/platform-facts.md"
+      ],
+      "assertions": [
+        "The reply says, for every option it compares, how hard that option would be to undo.",
+        "The reply offers a pre-mortem, a weighted scoring of the options, or a deeper analysis of the decision as a step before committing; an offer to make the answer more specific if given more details does not count."
+      ],
       "expectations": [
-        "Flags the decision as one-way/expensive",
-        "Offers escalation to a full framework instead of overreaching with the table"
+        "The reply says, for every option it compares, how hard that option would be to undo.",
+        "The reply offers a pre-mortem, a weighted scoring of the options, or a deeper analysis of the decision as a step before committing; an offer to make the answer more specific if given more details does not count."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Your notes from the PAY-212 session are attached as `session-notes.md` (in a workspace the file is at `input/5/session-notes.md`). The repository isn't available here, so go by the notes. Write the hand-off summary I'll read before tomorrow's stand-up: what was done, and what you need from me. Put the whole summary in your reply.",
+      "expected_output": "A hand-off summary with two decision tables, one for retries on `POST /charges` and one for the CI sandbox key, each followed by a recommendation and a do-nothing line. The setting name, the scratch branch and the changelog section are settled in a sentence, not put to the reader.",
+      "files": [
+        "evals/files/5/session-notes.md"
+      ],
+      "assertions": [
+        "The reply contains exactly two tables.",
+        "The reply contains a table in which each option for retries on `POST /charges` has its own column or its own row.",
+        "The reply does not ask the reader to decide the setting name, the scratch branch or the changelog section.",
+        "The reply states, for each of the two decisions it puts to the reader, what happens if no option is chosen."
+      ],
+      "expectations": [
+        "The reply contains exactly two tables.",
+        "The reply contains a table in which each option for retries on `POST /charges` has its own column or its own row.",
+        "The reply does not ask the reader to decide the setting name, the scratch branch or the changelog section.",
+        "The reply states, for each of the two decisions it puts to the reader, what happens if no option is chosen."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "We want the nightly sales report to start on its own instead of by hand. How it runs today is described in the attached `job-context.md` (in a workspace the file is at `input/6/job-context.md`). Tell me how you would schedule it and why. Don't write any code; reply with your proposal.",
+      "expected_output": "A proposal that shows the scheduling approaches side by side in a table with cons and a cost for each, names one of them, and states that approach's own downside.",
+      "files": [
+        "evals/files/6/job-context.md"
+      ],
+      "assertions": [
+        "The reply contains a table in which at least two scheduling approaches each have their own column or their own row.",
+        "The reply states at least one downside for every scheduling approach it compares.",
+        "The reply gives a cost for every scheduling approach it compares, as a number with a unit of time, money or work, or as none.",
+        "The paragraph that names the recommended approach also states a downside of that same approach."
+      ],
+      "expectations": [
+        "The reply contains a table in which at least two scheduling approaches each have their own column or their own row.",
+        "The reply states at least one downside for every scheduling approach it compares.",
+        "The reply gives a cost for every scheduling approach it compares, as a number with a unit of time, money or work, or as none.",
+        "The paragraph that names the recommended approach also states a downside of that same approach."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Write this week's status update for the team channel from the attached notes, `week-47-notes.md` (in a workspace the file is at `input/7/week-47-notes.md`). Keep it short enough to read in the channel, and reply with the update only.",
+      "expected_output": "A short status update saying that product search is moving to hosted Meilisearch, with the staging results and the Wednesday switch. The closed decision is reported as made: no table and no options.",
+      "files": [
+        "evals/files/7/week-47-notes.md"
+      ],
+      "assertions": [
+        "The reply says product search is moving to the hosted Meilisearch plan.",
+        "The reply gives the Wednesday 09:00 production switch.",
+        "The reply contains no table.",
+        "The reply presents no options for the reader to choose between."
+      ],
+      "expectations": [
+        "The reply says product search is moving to the hosted Meilisearch plan.",
+        "The reply gives the Wednesday 09:00 production switch.",
+        "The reply contains no table.",
+        "The reply presents no options for the reader to choose between."
+      ],
+      "expected_skill": null
+    },
+    {
+      "id": 8,
+      "prompt": "Here is where the CSV export stands, attached as `export-status.md` (in a workspace the file is at `input/8/export-status.md`). I'm the product owner. Tell me what you need me to decide and what you would do. Put it all in your reply.",
+      "expected_output": "A message that puts the inventory-export choice in one table (hide the button, cap at 500,000 rows, or hold the feature) with a cost and a reversibility rating for each, a recommendation with its own downside, and what ships if nobody chooses.",
+      "files": [
+        "evals/files/8/export-status.md"
+      ],
+      "assertions": [
+        "The reply contains a table in which each way of handling the inventory export has its own column or its own row.",
+        "The reply gives a cost for every way of handling the inventory export it compares, as a number with a unit of time, money or work, or as none.",
+        "The reply says, for every way of handling the inventory export it compares, how hard that choice would be to undo.",
+        "The paragraph that names the recommended option also states a downside of that same option.",
+        "The reply says that, if no option is chosen before the branch is cut, the inventory export ships and fails for the largest customers."
+      ],
+      "expectations": [
+        "The reply contains a table in which each way of handling the inventory export has its own column or its own row.",
+        "The reply gives a cost for every way of handling the inventory export it compares, as a number with a unit of time, money or work, or as none.",
+        "The reply says, for every way of handling the inventory export it compares, how hard that choice would be to undo.",
+        "The paragraph that names the recommended option also states a downside of that same option.",
+        "The reply says that, if no option is chosen before the branch is cut, the inventory export ships and fails for the largest customers."
       ]
     }
   ]

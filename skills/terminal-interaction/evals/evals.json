@@ -3,73 +3,154 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Can you actually try our init wizard and tell me if the prompts make sense? It asks for a project name then an environment.",
-      "expected_output": "Searches for an existing driver first, then drives the wizard through a real PTY, sends the answers, captures the screen, and reports what it saw with the reproduction command.",
-      "files": [],
+      "prompt": "Can you actually try our init wizard and tell me if the prompts make sense? It asks for a project name, then an environment. It is attached as `wizard.py` (in a workspace it is at `input/1/wizard.py`) and starts with `python3 wizard.py`. Answer `acme` to the first question and `prod` to the second. If you cannot run programs where you are, say so and give me the exact command or short script you would run, with the screen you expect from it. Put your whole answer in this reply: what you sent, what the screen showed (or would show), and whether both prompts appeared and took the answers.",
+      "expected_output": "Drives `wizard.py` on a pseudo-terminal, waiting for each prompt before answering it, and reports the screen: `Project name:`, then `Environment [dev/prod]:`, ending in `Created acme (prod)`. Answers piped in are never asked for: the wizard then prints `Created my-app (dev)`.",
+      "files": [
+        "evals/files/1/wizard.py"
+      ],
+      "assertions": [
+        "The reply contains a command or script that runs `wizard.py` on a pseudo-terminal and types both answers itself (for example with Python's `pty` module, `script`, `expect`, tmux or a PTY driver), so `wizard.py` does not read them from a pipe or a file.",
+        "That command or script sends `prod` only after waiting for the text `Environment` to appear, not straight after `acme` and not after a fixed delay.",
+        "The reply does not say that piping or redirecting `acme` and `prod` into `wizard.py` makes it print `Created acme (prod)`."
+      ],
       "expectations": [
-        "Looks for an MCP terminal server, published skill, or existing CLI before hand-rolling a driver",
-        "Drives through a real PTY rather than piping stdin, so prompts actually render",
-        "Waits for each prompt pattern rather than sleeping a fixed amount",
-        "Reports what was sent, the captured screen, and the finding - not a raw transcript dump",
-        "Cleans up any session it created"
+        "The reply contains a command or script that runs `wizard.py` on a pseudo-terminal and types both answers itself (for example with Python's `pty` module, `script`, `expect`, tmux or a PTY driver), so `wizard.py` does not read them from a pipe or a file.",
+        "That command or script sends `prod` only after waiting for the text `Environment` to appear, not straight after `acme` and not after a fixed delay.",
+        "The reply does not say that piping or redirecting `acme` and `prod` into `wizard.py` makes it print `Created acme (prod)`."
       ]
     },
     {
       "id": 2,
-      "prompt": "The dashboard TUI looks fine for me but a colleague says the table is mangled. Take a look.",
-      "expected_output": "Reproduces at multiple explicit terminal widths, since layout bugs are width bugs, and reports the width at which it breaks.",
-      "files": [],
+      "prompt": "The dashboard looks fine for me but a colleague says the table is mangled on his screen: the columns do not line up. Take a look. It is attached as `dashboard.py` (in a workspace it is at `input/2/dashboard.py`); `python3 dashboard.py` prints the table once and exits. If you cannot run programs where you are, say so and work out from the source what the table looks like at each width you would try. Put your whole answer in this reply: when it breaks, what the broken table looks like, and the exact commands I can use to see it on my own machine.",
+      "expected_output": "Looks at the table at several explicit terminal widths (for example 60, 80 and 200 columns) and reports two breaks: at 64 columns or fewer the SERVICE column width drops to zero or below and the rows stop lining up, and at 160 columns or more the rows gain a date column that the header does not have.",
+      "files": [
+        "evals/files/2/dashboard.py"
+      ],
+      "assertions": [
+        "The commands for `dashboard.py` that were run, or that the reply gives, set at least three different terminal widths.",
+        "The reply puts the narrow limit, below which the rows stop lining up, within one column of 64 (for example 'below 64', 'at 64 or fewer' or 'under 65').",
+        "The reply says the rows are also out of line with the header at 160 columns or wider."
+      ],
       "expectations": [
-        "Sets terminal size explicitly rather than inheriting whatever is current",
-        "Tries narrow, normal and wide widths to find the breaking point",
-        "Captures scrollback as well as the visible pane if content scrolled away",
-        "Reports the specific width where rendering breaks"
+        "The commands for `dashboard.py` that were run, or that the reply gives, set at least three different terminal widths.",
+        "The reply puts the narrow limit, below which the rows stop lining up, within one column of 64 (for example 'below 64', 'at 64 or fewer' or 'under 65').",
+        "The reply says the rows are also out of line with the header at 160 columns or wider."
       ]
     },
     {
       "id": 3,
-      "prompt": "Our deploy CLI just hangs forever when I run it from a script, but it's fine when I run it by hand.",
-      "expected_output": "Recognises the TTY difference: the program is likely waiting on a prompt it only renders when stdout is a terminal. Reproduces both ways to confirm.",
-      "files": [],
+      "prompt": "Our deploy CLI just hangs forever when I run it from a script, but it's fine when I run it by hand. The CLI is `deploy.py` and the script is `release.sh`; `stuck-screen.txt` is what `tmux capture-pane -t release -p` printed a minute into the hang (all three attached; in a workspace they are in `input/3/`). tmux is not installed where you are, so this cannot be reproduced there: work from the three files and do not run anything. The fix has to keep using tmux: it is the only terminal tool on the release box. Reply with the cause and with `release.sh` corrected, in full.",
+      "expected_output": "Says `release.sh` sends `y` after a fixed one-second sleep, while the three-second health check is still running, so `deploy.py` throws the key away and then waits at its `[y/N]` prompt. The corrected script polls the pane for the prompt text, with a limit, before it sends `y`, and removes the tmux session when it gives up.",
+      "files": [
+        "evals/files/3/deploy.py",
+        "evals/files/3/release.sh",
+        "evals/files/3/stuck-screen.txt"
+      ],
+      "assertions": [
+        "The reply says the `y` is sent while the health check is still running, before the `Deploy api to prod? [y/N]` prompt is on screen.",
+        "The corrected `release.sh` waits until the captured screen contains the prompt text (for example `[y/N]`) before it sends `y`.",
+        "In the corrected `release.sh`, the wait for the prompt is bounded by a time limit or a maximum number of tries, so it cannot loop forever.",
+        "The corrected `release.sh` ends the `release` tmux session if it gives up or fails (for example with `tmux kill-session -t release` or a `trap`)."
+      ],
       "expectations": [
-        "Identifies piped-vs-PTY as the probable cause rather than guessing at a deadlock",
-        "Reproduces under a real PTY and under a pipe to compare",
-        "Explains that programs suppress prompts and colour when not attached to a TTY"
+        "The reply says the `y` is sent while the health check is still running, before the `Deploy api to prod? [y/N]` prompt is on screen.",
+        "The corrected `release.sh` waits until the captured screen contains the prompt text (for example `[y/N]`) before it sends `y`.",
+        "In the corrected `release.sh`, the wait for the prompt is bounded by a time limit or a maximum number of tries, so it cannot loop forever.",
+        "The corrected `release.sh` ends the `release` tmux session if it gives up or fails (for example with `tmux kill-session -t release` or a `trap`)."
       ]
     },
     {
       "id": 4,
-      "prompt": "Write me a driver script that sends keys to our TUI and greps the output.",
-      "expected_output": "Searches for existing tooling before writing anything, names what it found, and only hand-rolls if nothing fits - saying so explicitly.",
-      "files": [],
+      "prompt": "Write me a driver script that sends keys to our TUI and greps the output. It is for the coding agent that does our manual checks on the test box: start `python3 menu.py`, press `j` twice and then Enter, and tell me whether `Selected: staging` shows up. What that box has is listed in `host-tools.txt` (attached; in a workspace it is at `input/4/host-tools.txt`). The box is not the machine you are on, so do not try to run anything. Give me your answer in full in the reply.",
+      "expected_output": "Points out that the box already has the `terminal-control` MCP server, which starts a session, sends keys and reads the screen, and recommends the agent use it ahead of a new script. Any script it still offers drives `menu.py` through tmux, which is installed there, not through a pipe or a tool the box lacks.",
+      "files": [
+        "evals/files/4/host-tools.txt"
+      ],
+      "assertions": [
+        "The reply recommends the `terminal-control` MCP server listed in `host-tools.txt` as the first choice for sending the keys and reading the screen.",
+        "Every script or command sequence in the reply drives `menu.py` through the `terminal-control` server or through tmux, the two terminal tools that `host-tools.txt` lists."
+      ],
       "expectations": [
-        "Runs a search for MCP servers and published skills covering terminal driving",
-        "Names what it found and whether it fits",
-        "Only writes a bespoke driver after stating that nothing suitable exists",
-        "Does not silently hand-roll because searching felt slow"
+        "The reply recommends the `terminal-control` MCP server listed in `host-tools.txt` as the first choice for sending the keys and reading the screen.",
+        "Every script or command sequence in the reply drives `menu.py` through the `terminal-control` server or through tmux, the two terminal tools that `host-tools.txt` lists."
       ]
     },
     {
       "id": 5,
-      "prompt": "Add a regression test suite with assertions for all the TUI keyboard shortcuts and wire it into CI.",
-      "expected_output": "Out of scope for this skill. Says so plainly - this skill covers exploratory drive-and-observe, not authoring test suites or CI wiring - and points at the framework's own test harness.",
-      "files": [],
+      "prompt": "Add a regression test suite with assertions for all the keyboard shortcuts in our TUI. The key handling is in `keys.py` (attached; in a workspace it is at `input/5/keys.py`). CI already runs `python3 -m unittest discover`, so a `test_keys.py` next to `keys.py` is all the wiring it needs. Give me the test file in full: write it next to `keys.py` if you can write files, otherwise put it in your reply.",
+      "expected_output": "A `unittest` file that imports `handle_key` and asserts the resulting state for each of the six shortcuts. No terminal session, no captured screen and no manual-test report.",
+      "files": [
+        "evals/files/5/keys.py"
+      ],
+      "assertions": [
+        "The test file, in the reply or written as `test_keys.py`, imports `handle_key` from `keys` and calls it directly.",
+        "The test file has at least one assertion for each of the six shortcuts `j`, `k`, `g`, `G`, `enter` and `q`.",
+        "Neither the reply nor the test file starts the TUI in tmux, `expect`, `script` or a pseudo-terminal.",
+        "The reply contains no captured terminal screen from driving the TUI by hand."
+      ],
       "expectations": [
-        "States that building assertion suites and CI wiring is outside this skill's scope",
-        "Points toward the framework-native test harness for durable tests",
-        "Does not refuse the underlying work, just does not treat it as manual-testing driving"
-      ]
+        "The test file, in the reply or written as `test_keys.py`, imports `handle_key` from `keys` and calls it directly.",
+        "The test file has at least one assertion for each of the six shortcuts `j`, `k`, `g`, `G`, `enter` and `q`.",
+        "Neither the reply nor the test file starts the TUI in tmux, `expect`, `script` or a pseudo-terminal.",
+        "The reply contains no captured terminal screen from driving the TUI by hand."
+      ],
+      "expected_skill": null
     },
     {
       "id": 6,
-      "prompt": "Run the installer on this box and confirm it completes cleanly.",
-      "expected_output": "Checks for tmux rather than assuming it, falls back to the zero-install PTY driver when absent, polls for completion output instead of sleeping, and reports evidence.",
-      "files": [],
+      "prompt": "I ran the installer on the new box and need to confirm it completed cleanly so I can close the ticket. I drove it in tmux: the commands I used are in `how-i-ran-it.txt` and the screen I captured at the end is `pane-capture.txt` (both attached; in a workspace they are in `input/6/`). The box has been wiped since, so this capture is all there is. Did the install complete cleanly? Reply with your verdict and what I should do differently on the next box, if anything.",
+      "expected_output": "Says a clean completion cannot be confirmed: the capture is only the last 24-row screenful, starting at step 40 of 60, so whatever steps 1 to 39 printed had scrolled off. Tells the user to capture the scrollback or the whole output next time.",
+      "files": [
+        "evals/files/6/how-i-ran-it.txt",
+        "evals/files/6/pane-capture.txt"
+      ],
+      "assertions": [
+        "The reply says the capture holds only the last screenful: the output of steps 1 to 39 is not in it.",
+        "The reply's verdict is that a clean completion cannot be confirmed from this capture, not that the install was clean.",
+        "The reply names a way to get the earlier lines next time: tmux scrollback (`capture-pane` with `-S`) or saving the installer's whole output to a file."
+      ],
       "expectations": [
-        "Checks whether tmux exists before using it",
-        "Falls back to a PTY driver that needs no installation when tmux is missing",
-        "Polls for a specific completion string rather than waiting a fixed time",
-        "Reports the captured evidence rather than asserting it worked"
+        "The reply says the capture holds only the last screenful: the output of steps 1 to 39 is not in it.",
+        "The reply's verdict is that a clean completion cannot be confirmed from this capture, not that the install was clean.",
+        "The reply names a way to get the earlier lines next time: tmux scrollback (`capture-pane` with `-S`) or saving the installer's whole output to a file."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "I spent the morning poking at `srvtop` in tmux and my raw notes are in `session-notes.txt` (attached; in a workspace it is at `input/7/session-notes.txt`). Turn them into the finding I can paste into a ticket for the srvtop team, who have not seen any of this. Reply with the ticket text only.",
+      "expected_output": "A short finding: after `j j Enter` at 80x24 the cursor is on `db-01` but the detail pane shows `web-01`, in 3 of 3 runs; at 200x50 the pane was right in both runs. It carries a trimmed screen excerpt and the tmux commands to repeat it, waiting for the `q quit` footer before the keys.",
+      "files": [
+        "evals/files/7/session-notes.txt"
+      ],
+      "assertions": [
+        "The write-up includes a screen excerpt in which the cursor row `> db-01` appears with a detail pane headed `web-01`.",
+        "The reproduction steps say to wait until named screen text (such as the `q quit` footer) is showing before sending `j j Enter`, not to wait a fixed time.",
+        "The write-up says the problem showed in 3 of 3 runs at 80x24.",
+        "The write-up says the problem did not show in either of the 2 runs at 200x50."
+      ],
+      "expectations": [
+        "The write-up includes a screen excerpt in which the cursor row `> db-01` appears with a detail pane headed `web-01`.",
+        "The reproduction steps say to wait until named screen text (such as the `q quit` footer) is showing before sending `j j Enter`, not to wait a fixed time.",
+        "The write-up says the problem showed in 3 of 3 runs at 80x24.",
+        "The write-up says the problem did not show in either of the 2 runs at 200x50."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "I want a small script the whole team can run to poke at our menu TUI: start `python3 menu.py`, press `j` twice, press Enter, and print what ends up on the screen. `menu.py` is attached (in a workspace it is at `input/8/menu.py`). People are on a mix of Linux and Mac laptops and I do not know what each of them has installed. Give me the script in full, as one self-contained file (we have no helper scripts of our own); I will run it myself, so you do not need to.",
+      "expected_output": "One script that runs `menu.py` on a pseudo-terminal of a fixed size without assuming tmux or expect is installed, waits for the menu text before each key instead of sleeping, and prints the final screen with `Selected: staging`.",
+      "files": [
+        "evals/files/8/menu.py"
+      ],
+      "assertions": [
+        "The script gives `menu.py` a pseudo-terminal with nothing beyond Python 3's standard library or the operating system's own tools (for example Python's `pty` module or the `script` command), so it runs where neither tmux nor `expect` is installed.",
+        "The script sets the terminal size to an explicit number of columns and rows.",
+        "The script waits for text that `menu.py` prints (such as `Enter select` or `> qa`) before it sends a key, instead of sleeping for a fixed time."
+      ],
+      "expectations": [
+        "The script gives `menu.py` a pseudo-terminal with nothing beyond Python 3's standard library or the operating system's own tools (for example Python's `pty` module or the `script` command), so it runs where neither tmux nor `expect` is installed.",
+        "The script sets the terminal size to an explicit number of columns and rows.",
+        "The script waits for text that `menu.py` prints (such as `Enter select` or `> qa`) before it sends a key, instead of sleeping for a fixed time."
       ]
     }
   ]

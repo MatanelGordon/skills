@@ -3,31 +3,171 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Add an export-to-PDF endpoint for invoices.",
-      "expected_output": "New feature folder/slice with its own handler+logic+tests, registered via the existing discovery pattern - not new methods scattered across controller/service/repository layers.",
-      "files": [],
+      "prompt": "Our billing API is attached: src/app.ts, src/routes/invoiceRoutes.ts, src/controllers/invoiceController.ts, src/services/invoiceService.ts and src/repositories/invoiceRepository.ts (in a workspace they are under input/1/src/). We need a new endpoint, GET /api/invoices/:id/export.csv, that returns the invoice's lines as CSV with the columns description, quantity, unitPrice, and 404 when the invoice does not exist. Reply with three things: the files you would create, the existing files you would edit (one line each on why), and the code that builds the CSV response in full. Do not write the other files.",
+      "expected_output": "The export is a new feature folder with its own handler; the invoice controller and invoice service are not edited, and at most one existing file changes to wire the endpoint in.",
+      "files": [
+        "evals/files/1/src/app.ts",
+        "evals/files/1/src/routes/invoiceRoutes.ts",
+        "evals/files/1/src/controllers/invoiceController.ts",
+        "evals/files/1/src/services/invoiceService.ts",
+        "evals/files/1/src/repositories/invoiceRepository.ts"
+      ],
+      "assertions": [
+        "`invoiceController.ts` is not among the existing files listed for editing or edited.",
+        "`invoiceService.ts` is not among the existing files listed for editing or edited.",
+        "At most one existing file is listed for editing or edited.",
+        "The CSV-building code is in a new file inside a folder named for the export (for example `src/features/invoices/export-invoice-csv/`), not in `src/controllers/` or `src/services/`."
+      ],
       "expectations": [
-        "Creates a feature slice, not edits across horizontal layers",
-        "Minimal touch on shared files (registration point only)"
+        "`invoiceController.ts` is not among the existing files listed for editing or edited.",
+        "`invoiceService.ts` is not among the existing files listed for editing or edited.",
+        "At most one existing file is listed for editing or edited.",
+        "The CSV-building code is in a new file inside a folder named for the export (for example `src/features/invoices/export-invoice-csv/`), not in `src/controllers/` or `src/services/`."
       ]
     },
     {
       "id": 2,
-      "prompt": "I'll just add a fourth method to InvoiceController for this.",
-      "expected_output": "The skill's trigger moment - redirects to a new slice instead of growing the god controller.",
-      "files": [],
+      "prompt": "I need an endpoint that emails a payment reminder for an unpaid invoice: POST api/invoices/{id}/remind, using the IEmailSender that Program.cs already registers (it has Task SendAsync(string to, string subject, string body)). I'll just add a fourth action, SendReminder, to InvoiceController and a SendReminderAsync method to InvoiceService, same as the others. The files are attached as Controllers/InvoiceController.cs, Services/InvoiceService.cs and Program.cs (in a workspace they are under input/2/). Before I start: list the files you would create and the existing files you would edit for this, then give the file that holds the reminder logic in full.",
+      "expected_output": "Steers the user away from growing InvoiceController and InvoiceService: the reminder becomes its own feature folder with its own handler, and neither existing class is edited.",
+      "files": [
+        "evals/files/2/Controllers/InvoiceController.cs",
+        "evals/files/2/Services/InvoiceService.cs",
+        "evals/files/2/Program.cs"
+      ],
+      "assertions": [
+        "`InvoiceController.cs` is not among the existing files listed for editing or edited.",
+        "`InvoiceService.cs` is not among the existing files listed for editing or edited.",
+        "The reminder logic is in a new file inside a folder named for the reminder (for example `Features/Invoices/SendReminder/`)."
+      ],
       "expectations": [
-        "Flags the controller-growth moment and proposes a slice"
+        "`InvoiceController.cs` is not among the existing files listed for editing or edited.",
+        "`InvoiceService.cs` is not among the existing files listed for editing or edited.",
+        "The reminder logic is in a new file inside a folder named for the reminder (for example `Features/Invoices/SendReminder/`)."
       ]
     },
     {
       "id": 3,
-      "prompt": "Fix the rounding bug inside the existing calculateTotals method.",
-      "expected_output": "Bug fix stays in place; no restructuring ceremony for a fix.",
-      "files": [],
+      "prompt": "Invoice totals are off by a cent. One line of 1 x 19.99 at 8% tax shows a total of 21.58, but the tax should be 1.60 and the total 21.59. The service is attached as invoiceService.ts (in a workspace it is at input/3/src/services/invoiceService.ts). Fix the bug and give me the corrected calculateTotals method.",
+      "expected_output": "The corrected calculateTotals method, edited in place, rounding the tax to the nearest cent instead of flooring it. No new files or folders.",
+      "files": [
+        "evals/files/3/src/services/invoiceService.ts"
+      ],
+      "assertions": [
+        "The corrected `calculateTotals` does not use `Math.floor` to compute the tax.",
+        "No new file or folder is named or created."
+      ],
       "expectations": [
-        "No slice refactor imposed on a localized bug fix"
+        "The corrected `calculateTotals` does not use `Math.floor` to compute the tax.",
+        "No new file or folder is named or created."
+      ],
+      "expected_skill": null
+    },
+    {
+      "id": 4,
+      "prompt": "Our order service is a small FastAPI app, attached as app/main.py, app/shared/mediator.py, app/shared/order_store.py, app/features/orders/handlers.py and app/features/orders/routes.py (in a workspace they are under input/4/app/). Add a cancel-order command: POST /orders/{order_id}/cancel sets the order's status to \"cancelled\", returns 404 when the order does not exist and 409 when its status is not \"created\". Reply with the files you would create, then the existing files you would edit (write \"none\" if there are none), then the cancel handler in full.",
+      "expected_output": "Cancel-order is a new folder with its own command, handler and router, picked up by the existing scan in app/main.py; handlers.py, routes.py and main.py stay unchanged.",
+      "files": [
+        "evals/files/4/app/main.py",
+        "evals/files/4/app/shared/mediator.py",
+        "evals/files/4/app/shared/order_store.py",
+        "evals/files/4/app/features/orders/handlers.py",
+        "evals/files/4/app/features/orders/routes.py"
+      ],
+      "assertions": [
+        "`handlers.py` is not among the existing files listed for editing or edited.",
+        "`routes.py` is not among the existing files listed for editing or edited.",
+        "The cancel handler is in a new file inside a folder named for cancelling (for example `app/features/orders/cancel_order/`)."
+      ],
+      "expectations": [
+        "`handlers.py` is not among the existing files listed for editing or edited.",
+        "`routes.py` is not among the existing files listed for editing or edited.",
+        "The cancel handler is in a new file inside a folder named for cancelling (for example `app/features/orders/cancel_order/`)."
       ]
+    },
+    {
+      "id": 5,
+      "prompt": "Our order API is attached: src/features/index.ts, src/shared/orders.ts and the create-order feature as src/features/orders/create-order/command.ts, handler.ts and endpoint.ts (in a workspace they are under input/5/src/). Business customers now need to place orders billed to their account instead of paying by card: no card token, no charge, and paymentRef is set to \"account:<customerId>\". Card orders must keep working exactly as they do now. List the files you would create and the existing files you would edit, then give the handler that creates an on-account order in full.",
+      "expected_output": "On-account ordering is a new slice beside create-order with its own command, handler and endpoint, sharing src/shared/orders.ts; the create-order files are not edited and no handler branches on the payment method.",
+      "files": [
+        "evals/files/5/src/features/index.ts",
+        "evals/files/5/src/shared/orders.ts",
+        "evals/files/5/src/features/orders/create-order/command.ts",
+        "evals/files/5/src/features/orders/create-order/handler.ts",
+        "evals/files/5/src/features/orders/create-order/endpoint.ts"
+      ],
+      "assertions": [
+        "`create-order/handler.ts` is not among the existing files listed for editing or edited.",
+        "`create-order/command.ts` is not among the existing files listed for editing or edited.",
+        "The on-account handler contains no `if` or `switch` that chooses between card payment and account billing.",
+        "The on-account handler is in a new folder under `src/features/orders/` (for example `create-order-on-account/`)."
+      ],
+      "expectations": [
+        "`create-order/handler.ts` is not among the existing files listed for editing or edited.",
+        "`create-order/command.ts` is not among the existing files listed for editing or edited.",
+        "The on-account handler contains no `if` or `switch` that chooses between card payment and account billing.",
+        "The on-account handler is in a new folder under `src/features/orders/` (for example `create-order-on-account/`)."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Attached is our payments API (in a workspace it is under input/6/): tree.txt shows the layout, and src/app.ts, src/routes/index.ts and src/features/payments/get-payment/endpoint.ts are included as they are. I need a new endpoint, POST /api/payments/:id/refund. List the files you would create and the existing files you would edit, then give the full new text of every existing file you edit. You do not need to write the refund handler itself.",
+      "expected_output": "The refund endpoint is a new folder under src/features/payments/. Wiring it in with one import in src/routes/index.ts is acceptable, but the reply points out that this file changes for every new endpoint and suggests mounting endpoints by scanning src/features instead.",
+      "files": [
+        "evals/files/6/tree.txt",
+        "evals/files/6/src/app.ts",
+        "evals/files/6/src/routes/index.ts",
+        "evals/files/6/src/features/payments/get-payment/endpoint.ts"
+      ],
+      "assertions": [
+        "The reply points out that `src/routes/index.ts` has to be edited every time an endpoint is added.",
+        "The reply proposes or makes a change that mounts endpoints by scanning `src/features` at startup (for example with `readdirSync` or a glob)."
+      ],
+      "expectations": [
+        "The reply points out that `src/routes/index.ts` has to be edited every time an endpoint is added.",
+        "The reply proposes or makes a change that mounts endpoints by scanning `src/features` at startup (for example with `readdirSync` or a glob)."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Our order service is attached as app/main.py, app/shared/event_bus.py, app/shared/mailer.py, app/features/orders/create_order/handler.py and app/features/orders/subscribers.py (in a workspace they are under input/7/app/; app/shared/order_store.py is left out, it only stores orders). When an order is created, the customer should also get an email with the subject \"Order <id> confirmed\". List the files you would create and the existing files you would edit, then give each of those files in full.",
+      "expected_output": "The confirmation email is sent by a subscriber to OrderCreated in a new file of its own, which app/main.py's import scan already picks up; subscribers.py, create_order/handler.py and main.py are left unchanged.",
+      "files": [
+        "evals/files/7/app/main.py",
+        "evals/files/7/app/shared/event_bus.py",
+        "evals/files/7/app/shared/mailer.py",
+        "evals/files/7/app/features/orders/create_order/handler.py",
+        "evals/files/7/app/features/orders/subscribers.py"
+      ],
+      "assertions": [
+        "`subscribers.py` is not among the existing files listed for editing or edited.",
+        "The `send_email` call is in a new file, not in `subscribers.py` or `create_order/handler.py`.",
+        "No existing file is listed for editing or edited."
+      ],
+      "expectations": [
+        "`subscribers.py` is not among the existing files listed for editing or edited.",
+        "The `send_email` call is in a new file, not in `subscribers.py` or `create_order/handler.py`.",
+        "No existing file is listed for editing or edited."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Please rename the function get in app/shared/order_store.py to find_by_id; people keep confusing it with dict.get. It is used only in app/features/orders/handlers.py. Both files are attached (in a workspace they are under input/8/app/). Give each changed file in full.",
+      "expected_output": "Both files given back with get renamed to find_by_id and the call site updated. No new files or folders.",
+      "files": [
+        "evals/files/8/app/shared/order_store.py",
+        "evals/files/8/app/features/orders/handlers.py"
+      ],
+      "assertions": [
+        "`order_store.py`, as given in the reply or as edited, has no function named `get`.",
+        "`handlers.py` calls `order_store.find_by_id(`.",
+        "No new file or folder is named or created."
+      ],
+      "expectations": [
+        "`order_store.py`, as given in the reply or as edited, has no function named `get`.",
+        "`handlers.py` calls `order_store.find_by_id(`.",
+        "No new file or folder is named or created."
+      ],
+      "expected_skill": null
     }
   ]
 }

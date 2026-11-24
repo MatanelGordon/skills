@@ -1,0 +1,46 @@
+Mutation pass notes: invoices service, proration
+
+frozen commit   8c2d4f1 (feat/proration, reviewed)     merge base 0b6e9a3
+scope           named by the user: src/billing/prorate.js, lines 10-48
+engine          StrykerJS 10.1.1, vitest runner 10.1.1, Node 22.12.0
+test scope      npx vitest run tests/billing/prorate.test.js
+budget          15 minutes or 40 mutants; used 6m 10s and 24 mutants
+baseline        unmutated suite green, 14 tests, 1.9 s
+raw report      .mutation-tmp/discovery.json
+sha256          80e4e39269c93fa299f814797ab7a18d908f1fdf5f4cfc82cbf0d3e3652ac08a (taken before any triage)
+
+Native status counts, discovery run
+  Killed 17   Survived 2   Timeout 1   NoCoverage 0   CompileError 1   Ignored 3   Pending 0
+
+Survivor 12   EqualityOperator   src/billing/prorate.js:31:14
+  - if (days <= daysInMonth) {
+  + if (days < daysInMonth) {
+  behaviour: a customer active for the whole month is billed the full monthly price
+  test added in the mutation worktree: tests/billing/prorate.test.js,
+    "bills the full price when the days equal the month length"
+  candidate commit d19e6a7, parent 8c2d4f1, changes tests/billing/prorate.test.js only
+  clean run: green, 15 tests
+  rerun limited to prorate.js line 31: mutant 12 Killed
+    report .mutation-tmp/targeted-12.json
+    sha256 d65e146c1c8a65201aef157037fe2c3839e060f18c01d1f2adff41455297693c
+  assertion and diff reviewed by Dana, who did not write the test
+
+Survivor 19   ConditionalExpression   src/billing/prorate.js:22:7
+  - if (days === 0) return 0;
+  + if (false) return 0;
+  Sam, who ran this mutation pass, marked it equivalent: "the formula on line 26
+  also gives 0 when days is 0, so dropping the early return changes nothing a
+  caller can see"
+  second opinion: none so far
+
+Timeout 7   UpdateOperator   src/billing/prorate.js:37:30
+  spot check: reran alone with three times the timeout, still never finishes
+  (the mutated loop counts the wrong way)
+
+Import
+  guard passed on d19e6a7
+  tests/billing/prorate.test.js restored onto feat/proration, committed as e77a0c5
+  after import: guard, clean suite and the mutant 12 rerun all green
+
+Cleanup
+  worktree ../invoices-mutation removed, branch mutation/proration deleted

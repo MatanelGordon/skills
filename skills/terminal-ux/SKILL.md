@@ -1,15 +1,10 @@
 ---
 name: terminal-ux
 description: >
-  Build complex, testable terminal UIs and data visualizations with Ink (React for CLIs)
-  — dashboards, live charts, sparklines, braille plots, gauges, tables, progress, log
-  panes, and keyboard-driven layouts. Use whenever writing or reviewing a TUI, CLI
-  output, or terminal visualization: Ink components, Box flexbox layout, colors,
-  keyboard input and focus, redraw performance, terminal width and resize handling, and
-  rendering data as text. Also use when asked to test a terminal UI — covers
-  ink-testing-library, renderToString, snapshot and layout-invariant tests, simulating
-  keystrokes, and the async input gotcha. Ink specific: assumes React + Ink, not
-  blessed/blessed-contrib/Textual.
+  Use when writing, fixing or testing an Ink (React) TUI or CLI output: dashboards,
+  charts, sparklines, tables, layout, keys, color, ink-testing-library; full-screen
+  setup (alternate screen, cursor, restoring the terminal) and resize bugs: ghost or
+  blank frames, handlers fighting, clear codes.
 license: MIT
 metadata:
   author: Matanel Gordon
@@ -105,6 +100,22 @@ message — never let content wrap into garbage.
 `truncate-start`, `truncate-middle`, `truncate-end`. Choose deliberately for every
 piece of variable-length text; unbounded content in a fixed box is the most common
 TUI layout bug.
+
+## Full-screen apps and resize
+
+A TUI that takes over the whole terminal, the way `htop` or `less` does, has
+three rules that are easy to get wrong. Read `references/full-screen-and-resize.md`
+before you write its entry point, and whenever a resize leaves ghost or repeated
+frames, a blank screen, or a divider stuck at its old width. It has the reasons,
+the code and the exact order the resize handlers must run in.
+
+1. **Render into the alternate screen:** write `\x1B[?1049h` (and hide the cursor)
+   before `render()`, and restore both from a `process.once('exit', ...)` handler.
+2. **Clear on resize from the entry point, before `render()`:** a `resize`
+   listener writing `\x1B[2J\x1B[H`, registered first so Ink draws onto a clean
+   screen. Never in a `useEffect`, and never `\x1Bc`.
+3. **Keep the width in React state,** set by a resize handler that does nothing else
+   (on Ink 7, `useWindowSize()` does this for you).
 
 ## Width: the wide-character trap
 
@@ -315,5 +326,6 @@ values, negatives, NaN, huge numbers, very long labels, emoji and CJK text.
 - [ ] Current-view hotkeys visible; `?` help; `Ctrl-C` always exits
 - [ ] `<Static>` used for append-only history
 - [ ] High-frequency updates throttled
+- [ ] Full-screen apps follow the three rules in `references/full-screen-and-resize.md`
 - [ ] Tests await a tick after `stdin.write()`
 - [ ] Tested with empty, single, flat, negative, and wide-character data

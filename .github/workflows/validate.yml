@@ -22,12 +22,15 @@ jobs:
           - { os: windows-latest, node: 20 }
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # validate reads git history to find retired skill names
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
       - run: npm ci
       - run: npm test
       - run: npm run validate
+      - run: npm run test:planning-eval
   mutation-smoke:
     if: github.event_name != 'schedule'
     name: test-only import smoke / Node 22

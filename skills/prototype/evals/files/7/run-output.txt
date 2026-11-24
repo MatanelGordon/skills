@@ -1,0 +1,2 @@
+$ python3 waitlist_spike.py
+all scenarios ran, no errors

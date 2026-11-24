@@ -3,44 +3,182 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Create the Job model - it's either pending, running with a worker id, or finished with an output path.",
-      "expected_output": "Frozen slotted dataclasses per state joined in a type union, matched with match/case ending in assert_never - not one class with a status field and Optionals.",
+      "prompt": "I'm starting our job runner in Python 3.12 and need the Job model as `job.py`. A job is in exactly one of three states: pending, running with a worker id, or finished with an output path. Also add a `describe(job)` function that returns a one-line summary for whichever state the job is in. Give me the whole module in one code block (and save it as `job.py` if you can write files). No need to run or type-check it, I'll do that.",
+      "expected_output": "A `job.py` with one frozen dataclass per state joined in a `Job` union, a `NewType` for the worker id, and a `describe` that uses `match` ending in `assert_never`; not one class with a status field and optional fields.",
       "files": [],
+      "assertions": [
+        "The final `job.py` code has a separate class for each of the three states (pending, running, finished), not one `Job` class with a status field.",
+        "Every state class in the final `job.py` code is decorated with `@dataclass(frozen=True)`; further arguments such as `slots=True` are allowed.",
+        "The `describe` function in the final `job.py` code uses a `match` statement whose last `case` arm calls `assert_never`.",
+        "The worker id in the final `job.py` code is typed with a `NewType` (for example `WorkerId = NewType(\"WorkerId\", str)`), not with plain `str` or `int`."
+      ],
       "expectations": [
-        "@dataclass(frozen=True, slots=True) per variant",
-        "type Job = union of variants; match with assert_never",
-        "tuple/Mapping fields, not list/dict, in frozen dataclasses"
+        "The final `job.py` code has a separate class for each of the three states (pending, running, finished), not one `Job` class with a status field.",
+        "Every state class in the final `job.py` code is decorated with `@dataclass(frozen=True)`; further arguments such as `slots=True` are allowed.",
+        "The `describe` function in the final `job.py` code uses a `match` statement whose last `case` arm calls `assert_never`.",
+        "The worker id in the final `job.py` code is typed with a `NewType` (for example `WorkerId = NewType(\"WorkerId\", str)`), not with plain `str` or `int`."
       ]
     },
     {
       "id": 2,
-      "prompt": "Should parse_config return None when the file is malformed?",
-      "expected_output": "No - None means absence, not failure. Returns a Result (Ok/Err union or returns library) carrying why it failed.",
-      "files": [],
+      "prompt": "Is `None` the right thing for `parse_config` in the attached `config.py` (in a workspace it is at `input/2/config.py`) to return when the file is malformed? Users write these files by hand, so broken ones are routine, and right now the Settings page tells them no file was found when the actual problem is a typo in it. The page has to say what is wrong. Answer yes or no in one line, then give me the rewritten `config.py` in full in one code block. Python 3.12, standard library only. No need to run it.",
+      "expected_output": "Says no, then a rewritten `config.py` in which `parse_config` returns a result type whose failure side is an error class with fields (ideally one per cause: missing file, malformed file) instead of `None` or a raised exception.",
+      "files": [
+        "evals/files/2/config.py"
+      ],
+      "assertions": [
+        "The return annotation of `parse_config` in the rewritten code is a result type that separates success from failure (for example `Result[Config, ConfigError]` or `Config | ConfigError`), not `Config | None`, plain `Config`, or one class with optional `config` and `error` fields.",
+        "The `settings_banner` function in the rewritten code branches on the value returned by `parse_config` with a `match` statement, not with `if` or `isinstance` checks.",
+        "The malformed-file failure in the rewritten code is returned as an instance of a class with at least one field (for example a dataclass `Malformed` with a `reason`), not as a bare string and not as an instance of an `Exception` subclass."
+      ],
       "expectations": [
-        "Distinguishes absence (None/Optional) from failure (Result with error)",
-        "Suggests the small hand-rolled Ok/Err union or returns, proportional to project size"
+        "The return annotation of `parse_config` in the rewritten code is a result type that separates success from failure (for example `Result[Config, ConfigError]` or `Config | ConfigError`), not `Config | None`, plain `Config`, or one class with optional `config` and `error` fields.",
+        "The `settings_banner` function in the rewritten code branches on the value returned by `parse_config` with a `match` statement, not with `if` or `isinstance` checks.",
+        "The malformed-file failure in the rewritten code is returned as an instance of a class with at least one field (for example a dataclass `Malformed` with a `reason`), not as a bare string and not as an instance of an `Exception` subclass."
       ]
     },
     {
       "id": 3,
-      "prompt": "Refactor this isinstance-chain dispatch into something safer.",
-      "expected_output": "match/case on the union with destructuring, assert_never for exhaustiveness, checked by mypy/pyright strict.",
-      "files": [],
+      "prompt": "Last week someone added a `Webhook` notification class and forgot to update `render`, so webhooks went out as empty strings and nobody noticed for days. I have reverted that change; the attached `notifications.py` (in a workspace it is at `input/3/notifications.py`) is the current file. Refactor it so that forgetting a class in `render` cannot slip through again. Python 3.12. Reply with the whole refactored file in one code block, then one or two sentences on how the next omission would get caught. No need to run it.",
+      "expected_output": "The notification classes without a shared base class, joined in a union that `render` takes as its parameter type, and a `render` built on `match` ending in `assert_never`, with a note that a static type checker reports a missing case before the code runs.",
+      "files": [
+        "evals/files/3/notifications.py"
+      ],
+      "assertions": [
+        "The `render` function in the refactored code uses a `match` statement whose last `case` arm calls `assert_never`.",
+        "The parameter of `render` in the refactored code is annotated with a union of the notification classes, written inline or through an alias such as `type Notification = Email | Sms | Push`.",
+        "No notification class in the refactored code inherits from a shared base class; `class Email(Notification):` and its siblings are gone.",
+        "The reply says that a static type checker (it may name mypy or pyright) reports the unhandled class before the code runs."
+      ],
       "expectations": [
-        "match/case replaces isinstance chains",
-        "assert_never gives checker-enforced exhaustiveness",
-        "Mentions strict type checking as the enforcement layer"
+        "The `render` function in the refactored code uses a `match` statement whose last `case` arm calls `assert_never`.",
+        "The parameter of `render` in the refactored code is annotated with a union of the notification classes, written inline or through an alias such as `type Notification = Email | Sms | Push`.",
+        "No notification class in the refactored code inherits from a shared base class; `class Email(Notification):` and its siblings are gone.",
+        "The reply says that a static type checker (it may name mypy or pyright) reports the unhandled class before the code runs."
       ]
     },
     {
       "id": 4,
-      "prompt": "Quick one-off script to bulk-rename these files, nothing fancy.",
-      "expected_output": "Plain pragmatic script; no returns library, no Result ceremony for a throwaway.",
+      "prompt": "Quick one-off: I have a folder of photos whose names end in `.jpeg` and I need them all to end in `.jpg`. Give me a tiny Python script I can run once from inside that folder and then delete. Nothing fancy, just the script.",
+      "expected_output": "A short plain script that loops over the `.jpeg` files in the current folder and renames each to `.jpg`. No result types, no dataclasses, no third-party imports.",
       "files": [],
+      "assertions": [
+        "The reply contains a Python script that renames files ending in `.jpeg` to the same name ending in `.jpg`, using `Path.rename`, `os.rename` or `shutil.move`.",
+        "The script defines or imports no `Ok`, `Err` or `Result` type.",
+        "The script contains no `@dataclass` decorator.",
+        "The script imports nothing from outside the Python standard library."
+      ],
       "expectations": [
-        "No FP ceremony imposed on a one-off script"
+        "The reply contains a Python script that renames files ending in `.jpeg` to the same name ending in `.jpg`, using `Path.rename`, `os.rename` or `shutil.move`.",
+        "The script defines or imports no `Ok`, `Err` or `Result` type.",
+        "The script contains no `@dataclass` decorator.",
+        "The script imports nothing from outside the Python standard library."
       ]
+    },
+    {
+      "id": 5,
+      "prompt": "Bug report from checkout: the order preview calls `apply_coupon` on the customer's cart just to show a 'with coupon' total, and afterwards the customer's own cart has the discounted prices too. Previewing twice discounts twice. The code is the attached `cart.py` (in a workspace it is at `input/5/cart.py`). Refactor the module so that this kind of bug cannot happen anywhere in it, not only in `apply_coupon`. Python 3.12. Reply with the whole refactored file in one code block. No need to run it.",
+      "expected_output": "`LineItem` and `Cart` as frozen dataclasses with the items held in a tuple; adding an item and applying a coupon each return a new `Cart` and leave the one they were given unchanged.",
+      "files": [
+        "evals/files/5/cart.py"
+      ],
+      "assertions": [
+        "`LineItem` and `Cart` in the refactored code are each declared with `@dataclass(frozen=True)`; further arguments such as `slots=True` are allowed.",
+        "The `items` field of `Cart` in the refactored code is annotated as a `tuple` (for example `tuple[LineItem, ...]`), not as a `list`.",
+        "The operation that adds an item to a cart in the refactored code (the `add` method or a function that replaces it) returns a new `Cart`, built with `dataclasses.replace` or a `Cart(...)` call, instead of returning `None`."
+      ],
+      "expectations": [
+        "`LineItem` and `Cart` in the refactored code are each declared with `@dataclass(frozen=True)`; further arguments such as `slots=True` are allowed.",
+        "The `items` field of `Cart` in the refactored code is annotated as a `tuple` (for example `tuple[LineItem, ...]`), not as a `list`.",
+        "The operation that adds an item to a cart in the refactored code (the `add` method or a function that replaces it) returns a new `Cart`, built with `dataclasses.replace` or a `Cart(...)` call, instead of returning `None`."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Please review the attached `subscription.py` (in a workspace it is at `input/6/subscription.py`) before I merge it. It is new domain code for our billing service: the API layer calls `renew` when a customer clicks Renew, and shows them a message when the renewal is refused. Python 3.12. Give me a numbered list of at most six findings, most important first. For each one name the class or function, say what is wrong, and say what you want changed, with a line or two of code where that helps. Do not rewrite the whole file.",
+      "expected_output": "A numbered list of findings that includes: `Subscription` should be a frozen dataclass, the refusal is raised instead of returned, `datetime.now()` is called inside the rule instead of the time being passed in, and the status string with its optional cancel fields should be one class per state.",
+      "files": [
+        "evals/files/6/subscription.py"
+      ],
+      "assertions": [
+        "One finding asks for `Subscription` (or the classes that replace it) to be declared with `@dataclass(frozen=True)`; further arguments such as `slots=True` are allowed.",
+        "One finding asks for the cancelled-subscription refusal in `renew` to be returned as a value (for example `Err(...)` or a `Result` return type) instead of raised.",
+        "One finding asks for `datetime.now()` to be taken out of `renew` by passing the current time (or a clock) in as a parameter.",
+        "One finding asks for the `status` string and the optional `cancelled_at` and `cancel_reason` fields to be replaced by one class per state (for example `Trial | Active | Cancelled`)."
+      ],
+      "expectations": [
+        "One finding asks for `Subscription` (or the classes that replace it) to be declared with `@dataclass(frozen=True)`; further arguments such as `slots=True` are allowed.",
+        "One finding asks for the cancelled-subscription refusal in `renew` to be returned as a value (for example `Err(...)` or a `Result` return type) instead of raised.",
+        "One finding asks for `datetime.now()` to be taken out of `renew` by passing the current time (or a clock) in as a parameter.",
+        "One finding asks for the `status` string and the optional `cancelled_at` and `cancel_reason` fields to be replaced by one class per state (for example `Trial | Active | Cancelled`)."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Write `signup.py` for our web app (Python 3.12, standard library only). It needs one function that takes the raw form fields `email`, `username` and `age`, all strings, and turns them into a signup record the rest of the code can rely on. Rules: the email contains exactly one `@`; the username is 3 to 20 characters, only letters, digits and underscores; the age is a whole number from 13 to 120. The form handler calls this on every submission and has to show the user which field was wrong and why. Give me the whole module in one code block (and save it as `signup.py` if you can write files). No need to run it.",
+      "expected_output": "A `signup.py` whose parsing function returns a result type: a frozen signup record on success and, on failure, a dataclass that names the field (by attribute or by class) and carries the reason. Nothing is raised for a broken rule, and validated strings such as the email are `NewType`s.",
+      "files": [],
+      "assertions": [
+        "The signup record returned on success in the final `signup.py` code is an instance of a class declared with `@dataclass(frozen=True)` (further arguments such as `slots=True` are allowed), not a `dict` or a plain class.",
+        "The return annotation of the parsing function in the final `signup.py` code is a result type that separates success from failure (for example `Result[Signup, Invalid]` or `Ok[Signup] | Err[Invalid]`), not a tuple, plain `Signup`, or one class with optional value and error fields.",
+        "A broken rule in the final `signup.py` code is returned as a dataclass instance that names the field by an attribute (`Invalid(field=\"age\", ...)`) or by its class (`InvalidAge(...)`), not as a string, a `dict` entry or an exception.",
+        "The final `signup.py` code declares at least one `NewType` for a validated value (for example `Email = NewType(\"Email\", str)`)."
+      ],
+      "expectations": [
+        "The signup record returned on success in the final `signup.py` code is an instance of a class declared with `@dataclass(frozen=True)` (further arguments such as `slots=True` are allowed), not a `dict` or a plain class.",
+        "The return annotation of the parsing function in the final `signup.py` code is a result type that separates success from failure (for example `Result[Signup, Invalid]` or `Ok[Signup] | Err[Invalid]`), not a tuple, plain `Signup`, or one class with optional value and error fields.",
+        "A broken rule in the final `signup.py` code is returned as a dataclass instance that names the field by an attribute (`Invalid(field=\"age\", ...)`) or by its class (`InvalidAge(...)`), not as a string, a `dict` entry or an exception.",
+        "The final `signup.py` code declares at least one `NewType` for a validated value (for example `Email = NewType(\"Email\", str)`)."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Write `trial.py` for our billing service (Python 3.12, standard library only). A free trial starts at `started_at` and runs for 14 days. Then the account gets a 3-day grace period, and after that the trial is expired. I need one function that tells me which of the three a trial is in right now and, for the first two, how many whole days are left before it moves on. The dashboard and a nightly job will both call it. Give me the whole module in one code block (and save it as `trial.py` if you can write files). No need to run it.",
+      "expected_output": "A `trial.py` whose function takes the current time as a required argument instead of reading the clock, and returns one of three state classes: active and grace carry the days left, expired carries none.",
+      "files": [],
+      "assertions": [
+        "The function that works out the trial state in the final `trial.py` code has a parameter for the current time with no default value (for example `now: datetime`).",
+        "The return annotation of the function that works out the trial state in the final `trial.py` code is a union of one class per state (for example `Active | Grace | Expired`), written inline or through an alias."
+      ],
+      "expectations": [
+        "The function that works out the trial state in the final `trial.py` code has a parameter for the current time with no default value (for example `now: datetime`).",
+        "The return annotation of the function that works out the trial state in the final `trial.py` code is a union of one class per state (for example `Active | Grace | Expired`), written inline or through an alias."
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "In the attached Django `models.py` (in a workspace it is at `input/9/models.py`), add an optional `nickname` to `Customer`, at most 40 characters, and a `set_nickname(nickname)` method that works the way `deactivate` does: set the value and save only that column. Reply with the updated `Customer` class in one code block. I will write the migration myself; no need to run anything.",
+      "expected_output": "The same Django model class with a `nickname` `CharField` of at most 40 characters and a `set_nickname` method that assigns `self.nickname` and saves with `update_fields`. The class stays a `models.Model`: no dataclass, no result type.",
+      "files": [
+        "evals/files/9/models.py"
+      ],
+      "assertions": [
+        "The `Customer` class in the reply still inherits from `models.Model`.",
+        "The reply adds `nickname` to `Customer` as a `models.CharField` with `max_length=40`.",
+        "The `set_nickname` method in the reply assigns to `self.nickname`.",
+        "The reply's code contains none of `@dataclass`, `Ok`, `Err` or `Result`."
+      ],
+      "expectations": [
+        "The `Customer` class in the reply still inherits from `models.Model`.",
+        "The reply adds `nickname` to `Customer` as a `models.CharField` with `max_length=40`.",
+        "The `set_nickname` method in the reply assigns to `self.nickname`.",
+        "The reply's code contains none of `@dataclass`, `Ok`, `Err` or `Result`."
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Quick Python question, nothing to write or review: what is the actual difference between `except Exception:` and a bare `except:`? A few sentences is enough.",
+      "expected_output": "A few sentences saying that a bare `except:` catches every `BaseException`, including `KeyboardInterrupt` and `SystemExit`, while `except Exception:` lets those through. No advice to replace exceptions with returned error values.",
+      "files": [],
+      "assertions": [
+        "The reply names `KeyboardInterrupt` or `SystemExit` as something a bare `except:` catches and `except Exception:` lets through.",
+        "The reply does not suggest returning an error value (such as a `Result`, `Ok`/`Err` or an error dataclass) instead of raising exceptions."
+      ],
+      "expectations": [
+        "The reply names `KeyboardInterrupt` or `SystemExit` as something a bare `except:` catches and `except Exception:` lets through.",
+        "The reply does not suggest returning an error value (such as a `Result`, `Ok`/`Err` or an error dataclass) instead of raising exceptions."
+      ],
+      "expected_skill": null
     }
   ]
 }

@@ -1,7 +1,9 @@
 ---
 name: browser-interaction
 description: >
-  Human-like browser drive: open, click, type, inspect, report evidence. Use when asked to test/try/click through/"see if it works"; check Chrome/Safari/Firefox/Edge; reproduce UI bugs; verify forms/flows/logins/layouts; investigate local-pass but reported-fail behavior; or choose a tool to drive a browser. Seek an existing host capability, installed CLI/library, or published skill and say plainly if none fits. Covers page structure, console/network evidence, WebKit ≠ Safari, and signed-in state. Not factual lookups, test suites, or CI.
+  Use when manually testing or clicking through a web page in a real browser, or
+  choosing a tool to drive one: reproduce UI bugs; verify forms, logins, layouts,
+  Safari, or cross-browser behavior. Not for factual lookups, test suites, or CI.
 license: MIT
 metadata:
   author: Matanel Gordon

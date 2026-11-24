@@ -1,0 +1,17 @@
+Host: build-agent-07 (Debian 12). No outbound internet, no sudo.
+Agent tools on this box: shell only (no browser tool, no web search).
+
+$ which google-chrome chromium firefox
+/usr/bin/google-chrome
+$ google-chrome --version
+Google Chrome 145.0.7632.45
+$ node --version
+v22.12.0
+$ npm ls --depth=0
+(empty)
+$ pip list 2>/dev/null | grep -i -E "playwright|selenium|pyppeteer|websocket"
+websockets   15.0
+$ which chrome-devtools playwright chromedriver geckodriver
+(nothing found)
+$ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/checkout
+200

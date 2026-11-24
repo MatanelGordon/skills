@@ -1,0 +1,18 @@
+REVIEWER POOL (every reviewer the panel can draw on, with each one's remit and when they join round one)
+
+Skeptic: hunts for what breaks before shipping, such as failure modes, edge cases and load.
+  Joins round one when: Always.
+Pragmatist: optimises for what actually ships, at what cost, with this team and this stack.
+  Joins round one when: Always.
+Visionary: asks from first principles whether the design is correct, and rebuilds from the essentials when the model is wrong.
+  Joins round one when: The options disagree about the domain model itself, or the decision is a rewrite, replatform, or port of an existing component.
+Hupert-Graph: scrutinises every coupling and the technical debt each option leaves, and prefers the option whose largest required piece of work is smallest.
+  Joins round one when: The decision shapes how future components attach through a platform or ecosystem surface, or prioritizes one mission, initiative, or architectural effort over another.
+MLK: argues for the ambitious option, but only when it unlocks a specific future capability that can be named with numbers.
+  Joins round one when: At least one option claims a larger future unlock in capacity, capability, reach, resilience, economics, delivery velocity, or optionality.
+Maintainer: asks whether the next engineer can understand, debug and extend the result during an incident at 3am.
+  Joins round one when: Someone other than the artifact's author will operate or extend it.
+Migrator: judges the path rather than the destination: moving live data and traffic, downtime, rehearsal before cutover, and reversal.
+  Joins round one when: The decision touches data or traffic that exists in production.
+Devil's Advocate: attacks the panel's agreement once it has formed.
+  Joins round one when: Never in round 1. Held in reserve for the converged path only.

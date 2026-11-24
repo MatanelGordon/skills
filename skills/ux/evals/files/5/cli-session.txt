@@ -1,0 +1,54 @@
+A terminal session with snapkeep 2.3.0, a tool that keeps dated snapshots of a
+folder. Lines starting with # are my notes, not output.
+
+$ snapkeep --help
+snapkeep 2.3.0
+
+Usage: snapkeep <command> [options]
+
+Commands:
+  init      Create a snapshot store
+  snap      take a snapshot of a folder
+  ls        List snapshots
+  restore   restore a snapshot
+  rm        Remove a snapshot
+  purge     remove snapshots
+
+Options:
+  init      -o <dir>         where the store lives
+  snap      --target <dir>   where the store lives
+  restore   --dest <dir>     where the restored files go
+  ls        --format <fmt>   output format
+
+$ snapkeep snap ~/projects --target /mnt/backup
+# nothing is printed for 11 minutes, then:
+done
+
+$ snapkeep ls
+ID          TAKEN             SIZE     FILES
+2026-11-18  2026-11-18 09:02  38.1 GB  212,400
+2026-11-19  2026-11-19 09:01  38.4 GB  213,050
+2026-11-20  2026-11-20 09:03  38.9 GB  214,870
+3 snapshots, 115.4 GB in /mnt/backup
+
+$ snapkeep ls --format JSON
+error: unknown format 'JSON'
+# `--format json` works. The accepted values are json and table.
+
+$ snapkeep restore 2026-11-2O --dest ~/restored
+E1107
+# I typed the letter O instead of a zero at the end of the ID.
+
+$ snapkeep restore 2026-11-20 --dest ~/restored
+restoring 2026-11-20 -> /home/dana/restored
+[#############.......] 64%  24.9 of 38.9 GB  about 3 min left
+restored 214,870 files to /home/dana/restored in 8m 12s
+
+$ snapkeep purge 2026-11-18
+purged 3 snapshots
+# I wanted to remove one old snapshot. `purge` ignores its argument and removes
+# every snapshot in the store. It does not ask first and there is no way to
+# get them back. `rm 2026-11-18` would have removed just that one.
+
+$ snapkeep ls
+0 snapshots, 0 B in /mnt/backup

@@ -1,5 +1,297 @@
 # Changelog
 
+## 1.23.0 — 2026-11-24
+
+One release for the improvement pull requests merged together on
+`integration/skills-improvement`, plus the routing changes made on top of
+them. Each pull request bumped the version on its own; their notes are kept
+below, one section each, in merge order.
+
+### Review convergence in `development-workflow` (#4, written as 1.22.2)
+
+- Changed `development-workflow` review from a one-shot check into a bounded
+  convergence gate: at least two fresh full-diff passes, mandatory re-review
+  after review-driven production fixes, explicit severity dispositions, and a
+  fail-closed stop after a fourth unsuccessful pass.
+- Updated the README workflow graph, light/dark scale illustration, stage guide,
+  and skill registry summary to show the review/fix/test loop, minimum pass
+  count, and escalation path.
+- Added deterministic policy regressions and agent eval cases for a clean first
+  pass, an incomplete first review fix, and failure to converge by the four-pass
+  cap.
+
+### Pull-request review mode in `development-workflow` (#5, written as 1.22.3)
+
+- Added an opt-in pull-request review mode to `development-workflow`. The skill
+  asks once, with the plan, whether the change should be reviewed through a pull
+  request. When the answer is yes it pushes the branch and opens a draft pull
+  request after test hardening and before the first review pass, pushes each
+  review fix as a new commit, and marks the pull request ready after
+  verification. It never merges without explicit permission. With no answer the
+  mode stays off, because a push cannot be unsent and a local branch can still
+  become a pull request later.
+- Rewrote the `development-workflow` description to lead with its trigger and
+  fit in 300 characters.
+- Added contract tests for the mode and four eval cases: asking, opening the
+  pull request at the right moment, the unanswered default, and not merging.
+
+### Short skill descriptions (#8)
+
+- **Shortened every skill description to a routing line.** The 27 descriptions
+  totalled 14,636 characters, and Claude Code and Codex fit about 8,000 in the
+  skill list, so with every skill installed the descriptions were cut. In 25 of
+  them the "use when" part was missing or ended after character 60, which is
+  all some agents show. The 26 descriptions outside `development-workflow` now
+  open with the trigger, hold at most 300 characters, and name what only that
+  skill does; all 27 total 7,327. Only `description:` blocks changed. No skill
+  body, reference, script or eval was touched.
+- **The validator enforces both limits.** `npm run validate` fails a description
+  over 300 characters and fails the collection once all descriptions together
+  reach 7,500. Regression tests pin each boundary and that a folded description
+  is measured after its lines are joined. The old 1,024-character check is gone:
+  the new limit is stricter.
+- The validator now reads a description in every YAML form. It used to read
+  only `>` and `>-` blocks, so a `|` block, a plain value continued on the next
+  lines, or an empty `description:` was measured wrongly and could pass any
+  limit. No skill here used those forms.
+
+### Eval format standard and loadable eval sets (#10)
+
+- **Added an eval format standard, [EVALS.md](EVALS.md).** One `evals.json`
+  shape now loads as committed in the repo runner, agent-skills-eval and
+  SkillEvaluator. Two evaluation runs had shown that neither external tool
+  graded a single assertion (they read `assertions`; the datasets had only
+  `expectations`), and that three datasets could not be staged at all. The
+  standard also sets rules for case count, case size, fixtures, container
+  dependencies and assertion wording, with the tool behaviour and published
+  guidance each rule rests on.
+- **Added `npm run normalize-evals`.** It mirrors `expectations` and
+  `assertions`, adds the `files` list a case was missing, moves inline text,
+  `{path, content}` objects and misplaced fixtures to
+  `evals/files/<case id>/`, and orders the keys. A second run changes nothing.
+  It never overwrites a fixture that differs (compared byte for byte), never
+  guesses between two lists that disagree, and never rewrites a file with a
+  duplicated key. It places every fixture before it rewrites `evals.json` and
+  removes a moved source only after, writing each fixture under a temporary
+  name first, so an interrupted run is finished by rerunning it. A source it
+  cannot remove is reported, not left silently.
+- **`npm run validate` now enforces the format.** A case with no assertions, a
+  fixture path that does not resolve, a fixture that is (or sits in) a
+  symlink, is binary or over 64 KB, or has a name Windows rejects,
+  `assertions` and `expectations` that differ, or a duplicated key fails
+  validation. Fewer than six cases, no negative case, or a case with fewer
+  than 2 or more than 5 assertions is printed as a warning.
+- Normalised all 27 skill eval files and both agent eval files. Fixtures moved
+  from `evals/fixtures/` to `evals/files/` in development-workflow,
+  mutation-testing and test-hardening.
+
+### visual-plan rework and slimmer functional-csharp (#7)
+
+- **Rewrote `visual-plan` around two Markdown files.** It now writes a plan
+  into `.plan/<name>/` as `plan.md` for the implementing agent, in
+  `deep-plan`'s format and still owned by `deep-plan`, and `review.md` for the
+  user: at most 500 words, with linked SVG diagrams, the questions that need
+  the user's call (`Q1`, `Q2`), the choices already made and the risks. Open
+  questions, with a recommendation and a default, sit under the plan's
+  existing "Risks and unknowns" heading, so no second plan format exists; an
+  answer is written back as `answered <date>: <answer>`. `SKILL.md` went from
+  30,424 to 6,303 characters, and the Markdown an agent may load from 68,212
+  to 12,650.
+- Removed the hosted Agent-Native Plans workflow from `visual-plan`, with its
+  four reference files and `agent-native-skill.json`. That text came from
+  Builder.io's MIT-licensed `@agent-native/core` skill; the replacement is
+  written from scratch and needs no connector or account. This also clears
+  the two email-address findings and the unexpected-file finding from
+  SkillEvaluator.
+- Credited Builder.io in the README and in `visual-plan`'s frontmatter
+  (`inspired_by`): versions up to 1.22.1 were based on the `visual-plan`
+  skill in its MIT-licensed `@agent-native/core`.
+- Added `visual-plan/scripts/check-review.mjs`, a dependency-free checker with
+  50 tests: both files exist, the review links the plan, every linked SVG
+  exists, parses as namespace-aware XML and refers to nothing outside itself,
+  no SVG is pasted inline (GitHub strips it), the review is within its word
+  budget, and every question and ADR in the plan appears in the review. The
+  diagram rules in `references/diagrams.md` ask for one adaptive SVG per
+  diagram, a format checked by rendering it in light and dark.
+- **Slimmed `functional-csharp`** from 16,369 to 11,971 characters. The
+  five rules keep their inline examples; the `Match` walkthrough, pattern
+  matching, the ErrorOr chain, pipelines, the parameter-record example and the
+  Decider code moved to `references/`, including a new `patterns.md`. The
+  union section no longer repeats `references/unions.md`. Added one line the
+  evals already tested for: mutation that never leaves a function is fine.
+- **Updated `functional-csharp` for C# 15 on .NET 11** (released 10 November
+  2026): mark a state hierarchy `closed`, or use `union` for one of several
+  existing types, and the compiler checks the switch; the private-constructor
+  hierarchy, the `UnreachableException` arm and `Match` stay as the advice for
+  .NET 10 and earlier. Corrected two claims: `ImmutableList<T>` supports list
+  patterns except a captured slice, and CS8509 fires on a switch expression
+  without a `_` arm, not on every switch.
+- **`deep-plan` now writes the review too.** After `plan.md` it writes
+  `review.md` and `diagrams/` beside it, the `visual-plan` way, and puts every
+  question only the user can settle on a `Q<n>` line under "Risks and
+  unknowns", with a recommendation and a default. Its description is
+  unchanged; a new eval case (11) checks for the review.
+- **Plan files are never force-added.** `deep-plan` asks git first
+  (`git check-ignore -q .plan/<name>/plan.md`): where `.plan/` is not
+  ignored it commits `plan.md` with its change; where it is ignored it commits
+  no plan files, uses no `git add -f` and no `.gitignore` edit, and says once
+  that the plan stays local. `visual-plan` follows the same rule for
+  `review.md` and `diagrams/`. A new `deep-plan` eval case (12) checks it.
+- `visual-plan` ships its worked example, a review of the council plan with
+  two diagrams, in `assets/examples/council-protocol-hardening/` instead of
+  force-adding it under `.plan/`.
+- Rewrote both skills' eval sets in the shared format: 12 cases for
+  `functional-csharp` (the 4 existing ones, 7 for rules that moved or
+  shrank, 1 negative) and 6 for `visual-plan` with fixtures, a container
+  definition and a grader that prints each trial's files for the checker.
+
+### One CLI-subagent skill, and parallel-build refocused on splitting work (#9)
+
+- **Merged `openrouter-cli-subagent` into `cli-coding-subagents`.** One skill
+  now covers running a coding worker through the codex, copilot or OpenRouter
+  (`ori`) CLI. OpenRouter is a mode whose detail lives in
+  `references/openrouter.md`, and the three `ori-*.sh` helpers moved into the
+  merged skill's `scripts/`. SkillEvaluator had the two descriptions at 0.88
+  similarity. The old directory is gone, so a link to it from an earlier
+  install now dangles; `install-skills doctor` lists it.
+- **Refocused `parallel-build` on how to split a job between workers:** which
+  pieces are independent, who owns which files, what has to land first, how
+  many run at once, and how the run is tracked and resumed. Parallel is the
+  default for independent pieces. A quick split (an ownership table and one
+  dispatch) covers pieces that share no file; the three-phase build keeps its
+  precondition of an approved `deep-plan` plan. Everything about running a
+  single worker now lives only in `cli-coding-subagents`.
+- Workers get a git worktree automatically whenever the project is a git
+  repository. `wt.sh` exits 4 outside one, and the skill says what to do then
+  (in the new `references/worktrees.md`, with the `wt.sh` exit-code recovery).
+- Both `SKILL.md` files stay under 16,000 characters, the read cap OpenClaw
+  applies below 100K tokens of context; the old OpenRouter skill was 19,329.
+- Added `wt.sh rundir <name>`: a place for the prompts, logs and status files
+  of a run that has no plan directory, beside the worktrees and outside the
+  repository (in the project's `.sa-runs/` when there is no git).
+- `codex-session.py` reads the sessions of `$CODEX_HOME`, so a worker that ran
+  under `ori codex` can be resumed.
+- Fixed the documented `codex exec resume` command. codex-cli 0.170.0 rejects
+  `--color never` after `resume`; it now comes before.
+- Fixed `ori-codex-home.sh` replacing all three links on every run instead of
+  leaving correct ones alone.
+- The installed skill is located by one resolver block that accepts a copy
+  only when all six helpers are executable. The shorter form used by two of the
+  three skills took the first directory that existed.
+- Added `skills/cli-coding-subagents/tests/scripts.test.mjs`: 23 tests over the
+  helpers' exit codes, the capability and wallet checks, and the resolver block.
+- Rewrote both eval sets in the eval standard. `parallel-build`'s cases were
+  whole builds that no agent finished; each is now one step with its inputs
+  supplied as fixtures.
+- Both descriptions are under 300 characters (288 and 297, from 497, 827 and
+  712) and start with their trigger.
+
+### Planning-context evaluations for adr, bookkeeper, research-first and confidence-ranker (#6)
+
+- **Evals that give `adr`, `bookkeeper`, `research-first` and
+  `confidence-ranker` something to consult.** Their cases ran in an empty
+  workspace: no decision record, no memory entry, no helper, no history. Both
+  arms then scored the same and the result said nothing about the skills. Each
+  of the four now carries a small repository under `evals/environment/fixture/`
+  that the evaluation image builds into a git checkout and starts the agent
+  in, with cases that ask for a plan which one fact in that repository must
+  change: a decision record that rules out the obvious design, a memory entry
+  naming the only runner a test passes on, a retry helper that already exists,
+  two commit messages that explain code that looks removable, a config file
+  that loads a "dead" module by name, a pinned version that contradicts the
+  request.
+- **Added `tools/planning-eval`.** It reads a finished SkillEvaluator Tier 3
+  run folder and reports, per attempt and without a grader model, whether the
+  skill was loaded, whether a tool call opened the place the fact lives in,
+  and whether the final reply reflects the fact. `npm run test:planning-eval`
+  runs its tests, which also check that no planted-fact prompt gives its fact
+  away. CI runs them in the validate job.
+- Rewrote the four eval sets in the eval format standard (`assertions` and
+  `expectations` identical, `files: []`, a negative case marked
+  `expected_skill: null`). Cases that only made sense in an empty repository
+  are retired and their ids are not reused: `adr` 2 and 3, `bookkeeper` 2,
+  `research-first` 2, `confidence-ranker` 1 and 3.
+- **Measured, and no skill text changed.** On `nvidia/nemotron-3-nano-30b-a3b`
+  as a Claude Code agent, none of the four skills changed the plan: installed,
+  none loaded on a planning prompt (0 of 23 attempts); loaded by a slash
+  command, they found the planted fact in 2 of 24 attempts, as often as the
+  agent did without them. A body change was tried for each skill against its
+  observed failure and measured the same way; none passed the bar set in
+  advance, so none ships. Figures and raw output are in the pull request.
+
+### Removal and rename sweeps (#12)
+
+- **Removing or renaming something now includes sweeping for what still names
+  it.** `get-the-job-done` gains a rule: a removal or rename is not done until
+  a sweep gate passes (a search that must come back empty outside history
+  files) and every hit is fixed or listed for the user with its path. The sweep
+  covers the repo (README tables, SVG text, eval cases, tests, other skills,
+  CI, the installer), installed copies and links in every agent folder, and the
+  user's own rules and memory. "It will dangle" is named as an anti-pattern.
+  Four new eval cases (16 to 19): a removal, a flag rename, an agent report
+  with dangling leftovers, and a negative case.
+- `npm run validate` now fails when a current file names a skill that used to
+  be under `skills/` and is not any more: by path (`skills/name`,
+  `../name/SKILL.md`) anywhere, and a hyphenated name in any form. A
+  single-word name (the retired `rank`) counts only as a path or, in docs, a
+  `[rank](…)` link, because `` `rank` `` and **rank** are ordinary words there;
+  that is the one form the check misses. Retired names come from git
+  history, so committed and uncommitted removals and the old side of a rename
+  are all caught with no list to maintain. `CHANGELOG.md` files, `.plan/` and
+  `.adr/` are exempt. CI now checks out with full history, which the check
+  needs, and a shallow clone under CI is reported instead of passing silently.
+  Where git history cannot be read (an export or tarball without `.git`, a
+  repository with no commits), validate prints a warning that the check was
+  skipped and why.
+- `npm run install-skills` (and `uninstall`) prune links in the chosen agent
+  folders that point into this repo's `skills/` or `agents/` and whose target
+  is gone, printing each one. A real file or folder, a live link, a link
+  elsewhere, and a target that exists but cannot be read are never touched.
+  `doctor` now says so for such links. Running `install` from a branch that
+  lacks a skill prunes that skill's link; installing again from the branch
+  that has it restores it.
+
+### Routing fixes
+
+- **Folded `tui-builder` into `terminal-ux`.** A 30B model sent seven of
+  tui-builder's own resize requests to terminal-ux: both skills covered Ink,
+  resize and redraw. Its rules now live, unchanged, in
+  `terminal-ux/references/full-screen-and-resize.md`, which terminal-ux points
+  to for full-screen setup and resize bugs; its eight eval cases are
+  terminal-ux cases 12 to 19; the two that were tui-builder's negative cases
+  (a plain CI table, a `--json` flag for a pipeline CLI) are positive cases
+  now, because plain CLI output is terminal-ux's own ground. The collection
+  is 25 skills. A link to `tui-builder` from an earlier install now dangles;
+  `npm run install-skills` prunes it (#12).
+- **Rewrote five descriptions so the trigger a user would type comes first.**
+  `functional-typescript` and `functional-python` now open with their
+  language ("writing or changing TypeScript or JavaScript modules, domain
+  models or error handling") and the code smells they address, instead of
+  the generic verbs ("new modules", "handlers") that matched TypeScript
+  trivia, a Python file and an Ink chart in an earlier routing test.
+  `get-the-job-done` opens with the user's pushback ("you said it was done,
+  but..."), not with "define runnable completion gates"; to fit 300
+  characters it no longer names lowering a threshold. `bookkeeper` opens with
+  facts to keep for next time and no longer names today-only state, which
+  pulled such requests in. `terminal-ux` names the resize and full-screen
+  symptoms itself. None points at a sibling skill. On a held-out routing set
+  (a 30B model, 125 requests, 5 attempts) the four problem areas went:
+  functional 0.34 to 0.52, done 0.26 to 0.29, memory 0.65 to 0.80, and
+  terminal 0.52 to 0.46, down.
+
+### Integration
+
+- Ran `npm run normalize-evals` over the merged tree: the three
+  `development-workflow` cases #4 added gained their `assertions`.
+- The README's "Writing your own portable skill" now states the trigger-first
+  rule and both description limits that `npm run validate` enforces.
+- `EVALS.md` lists the files a skill may keep beside `evals.json`
+  (`config.yml`, `grader.py`, `environment/`, `files/shared/`) and the
+  per-case `trajectory_checks` key, and two tests pin that the normaliser and
+  the validator leave them alone.
+- Combined figures, which the notes of each pull request above predate: 25
+  skills, and 6,775 description characters for all of them together.
+
 ## 1.22.1 — 2026-11-21
 
 - Redesigned the README opening around an original light/dark hero, a concise

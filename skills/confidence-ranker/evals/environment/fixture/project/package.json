@@ -1,0 +1,19 @@
+{
+  "name": "partner-reports",
+  "version": "4.0.3",
+  "private": true,
+  "description": "Sales reports for partners, over HTTP and as nightly exports",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "jobs": "node src/jobs/runner.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "4.19.2",
+    "pg": "8.11.5"
+  }
+}

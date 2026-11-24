@@ -1,0 +1,13 @@
+$ CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools status
+chrome-devtools-mcp 1.13.0
+daemon: running (pid 51877, started by this session)
+arguments: --performanceCrux=false --usageStatistics=false --isolated --headless
+           --allowedUrlPattern=https://staging.acme.example/* --workspace=/home/dev/acme-web
+browser: Chrome 145.0.7632.45 (Linux x86_64), headless
+pages: 1 open (id 1, https://staging.acme.example/)
+
+$ CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools evaluate_script '() => navigator.userAgent' --pageId 1 --output-format=json
+{"result":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.0.0 Safari/537.36"}
+
+$ CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1 CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=1 chrome-devtools take_snapshot 1 --output-format=json
+{"snapshot":"- banner\n  - alert: Your browser is not supported. Please use a current version of Chrome, Firefox or Safari.\n- main\n  - heading \"Acme staging\" [level=1]"}

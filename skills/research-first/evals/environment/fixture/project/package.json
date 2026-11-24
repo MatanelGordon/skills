@@ -1,0 +1,19 @@
+{
+  "name": "shipping-desk",
+  "version": "3.2.1",
+  "private": true,
+  "description": "Books shipments with the carrier and keeps their labels",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "purge-labels": "node src/labels/purge.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "pg": "^8.11.5"
+  }
+}

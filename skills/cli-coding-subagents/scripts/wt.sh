@@ -12,12 +12,17 @@
 #                                 -F supplies the full merge message
 #   wt.sh drop <slug>             discard the worktree and branch without merging
 #   wt.sh gc                      remove worktrees whose branch is already merged
+#   wt.sh rundir <name>           create a run directory (prompts/ agents/ logs/) and print its path
 #
 # Branch naming: sa/<slug>.   Worktree root: <repo-parent>/.wt-<repo-name>/<slug>
+# Run directories: <worktree-root>/.runs/<name>. A slug may not start with a
+# dot, so no worktree can be named .runs, and gc's glob skips dot entries.
+# Outside a git repository rundir uses ./.sa-runs/<name> in the current directory.
 # Override the root with PARALLEL_WT_ROOT.
 #
 # Exit codes: 0 ok · 1 error (see message) · 2 merge conflict, needs resolution
-#             · 3 main tree dirty, merge not attempted · 64 bad usage
+#             · 3 main tree dirty, merge not attempted · 4 not a git repository,
+#             so no worktree is possible · 64 bad usage
 set -uo pipefail
 
 die() { echo "wt: $1" >&2; exit "${2:-1}"; }
@@ -26,11 +31,26 @@ die() { echo "wt: $1" >&2; exit "${2:-1}"; }
 usage() { awk 'NR>1 && /^#/ { sub(/^# ?/, ""); print; next } NR>1 { exit }' "$0"; }
 case "${1:-}" in
   -h|--help|help|'') usage; exit 0 ;;
-  new|path|list|merge|drop|gc) ;;
+  new|path|list|merge|drop|gc|rundir) ;;
   *) echo "wt: unknown command: $1" >&2; usage >&2; exit 64 ;;
 esac
 
-git rev-parse --git-dir >/dev/null 2>&1 || die "not inside a git repository"
+command -v git >/dev/null 2>&1 || die "git is not installed (or not on PATH)"
+
+# Without git no worktree is possible, but a run still needs somewhere for its
+# prompts and logs, so rundir alone falls back to the project directory.
+if ! git rev-parse --git-dir >/dev/null 2>&1; then
+  if [ "$1" = "rundir" ]; then
+    name="${2:-}"
+    [ -n "$name" ] || die "missing <name>"
+    case "$name" in *[!a-zA-Z0-9._-]*|.*|-*) die "name must be [a-zA-Z0-9._-] and not start with a dot or a dash: $name" ;; esac
+    dir="$PWD/.sa-runs/$name"
+    mkdir -p "$dir/prompts" "$dir/agents" "$dir/logs" || die "cannot create $dir"
+    echo "$dir"
+    exit 0
+  fi
+  die "not a git repository: $PWD (no worktree is possible here)" 4
+fi
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 REPO_NAME="$(basename "$REPO_ROOT")"
 WT_ROOT="${PARALLEL_WT_ROOT:-$(dirname "$REPO_ROOT")/.wt-$REPO_NAME}"
@@ -42,6 +62,7 @@ slug_check() {
   case "$1" in
     *[!a-zA-Z0-9._-]*) die "slug must be [a-zA-Z0-9._-]: $1" ;;
     .*) die "slug may not start with a dot: $1" ;;
+    -*) die "slug may not start with a dash: $1" ;;
   esac
 }
 
@@ -206,6 +227,15 @@ case "$cmd" in
     rmdir "$WT_ROOT" 2>/dev/null
     # Non-zero when anything was left behind, so "gc && done" cannot lie.
     exit "$gc_failed"
+    ;;
+
+  rundir)
+    # Prompts, logs and status files need a home that outlives a reboot and is
+    # outside every worktree, so no worker's branch ever carries them.
+    name="${1:-}"; slug_check "$name"
+    dir="$WT_ROOT/.runs/$name"
+    mkdir -p "$dir/prompts" "$dir/agents" "$dir/logs" || die "cannot create $dir"
+    echo "$dir"
     ;;
 
   *) usage >&2; exit 64 ;;   # unreachable: validated above

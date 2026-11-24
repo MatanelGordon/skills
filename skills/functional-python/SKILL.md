@@ -1,16 +1,10 @@
 ---
 name: functional-python
 description: >
-  Write Python in a functional style — frozen dataclasses, pure functions, tagged-union
-  domain models with exhaustive match/case, and Result-typed errors instead of mutable
-  classes, inheritance hierarchies, and exceptions for expected failures. Use whenever
-  writing, reviewing, or refactoring Python: modules, services, FastAPI/Django handlers,
-  data pipelines, domain models, or error handling. Also use when tempted to write a
-  class with mutable attributes, use inheritance for polymorphism, mutate a list/dict
-  argument in place, raise for a validation failure, or return None to mean failure; and
-  when a dataclass has optional fields only valid in certain combinations. Covers
-  frozen/slots dataclasses, NewType, Protocol over ABC, match/case, returns library,
-  immutable updates, and functional core + imperative shell.
+  Use when writing or changing Python modules, domain models or error handling, above
+  all code that mutates arguments, uses base classes for variants, returns None or
+  raises for expected failures, dispatches on long if/elif chains, or has optional
+  fields valid only together. Gives match/case, Result.
 license: MIT
 metadata:
   author: Matanel Gordon

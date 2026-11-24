@@ -1,11 +1,10 @@
 ---
 name: prototype
 description: >
-  Build throwaway code to answer design, architecture, flow, or interaction
-  questions before production implementation. Use for spikes, POCs, mockups,
-  quick versions, comparing options, or uncertainty that running code can
-  resolve. Covers isolated greenfield throwaways and brownfield prototypes
-  placed behind one replaceable seam.
+  Use when asked for a spike, POC, proof of concept, clickable prototype, throwaway
+  experiment, or quick running version to settle an architecture, feasibility, behavior,
+  flow, or interaction question before production. Not for static mockups or production
+  implementation.
 license: MIT
 metadata:
   author: Matanel Gordon

@@ -1,0 +1,36 @@
+EXPENSE CLAIM FORM: what happens when the session runs out
+
+What the user sees today
+------------------------
+The form has 4 pages. On pressing "Submit claim" on page 4 with an expired
+session, this dialog appears:
+
+    +------------------------------------------------+
+    | Error                                          |
+    |                                                |
+    | ERR_SESSION_4012: token expired (401)          |
+    |                                                |
+    |                                        [ OK ]  |
+    +------------------------------------------------+
+
+Pressing OK reloads the page. The form comes back empty, on page 1.
+
+What the server returned
+------------------------
+    HTTP/1.1 401 Unauthorized
+    Content-Type: application/json
+
+    {"error": {"code": "ERR_SESSION_4012", "message": "token expired"}}
+
+Facts
+-----
+- A session ends after 30 minutes without a request to the server.
+  Typing in the form sends no requests.
+- Most people need 20 to 40 minutes to fill the form, because they have to
+  find their receipts.
+- At the moment the dialog appears, the browser still holds everything the
+  user typed on all four pages.
+- After signing in again, the app is able to send the user to any page of
+  the form.
+- Last month 212 submissions hit this dialog. 131 of those claims were never
+  submitted afterwards.

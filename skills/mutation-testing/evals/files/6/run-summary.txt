@@ -1,0 +1,28 @@
+Mutation run summary: shop repo, refund module
+
+frozen commit   5e0c7d2 (feat/partial-refunds)      merge base 1a9f3b4
+scope           src/checkout/refund.js, lines 12-58
+engine          StrykerJS 10.1.1, vitest runner 10.1.1
+baseline        unmutated suite green, 22 tests
+budget          20 minutes or 60 mutants
+elapsed         20m 00s, stopped by the time budget
+raw report      .mutation-tmp/discovery.json
+sha256          55614eb3f60975003c63173b357ba04267ae2ed296aabeabfe745aa055905989
+
+status          count
+Killed             49
+Survived            0
+Timeout             0
+NoCoverage          0
+CompileError        0
+Ignored             0
+Pending             1
+total              50
+
+Pending mutant
+  id 37   ConditionalExpression   src/checkout/refund.js:41:9
+  - if (amountCents > order.paidCents) {
+  + if (false) {
+  (the guard that rejects a refund larger than what the customer paid)
+
+score: 49 killed of 50 = 98%

@@ -102,9 +102,10 @@ PLAN="$(git rev-parse --show-toplevel)/.plan/oauth-device-flow"   # example: you
 mkdir -p "$PLAN"/{prompts,agents,logs}
 ```
 
-`plan.md` and `PROGRESS.md` are committed. `prompts/`, `agents/` and `logs/`
-are never added to git: workers rewrite their status files while they run, and
-a tracked file changing in the main tree makes `wt.sh merge` refuse with exit 3.
+`agents/` and `logs/` are never added to git: workers rewrite their status
+files while they run, and a tracked file changing in the main tree makes
+`wt.sh merge` refuse with exit 3. The rest is committed only when git tracks
+`.plan/` (step 6).
 
 **Phase 1 — foundation. Usually 1 agent. 2 only in a monorepo spanning separate
 projects.** It builds the shared files listed in step 2. Its real job is to make
@@ -123,12 +124,8 @@ phase 1.
 - **1 to 2 security agents** write `SECURITY.md`, or `SECURITY.part1.md` and
   `SECURITY.part2.md`. Prefer codex, or a Claude `Agent`.
 
-A review worker run through a CLI is dispatched like any other: own worktree
-of the merged branch, the same prompt template. Its Scope is its findings file
-in the plan directory (absolute path) and its status file; the code is
-off-limits. In place of critical-path tests, its acceptance criteria are the
-`CR.md` shape in `references/templates.md`. A Claude `Agent` reviewer gets the
-same scope and criteria in its brief.
+Review workers are dispatched like any other worker; their scope and
+acceptance criteria are under "Review workers" in `references/templates.md`.
 
 Skip security agents for throwaway projects under `Desktop/Playgrounds`: they
 will never ship and auditing them is noise. Code review still runs. Check:
@@ -212,8 +209,11 @@ absolute path. Workers run in worktrees but write to the main tree's
 allowlist; otherwise progress updates land on feature branches and conflict at
 every merge.
 
-Commit `PROGRESS.md` updates as you go. A dirty main tree makes `wt.sh merge`
-refuse with exit 3, and the commits give the run a history worth having.
+When git does not ignore `.plan/` (`git check-ignore -q .plan` fails), commit
+`plan.md`, `prompts/`, the review outputs and each `PROGRESS.md` update as you
+go: a dirty main tree makes `wt.sh merge` refuse with exit 3. When `.plan/` is
+ignored, commit none of it and never `git add -f`: ignored files are
+untracked, so they cannot make the tree dirty.
 
 ### 7. Finish
 
@@ -234,8 +234,8 @@ refuse with exit 3, and the commits give the run a history worth having.
    done about each, the test results as they actually are, and anything left
    undone.
 
-Beyond the merges and the plan-directory commits in step 6, do not commit or
-push unless asked.
+Beyond the merges (and, when `.plan/` is tracked, the plan-directory commits in
+step 6), do not commit or push unless asked.
 
 ## Resuming an interrupted build
 

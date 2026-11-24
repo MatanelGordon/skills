@@ -39,9 +39,11 @@ sync tool, raise the default HTTP timeout):
 they survive a reboot — after a crash they are often the only record of what an
 agent did.
 
-`plan.md`, `PROGRESS.md` and the review outputs are **committed to git**: that
-is what lets other sessions and teammates share the plan and architecture.
-`prompts/`, `agents/` and `logs/` are not (see `parallel-build` step 3). For
+`plan.md`, `PROGRESS.md`, `prompts/` and the review outputs are **committed to
+git** when git does not ignore `.plan/`: that is what lets other sessions and
+teammates share the plan and architecture. When `.plan/` is ignored, they stay
+local and are never force-added. `agents/` and `logs/` are never committed (see
+`parallel-build` step 3). For
 `PROGRESS.md` commits, main-working-tree location, and absolute-path rules, see
 `parallel-build` step 6 (Track progress).
 
@@ -124,6 +126,13 @@ Worktree root: `<parent>/.wt-<repo>/` · logs: `./logs/<slug>.log`
 ---
 
 ## CR.md / SECURITY.md
+
+**Review workers.** A review worker run through a CLI is dispatched like any
+other: own worktree of the merged branch, the same prompt template. Its Scope
+is its findings file in the plan directory (absolute path) and its status file;
+the code is off-limits. In place of critical-path tests, its acceptance criteria
+are the shape below. A Claude `Agent` reviewer gets the same scope and criteria
+in its brief.
 
 ```markdown
 # Code Review — <plan-name>[ — part N]

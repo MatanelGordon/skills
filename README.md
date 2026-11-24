@@ -187,7 +187,8 @@ others when you install it.
 | [development-workflow](skills/development-workflow/SKILL.md) | The spine: research → plan → test-first → implement → test-harden → review → verify → commit. Mutation testing is an explicit risk/value option, not a default feature gate. → `research-first`, `confidence-ranker`, `deep-plan`, `test-hardening`, `mutation-testing`, `adr` |
 | [test-hardening](skills/test-hardening/SKILL.md) | Fresh post-implementation eyes add bounded tests for observable edge cases. Red proof happens in a scratch copy/worktree, production defects return as regressions, and hosts without subagents use a declared fresh-context fallback. |
 | [mutation-testing](skills/mutation-testing/SKILL.md) | Opt-in native mutation testing for an explicit scope or budgeted critical logic. Five adapters preserve engine meanings; a direct-parent Git guard rejects production history and imports only reviewed test paths. → `test-hardening` |
-| [deep-plan](skills/deep-plan/SKILL.md) | Turns "build X" into a plan someone with zero context could execute: a clarity gate before any writing, one owner per file path, every edge case enumerated with a status, and test commands quoted verbatim. Owns `.plan/`. |
+| [deep-plan](skills/deep-plan/SKILL.md) | Turns "build X" into a plan someone with zero context could execute: a clarity gate before any writing, one owner per file path, every edge case enumerated with a status, and test commands quoted verbatim. Writes a short `review.md` with diagrams for your sign-off beside the plan. Owns `.plan/`. → `visual-plan` |
+| [visual-plan](skills/visual-plan/SKILL.md) | Writes a plan as two files: `plan.md` for the implementing agent and a `review.md` of at most 500 words for you, with linked SVG diagrams, the questions that need your call, and the risks. A bundled checker keeps the two in step. → `deep-plan`, `impeccable-lite` |
 | [council](skills/council/SKILL.md) | Pressure-tests consequential architecture choices with isolated, contrast-written personas, anonymized cross-review, and a chairman verdict that preserves dissent. Weights falsifiers over confidence theatre. Built for weak single-model harnesses on closed networks. |
 | [prototype](skills/prototype/SKILL.md) | Throwaway code that answers a design question before real work burns tokens on the wrong thing. Greenfield: hardcode everything, delete it after. Brownfield: deliberately bad code behind exactly one seam, so the real thing lands as a one-line swap. |
 | [get-the-job-done](skills/get-the-job-done/SKILL.md) | Guards against work that only *looks* finished. Completion claims become `GATES.md` entries, each with a runnable `CHECK`, and a bundled checker re-runs them. Read-only and hook-free on purpose, so it survives six concurrent agents. |
@@ -244,7 +245,6 @@ This registry deliberately installs **`impeccable-lite`**, not the upstream
 | [ux](skills/ux/SKILL.md) | A style-agnostic way to answer "is this good UX?" with a rubric instead of an opinion: severity-rated heuristics plus metrics with published thresholds. |
 | [terminal-ux](skills/terminal-ux/SKILL.md) | Terminal dashboards and visualisations with Ink, including the testing traps I hit so you don't have to. |
 | [tui-builder](skills/tui-builder/SKILL.md) | Full-screen TUI work, with hard-won terminal-resize rules. |
-| [visual-plan](skills/visual-plan/SKILL.md) | Turns text plans into reviewable visual plans with diagrams, file maps, and annotated code. |
 
 ### Driving and observing
 
@@ -468,7 +468,11 @@ blind-synced. Provenance for each file is recorded in
 Everything here is by **Matanel Gordon** and MIT licensed except
 `skills/impeccable-lite/references/perception-first-lens.md`, which is an
 attributed CC BY-SA 4.0 adaptation. Where a skill builds on published thinking,
-it says so inline. Notable sources:
+it says so inline. `visual-plan` up to version 1.22.1 was based on the
+`visual-plan` skill in Builder.io's MIT-licensed
+[`@agent-native/core`](https://github.com/BuilderIO/agent-native)
+(Copyright (c) 2026 Builder.io, Inc.); from 1.23.0 it is rewritten from
+scratch. Notable sources:
 [Nygard](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions)
 and [MADR](https://adr.github.io/madr/) for the ADR templates, and the
 [Lore protocol](https://arxiv.org/html/2603.15566v1) for the git trailer schema.

@@ -1,5 +1,65 @@
 # Changelog
 
+## 1.23.0 — 2026-11-23
+
+- **Rewrote `visual-plan` around two Markdown files.** It now writes a plan
+  into `.plan/<name>/` as `plan.md` for the implementing agent, in
+  `deep-plan`'s format and still owned by `deep-plan`, and `review.md` for the
+  user: at most 500 words, with linked SVG diagrams, the questions that need
+  the user's call (`Q1`, `Q2`), the choices already made and the risks. Open
+  questions, with a recommendation and a default, sit under the plan's
+  existing "Risks and unknowns" heading, so no second plan format exists; an
+  answer is written back as `answered <date>: <answer>`. `SKILL.md` went from
+  30,424 to 6,303 characters, and the Markdown an agent may load from 68,212
+  to 12,650.
+- Removed the hosted Agent-Native Plans workflow from `visual-plan`, with its
+  four reference files and `agent-native-skill.json`. That text came from
+  Builder.io's MIT-licensed `@agent-native/core` skill; the replacement is
+  written from scratch and needs no connector or account. This also clears
+  the two email-address findings and the unexpected-file finding from
+  SkillEvaluator.
+- Credited Builder.io in the README and in `visual-plan`'s frontmatter
+  (`inspired_by`): versions up to 1.22.1 were based on the `visual-plan`
+  skill in its MIT-licensed `@agent-native/core`.
+- Added `visual-plan/scripts/check-review.mjs`, a dependency-free checker with
+  50 tests: both files exist, the review links the plan, every linked SVG
+  exists, parses as namespace-aware XML and refers to nothing outside itself,
+  no SVG is pasted inline (GitHub strips it), the review is within its word
+  budget, and every question and ADR in the plan appears in the review. The
+  diagram rules in `references/diagrams.md` ask for one adaptive SVG per
+  diagram, a format checked by rendering it in light and dark.
+- **Slimmed `functional-csharp`** from 16,369 to 11,971 characters. The
+  five rules keep their inline examples; the `Match` walkthrough, pattern
+  matching, the ErrorOr chain, pipelines, the parameter-record example and the
+  Decider code moved to `references/`, including a new `patterns.md`. The
+  union section no longer repeats `references/unions.md`. Added one line the
+  evals already tested for: mutation that never leaves a function is fine.
+- **Updated `functional-csharp` for C# 15 on .NET 11** (released 10 November
+  2026): mark a state hierarchy `closed`, or use `union` for one of several
+  existing types, and the compiler checks the switch; the private-constructor
+  hierarchy, the `UnreachableException` arm and `Match` stay as the advice for
+  .NET 10 and earlier. Corrected two claims: `ImmutableList<T>` supports list
+  patterns except a captured slice, and CS8509 fires on a switch expression
+  without a `_` arm, not on every switch.
+- **`deep-plan` now writes the review too.** After `plan.md` it writes
+  `review.md` and `diagrams/` beside it, the `visual-plan` way, and puts every
+  question only the user can settle on a `Q<n>` line under "Risks and
+  unknowns", with a recommendation and a default. Its description is
+  unchanged; a new eval case (11) checks for the review.
+- **Plan files are never force-added.** `deep-plan` asks git first
+  (`git check-ignore -q .plan/<name>/plan.md`): where `.plan/` is not
+  ignored it commits `plan.md` with its change; where it is ignored it commits
+  no plan files, uses no `git add -f` and no `.gitignore` edit, and says once
+  that the plan stays local. `visual-plan` follows the same rule for
+  `review.md` and `diagrams/`. A new `deep-plan` eval case (12) checks it.
+- `visual-plan` ships its worked example, a review of the council plan with
+  two diagrams, in `assets/examples/council-protocol-hardening/` instead of
+  force-adding it under `.plan/`.
+- Rewrote both skills' eval sets in the shared format: 12 cases for
+  `functional-csharp` (the 4 existing ones, 7 for rules that moved or
+  shrank, 1 negative) and 6 for `visual-plan` with fixtures, a container
+  definition and a grader that prints each trial's files for the checker.
+
 ## 1.22.1 — 2026-11-21
 
 - Redesigned the README opening around an original light/dark hero, a concise

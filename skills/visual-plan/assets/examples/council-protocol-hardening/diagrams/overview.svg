@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 264" role="img" aria-labelledby="t d">
+  <title id="t">Council bookkeeping before and after the protocol helper</title>
+  <desc id="d">Before, the host agent did the bookkeeping between rounds by hand, and a long round-two packet could be compacted. After, council-protocol.mjs does it in code and gives round two the exact packet, or stops with PACKET_TOO_LARGE when it is over budget.</desc>
+  <style>
+    .bg { fill: #ffffff; }
+    .zone { fill: none; stroke: #d1d9e0; stroke-dasharray: 4 4; }
+    .card { fill: #f6f8fa; stroke: #d1d9e0; }
+    .new { fill: #ddf4ff; stroke: #0969da; }
+    .gone { fill: none; stroke: #818b98; stroke-dasharray: 6 4; }
+    .ask { fill: #fff8c5; stroke: #9a6700; }
+    .ink { fill: #1f2328; }
+    .muted { fill: #59636e; }
+    .wire { fill: none; stroke: #818b98; stroke-width: 1.5; }
+    .tip { fill: #818b98; }
+    text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; font-size: 14px; }
+    .small { font-size: 12px; }
+    .caps { font-size: 11px; font-weight: 600; letter-spacing: .08em; }
+    .strong { font-weight: 600; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #0d1117; }
+      .zone { stroke: #3d444d; }
+      .card { fill: #151b23; stroke: #3d444d; }
+      .new { fill: #121d2f; stroke: #4493f8; }
+      .gone { stroke: #656c76; }
+      .ask { fill: #272115; stroke: #d29922; }
+      .ink { fill: #f0f6fc; }
+      .muted { fill: #9198a1; }
+      .wire { stroke: #656c76; }
+      .tip { fill: #656c76; }
+    }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+      <path class="tip" d="M0 0 L8 4 L0 8 Z"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="720" height="264" rx="8"/>
+
+  <text class="muted caps" x="24" y="36">BEFORE</text>
+  <rect class="card" x="24" y="48" width="144" height="48" rx="8"/>
+  <text class="ink" x="96" y="69" text-anchor="middle">Round one</text>
+  <text class="muted small" x="96" y="86" text-anchor="middle">members answer</text>
+  <path class="wire" d="M168 72 H228" marker-end="url(#arrow)"/>
+  <rect class="card" x="232" y="48" width="200" height="48" rx="8"/>
+  <text class="ink" x="332" y="69" text-anchor="middle">Host agent</text>
+  <text class="muted small" x="332" y="86" text-anchor="middle">bookkeeping by hand</text>
+  <path class="wire" d="M432 72 H492" marker-end="url(#arrow)"/>
+  <rect class="card" x="496" y="48" width="200" height="48" rx="8"/>
+  <text class="ink" x="596" y="69" text-anchor="middle">Round two</text>
+  <text class="muted small" x="596" y="86" text-anchor="middle">packet may be compacted</text>
+
+  <text class="muted caps" x="24" y="132">AFTER</text>
+  <rect class="card" x="24" y="144" width="144" height="48" rx="8"/>
+  <text class="ink" x="96" y="165" text-anchor="middle">Round one</text>
+  <text class="muted small" x="96" y="182" text-anchor="middle">members answer</text>
+  <path class="wire" d="M168 168 H228" marker-end="url(#arrow)"/>
+  <rect class="new" x="232" y="144" width="200" height="48" rx="8"/>
+  <text class="ink strong" x="332" y="165" text-anchor="middle">council-protocol.mjs</text>
+  <text class="muted small" x="332" y="182" text-anchor="middle">bookkeeping in code</text>
+  <path class="wire" d="M432 168 H492" marker-end="url(#arrow)"/>
+  <rect class="card" x="496" y="144" width="200" height="48" rx="8"/>
+  <text class="ink" x="596" y="165" text-anchor="middle">Round two</text>
+  <text class="muted small" x="596" y="182" text-anchor="middle">gets the exact packet</text>
+  <text class="muted small" x="332" y="212" text-anchor="middle">over budget: stops with PACKET_TOO_LARGE</text>
+
+  <rect class="new" x="24" y="232" width="12" height="12" rx="3"/>
+  <text class="muted small" x="44" y="243">new in this plan</text>
+</svg>

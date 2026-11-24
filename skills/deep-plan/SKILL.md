@@ -6,6 +6,7 @@ license: MIT
 metadata:
   author: Matanel Gordon
   source: https://github.com/MatanelGordon/skills
+  depends: visual-plan
 ---
 
 # Deep plan
@@ -15,7 +16,19 @@ subagent, a teammate, you in three weeks — do the work without re-deriving you
 reasoning. Every rule below serves that one test.
 
 **This skill owns `.plan/`.** It creates the directory, defines the layout, and
-writes `plan.md`. `parallel-build` executes a plan; it does not invent one.
+writes `parallel-build`'s input. `parallel-build` executes a plan; it does not
+invent one.
+
+**Every plan is delivered as two files** in `.plan/<name>/`:
+
+1. `plan.md`, complete, for whoever builds it (§1–§5, template in
+   `references/plan-template.md`);
+2. `review.md` with `diagrams/`, short, for the user who approves it (§6).
+
+A question only the user can settle is not answered by you: it becomes a
+`Q<n>` line in `plan.md` and appears in `review.md` under the same id. When you
+cannot write files, give both in your reply, `plan.md` first, then
+`review.md`.
 
 **Model requirement.** This skill requires xhigh reasoning effort on a frontier
 model. If the current model does not meet that bar, do not plan silently — ask
@@ -60,7 +73,10 @@ Use `Explore` agents in parallel when the repo is unfamiliar. Investigation is
 cheap; a wrong plan executed by four agents is not.
 
 **Name what you could not determine.** An unknown stated in the plan is a risk
-being managed; an unknown glossed over is a bug waiting.
+being managed; an unknown glossed over is a bug waiting. An unknown only the
+user can settle goes under "Risks and unknowns" as one numbered line, so the
+review and the user's answer can refer to it:
+`- Q1: <question>: <option> or <option> -> your call; recommend <option>; default <what happens with no answer>`.
 
 That's why you need to ask me questions you think are critical for understanding the mission before you start planning.
 
@@ -147,12 +163,29 @@ PLAN="$(git rev-parse --show-toplevel)/.plan/<name>"
 mkdir -p "$PLAN"
 ```
 
-`.plan/` is **committed to git** — that is what makes the architecture shared.
-Commit `plan.md` with the change it describes. `PROGRESS.md` churns during
-execution; commit those updates as you go rather than letting the tree sit dirty
-(a dirty tree blocks `wt.sh merge`).
+**Commit the plan only if the project lets you.** Ask git first:
+`git check-ignore -q .plan/<name>/plan.md`.
+
+- **Not ignored (exit 1):** `.plan/` is committed — that is what makes the
+  architecture shared. Commit `plan.md` with the change it describes.
+  `PROGRESS.md` churns during execution; commit those updates as you go rather
+  than letting the tree sit dirty (a dirty tree blocks `wt.sh merge`).
+- **Ignored (exit 0):** commit no plan files. No `git add -f`, no `--force`,
+  and no edit to `.gitignore` to get round it. The plan stays local; say once
+  in the hand-off that it is uncommitted because the project ignores `.plan/`.
 
 See `references/plan-template.md` for the full `plan.md` shape.
+
+### Write the review the user approves from
+
+`plan.md` is for the agent; the user reads a short version. Beside it, write
+`review.md` and `diagrams/` the way the `visual-plan` skill describes, and load
+that skill if it is installed. In short: at most 500 words; a link to
+`plan.md`; what changes, what needs the user's call (every `Q<n>` with its
+recommendation and default), what is already decided, the risks, and how we
+will know it worked; one to three diagrams, each a linked `.svg` file, never
+inline `<svg>`. Nothing goes in the review that is not in the plan. Run
+visual-plan's `scripts/check-review.mjs` on the folder when it is available.
 
 ### Review the plan before executing
 
@@ -162,7 +195,10 @@ conflicts, after real quota is spent. Run the checklist in
 It checks the few things that actually break runs: every path owned once, shared
 surface in phase 1, acceptance criteria checkable, test commands real.
 
-Then **confirm with the user before executing.**
+Then point the user to `review.md` and **confirm with them before executing.**
+They answer by id (`Q1: 30 days`); record each answer in `plan.md` as
+`- Q1: <question> -> answered <date>: <answer>`, add an Amendments line, and
+refresh the review.
 
 ## 7. Status and amendment
 
@@ -220,6 +256,8 @@ Ready when someone who has not read this conversation could execute it:
 - [ ] Shared surface assigned to phase 1
 - [ ] Unknowns and risks named
 - [ ] Status line present; `draft` until agreed
+- [ ] Plan files committed only where git does not ignore `.plan/`; never force-added
+- [ ] Every question for the user is a `Q<n>` line; `review.md` and `diagrams/` written and checked
 - [ ] Hard-to-reverse decisions captured as ADRs
 - [ ] Plan reviewed before dispatch
 

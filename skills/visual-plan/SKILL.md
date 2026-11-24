@@ -23,6 +23,8 @@ the folder of the plan the user points you at (never a copy of it):
 `plan.md` is the source of truth and belongs to the `deep-plan` skill.
 `review.md` and `diagrams/` belong to this skill and are derived from it: a
 fact that is not in the plan does not appear in the review.
+`assets/examples/council-protocol-hardening/` holds a finished review and its
+two diagrams.
 
 ## When
 
